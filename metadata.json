@@ -1,0 +1,6 @@
+{
+  "name": "UniSocial - Mạng Xã Hội Học Tập & Ngân Hàng Đề",
+  "description": "Nền tảng mạng xã hội học tập kết hợp ngân hàng đề thi đại học phong cách Facebook Web: đề xuất câu hỏi, giảng viên kiểm duyệt, AI tinh chỉnh, minigame và nhắn tin realtime.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
