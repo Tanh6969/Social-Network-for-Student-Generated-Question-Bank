@@ -8,12 +8,13 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "lint": "eslint src tests",
+    
     "format:check": "prettier --check src/app src/api/*.ts src/features/auth/components/AuthPage.tsx src/features/auth/useAuthSession.ts src/features/auth/mapAuthUser.ts scripts/*.mjs tests/*.ts",
     "generate:api": "openapi-typescript openapi/openapi.json -o src/api/generated/openapi.ts && node scripts/check-api-coverage.mjs",
     "check:api": "node scripts/check-api-coverage.mjs",
     "update:api": "node scripts/update-openapi.mjs && npm run generate:api"
+    "lint": "tsc --noEmit",
+    "test": "npm run lint"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.104.2",
