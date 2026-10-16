@@ -3,18 +3,30 @@ import { Send, ThumbsUp, X } from 'lucide-react';
 import { useApp } from '../../demo/context/AppContext';
 import type { CommentItem, Post } from '../../demo/types';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
+import { MediaLightbox } from '../../../shared/components/MediaLightbox';
 import { CommentList } from './CommentList';
 import { PostContent } from './PostContent';
-import { PostMedia } from './PostMedia';
 import { formatPostTime } from '../postUtils';
 
 export function PostDetailModal() {
-  const { activePostDetail } = useApp();
+  const { activePostDetail, activePostMediaIndex } = useApp();
   if (!activePostDetail) return null;
-  return <PostDetail key={activePostDetail.id} post={activePostDetail} />;
+  return (
+    <PostDetail
+      key={activePostDetail.id}
+      post={activePostDetail}
+      initialIndex={activePostMediaIndex}
+    />
+  );
 }
 
-function PostDetail({ post }: { post: Post }) {
+function PostDetail({
+  post,
+  initialIndex,
+}: {
+  post: Post;
+  initialIndex: number;
+}) {
   const {
     currentUser,
     setActivePostDetail,
@@ -33,130 +45,141 @@ function PostDetail({ post }: { post: Post }) {
     setReplyTarget(null);
   };
 
-  const hasMedia = Boolean(post.mediaUrls?.length);
+  const close = () => setActivePostDetail(null);
+  const mediaUrls = post.mediaUrls ?? [];
+  const sidebar = (
+    <div className="flex h-full min-h-0 w-full flex-col bg-white dark:bg-[#242526]">
+      <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
+        <div className="flex min-w-0 items-center gap-3">
+          <AvatarWithFrame user={post.author} size="md" />
+          <div className="min-w-0">
+            <h3 className="truncate text-sm font-bold text-gray-900 dark:text-gray-100">
+              {post.author.name}
+            </h3>
+            <span className="text-xs text-gray-500">
+              {formatPostTime(post.createdAt)}
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {post.author.id === currentUser.id && (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  close();
+                  openPostComposer(post.id);
+                }}
+                className="text-xs font-semibold text-blue-600 hover:underline"
+              >
+                Sửa
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm('Xóa bài viết này?')) deletePost(post.id);
+                }}
+                className="text-xs font-semibold text-red-600 hover:underline"
+              >
+                Xóa
+              </button>
+            </>
+          )}
+          {!mediaUrls.length && (
+            <button
+              type="button"
+              onClick={close}
+              aria-label="Đóng chi tiết"
+              className="rounded-full p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
+        </div>
+      </div>
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
+        {post.content.trim() && <PostContent content={post.content} />}
+        <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-xs dark:border-gray-700">
+          <button
+            type="button"
+            onClick={() => toggleLikePost(post.id)}
+            className={`flex items-center gap-1.5 font-semibold ${post.isLiked ? 'text-blue-600' : 'text-gray-600'}`}
+          >
+            <ThumbsUp className="h-4 w-4" />
+            {post.likesCount} Thích
+          </button>
+          <span className="text-gray-500">{post.commentsCount} bình luận</span>
+        </div>
+        <CommentList
+          comments={post.comments ?? []}
+          onReply={(comment) => setReplyTarget(comment)}
+        />
+      </div>
+      {replyTarget && (
+        <div className="flex items-center justify-between px-4 pb-1 text-xs text-blue-600">
+          <span>Đang trả lời {replyTarget.author.name}</span>
+          <button
+            type="button"
+            onClick={() => setReplyTarget(null)}
+            className="hover:underline"
+          >
+            Hủy
+          </button>
+        </div>
+      )}
+      <div className="flex items-center gap-2 border-t border-gray-200 p-3 dark:border-gray-700">
+        <AvatarWithFrame user={currentUser} size="sm" />
+        <input
+          type="text"
+          value={commentInput}
+          onChange={(event) => setCommentInput(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') submitComment();
+          }}
+          placeholder={
+            replyTarget
+              ? `Trả lời ${replyTarget.author.name}...`
+              : 'Viết bình luận...'
+          }
+          aria-label="Nội dung bình luận"
+          className="min-w-0 flex-1 rounded-full bg-gray-100 px-3.5 py-2 text-xs dark:bg-[#3A3B3C]"
+        />
+        <button
+          type="button"
+          onClick={submitComment}
+          disabled={!commentInput.trim()}
+          aria-label="Gửi bình luận"
+          className="p-2 text-blue-600 disabled:text-gray-300"
+        >
+          <Send className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+
+  if (mediaUrls.length)
+    return (
+      <MediaLightbox
+        items={mediaUrls.map((src, index) => ({
+          src,
+          kind: post.type === 'VIDEO' ? 'video' : 'image',
+          alt: `Ảnh bài viết ${index + 1}`,
+        }))}
+        initialIndex={initialIndex}
+        onClose={close}
+        sidebar={sidebar}
+      />
+    );
+
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-0 sm:p-4">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-4">
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Chi tiết bài viết"
-        className={`flex max-h-[96vh] w-full flex-col overflow-hidden border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-[#242526] sm:rounded-2xl md:flex-row ${hasMedia ? 'h-[85vh] max-w-5xl' : 'max-w-xl'}`}
+        className="flex max-h-[90vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-[#242526]"
       >
-        {hasMedia && (
-          <div className="flex min-h-[250px] flex-1 items-center justify-center bg-black">
-            <PostMedia
-              url={post.mediaUrls![0]}
-              isVideo={post.type === 'VIDEO'}
-            />
-          </div>
-        )}
-        <div
-          className={`flex min-h-0 flex-col bg-white dark:bg-[#242526] ${hasMedia ? 'w-full md:w-[420px]' : 'w-full'}`}
-        >
-          <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
-            <div className="flex items-center gap-3">
-              <AvatarWithFrame user={post.author} size="md" />
-              <div>
-                <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">
-                  {post.author.name}
-                </h3>
-                <span className="text-xs text-gray-500">
-                  {formatPostTime(post.createdAt)}
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {post.author.id === currentUser.id && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => openPostComposer(post.id)}
-                    className="text-xs font-semibold text-blue-600 hover:underline"
-                  >
-                    Sửa
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (window.confirm('Xóa bài viết này?'))
-                        deletePost(post.id);
-                    }}
-                    className="text-xs font-semibold text-red-600 hover:underline"
-                  >
-                    Xóa
-                  </button>
-                </>
-              )}
-              <button
-                type="button"
-                onClick={() => setActivePostDetail(null)}
-                aria-label="Đóng chi tiết"
-                className="rounded-full p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-          <div className="flex-1 space-y-4 overflow-y-auto p-4">
-            <PostContent content={post.content} />
-            <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-xs dark:border-gray-700">
-              <button
-                type="button"
-                onClick={() => toggleLikePost(post.id)}
-                className={`flex items-center gap-1.5 font-semibold ${post.isLiked ? 'text-blue-600' : 'text-gray-600'}`}
-              >
-                <ThumbsUp className="h-4 w-4" />
-                {post.likesCount} Thích
-              </button>
-              <span className="text-gray-500">
-                {post.commentsCount} bình luận
-              </span>
-            </div>
-            <CommentList
-              comments={post.comments ?? []}
-              onReply={(comment) => setReplyTarget(comment)}
-            />
-          </div>
-          {replyTarget && (
-            <div className="flex items-center justify-between px-4 pb-1 text-xs text-blue-600">
-              <span>Đang trả lời {replyTarget.author.name}</span>
-              <button
-                type="button"
-                onClick={() => setReplyTarget(null)}
-                className="hover:underline"
-              >
-                Hủy
-              </button>
-            </div>
-          )}
-          <div className="flex items-center gap-2 border-t border-gray-200 p-3 dark:border-gray-700">
-            <AvatarWithFrame user={currentUser} size="sm" />
-            <input
-              type="text"
-              value={commentInput}
-              onChange={(event) => setCommentInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') submitComment();
-              }}
-              placeholder={
-                replyTarget
-                  ? `Trả lời ${replyTarget.author.name}...`
-                  : 'Viết bình luận...'
-              }
-              aria-label="Nội dung bình luận"
-              className="flex-1 rounded-full bg-gray-100 px-3.5 py-2 text-xs dark:bg-[#3A3B3C]"
-            />
-            <button
-              type="button"
-              onClick={submitComment}
-              disabled={!commentInput.trim()}
-              aria-label="Gửi bình luận"
-              className="p-2 text-blue-600 disabled:text-gray-300"
-            >
-              <Send className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
+        {sidebar}
       </div>
     </div>
   );

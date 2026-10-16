@@ -8,7 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "format:check": "prettier --check src/app src/api/*.ts src/features/auth/components/AuthPage.tsx src/features/auth/useAuthSession.ts src/features/auth/mapAuthUser.ts src/features/feed/postUtils.ts src/features/feed/components/CommentList.tsx src/features/feed/components/CreatePostModal.tsx src/features/feed/components/PostContent.tsx src/features/feed/components/PostDetailModal.tsx src/features/feed/components/PostMedia.tsx scripts/*.mjs tests/*.ts",
+    "format:check": "prettier --check src/app src/api/*.ts src/features/auth/components/AuthPage.tsx src/features/auth/useAuthSession.ts src/features/auth/mapAuthUser.ts src/features/feed/mediaUtils.ts src/features/feed/postUtils.ts src/features/feed/components/CommentList.tsx src/features/feed/components/CreatePostModal.tsx src/features/feed/components/PostContent.tsx src/features/feed/components/PostDetailModal.tsx src/features/feed/components/PostMedia.tsx src/features/feed/components/PostMediaGallery.tsx src/shared/components/MediaLightbox.tsx scripts/*.mjs tests/*.ts",
     "generate:api": "openapi-typescript openapi/openapi.json -o src/api/generated/openapi.ts && node scripts/check-api-coverage.mjs",
     "check:api": "node scripts/check-api-coverage.mjs",
     "update:api": "node scripts/update-openapi.mjs && npm run generate:api",

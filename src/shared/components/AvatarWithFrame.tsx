@@ -17,7 +17,7 @@ export const AvatarWithFrame: React.FC<AvatarWithFrameProps> = ({
   showOnline = true,
   showLecturerBadge = true,
   onClick,
-  className = ''
+  className = '',
 }) => {
   const sizeMap = {
     xs: 'w-6 h-6',
@@ -25,7 +25,7 @@ export const AvatarWithFrame: React.FC<AvatarWithFrameProps> = ({
     md: 'w-10 h-10',
     lg: 'w-12 h-12',
     xl: 'w-16 h-16',
-    '2xl': 'w-24 h-24'
+    '2xl': 'w-24 h-24',
   };
 
   const getFrameRingClass = () => {
@@ -53,14 +53,18 @@ export const AvatarWithFrame: React.FC<AvatarWithFrameProps> = ({
       <img
         src={user.avatar}
         alt={user.name}
-        className={`rounded-full object-cover ${sizeMap[size]} ${getFrameRingClass()}`}
+        className={`rounded-full object-cover object-center ${sizeMap[size]} ${getFrameRingClass()}`}
       />
 
       {/* Online indicator dot */}
       {showOnline && user.isOnline && (
         <span
           className={`absolute bottom-0 right-0 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#242526] ${
-            size === 'xs' || size === 'sm' ? 'w-2 h-2' : size === 'md' ? 'w-2.5 h-2.5' : 'w-3.5 h-3.5'
+            size === 'xs' || size === 'sm'
+              ? 'w-2 h-2'
+              : size === 'md'
+                ? 'w-2.5 h-2.5'
+                : 'w-3.5 h-3.5'
           }`}
           title="Đang hoạt động"
         />
@@ -72,7 +76,11 @@ export const AvatarWithFrame: React.FC<AvatarWithFrameProps> = ({
           className="absolute -bottom-0.5 -right-0.5 bg-blue-600 text-white rounded-full p-0.5 shadow-sm"
           title="Giảng viên đã xác thực"
         >
-          <BadgeCheck className={size === 'xs' || size === 'sm' ? 'w-2.5 h-2.5' : 'w-3.5 h-3.5'} />
+          <BadgeCheck
+            className={
+              size === 'xs' || size === 'sm' ? 'w-2.5 h-2.5' : 'w-3.5 h-3.5'
+            }
+          />
         </span>
       )}
     </div>

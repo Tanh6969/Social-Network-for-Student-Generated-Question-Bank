@@ -3,7 +3,7 @@ import { useApp } from '../../demo/context/AppContext';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
 import { CommentList } from './CommentList';
 import { PostContent } from './PostContent';
-import { PostMedia } from './PostMedia';
+import { PostMediaGallery } from './PostMediaGallery';
 import { formatPostTime, sortFeedPosts } from '../postUtils';
 import {
   Users,
@@ -30,7 +30,7 @@ import {
   RefreshCw,
   SlidersHorizontal,
   ShieldCheck,
-  Compass
+  Compass,
 } from 'lucide-react';
 import type { CommentItem } from '../../demo/types';
 
@@ -47,17 +47,22 @@ export const FeedView: React.FC = () => {
     setActiveTab,
     setIsProposeSessionModalOpen,
     setActivePostDetail,
+    openPostMedia,
     minigames,
     leaderboard,
     openChatDock,
     setViewingUserId,
     showToast,
-    openReportModal
+    openReportModal,
   } = useApp();
 
   const [hasNewPostsBanner, setHasNewPostsBanner] = useState(true);
-  const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
-  const [replyTargets, setReplyTargets] = useState<Record<string, CommentItem | null>>({});
+  const [commentInputs, setCommentInputs] = useState<Record<string, string>>(
+    {},
+  );
+  const [replyTargets, setReplyTargets] = useState<
+    Record<string, CommentItem | null>
+  >({});
   const [activeMenuPostId, setActiveMenuPostId] = useState<string | null>(null);
   const friendIds = new Set(
     Object.entries(friendStatuses)
@@ -220,7 +225,8 @@ export const FeedView: React.FC = () => {
               onClick={() => openPostComposer()}
               className="flex-1 bg-[#F0F2F5] dark:bg-[#3A3B3C] hover:bg-[#E4E6EB] dark:hover:bg-[#4E4F50] text-gray-500 dark:text-gray-300 text-sm font-medium py-2.5 px-4 rounded-full text-left transition"
             >
-              {currentUser.name.split(' ').slice(-1)[0]} ơi, bạn đang nghiên cứu gì thế?
+              {currentUser.name.split(' ').slice(-1)[0]} ơi, bạn đang nghiên cứu
+              gì thế?
             </button>
           </div>
 
@@ -261,7 +267,9 @@ export const FeedView: React.FC = () => {
             className="bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100/70 border border-blue-200 dark:border-blue-800 rounded-xl p-3 text-center text-xs font-semibold text-blue-700 dark:text-blue-300 cursor-pointer shadow-xs transition flex items-center justify-center gap-2"
           >
             <RefreshCw className="w-4 h-4 animate-spin text-blue-600" />
-            <span>Có 2 bài viết và câu hỏi thi mới được cập nhật – Nhấn để làm mới</span>
+            <span>
+              Có 2 bài viết và câu hỏi thi mới được cập nhật – Nhấn để làm mới
+            </span>
           </div>
         )}
 
@@ -308,7 +316,9 @@ export const FeedView: React.FC = () => {
                 <div className="relative">
                   <button
                     onClick={() =>
-                      setActiveMenuPostId(activeMenuPostId === post.id ? null : post.id)
+                      setActiveMenuPostId(
+                        activeMenuPostId === post.id ? null : post.id,
+                      )
                     }
                     className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] text-gray-500"
                   >
@@ -330,7 +340,8 @@ export const FeedView: React.FC = () => {
                           </button>
                           <button
                             onClick={() => {
-                              if (window.confirm('Xóa bài viết này?')) deletePost(post.id);
+                              if (window.confirm('Xóa bài viết này?'))
+                                deletePost(post.id);
                               setActiveMenuPostId(null);
                             }}
                             className="w-full px-3 py-2 text-left text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
@@ -341,7 +352,11 @@ export const FeedView: React.FC = () => {
                       ) : (
                         <button
                           onClick={() => {
-                            openReportModal('BÀI VIẾT', post.id, post.content.slice(0, 40));
+                            openReportModal(
+                              'BÀI VIẾT',
+                              post.id,
+                              post.content.slice(0, 40),
+                            );
                             setActiveMenuPostId(null);
                           }}
                           className="w-full px-3 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C]"
@@ -355,20 +370,19 @@ export const FeedView: React.FC = () => {
               </div>
 
               {/* Content text */}
-              <div className="px-4 pb-3">
-                <PostContent key={post.id} content={post.content} compact />
-              </div>
+              {post.content.trim() && (
+                <div className="px-4 pb-3">
+                  <PostContent key={post.id} content={post.content} compact />
+                </div>
+              )}
 
               {/* Media images grid */}
               {post.mediaUrls && post.mediaUrls.length > 0 && (
-                <div
-                  className={post.type === 'VIDEO' ? '' : 'cursor-pointer'}
-                  onClick={() => {
-                    if (post.type !== 'VIDEO') setActivePostDetail(post);
-                  }}
-                >
-                  <PostMedia url={post.mediaUrls[0]} isVideo={post.type === 'VIDEO'} />
-                </div>
+                <PostMediaGallery
+                  urls={post.mediaUrls}
+                  isVideo={post.type === 'VIDEO'}
+                  onOpen={(index) => openPostMedia(post, index)}
+                />
               )}
 
               {/* Stats Bar */}
@@ -395,7 +409,9 @@ export const FeedView: React.FC = () => {
                 <button
                   onClick={() => toggleLikePost(post.id)}
                   className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition ${
-                    post.isLiked ? 'text-blue-600 dark:text-blue-400 font-bold' : ''
+                    post.isLiked
+                      ? 'text-blue-600 dark:text-blue-400 font-bold'
+                      : ''
                   }`}
                 >
                   <ThumbsUp
@@ -413,7 +429,12 @@ export const FeedView: React.FC = () => {
                 </button>
 
                 <button
-                  onClick={() => showToast('Đã sao chép liên kết chia sẻ bài viết!', 'success')}
+                  onClick={() =>
+                    showToast(
+                      'Đã sao chép liên kết chia sẻ bài viết!',
+                      'success',
+                    )
+                  }
                   className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition"
                 >
                   <Share2 className="w-4 h-4" />
@@ -430,10 +451,17 @@ export const FeedView: React.FC = () => {
                 />
                 {replyTargets[post.id] && (
                   <div className="flex items-center justify-between text-xs text-blue-600">
-                    <span>Đang trả lời {replyTargets[post.id]?.author.name}</span>
+                    <span>
+                      Đang trả lời {replyTargets[post.id]?.author.name}
+                    </span>
                     <button
                       type="button"
-                      onClick={() => setReplyTargets((previous) => ({ ...previous, [post.id]: null }))}
+                      onClick={() =>
+                        setReplyTargets((previous) => ({
+                          ...previous,
+                          [post.id]: null,
+                        }))
+                      }
                       className="hover:underline"
                     >
                       Hủy
@@ -451,7 +479,10 @@ export const FeedView: React.FC = () => {
                       placeholder="Viết câu trả lời hoặc thảo luận..."
                       value={commentInputs[post.id] || ''}
                       onChange={(e) =>
-                        setCommentInputs((prev) => ({ ...prev, [post.id]: e.target.value }))
+                        setCommentInputs((prev) => ({
+                          ...prev,
+                          [post.id]: e.target.value,
+                        }))
                       }
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') handleCommentSubmit(post.id);
@@ -492,14 +523,17 @@ export const FeedView: React.FC = () => {
               {minigames[0].title}
             </h4>
             <p className="text-[11px] text-gray-500 mb-3">
-              Thưởng ngay +{minigames[0].rewardPoints} điểm cống hiến cho dự đoán chính xác nhất!
+              Thưởng ngay +{minigames[0].rewardPoints} điểm cống hiến cho dự
+              đoán chính xác nhất!
             </p>
 
             <button
               onClick={() => setActiveTab('game')}
               className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs rounded-lg shadow-xs transition"
             >
-              {minigames[0].hasUserGuessed ? 'Xem dự đoán của bạn' : 'Tham gia dự đoán ngay'}
+              {minigames[0].hasUserGuessed
+                ? 'Xem dự đoán của bạn'
+                : 'Tham gia dự đoán ngay'}
             </button>
           </div>
         )}
@@ -531,7 +565,9 @@ export const FeedView: React.FC = () => {
               <p className="text-[11px] text-gray-500">14 bạn chung</p>
               <div className="flex items-center gap-2 mt-1.5">
                 <button
-                  onClick={() => showToast('Đã chấp nhận lời mời kết bạn!', 'success')}
+                  onClick={() =>
+                    showToast('Đã chấp nhận lời mời kết bạn!', 'success')
+                  }
                   className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-medium"
                 >
                   Xác nhận
@@ -578,8 +614,8 @@ export const FeedView: React.FC = () => {
                       lead.rank === 1
                         ? 'bg-blue-600 text-white'
                         : lead.rank === 2
-                        ? 'bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200'
-                        : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                          ? 'bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200'
+                          : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                     }`}
                   >
                     {lead.rank}
@@ -607,24 +643,27 @@ export const FeedView: React.FC = () => {
               {
                 id: 'user_sv_02',
                 name: 'Lê Thị Thuỳ Dung',
-                avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80',
+                avatar:
+                  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80',
                 role: 'STUDENT' as const,
-                isOnline: true
+                isOnline: true,
               },
               {
                 id: 'user_sv_03',
                 name: 'Phạm Quang Huy',
-                avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80',
+                avatar:
+                  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80',
                 role: 'STUDENT' as const,
-                isOnline: true
+                isOnline: true,
               },
               {
                 id: 'user_gv_01',
                 name: 'TS. Trần Minh Đức',
-                avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
+                avatar:
+                  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
                 role: 'LECTURER' as const,
-                isOnline: true
-              }
+                isOnline: true,
+              },
             ].map((contact) => (
               <div
                 key={contact.id}

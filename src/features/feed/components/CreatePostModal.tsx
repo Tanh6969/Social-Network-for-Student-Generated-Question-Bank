@@ -1,8 +1,9 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ImagePlus, X } from 'lucide-react';
 import { useApp } from '../../demo/context/AppContext';
 import type { Post } from '../../demo/types';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
+import { MediaLightbox } from '../../../shared/components/MediaLightbox';
 import {
   countWords,
   getPostContentIssue,
@@ -10,7 +11,14 @@ import {
   MAX_POST_WORDS,
   type PostContentIssue,
 } from '../postUtils';
-import { PostMedia } from './PostMedia';
+import {
+  getMediaKind,
+  MAX_POST_IMAGES,
+  readMediaFile,
+  revokeMediaUrl,
+  validateMediaFile,
+} from '../mediaUtils';
+import { PostMediaGallery } from './PostMediaGallery';
 
 export function CreatePostModal() {
   const { isCreatePostModalOpen, editingPostId, posts } = useApp();
@@ -25,6 +33,8 @@ function PostComposer({ editingPost }: { editingPost?: Post }) {
   const { currentUser, createPost, updatePost, closePostComposer, showToast } =
     useApp();
   const fileInput = useRef<HTMLInputElement>(null);
+  const newMediaUrls = useRef(new Set<string>());
+  const composerClosed = useRef(false);
   const [content, setContent] = useState(editingPost?.content ?? '');
   const [limitIssue, setLimitIssue] = useState<PostContentIssue | null>(null);
   const [privacy, setPrivacy] = useState<Post['privacy']>(
@@ -33,10 +43,13 @@ function PostComposer({ editingPost }: { editingPost?: Post }) {
   const [subjectTag, setSubjectTag] = useState(
     editingPost?.subjectTag ?? 'Mạng máy tính',
   );
-  const [mediaUrl, setMediaUrl] = useState(editingPost?.mediaUrls?.[0] ?? '');
+  const [mediaUrls, setMediaUrls] = useState(editingPost?.mediaUrls ?? []);
   const [mediaType, setMediaType] = useState<'image' | 'video'>(
     editingPost?.type === 'VIDEO' ? 'video' : 'image',
   );
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [isReadingFiles, setIsReadingFiles] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const wordCount = countWords(content);
   const contentIssue = getPostContentIssue(content);
   const wordsRemaining = MAX_POST_WORDS - wordCount;
@@ -47,36 +60,90 @@ function PostComposer({ editingPost }: { editingPost?: Post }) {
   const ringCircumference = 2 * Math.PI * 15;
   const ringProgress = Math.min(wordCount / MAX_POST_WORDS, 1);
 
+  useEffect(() => {
+    const ownedUrls = newMediaUrls.current;
+    composerClosed.current = false;
+    return () => {
+      composerClosed.current = true;
+      ownedUrls.forEach(revokeMediaUrl);
+      ownedUrls.clear();
+    };
+  }, []);
+
   const handleContentChange = (value: string) => {
     const limited = limitPostContent(value);
     setContent(limited.content);
     setLimitIssue(limited.issue);
   };
 
-  const handleFile = (file?: File) => {
-    if (!file) return;
-    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-      showToast('Chỉ hỗ trợ ảnh và video.', 'warning');
+  const handleFiles = async (files?: FileList | null) => {
+    if (!files?.length) return;
+    setFileError(null);
+    const selectedFiles = Array.from(files);
+    const invalid = selectedFiles.map(validateMediaFile).find(Boolean);
+    if (invalid) {
+      setFileError(invalid);
+      showToast(invalid, 'warning');
+    }
+    const selected = selectedFiles.filter((file) => !validateMediaFile(file));
+    if (!selected.length) return;
+    const selectedKind = getMediaKind(selected[0].type);
+    if (
+      selected.some((file) => getMediaKind(file.type) !== selectedKind) ||
+      (mediaUrls.length > 0 && selectedKind !== mediaType)
+    ) {
+      setFileError('Chọn ảnh hoặc video riêng cho mỗi bài viết.');
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      showToast('Media demo tối đa 10 MB.', 'warning');
+    if (
+      selectedKind === 'video' &&
+      (selected.length > 1 || mediaUrls.length > 0)
+    ) {
+      setFileError('Mỗi bài viết chỉ chứa một video.');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        setMediaUrl(reader.result);
-        setMediaType(file.type.startsWith('video/') ? 'video' : 'image');
+    if (
+      selectedKind === 'image' &&
+      mediaUrls.length + selected.length > MAX_POST_IMAGES
+    ) {
+      setFileError(`Mỗi bài viết tối đa ${MAX_POST_IMAGES} ảnh.`);
+      return;
+    }
+    setIsReadingFiles(true);
+    try {
+      const results = await Promise.allSettled(selected.map(readMediaFile));
+      const nextUrls = results
+        .filter(
+          (result): result is PromiseFulfilledResult<string> =>
+            result.status === 'fulfilled',
+        )
+        .map((result) => result.value);
+      if (composerClosed.current) {
+        nextUrls.forEach(revokeMediaUrl);
+        return;
       }
-    };
-    reader.onerror = () => showToast('Không đọc được tệp media.', 'error');
-    reader.readAsDataURL(file);
+      nextUrls.forEach((url) => newMediaUrls.current.add(url));
+      if (nextUrls.length) {
+        setMediaUrls((current) => [...current, ...nextUrls]);
+        setMediaType(selectedKind ?? 'image');
+      }
+      if (results.some((result) => result.status === 'rejected'))
+        setFileError('Không đọc được một số tệp đã chọn.');
+    } catch {
+      setFileError('Không đọc được tệp đã chọn. Hãy thử lại.');
+    } finally {
+      setIsReadingFiles(false);
+    }
   };
 
   const handleSave = () => {
-    if (!content.trim() || contentIssue) return;
-    const mediaUrls = mediaUrl ? [mediaUrl] : [];
+    if (
+      (!content.trim() && !mediaUrls.length) ||
+      contentIssue ||
+      isReadingFiles
+    )
+      return;
+    newMediaUrls.current.clear();
     if (editingPost) {
       updatePost(editingPost.id, {
         content: content.trim(),
@@ -85,7 +152,7 @@ function PostComposer({ editingPost }: { editingPost?: Post }) {
         type:
           editingPost.type === 'QUESTION_APPROVED'
             ? editingPost.type
-            : mediaType === 'video' && mediaUrl
+            : mediaType === 'video' && mediaUrls.length
               ? 'VIDEO'
               : 'KNOWLEDGE',
       });
@@ -95,7 +162,7 @@ function PostComposer({ editingPost }: { editingPost?: Post }) {
         privacy,
         subjectTag,
         mediaUrls,
-        type: mediaType === 'video' && mediaUrl ? 'VIDEO' : 'KNOWLEDGE',
+        type: mediaType === 'video' && mediaUrls.length ? 'VIDEO' : 'KNOWLEDGE',
       });
     }
     closePostComposer();
@@ -188,26 +255,28 @@ function PostComposer({ editingPost }: { editingPost?: Post }) {
                   : 'Bài viết quá dài. Phần vượt giới hạn đã được cắt.'}
             </p>
           )}
-          {mediaUrl && (
-            <div className="relative">
-              <PostMedia url={mediaUrl} isVideo={mediaType === 'video'} />
-              <button
-                type="button"
-                onClick={() => setMediaUrl('')}
-                aria-label="Gỡ media"
-                className="absolute right-2 top-2 rounded-full bg-black/70 p-1 text-white"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          )}
+          <PostMediaGallery
+            urls={mediaUrls}
+            isVideo={mediaType === 'video'}
+            onOpen={setPreviewIndex}
+            onRemove={(index) => {
+              const removed = mediaUrls[index];
+              if (removed && newMediaUrls.current.delete(removed))
+                revokeMediaUrl(removed);
+              setMediaUrls((current) =>
+                current.filter((_, itemIndex) => itemIndex !== index),
+              );
+              setFileError(null);
+            }}
+          />
           <input
             ref={fileInput}
             type="file"
             accept="image/*,video/*"
+            multiple
             className="hidden"
             onChange={(event) => {
-              handleFile(event.target.files?.[0]);
+              void handleFiles(event.target.files);
               event.target.value = '';
             }}
           />
@@ -217,8 +286,16 @@ function PostComposer({ editingPost }: { editingPost?: Post }) {
             className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-[#3A3B3C]"
           >
             <ImagePlus className="h-4 w-4 text-emerald-600" />
-            {mediaUrl ? 'Thay ảnh/video' : 'Thêm ảnh/video'}
+            Thêm ảnh/video
           </button>
+          {fileError && (
+            <p
+              role="alert"
+              className="text-xs font-medium text-red-600 dark:text-red-400"
+            >
+              {fileError}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-4 border-t border-gray-100 p-4 dark:border-gray-700">
           <div
@@ -276,13 +353,28 @@ function PostComposer({ editingPost }: { editingPost?: Post }) {
           <button
             type="button"
             onClick={handleSave}
-            disabled={!content.trim() || Boolean(contentIssue)}
+            disabled={
+              (!content.trim() && !mediaUrls.length) ||
+              Boolean(contentIssue) ||
+              isReadingFiles
+            }
             className="flex-1 rounded-xl bg-blue-600 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 dark:disabled:bg-gray-700"
           >
             {editingPost ? 'Lưu thay đổi' : 'Đăng bài viết'}
           </button>
         </div>
       </div>
+      {previewIndex !== null && mediaUrls.length > 0 && (
+        <MediaLightbox
+          items={mediaUrls.map((src, index) => ({
+            src,
+            kind: mediaType,
+            alt: `Ảnh đã chọn ${index + 1}`,
+          }))}
+          initialIndex={previewIndex}
+          onClose={() => setPreviewIndex(null)}
+        />
+      )}
     </div>
   );
 }
