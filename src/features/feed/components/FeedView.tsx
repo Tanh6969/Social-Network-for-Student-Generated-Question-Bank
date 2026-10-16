@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { useApp } from '../../demo/context/AppContext';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
+import { CommentList } from './CommentList';
+import { PostContent } from './PostContent';
+import { PostMedia } from './PostMedia';
+import { formatPostTime, sortFeedPosts } from '../postUtils';
 import {
   Users,
   BookOpen,
@@ -28,23 +32,21 @@ import {
   ShieldCheck,
   Compass
 } from 'lucide-react';
-import { Post, Question } from '../../demo/types';
+import type { CommentItem } from '../../demo/types';
 
 export const FeedView: React.FC = () => {
   const {
     currentUser,
     role,
     posts,
-    createPost,
     toggleLikePost,
     addComment,
     deletePost,
+    friendStatuses,
+    openPostComposer,
     setActiveTab,
-    setIsCreatePostModalOpen,
     setIsProposeSessionModalOpen,
-    setActiveQuizQuestion,
     setActivePostDetail,
-    questions,
     minigames,
     leaderboard,
     openChatDock,
@@ -55,19 +57,33 @@ export const FeedView: React.FC = () => {
 
   const [hasNewPostsBanner, setHasNewPostsBanner] = useState(true);
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
+  const [replyTargets, setReplyTargets] = useState<Record<string, CommentItem | null>>({});
   const [activeMenuPostId, setActiveMenuPostId] = useState<string | null>(null);
+  const friendIds = new Set(
+    Object.entries(friendStatuses)
+      .filter(([, status]) => status === 'FRIEND')
+      .map(([id]) => id),
+  );
+  const visiblePosts = posts.filter(
+    (post) =>
+      post.author.id === currentUser.id ||
+      post.privacy === 'PUBLIC' ||
+      (post.privacy === 'FRIENDS' && friendIds.has(post.author.id)),
+  );
+  const orderedPosts = sortFeedPosts(visiblePosts, currentUser.id, friendIds);
 
   const handleCommentSubmit = (postId: string) => {
     const text = commentInputs[postId] || '';
     if (text.trim()) {
-      addComment(postId, text);
+      addComment(postId, text, replyTargets[postId]?.id);
       setCommentInputs((prev) => ({ ...prev, [postId]: '' }));
+      setReplyTargets((prev) => ({ ...prev, [postId]: null }));
     }
   };
 
-  const getLinkedQuestion = (questionId?: string): Question | undefined => {
-    if (!questionId) return undefined;
-    return questions.find((q) => q.id === questionId);
+  const handleReply = (postId: string, comment: CommentItem) => {
+    setReplyTargets((previous) => ({ ...previous, [postId]: comment }));
+    document.getElementById(`comment-input-${postId}`)?.focus();
   };
 
   return (
@@ -201,7 +217,7 @@ export const FeedView: React.FC = () => {
           <div className="flex items-center gap-3 pb-3 border-b border-gray-100 dark:border-gray-700">
             <AvatarWithFrame user={currentUser} size="md" />
             <button
-              onClick={() => setIsCreatePostModalOpen(true)}
+              onClick={() => openPostComposer()}
               className="flex-1 bg-[#F0F2F5] dark:bg-[#3A3B3C] hover:bg-[#E4E6EB] dark:hover:bg-[#4E4F50] text-gray-500 dark:text-gray-300 text-sm font-medium py-2.5 px-4 rounded-full text-left transition"
             >
               {currentUser.name.split(' ').slice(-1)[0]} ơi, bạn đang nghiên cứu gì thế?
@@ -210,7 +226,7 @@ export const FeedView: React.FC = () => {
 
           <div className="flex items-center justify-between pt-3 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300">
             <button
-              onClick={() => setIsCreatePostModalOpen(true)}
+              onClick={() => openPostComposer()}
               className="flex items-center justify-center gap-2 flex-1 py-2 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-lg transition"
             >
               <Image className="w-4.5 h-4.5 text-gray-500 dark:text-gray-400" />
@@ -218,7 +234,7 @@ export const FeedView: React.FC = () => {
             </button>
 
             <button
-              onClick={() => setIsCreatePostModalOpen(true)}
+              onClick={() => openPostComposer()}
               className="flex items-center justify-center gap-2 flex-1 py-2 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-lg transition"
             >
               <Video className="w-4.5 h-4.5 text-gray-500 dark:text-gray-400" />
@@ -250,9 +266,7 @@ export const FeedView: React.FC = () => {
         )}
 
         {/* Feed Posts */}
-        {posts.map((post) => {
-          const linkedQuestion = getLinkedQuestion(post.linkedQuestionId);
-
+        {orderedPosts.map((post) => {
           return (
             <article
               key={post.id}
@@ -282,7 +296,7 @@ export const FeedView: React.FC = () => {
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                      <span>{post.createdAt}</span>
+                      <span>{formatPostTime(post.createdAt)}</span>
                       <span>·</span>
                       <span className="bg-gray-100 dark:bg-[#3A3B3C] px-1.5 py-0.2 rounded text-[10px]">
                         {post.subjectTag || 'Chia sẻ kiến thức'}
@@ -304,15 +318,26 @@ export const FeedView: React.FC = () => {
                   {activeMenuPostId === post.id && (
                     <div className="absolute right-0 top-8 bg-white dark:bg-[#242526] shadow-xl border border-gray-200 dark:border-gray-700 rounded-xl py-1 w-44 z-30 text-xs">
                       {post.author.id === currentUser.id ? (
-                        <button
-                          onClick={() => {
-                            deletePost(post.id);
-                            setActiveMenuPostId(null);
-                          }}
-                          className="w-full px-3 py-2 text-left text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center gap-2"
-                        >
-                          Xóa bài viết
-                        </button>
+                        <>
+                          <button
+                            onClick={() => {
+                              openPostComposer(post.id);
+                              setActiveMenuPostId(null);
+                            }}
+                            className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-[#3A3B3C]"
+                          >
+                            Sửa bài viết
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (window.confirm('Xóa bài viết này?')) deletePost(post.id);
+                              setActiveMenuPostId(null);
+                            }}
+                            className="w-full px-3 py-2 text-left text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                          >
+                            Xóa bài viết
+                          </button>
+                        </>
                       ) : (
                         <button
                           onClick={() => {
@@ -331,73 +356,18 @@ export const FeedView: React.FC = () => {
 
               {/* Content text */}
               <div className="px-4 pb-3">
-                <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line leading-relaxed">
-                  {post.content}
-                </p>
+                <PostContent key={post.id} content={post.content} compact />
               </div>
-
-              {/* Ghi chú của Giảng viên (SOC.06) */}
-              {post.lecturerNote && (
-                <div className="mx-4 mb-3 p-3 bg-amber-50 dark:bg-amber-950/30 border-l-4 border-amber-500 rounded-r-xl">
-                  <div className="flex items-center gap-2 mb-1">
-                    <img
-                      src={post.lecturerNote.avatar}
-                      alt="GV"
-                      className="w-5 h-5 rounded-full object-cover"
-                    />
-                    <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
-                      Ghi chú từ {post.lecturerNote.lecturerName}
-                    </span>
-                    <span className="text-[10px] text-amber-700 dark:text-amber-400">
-                      {post.lecturerNote.createdAt}
-                    </span>
-                  </div>
-                  <p className="text-xs text-amber-800 dark:text-amber-300 italic">
-                    "{post.lecturerNote.note}"
-                  </p>
-                </div>
-              )}
-
-              {/* Linked Question Card with "Làm thử" (BANK.07) */}
-              {linkedQuestion && (
-                <div className="mx-4 mb-3 p-3.5 bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 rounded-xl">
-                  <div className="flex items-center justify-between text-xs font-semibold text-blue-800 dark:text-blue-300 mb-2">
-                    <span className="flex items-center gap-1.5">
-                      <BookOpen className="w-4 h-4 text-blue-600" />
-                      Câu hỏi kiểm định: {linkedQuestion.subject}
-                    </span>
-                    <span className="bg-blue-200 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-0.5 rounded text-[10px]">
-                      Độ khó: {linkedQuestion.difficulty === 'EASY' ? 'Dễ' : linkedQuestion.difficulty === 'MEDIUM' ? 'Trung bình' : 'Khó'}
-                    </span>
-                  </div>
-
-                  <p className="text-xs font-medium text-gray-900 dark:text-gray-100 line-clamp-2 mb-3">
-                    {linkedQuestion.content}
-                  </p>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] text-gray-500">
-                      {linkedQuestion.totalAttempts} lượt làm thử · {linkedQuestion.ratingAverage} ★ ({linkedQuestion.ratingCount})
-                    </span>
-                    <button
-                      onClick={() => setActiveQuizQuestion(linkedQuestion)}
-                      className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-xs transition"
-                    >
-                      Làm thử câu này
-                    </button>
-                  </div>
-                </div>
-              )}
 
               {/* Media images grid */}
               {post.mediaUrls && post.mediaUrls.length > 0 && (
-                <div className="bg-gray-100 dark:bg-black max-h-96 overflow-hidden">
-                  <img
-                    src={post.mediaUrls[0]}
-                    alt="Media"
-                    className="w-full object-cover max-h-96 cursor-pointer hover:opacity-95 transition"
-                    onClick={() => setActivePostDetail(post)}
-                  />
+                <div
+                  className={post.type === 'VIDEO' ? '' : 'cursor-pointer'}
+                  onClick={() => {
+                    if (post.type !== 'VIDEO') setActivePostDetail(post);
+                  }}
+                >
+                  <PostMedia url={post.mediaUrls[0]} isVideo={post.type === 'VIDEO'} />
                 </div>
               )}
 
@@ -453,30 +423,30 @@ export const FeedView: React.FC = () => {
 
               {/* Inline Comments Section */}
               <div className="p-4 bg-gray-50/50 dark:bg-[#1E1F20] border-t border-gray-100 dark:border-gray-700 space-y-3">
-                {post.comments && post.comments.slice(0, 2).map((comment) => (
-                  <div key={comment.id} className="flex items-start gap-2 text-xs">
-                    <AvatarWithFrame user={comment.author} size="sm" />
-                    <div className="flex-1">
-                      <div className="bg-white dark:bg-[#242526] p-2.5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xs">
-                        <span className="font-bold text-gray-900 dark:text-gray-100 block">
-                          {comment.author.name}
-                        </span>
-                        <span className="text-gray-700 dark:text-gray-300">{comment.content}</span>
-                      </div>
-                      <div className="flex items-center gap-3 px-2 mt-1 text-[11px] text-gray-500 font-medium">
-                        <span>{comment.createdAt}</span>
-                        <span className="hover:underline cursor-pointer">Thích</span>
-                        <span className="hover:underline cursor-pointer">Trả lời</span>
-                      </div>
-                    </div>
+                <CommentList
+                  comments={post.comments ?? []}
+                  limit={2}
+                  onReply={(comment) => handleReply(post.id, comment)}
+                />
+                {replyTargets[post.id] && (
+                  <div className="flex items-center justify-between text-xs text-blue-600">
+                    <span>Đang trả lời {replyTargets[post.id]?.author.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => setReplyTargets((previous) => ({ ...previous, [post.id]: null }))}
+                      className="hover:underline"
+                    >
+                      Hủy
+                    </button>
                   </div>
-                ))}
+                )}
 
                 {/* Comment Input */}
                 <div className="flex items-center gap-2 pt-1">
                   <AvatarWithFrame user={currentUser} size="sm" />
                   <div className="flex-1 relative">
                     <input
+                      id={`comment-input-${post.id}`}
                       type="text"
                       placeholder="Viết câu trả lời hoặc thảo luận..."
                       value={commentInputs[post.id] || ''}

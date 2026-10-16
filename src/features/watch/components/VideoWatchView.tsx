@@ -1,11 +1,20 @@
 import React from 'react';
 import { useApp } from '../../demo/context/AppContext';
 import { Tv, ThumbsUp, MessageCircle, Share2, Play, Bookmark } from 'lucide-react';
+import { PostMedia } from '../../feed/components/PostMedia';
+import { PostContent } from '../../feed/components/PostContent';
+import { formatPostTime } from '../../feed/postUtils';
 
 export const VideoWatchView: React.FC = () => {
-  const { posts, toggleLikePost, showToast } = useApp();
+  const { posts, currentUser, friendStatuses, toggleLikePost, setActivePostDetail, showToast } = useApp();
 
-  const videoPosts = posts.filter((p) => p.type === 'VIDEO' || p.videoUrl);
+  const videoPosts = posts.filter(
+    (post) =>
+      (post.type === 'VIDEO' || post.videoUrl) &&
+      (post.author.id === currentUser.id ||
+        post.privacy === 'PUBLIC' ||
+        (post.privacy === 'FRIENDS' && friendStatuses[post.author.id] === 'FRIEND')),
+  );
 
   return (
     <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 flex flex-col lg:flex-row gap-6 lg:gap-8 xl:gap-12 items-start justify-between">
@@ -51,25 +60,28 @@ export const VideoWatchView: React.FC = () => {
                 <h4 className="font-bold text-xs text-gray-900 dark:text-gray-100">
                   {post.author.name}
                 </h4>
-                <span className="text-[10px] text-gray-400">{post.createdAt}</span>
+                <span className="text-[10px] text-gray-400">{formatPostTime(post.createdAt)}</span>
               </div>
             </div>
 
-            <p className="px-4 pb-3 text-xs text-gray-800 dark:text-gray-200">
-              {post.content}
-            </p>
-
-            {/* Simulated Video Player */}
-            <div className="relative aspect-video bg-black flex items-center justify-center group cursor-pointer">
-              <img
-                src={post.videoUrl || 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1000&q=80'}
-                alt="Thumbnail"
-                className="w-full h-full object-cover opacity-80 group-hover:opacity-90 transition"
-              />
-              <div className="w-16 h-16 rounded-full bg-rose-600/90 text-white flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
-                <Play className="w-8 h-8 fill-white ml-1" />
-              </div>
+            <div className="px-4 pb-3">
+              <PostContent key={post.id} content={post.content} compact />
             </div>
+
+            {post.mediaUrls?.[0] ? (
+              <PostMedia url={post.mediaUrls[0]} isVideo={post.type === 'VIDEO'} />
+            ) : (
+              <div className="relative aspect-video bg-black flex items-center justify-center group">
+                <img
+                  src={post.videoUrl || 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1000&q=80'}
+                  alt="Thumbnail video demo"
+                  className="w-full h-full object-cover opacity-80"
+                />
+                <div className="absolute w-16 h-16 rounded-full bg-rose-600/90 text-white flex items-center justify-center shadow-2xl">
+                  <Play className="w-8 h-8 fill-white ml-1" />
+                </div>
+              </div>
+            )}
 
             {/* Actions */}
             <div className="p-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between text-xs text-gray-600 dark:text-gray-300">
@@ -81,7 +93,8 @@ export const VideoWatchView: React.FC = () => {
                 <span>{post.likesCount} Thích</span>
               </button>
 
-              <button className="flex items-center gap-1.5 hover:text-blue-600 font-semibold">
+              <button onClick={() => setActivePostDetail(post)}
+                className="flex items-center gap-1.5 hover:text-blue-600 font-semibold">
                 <MessageCircle className="w-4 h-4" />
                 <span>{post.commentsCount} Bình luận</span>
               </button>

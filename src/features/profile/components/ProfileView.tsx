@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useApp } from '../../demo/context/AppContext';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
+import { PostContent } from '../../feed/components/PostContent';
+import { PostMedia } from '../../feed/components/PostMedia';
+import { formatPostTime } from '../../feed/postUtils';
 import {
   Camera,
   Edit,
@@ -24,6 +27,10 @@ export const ProfileView: React.FC = () => {
     viewingUserId,
     getUserById,
     posts,
+    friendStatuses,
+    openPostComposer,
+    deletePost,
+    setActivePostDetail,
     questions,
     setActiveQuizQuestion,
     setActiveTab,
@@ -40,7 +47,14 @@ export const ProfileView: React.FC = () => {
   const targetUser: User = viewingUserId ? getUserById(viewingUserId) : currentUser;
   const isMe = targetUser.id === currentUser.id;
 
-  const userPosts = posts.filter((p) => p.author.id === targetUser.id);
+  const userPosts = posts
+    .filter(
+      (post) =>
+        post.author.id === targetUser.id &&
+        (isMe || post.privacy === 'PUBLIC' ||
+          (post.privacy === 'FRIENDS' && friendStatuses[targetUser.id] === 'FRIEND')),
+    )
+    .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
   const userQuestions = questions.filter((q) => q.creatorId === targetUser.id && q.status === 'APPROVED');
 
   const handleSaveBio = () => {
@@ -111,6 +125,12 @@ export const ProfileView: React.FC = () => {
             <div className="flex items-center gap-2 pb-2">
               {isMe ? (
                 <>
+                  <button
+                    onClick={() => openPostComposer()}
+                    className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700"
+                  >
+                    Tạo bài viết
+                  </button>
                   <button
                     onClick={() => setActiveTab('cosmetics')}
                     className="px-4 py-2 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 rounded-xl text-xs font-bold hover:bg-purple-100 transition flex items-center gap-1.5"
@@ -254,19 +274,31 @@ export const ProfileView: React.FC = () => {
                   key={post.id}
                   className="bg-white dark:bg-[#242526] rounded-xl shadow-xs border border-gray-200 dark:border-gray-700 p-4 space-y-3"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
                     <AvatarWithFrame user={post.author} size="md" />
                     <div>
                       <h4 className="font-bold text-xs text-gray-900 dark:text-gray-100">
                         {post.author.name}
                       </h4>
-                      <span className="text-[10px] text-gray-400">{post.createdAt}</span>
+                      <span className="text-[10px] text-gray-400">{formatPostTime(post.createdAt)}</span>
                     </div>
+                    </div>
+                    {isMe && (
+                      <div className="flex gap-3 text-xs font-semibold">
+                        <button onClick={() => openPostComposer(post.id)} className="text-blue-600 hover:underline">Sửa</button>
+                        <button onClick={() => { if (window.confirm('Xóa bài viết này?')) deletePost(post.id); }}
+                          className="text-red-600 hover:underline">Xóa</button>
+                      </div>
+                    )}
                   </div>
 
-                  <p className="text-xs text-gray-800 dark:text-gray-200 leading-relaxed">
-                    {post.content}
-                  </p>
+                  <PostContent key={post.id} content={post.content} compact />
+                  {post.mediaUrls?.[0] && <PostMedia url={post.mediaUrls[0]} isVideo={post.type === 'VIDEO'} />}
+                  <button onClick={() => setActivePostDetail(post)}
+                    className="text-xs font-semibold text-blue-600 hover:underline">
+                    {post.commentsCount} bình luận · Xem chi tiết
+                  </button>
                 </div>
               ))}
             </>

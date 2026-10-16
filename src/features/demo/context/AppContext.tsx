@@ -18,6 +18,8 @@ import {
   AppNotification,
   CommentItem
 } from '../types';
+import type { FriendStatus } from '../types';
+import { appendComment, getPostContentIssue, removeOwnedPost, updateOwnedPost } from '../../feed/postUtils';
 import {
   mockCurrentUserStudent,
   mockCurrentUserLecturer,
@@ -76,10 +78,13 @@ interface AppContextType {
   // Posts & Social
   posts: Post[];
   createPost: (postData: Partial<Post>) => void;
+  updatePost: (postId: string, updates: Pick<Post, 'content' | 'privacy' | 'mediaUrls' | 'type'>) => void;
   toggleLikePost: (postId: string) => void;
   addComment: (postId: string, text: string, parentCommentId?: string) => void;
   deletePost: (postId: string) => void;
   addLecturerNote: (postId: string, note: string) => void;
+  friendStatuses: Record<string, FriendStatus>;
+  setFriendStatuses: React.Dispatch<React.SetStateAction<Record<string, FriendStatus>>>;
 
   // Questions & Bank
   questions: Question[];
@@ -132,6 +137,9 @@ interface AppContextType {
   setActivePostDetail: (p: Post | null) => void;
   isCreatePostModalOpen: boolean;
   setIsCreatePostModalOpen: (open: boolean) => void;
+  editingPostId: string | null;
+  openPostComposer: (postId?: string) => void;
+  closePostComposer: () => void;
   isProposeSessionModalOpen: boolean;
   setIsProposeSessionModalOpen: (open: boolean) => void;
   activeAIRefineQuestion: Question | null;
@@ -190,6 +198,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Data states
   const [posts, setPosts] = useState<Post[]>(mockPosts);
+  const [friendStatuses, setFriendStatuses] = useState<Record<string, FriendStatus>>({
+    user_sv_02: 'REQUEST_RECEIVED',
+    user_sv_03: 'FRIEND',
+    user_sv_04: 'NONE',
+  });
   const [questions, setQuestions] = useState<Question[]>(mockQuestions);
   const [sessions, setSessions] = useState<ProposeSession[]>(mockProposeSessions);
   const [exams, setExams] = useState<Exam[]>(mockExams);
@@ -205,8 +218,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Modals
   const [activeQuizQuestion, setActiveQuizQuestion] = useState<Question | null>(null);
-  const [activePostDetail, setActivePostDetail] = useState<Post | null>(null);
+  const [activePostDetailId, setActivePostDetailId] = useState<string | null>(null);
+  const activePostDetail = posts.find((post) => post.id === activePostDetailId) ?? null;
+  const setActivePostDetail = (post: Post | null) => setActivePostDetailId(post?.id ?? null);
   const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const openPostComposer = (postId?: string) => {
+    setEditingPostId(postId ?? null);
+    setIsCreatePostModalOpen(true);
+  };
+  const closePostComposer = () => {
+    setIsCreatePostModalOpen(false);
+    setEditingPostId(null);
+  };
   const [isProposeSessionModalOpen, setIsProposeSessionModalOpen] = useState(false);
   const [activeAIRefineQuestion, setActiveAIRefineQuestion] = useState<Question | null>(null);
   const [isExamWizardOpen, setIsExamWizardOpen] = useState(false);
@@ -290,8 +314,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Posts
   const createPost = (postData: Partial<Post>) => {
+    if (!postData.content?.trim() || getPostContentIssue(postData.content)) return;
     const newPost: Post = {
-      id: 'post_' + Date.now(),
+      id: crypto.randomUUID(),
       author: currentUser,
       type: postData.type || 'KNOWLEDGE',
       content: postData.content || '',
@@ -304,11 +329,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       commentsCount: 0,
       sharesCount: 0,
       privacy: postData.privacy || 'PUBLIC',
-      createdAt: 'Vừa xong',
+      createdAt: new Date().toISOString(),
       comments: []
     };
-    setPosts([newPost, ...posts]);
+    setPosts((previous) => [newPost, ...previous]);
     showToast('Đã đăng bài viết mới thành công!', 'success');
+  };
+
+  const updatePost = (postId: string, updates: Pick<Post, 'content' | 'privacy' | 'mediaUrls' | 'type'>) => {
+    if (!updates.content.trim() || getPostContentIssue(updates.content)) return;
+    if (!posts.some((post) => post.id === postId && post.author.id === currentUser.id)) return;
+    setPosts((previous) => updateOwnedPost(previous, postId, currentUser.id, updates));
+    showToast('Đã lưu thay đổi bài viết.', 'success');
   };
 
   const toggleLikePost = (postId: string) => {
@@ -328,44 +360,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const addComment = (postId: string, text: string, parentCommentId?: string) => {
+    if (!text.trim()) return;
+    const post = posts.find((item) => item.id === postId);
+    if (!post || (parentCommentId && !post.comments?.some((item) => item.id === parentCommentId))) return;
     const newComment: CommentItem = {
-      id: 'c_' + Date.now(),
+      id: crypto.randomUUID(),
       author: currentUser,
-      content: text,
-      createdAt: 'Vừa xong',
+      content: text.trim(),
+      createdAt: new Date().toISOString(),
       likesCount: 0,
       isLiked: false
     };
 
-    setPosts((prev) =>
-      prev.map((p) => {
-        if (p.id === postId) {
-          const updatedComments = p.comments ? [...p.comments] : [];
-          if (parentCommentId) {
-            // Nest inside parent comment
-            const parent = updatedComments.find((c) => c.id === parentCommentId);
-            if (parent) {
-              parent.replies = [...(parent.replies || []), newComment];
-            } else {
-              updatedComments.push(newComment);
-            }
-          } else {
-            updatedComments.push(newComment);
-          }
-          return {
-            ...p,
-            commentsCount: p.commentsCount + 1,
-            comments: updatedComments
-          };
-        }
-        return p;
-      })
-    );
+    setPosts((previous) => appendComment(previous, postId, newComment, parentCommentId));
     showToast('Đã gửi bình luận!', 'success');
   };
 
   const deletePost = (postId: string) => {
-    setPosts((prev) => prev.filter((p) => p.id !== postId));
+    if (!posts.some((post) => post.id === postId && post.author.id === currentUser.id)) return;
+    setPosts((previous) => removeOwnedPost(previous, postId, currentUser.id));
+    if (activePostDetailId === postId) setActivePostDetailId(null);
     showToast('Đã xóa bài viết thành công!', 'info');
   };
 
@@ -775,10 +789,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         toggleDarkMode,
         posts,
         createPost,
+        updatePost,
         toggleLikePost,
         addComment,
         deletePost,
         addLecturerNote,
+        friendStatuses,
+        setFriendStatuses,
         questions,
         answerQuestion,
         rateQuestion,
@@ -815,6 +832,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setActivePostDetail,
         isCreatePostModalOpen,
         setIsCreatePostModalOpen,
+        editingPostId,
+        openPostComposer,
+        closePostComposer,
         isProposeSessionModalOpen,
         setIsProposeSessionModalOpen,
         activeAIRefineQuestion,

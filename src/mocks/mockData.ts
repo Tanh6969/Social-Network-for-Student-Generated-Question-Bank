@@ -14,9 +14,9 @@ import {
 
 export const mockCurrentUserStudent: User = {
   id: 'user_sv_01',
-  name: 'Tuấn Anh gay',
+  name: 'Nguyễn Văn Nam',
   role: 'STUDENT',
-  email: 'tuananh@truong.edu.vn',
+  email: 'nam.nv@truong.edu.vn',
   avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
   coverImage: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80',
   bio: 'Sinh viên K64 - Viện Công nghệ Thông tin & Truyền thông. Đam mê Hệ phân tán & Ngân hàng đề thi.',
@@ -301,10 +301,10 @@ export const mockPosts: Post[] = [
     linkedQuestionId: 'q_01',
     likesCount: 48,
     isLiked: false,
-    commentsCount: 14,
+    commentsCount: 3,
     sharesCount: 5,
     privacy: 'PUBLIC',
-    createdAt: '2 giờ trước',
+    createdAt: new Date(Date.now() - 2 * 60 * 60_000).toISOString(),
     lecturerNote: {
       lecturerName: 'TS. Trần Minh Đức',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80',
@@ -316,7 +316,7 @@ export const mockPosts: Post[] = [
         id: 'c_01',
         author: mockOtherUsers[0],
         content: 'Tuyệt vời Nam ơi, câu này kỳ trước thi giữa kỳ dính đúng một câu tương tự luôn! 👏',
-        createdAt: '1 giờ trước',
+        createdAt: new Date(Date.now() - 60 * 60_000).toISOString(),
         likesCount: 6,
         isLiked: true,
         replies: [
@@ -324,7 +324,7 @@ export const mockPosts: Post[] = [
             id: 'c_01_rep',
             author: mockCurrentUserStudent,
             content: 'Cảm ơn Dung nhé! Cố gắng tuần này lọt Top 3 Minigame nữa là được mở khung avatar mới!',
-            createdAt: '45 phút trước',
+            createdAt: new Date(Date.now() - 45 * 60_000).toISOString(),
             likesCount: 2,
             isLiked: false
           }
@@ -334,7 +334,7 @@ export const mockPosts: Post[] = [
         id: 'c_02',
         author: mockOtherUsers[1],
         content: 'Đã vào làm thử và đúng luôn, giải thích rất chi tiết nhé bạn!',
-        createdAt: '30 phút trước',
+        createdAt: new Date(Date.now() - 30 * 60_000).toISOString(),
         likesCount: 3,
         isLiked: false
       }
@@ -351,10 +351,10 @@ export const mockPosts: Post[] = [
     ],
     likesCount: 185,
     isLiked: true,
-    commentsCount: 36,
+    commentsCount: 0,
     sharesCount: 42,
     privacy: 'PUBLIC',
-    createdAt: '5 giờ trước',
+    createdAt: new Date(Date.now() - 5 * 60 * 60_000).toISOString(),
     comments: []
   },
   {
@@ -366,10 +366,10 @@ export const mockPosts: Post[] = [
     videoUrl: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1000&q=80',
     likesCount: 92,
     isLiked: false,
-    commentsCount: 19,
+    commentsCount: 0,
     sharesCount: 11,
     privacy: 'PUBLIC',
-    createdAt: 'Hôm qua lúc 18:20',
+    createdAt: new Date(Date.now() - 26 * 60 * 60_000).toISOString(),
   }
 ];
 

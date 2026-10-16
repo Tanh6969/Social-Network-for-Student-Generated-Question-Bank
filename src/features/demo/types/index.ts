@@ -1,4 +1,5 @@
 export type Role = 'STUDENT' | 'LECTURER';
+export type FriendStatus = 'FRIEND' | 'REQUEST_SENT' | 'REQUEST_RECEIVED' | 'NONE';
 
 export interface User {
   id: string;

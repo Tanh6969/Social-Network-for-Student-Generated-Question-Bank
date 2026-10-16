@@ -123,7 +123,7 @@ export const AuthPage: React.FC = () => {
                 <form onSubmit={handleLoginSubmit} className="space-y-3.5">
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                        Email tài khoản
+                      Email tài khoản
                     </label>
                     <div className="relative">
                       <Mail className="w-4 h-4 text-gray-400 absolute left-3 top-3 pointer-events-none" />
