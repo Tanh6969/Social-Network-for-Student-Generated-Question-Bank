@@ -48,13 +48,21 @@ export const AvatarWithFrame: React.FC<AvatarWithFrameProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`relative inline-flex items-center justify-center shrink-0 ${onClick ? 'cursor-pointer' : ''} ${className}`}
+      className={`relative inline-flex shrink-0 items-center justify-center rounded-full ${onClick ? 'cursor-pointer' : ''} ${className}`}
     >
-      <img
-        src={user.avatar}
-        alt={user.name}
-        className={`rounded-full object-cover object-center ${sizeMap[size]} ${getFrameRingClass()}`}
-      />
+      <span
+        className={`inline-block overflow-hidden rounded-full ${sizeMap[size]} ${getFrameRingClass()}`}
+      >
+        <img
+          src={user.avatar}
+          alt={user.name}
+          className="h-full w-full object-cover"
+          style={{
+            objectPosition: `${user.avatarCrop?.x ?? 50}% ${user.avatarCrop?.y ?? 50}%`,
+            transform: `scale(${user.avatarCrop?.zoom ?? 1})`,
+          }}
+        />
+      </span>
 
       {/* Online indicator dot */}
       {showOnline && user.isOnline && (

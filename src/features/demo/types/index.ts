@@ -1,6 +1,21 @@
 export type Role = 'STUDENT' | 'LECTURER';
 export type FriendStatus = 'FRIEND' | 'REQUEST_SENT' | 'REQUEST_RECEIVED' | 'NONE';
 
+export interface ImageCrop {
+  x: number;
+  y: number;
+  zoom: number;
+}
+
+export interface ProfilePhotoHistoryItem {
+  id: string;
+  userId: string;
+  kind: 'avatar' | 'cover';
+  url: string;
+  crop?: ImageCrop;
+  savedAt: string;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -8,6 +23,8 @@ export interface User {
   email: string;
   avatar: string;
   coverImage: string;
+  avatarCrop?: ImageCrop;
+  coverCrop?: ImageCrop;
   bio: string;
   faculty: string; // Khoa CNTT, v.v.
   classOrTitle: string; // K64 CNTT1 hoặc TS. Trưởng bộ môn

@@ -24,7 +24,11 @@ import {
   AppNotification,
   CommentItem,
 } from '../types';
-import type { FriendStatus } from '../types';
+import type {
+  FriendStatus,
+  ImageCrop,
+  ProfilePhotoHistoryItem,
+} from '../types';
 import {
   appendComment,
   getPostContentIssue,
@@ -65,6 +69,12 @@ interface AppContextType {
   role: Role;
   switchRole: (newRole: Role) => void;
   updateCurrentUser: (updates: Partial<User>) => void;
+  profilePhotoHistory: ProfilePhotoHistoryItem[];
+  saveProfilePhoto: (
+    kind: 'avatar' | 'cover',
+    url: string,
+    crop: ImageCrop,
+  ) => void;
   viewingUserId: string | null;
   setViewingUserId: (id: string | null) => void;
   getUserById: (id: string) => User;
@@ -257,6 +267,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   // Data states
   const [posts, setPosts] = useState<Post[]>(mockPosts);
+  const [profilePhotoHistory, setProfilePhotoHistory] = useState<
+    ProfilePhotoHistoryItem[]
+  >([]);
   const [friendStatuses, setFriendStatuses] = useState<
     Record<string, FriendStatus>
   >({
@@ -362,11 +375,56 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   const updateCurrentUser = (updates: Partial<User>) => {
     updateAuthCurrentUser(updates);
     setPosts((previous) =>
-      previous.map((post) =>
-        post.author.id === currentUser.id
-          ? { ...post, author: { ...post.author, ...updates } }
-          : post,
-      ),
+      previous.map((post) => ({
+        ...post,
+        author:
+          post.author.id === currentUser.id
+            ? { ...post.author, ...updates }
+            : post.author,
+        comments: post.comments?.map((comment) => ({
+          ...comment,
+          author:
+            comment.author.id === currentUser.id
+              ? { ...comment.author, ...updates }
+              : comment.author,
+          replies: comment.replies?.map((reply) => ({
+            ...reply,
+            author:
+              reply.author.id === currentUser.id
+                ? { ...reply.author, ...updates }
+                : reply.author,
+          })),
+        })),
+      })),
+    );
+  };
+
+  const saveProfilePhoto = (
+    kind: 'avatar' | 'cover',
+    url: string,
+    crop: ImageCrop,
+  ) => {
+    const previousUrl =
+      kind === 'avatar' ? currentUser.avatar : currentUser.coverImage;
+    const previousCrop =
+      kind === 'avatar' ? currentUser.avatarCrop : currentUser.coverCrop;
+    if (previousUrl !== url) {
+      setProfilePhotoHistory((history) => [
+        {
+          id: crypto.randomUUID(),
+          userId: currentUser.id,
+          kind,
+          url: previousUrl,
+          crop: previousCrop,
+          savedAt: new Date().toISOString(),
+        },
+        ...history,
+      ]);
+    }
+    updateCurrentUser(
+      kind === 'avatar'
+        ? { avatar: url, avatarCrop: crop }
+        : { coverImage: url, coverCrop: crop },
     );
   };
 
@@ -465,6 +523,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     );
     oldPost.mediaUrls
       ?.filter((url) => !updates.mediaUrls?.includes(url))
+      .filter(
+        (url) =>
+          url !== currentUser.avatar &&
+          url !== currentUser.coverImage &&
+          !profilePhotoHistory.some((photo) => photo.url === url),
+      )
       .forEach(revokeMediaUrl);
     showToast('Đã lưu thay đổi bài viết.', 'success');
   };
@@ -521,7 +585,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     );
     if (!oldPost) return;
     setPosts((previous) => removeOwnedPost(previous, postId, currentUser.id));
-    oldPost.mediaUrls?.forEach(revokeMediaUrl);
+    oldPost.mediaUrls
+      ?.filter(
+        (url) =>
+          url !== currentUser.avatar &&
+          url !== currentUser.coverImage &&
+          !profilePhotoHistory.some((photo) => photo.url === url),
+      )
+      .forEach(revokeMediaUrl);
     if (activePostDetailId === postId) setActivePostDetailId(null);
     showToast('Đã xóa bài viết thành công!', 'info');
   };
@@ -987,6 +1058,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         role,
         switchRole,
         updateCurrentUser,
+        profilePhotoHistory,
+        saveProfilePhoto,
         viewingUserId,
         setViewingUserId,
         getUserById,
