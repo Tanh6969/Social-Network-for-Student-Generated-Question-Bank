@@ -20,6 +20,11 @@ const BankView = React.lazy(() =>
     default: module.BankView,
   })),
 );
+const ProposeView = React.lazy(() =>
+  import('../features/propose/components/ProposeView').then((module) => ({
+    default: module.ProposeView,
+  })),
+);
 const VideoWatchView = React.lazy(() =>
   import('../features/watch/components/VideoWatchView').then((module) => ({
     default: module.VideoWatchView,
@@ -127,6 +132,7 @@ const MainContent: React.FC = () => {
         <div className="flex-1">
           {activeTab === 'feed' && <FeedView />}
           {activeTab === 'bank' && <BankView />}
+          {activeTab === 'propose' && <ProposeView />}
           {activeTab === 'watch' && <VideoWatchView />}
           {activeTab === 'game' && <MinigameView />}
           {activeTab === 'friends' && <FriendsView />}
