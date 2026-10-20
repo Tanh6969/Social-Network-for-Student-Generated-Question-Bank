@@ -5,15 +5,23 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "format:check": "prettier --check src/app src/api/*.ts src/features/auth/components/AuthPage.tsx src/features/auth/useAuthSession.ts src/features/auth/mapAuthUser.ts scripts/*.mjs tests/*.ts",
+    "generate:api": "openapi-typescript openapi/openapi.json -o src/api/generated/openapi.ts && node scripts/check-api-coverage.mjs",
+    "check:api": "node scripts/check-api-coverage.mjs",
+    "update:api": "node scripts/update-openapi.mjs && npm run generate:api",
     "lint": "tsc --noEmit",
     "test": "npm run lint"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.104.2",
     "lucide-react": "^1.16.0",
+    "openapi-fetch": "^0.17.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-router": "^7.18.4"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",
@@ -21,8 +29,14 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^10.12.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "openapi-typescript": "^7.13.0",
+    "prettier": "^3.9.10",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.3",
-    "vite": "^6.2.0"
+    "typescript-eslint": "^8.71.2",
+    "vite": "^6.2.0",
+    "vitest": "^5.0.4"
   }
 }
