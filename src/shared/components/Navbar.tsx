@@ -20,7 +20,8 @@ import {
   HelpCircle,
   LogOut,
   X,
-  FileCode
+  FileCode,
+  FilePlus
 } from 'lucide-react';
 import { MainTab } from '../../features/demo/types';
 
@@ -304,6 +305,22 @@ export const Navbar: React.FC = () => {
           </span>
         </button>
 
+        {/* Đề xuất câu hỏi */}
+        <button
+          onClick={() => handleTabClick('propose')}
+          className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-lg transition-colors ${
+            activeTab === 'propose'
+              ? 'text-blue-600 dark:text-blue-400 border-b-[3px] border-blue-600'
+              : 'text-gray-500 dark:text-gray-400'
+          }`}
+          title="Đề xuất phiên câu hỏi thi (Sessions)"
+        >
+          <FilePlus className={`w-6 h-6 ${activeTab === 'propose' ? 'stroke-[2.5]' : ''}`} />
+          <span className="absolute top-1 right-3 text-[10px] font-bold bg-emerald-600 text-white px-1 rounded-full">
+            +
+          </span>
+        </button>
+
         {/* Video học tập */}
         <button
           onClick={() => handleTabClick('watch')}
@@ -405,6 +422,18 @@ export const Navbar: React.FC = () => {
                   <BookOpen className="w-5 h-5 text-blue-600 mb-1" />
                   <span className="font-semibold block text-gray-800 dark:text-gray-200">Ngân hàng đề</span>
                   <span className="text-[10px] text-gray-500">Đóng góp & ôn tập</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    handleTabClick('propose');
+                    setIsGridMenuOpen(false);
+                  }}
+                  className="p-2.5 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-left transition"
+                >
+                  <FilePlus className="w-5 h-5 text-emerald-600 mb-1" />
+                  <span className="font-semibold block text-gray-800 dark:text-gray-200">Đề xuất câu hỏi</span>
+                  <span className="text-[10px] text-gray-500">Biên soạn & duyệt</span>
                 </button>
 
                 <button

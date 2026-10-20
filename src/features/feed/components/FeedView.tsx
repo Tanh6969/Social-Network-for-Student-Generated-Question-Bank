@@ -116,8 +116,8 @@ export const FeedView: React.FC = () => {
           </button>
 
           <button
-            onClick={() => setIsProposeSessionModalOpen(true)}
-            className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-semibold transition text-left"
+            onClick={() => setActiveTab('propose')}
+            className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-semibold transition text-left cursor-pointer"
           >
             <div className="w-9 h-9 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50 flex items-center justify-center transition-colors">
               <PlusCircle className="w-5 h-5" />
@@ -226,8 +226,8 @@ export const FeedView: React.FC = () => {
             </button>
 
             <button
-              onClick={() => setIsProposeSessionModalOpen(true)}
-              className="flex items-center justify-center gap-2 flex-1 py-2 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-lg transition text-blue-600 dark:text-blue-400 font-semibold"
+              onClick={() => setActiveTab('propose')}
+              className="flex items-center justify-center gap-2 flex-1 py-2 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-lg transition text-blue-600 dark:text-blue-400 font-semibold cursor-pointer"
             >
               <HelpCircle className="w-4.5 h-4.5 text-blue-600 dark:text-blue-400" />
               <span>Đề xuất câu hỏi</span>

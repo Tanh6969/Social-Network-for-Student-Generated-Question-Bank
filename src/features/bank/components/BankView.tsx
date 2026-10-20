@@ -54,8 +54,8 @@ export const BankView: React.FC = () => {
       <aside className="hidden lg:block w-[280px] xl:w-[300px] 2xl:w-[320px] shrink-0 sticky top-18 h-[calc(100vh-5rem)] overflow-y-auto space-y-4 select-none pr-2">
         {/* Action Button: Propose Session */}
         <button
-          onClick={() => setIsProposeSessionModalOpen(true)}
-          className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm shadow-xs transition flex items-center justify-center gap-2"
+          onClick={() => setActiveTab('propose')}
+          className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm shadow-xs transition flex items-center justify-center gap-2 cursor-pointer"
         >
           <PlusCircle className="w-4.5 h-4.5" />
           <span>Đề xuất phiên câu hỏi</span>
@@ -193,8 +193,8 @@ export const BankView: React.FC = () => {
               Câu hỏi chính thức ({filteredQuestions.length})
             </button>
             <button
-              onClick={() => setIsProposeSessionModalOpen(true)}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition flex items-center gap-1.5 ml-auto"
+              onClick={() => setActiveTab('propose')}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition flex items-center gap-1.5 ml-auto cursor-pointer"
             >
               <PlusCircle className="w-4 h-4" />
               <span>Gửi câu hỏi mới</span>
@@ -284,8 +284,8 @@ export const BankView: React.FC = () => {
               Hãy thử chọn môn học khác hoặc đóng góp câu hỏi đầu tiên cho chủ đề này!
             </p>
             <button
-              onClick={() => setIsProposeSessionModalOpen(true)}
-              className="mt-2 px-4 py-2 bg-blue-600 text-white font-semibold text-xs rounded-lg"
+              onClick={() => setActiveTab('propose')}
+              className="mt-2 px-4 py-2 bg-blue-600 text-white font-semibold text-xs rounded-lg cursor-pointer"
             >
               Đề xuất câu hỏi ngay
             </button>
