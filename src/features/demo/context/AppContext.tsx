@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from 'react';
 import { useAuthSession } from '../../auth/useAuthSession';
 import { useLocation, useNavigate } from 'react-router';
 import { tabFromPath, tabPaths } from '../../../app/routes';
@@ -16,8 +22,20 @@ import {
   Conversation,
   MessageItem,
   AppNotification,
-  CommentItem
+  CommentItem,
 } from '../types';
+import type {
+  FriendStatus,
+  ImageCrop,
+  ProfilePhotoHistoryItem,
+} from '../types';
+import {
+  appendComment,
+  getPostContentIssue,
+  removeOwnedPost,
+  updateOwnedPost,
+} from '../../feed/postUtils';
+import { revokeMediaUrl } from '../../feed/mediaUtils';
 import {
   mockCurrentUserStudent,
   mockCurrentUserLecturer,
@@ -30,7 +48,7 @@ import {
   mockCosmetics,
   mockConversations,
   mockNotifications,
-  mockExams
+  mockExams,
 } from '../../../mocks/mockData';
 
 export interface Toast {
@@ -51,6 +69,12 @@ interface AppContextType {
   role: Role;
   switchRole: (newRole: Role) => void;
   updateCurrentUser: (updates: Partial<User>) => void;
+  profilePhotoHistory: ProfilePhotoHistoryItem[];
+  saveProfilePhoto: (
+    kind: 'avatar' | 'cover',
+    url: string,
+    crop: ImageCrop,
+  ) => void;
   viewingUserId: string | null;
   setViewingUserId: (id: string | null) => void;
   getUserById: (id: string) => User;
@@ -76,23 +100,63 @@ interface AppContextType {
   // Posts & Social
   posts: Post[];
   createPost: (postData: Partial<Post>) => void;
+  updatePost: (
+    postId: string,
+    updates: Pick<Post, 'content' | 'privacy' | 'mediaUrls' | 'type'>,
+  ) => void;
   toggleLikePost: (postId: string) => void;
   addComment: (postId: string, text: string, parentCommentId?: string) => void;
   deletePost: (postId: string) => void;
   addLecturerNote: (postId: string, note: string) => void;
+  friendStatuses: Record<string, FriendStatus>;
+  setFriendStatuses: React.Dispatch<
+    React.SetStateAction<Record<string, FriendStatus>>
+  >;
 
   // Questions & Bank
   questions: Question[];
-  answerQuestion: (questionId: string, chosenOption: 'A' | 'B' | 'C' | 'D') => boolean;
+  answerQuestion: (
+    questionId: string,
+    chosenOption: 'A' | 'B' | 'C' | 'D',
+  ) => boolean;
   rateQuestion: (questionId: string, stars: number) => void;
   updateQuestion: (questionId: string, updates: Partial<Question>) => void;
-  applyAIQuestionRefine: (questionId: string, newContent: string, newExplanation?: string) => void;
+  applyAIQuestionRefine: (
+    questionId: string,
+    newContent: string,
+    newExplanation?: string,
+  ) => void;
 
   // Propose Sessions (SV đề xuất -> GV duyệt)
   sessions: ProposeSession[];
-  createProposeSession: (title: string, subject: string, chapter: string, newQuestions: Omit<Question, 'id' | 'status' | 'creatorId' | 'creatorName' | 'creatorAvatar' | 'ratingAverage' | 'ratingCount' | 'totalAttempts' | 'correctAttempts'>[]) => void;
-  approveSession: (sessionId: string, selectedQuestionIds: string[], note?: string, autoPost?: boolean) => void;
-  rejectSession: (sessionId: string, selectedQuestionIds: string[], reason: string) => void;
+  createProposeSession: (
+    title: string,
+    subject: string,
+    chapter: string,
+    newQuestions: Omit<
+      Question,
+      | 'id'
+      | 'status'
+      | 'creatorId'
+      | 'creatorName'
+      | 'creatorAvatar'
+      | 'ratingAverage'
+      | 'ratingCount'
+      | 'totalAttempts'
+      | 'correctAttempts'
+    >[],
+  ) => void;
+  approveSession: (
+    sessionId: string,
+    selectedQuestionIds: string[],
+    note?: string,
+    autoPost?: boolean,
+  ) => void;
+  rejectSession: (
+    sessionId: string,
+    selectedQuestionIds: string[],
+    reason: string,
+  ) => void;
 
   // Exams
   exams: Exam[];
@@ -130,8 +194,13 @@ interface AppContextType {
   setActiveQuizQuestion: (q: Question | null) => void;
   activePostDetail: Post | null;
   setActivePostDetail: (p: Post | null) => void;
+  activePostMediaIndex: number;
+  openPostMedia: (post: Post, index: number) => void;
   isCreatePostModalOpen: boolean;
   setIsCreatePostModalOpen: (open: boolean) => void;
+  editingPostId: string | null;
+  openPostComposer: (postId?: string) => void;
+  closePostComposer: () => void;
   isProposeSessionModalOpen: boolean;
   setIsProposeSessionModalOpen: (open: boolean) => void;
   activeAIRefineQuestion: Question | null;
@@ -150,26 +219,34 @@ interface AppContextType {
   setIsTourGuideOpen: (open: boolean) => void;
   isAuthModalOpen: boolean;
   authModalMode: 'LOGIN' | 'REGISTER' | 'OTP' | 'SESSION_EXPIRED';
-  openAuthModal: (mode?: 'LOGIN' | 'REGISTER' | 'OTP' | 'SESSION_EXPIRED') => void;
+  openAuthModal: (
+    mode?: 'LOGIN' | 'REGISTER' | 'OTP' | 'SESSION_EXPIRED',
+  ) => void;
   closeAuthModal: () => void;
 
   // System states
   isOfflineSimulated: boolean;
   setIsOfflineSimulated: (offline: boolean) => void;
   toasts: Toast[];
-  showToast: (message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
+  showToast: (
+    message: string,
+    type?: 'success' | 'info' | 'warning' | 'error',
+  ) => void;
   removeToast: (id: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const AppProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [viewingUserId, setViewingUserId] = useState<string | null>(null);
   const activeTab = tabFromPath(location.pathname) ?? 'feed';
   const setActiveTab = (tab: MainTab) => navigate(tabPaths[tab]);
-  const [selectedSubject, setSelectedSubject] = useState<string>('Tất cả môn học');
+  const [selectedSubject, setSelectedSubject] =
+    useState<string>('Tất cả môn học');
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     try {
       return localStorage.getItem('unisocial_theme') === 'dark';
@@ -185,44 +262,93 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     'Chuẩn 3NF Cơ sở dữ liệu',
     'TS. Trần Minh Đức',
     'Giải tích 1 chuỗi số',
-    'Đề thi Mạng máy tính K64'
+    'Đề thi Mạng máy tính K64',
   ]);
 
   // Data states
   const [posts, setPosts] = useState<Post[]>(mockPosts);
+  const [profilePhotoHistory, setProfilePhotoHistory] = useState<
+    ProfilePhotoHistoryItem[]
+  >([]);
+  const [friendStatuses, setFriendStatuses] = useState<
+    Record<string, FriendStatus>
+  >({
+    user_sv_02: 'REQUEST_RECEIVED',
+    user_sv_03: 'FRIEND',
+    user_sv_04: 'NONE',
+  });
   const [questions, setQuestions] = useState<Question[]>(mockQuestions);
-  const [sessions, setSessions] = useState<ProposeSession[]>(mockProposeSessions);
+  const [sessions, setSessions] =
+    useState<ProposeSession[]>(mockProposeSessions);
   const [exams, setExams] = useState<Exam[]>(mockExams);
   const [minigames, setMinigames] = useState<Minigame[]>(mockMinigames);
-  const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>(mockLeaderboard);
+  const [leaderboard, setLeaderboard] =
+    useState<LeaderboardUser[]>(mockLeaderboard);
   const [cosmetics, setCosmetics] = useState<CosmeticItem[]>(mockCosmetics);
-  const [conversations, setConversations] = useState<Conversation[]>(mockConversations);
-  const [notifications, setNotifications] = useState<AppNotification[]>(mockNotifications);
+  const [conversations, setConversations] =
+    useState<Conversation[]>(mockConversations);
+  const [notifications, setNotifications] =
+    useState<AppNotification[]>(mockNotifications);
 
   // Chat dock
   const [activeDockIds, setActiveDockIds] = useState<string[]>(['conv_01']);
   const [minimizedDockIds, setMinimizedDockIds] = useState<string[]>([]);
 
   // Modals
-  const [activeQuizQuestion, setActiveQuizQuestion] = useState<Question | null>(null);
-  const [activePostDetail, setActivePostDetail] = useState<Post | null>(null);
+  const [activeQuizQuestion, setActiveQuizQuestion] = useState<Question | null>(
+    null,
+  );
+  const [activePostDetailId, setActivePostDetailId] = useState<string | null>(
+    null,
+  );
+  const [activePostMediaIndex, setActivePostMediaIndex] = useState(0);
+  const activePostDetail =
+    posts.find((post) => post.id === activePostDetailId) ?? null;
+  const setActivePostDetail = (post: Post | null) => {
+    setActivePostMediaIndex(0);
+    setActivePostDetailId(post?.id ?? null);
+  };
+  const openPostMedia = (post: Post, index: number) => {
+    setActivePostMediaIndex(index);
+    setActivePostDetailId(post.id);
+  };
   const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
-  const [isProposeSessionModalOpen, setIsProposeSessionModalOpen] = useState(false);
-  const [activeAIRefineQuestion, setActiveAIRefineQuestion] = useState<Question | null>(null);
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const openPostComposer = (postId?: string) => {
+    setEditingPostId(postId ?? null);
+    setIsCreatePostModalOpen(true);
+  };
+  const closePostComposer = () => {
+    setIsCreatePostModalOpen(false);
+    setEditingPostId(null);
+  };
+  const [isProposeSessionModalOpen, setIsProposeSessionModalOpen] =
+    useState(false);
+  const [activeAIRefineQuestion, setActiveAIRefineQuestion] =
+    useState<Question | null>(null);
   const [isExamWizardOpen, setIsExamWizardOpen] = useState(false);
   const [isExportQuestionsOpen, setIsExportQuestionsOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [reportTarget, setReportTarget] = useState<{ type: string; id: string; title: string } | null>(null);
+  const [reportTarget, setReportTarget] = useState<{
+    type: string;
+    id: string;
+    title: string;
+  } | null>(null);
   const [isApiReferenceOpen, setIsApiReferenceOpen] = useState(false);
   const [isTourGuideOpen, setIsTourGuideOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authModalMode, setAuthModalMode] = useState<'LOGIN' | 'REGISTER' | 'OTP' | 'SESSION_EXPIRED'>('LOGIN');
+  const [authModalMode, setAuthModalMode] = useState<
+    'LOGIN' | 'REGISTER' | 'OTP' | 'SESSION_EXPIRED'
+  >('LOGIN');
 
   // System states
   const [isOfflineSimulated, setIsOfflineSimulated] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const showToast = (message: string, type: 'success' | 'info' | 'warning' | 'error' = 'info') => {
+  const showToast = (
+    message: string,
+    type: 'success' | 'info' | 'warning' | 'error' = 'info',
+  ) => {
     const id = Date.now().toString() + Math.random().toString();
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => {
@@ -235,10 +361,72 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const {
-    isAuthenticated, currentUser, setCurrentUser, role, login, loginWithCredentials,
-    logout, switchRole, updateCurrentUser,
+    isAuthenticated,
+    currentUser,
+    setCurrentUser,
+    role,
+    login,
+    loginWithCredentials,
+    logout,
+    switchRole,
+    updateCurrentUser: updateAuthCurrentUser,
   } = useAuthSession(showToast);
 
+  const updateCurrentUser = (updates: Partial<User>) => {
+    updateAuthCurrentUser(updates);
+    setPosts((previous) =>
+      previous.map((post) => ({
+        ...post,
+        author:
+          post.author.id === currentUser.id
+            ? { ...post.author, ...updates }
+            : post.author,
+        comments: post.comments?.map((comment) => ({
+          ...comment,
+          author:
+            comment.author.id === currentUser.id
+              ? { ...comment.author, ...updates }
+              : comment.author,
+          replies: comment.replies?.map((reply) => ({
+            ...reply,
+            author:
+              reply.author.id === currentUser.id
+                ? { ...reply.author, ...updates }
+                : reply.author,
+          })),
+        })),
+      })),
+    );
+  };
+
+  const saveProfilePhoto = (
+    kind: 'avatar' | 'cover',
+    url: string,
+    crop: ImageCrop,
+  ) => {
+    const previousUrl =
+      kind === 'avatar' ? currentUser.avatar : currentUser.coverImage;
+    const previousCrop =
+      kind === 'avatar' ? currentUser.avatarCrop : currentUser.coverCrop;
+    if (previousUrl !== url) {
+      setProfilePhotoHistory((history) => [
+        {
+          id: crypto.randomUUID(),
+          userId: currentUser.id,
+          kind,
+          url: previousUrl,
+          crop: previousCrop,
+          savedAt: new Date().toISOString(),
+        },
+        ...history,
+      ]);
+    }
+    updateCurrentUser(
+      kind === 'avatar'
+        ? { avatar: url, avatarCrop: crop }
+        : { coverImage: url, coverCrop: crop },
+    );
+  };
   // Sync dark mode class on root
   useEffect(() => {
     try {
@@ -290,8 +478,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Posts
   const createPost = (postData: Partial<Post>) => {
+    if (
+      (!postData.content?.trim() && !postData.mediaUrls?.length) ||
+      getPostContentIssue(postData.content ?? '')
+    )
+      return;
     const newPost: Post = {
-      id: 'post_' + Date.now(),
+      id: crypto.randomUUID(),
       author: currentUser,
       type: postData.type || 'KNOWLEDGE',
       content: postData.content || '',
@@ -304,11 +497,39 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       commentsCount: 0,
       sharesCount: 0,
       privacy: postData.privacy || 'PUBLIC',
-      createdAt: 'Vừa xong',
-      comments: []
+      createdAt: new Date().toISOString(),
+      comments: [],
     };
-    setPosts([newPost, ...posts]);
+    setPosts((previous) => [newPost, ...previous]);
     showToast('Đã đăng bài viết mới thành công!', 'success');
+  };
+
+  const updatePost = (
+    postId: string,
+    updates: Pick<Post, 'content' | 'privacy' | 'mediaUrls' | 'type'>,
+  ) => {
+    if (
+      (!updates.content.trim() && !updates.mediaUrls?.length) ||
+      getPostContentIssue(updates.content)
+    )
+      return;
+    const oldPost = posts.find(
+      (post) => post.id === postId && post.author.id === currentUser.id,
+    );
+    if (!oldPost) return;
+    setPosts((previous) =>
+      updateOwnedPost(previous, postId, currentUser.id, updates),
+    );
+    oldPost.mediaUrls
+      ?.filter((url) => !updates.mediaUrls?.includes(url))
+      .filter(
+        (url) =>
+          url !== currentUser.avatar &&
+          url !== currentUser.coverImage &&
+          !profilePhotoHistory.some((photo) => photo.url === url),
+      )
+      .forEach(revokeMediaUrl);
+    showToast('Đã lưu thay đổi bài viết.', 'success');
   };
 
   const toggleLikePost = (postId: string) => {
@@ -319,53 +540,59 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           return {
             ...p,
             isLiked,
-            likesCount: isLiked ? p.likesCount + 1 : Math.max(0, p.likesCount - 1)
+            likesCount: isLiked
+              ? p.likesCount + 1
+              : Math.max(0, p.likesCount - 1),
           };
         }
         return p;
-      })
+      }),
     );
   };
 
-  const addComment = (postId: string, text: string, parentCommentId?: string) => {
+  const addComment = (
+    postId: string,
+    text: string,
+    parentCommentId?: string,
+  ) => {
+    if (!text.trim()) return;
+    const post = posts.find((item) => item.id === postId);
+    if (
+      !post ||
+      (parentCommentId &&
+        !post.comments?.some((item) => item.id === parentCommentId))
+    )
+      return;
     const newComment: CommentItem = {
-      id: 'c_' + Date.now(),
+      id: crypto.randomUUID(),
       author: currentUser,
-      content: text,
-      createdAt: 'Vừa xong',
+      content: text.trim(),
+      createdAt: new Date().toISOString(),
       likesCount: 0,
-      isLiked: false
+      isLiked: false,
     };
 
-    setPosts((prev) =>
-      prev.map((p) => {
-        if (p.id === postId) {
-          const updatedComments = p.comments ? [...p.comments] : [];
-          if (parentCommentId) {
-            // Nest inside parent comment
-            const parent = updatedComments.find((c) => c.id === parentCommentId);
-            if (parent) {
-              parent.replies = [...(parent.replies || []), newComment];
-            } else {
-              updatedComments.push(newComment);
-            }
-          } else {
-            updatedComments.push(newComment);
-          }
-          return {
-            ...p,
-            commentsCount: p.commentsCount + 1,
-            comments: updatedComments
-          };
-        }
-        return p;
-      })
+    setPosts((previous) =>
+      appendComment(previous, postId, newComment, parentCommentId),
     );
     showToast('Đã gửi bình luận!', 'success');
   };
 
   const deletePost = (postId: string) => {
-    setPosts((prev) => prev.filter((p) => p.id !== postId));
+    const oldPost = posts.find(
+      (post) => post.id === postId && post.author.id === currentUser.id,
+    );
+    if (!oldPost) return;
+    setPosts((previous) => removeOwnedPost(previous, postId, currentUser.id));
+    oldPost.mediaUrls
+      ?.filter(
+        (url) =>
+          url !== currentUser.avatar &&
+          url !== currentUser.coverImage &&
+          !profilePhotoHistory.some((photo) => photo.url === url),
+      )
+      .forEach(revokeMediaUrl);
+    if (activePostDetailId === postId) setActivePostDetailId(null);
     showToast('Đã xóa bài viết thành công!', 'info');
   };
 
@@ -379,18 +606,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
               lecturerName: currentUser.name,
               avatar: currentUser.avatar,
               note,
-              createdAt: 'Vừa xong'
-            }
+              createdAt: 'Vừa xong',
+            },
           };
         }
         return p;
-      })
+      }),
     );
     showToast('Đã ghim ghi chú giảng viên!', 'success');
   };
 
   // Questions
-  const answerQuestion = (questionId: string, chosenOption: 'A' | 'B' | 'C' | 'D') => {
+  const answerQuestion = (
+    questionId: string,
+    chosenOption: 'A' | 'B' | 'C' | 'D',
+  ) => {
     const q = questions.find((item) => item.id === questionId);
     if (!q) return false;
     const isCorrect = q.correctAnswer === chosenOption;
@@ -398,19 +628,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setQuestions((prev) =>
       prev.map((item) => {
         if (item.id === questionId) {
-          const distribution = item.optionDistribution || { A: 0, B: 0, C: 0, D: 0 };
+          const distribution = item.optionDistribution || {
+            A: 0,
+            B: 0,
+            C: 0,
+            D: 0,
+          };
           return {
             ...item,
             totalAttempts: item.totalAttempts + 1,
-            correctAttempts: isCorrect ? item.correctAttempts + 1 : item.correctAttempts,
+            correctAttempts: isCorrect
+              ? item.correctAttempts + 1
+              : item.correctAttempts,
             optionDistribution: {
               ...distribution,
-              [chosenOption]: (distribution[chosenOption] || 0) + 1
-            }
+              [chosenOption]: (distribution[chosenOption] || 0) + 1,
+            },
           };
         }
         return item;
-      })
+      }),
     );
 
     if (isCorrect) {
@@ -424,27 +661,33 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       prev.map((q) => {
         if (q.id === questionId) {
           const newCount = q.ratingCount + 1;
-          const newAvg = Number(((q.ratingAverage * q.ratingCount + stars) / newCount).toFixed(1));
+          const newAvg = Number(
+            ((q.ratingAverage * q.ratingCount + stars) / newCount).toFixed(1),
+          );
           return {
             ...q,
             userRatedStars: stars,
             ratingCount: newCount,
-            ratingAverage: newAvg
+            ratingAverage: newAvg,
           };
         }
         return q;
-      })
+      }),
     );
     showToast(`Đã gửi đánh giá ${stars} sao cho câu hỏi!`, 'success');
   };
 
   const updateQuestion = (questionId: string, updates: Partial<Question>) => {
     setQuestions((prev) =>
-      prev.map((q) => (q.id === questionId ? { ...q, ...updates } : q))
+      prev.map((q) => (q.id === questionId ? { ...q, ...updates } : q)),
     );
   };
 
-  const applyAIQuestionRefine = (questionId: string, newContent: string, newExplanation?: string) => {
+  const applyAIQuestionRefine = (
+    questionId: string,
+    newContent: string,
+    newExplanation?: string,
+  ) => {
     setQuestions((prev) =>
       prev.map((q) => {
         if (q.id === questionId) {
@@ -452,11 +695,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             ...q,
             content: newContent,
             explanation: newExplanation || q.explanation,
-            status: 'APPROVED'
+            status: 'APPROVED',
           };
         }
         return q;
-      })
+      }),
     );
     showToast('Đã áp dụng tinh chỉnh của AI thành công!', 'success');
   };
@@ -466,22 +709,35 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     title: string,
     subject: string,
     chapter: string,
-    newQuestionsData: Omit<Question, 'id' | 'status' | 'creatorId' | 'creatorName' | 'creatorAvatar' | 'ratingAverage' | 'ratingCount' | 'totalAttempts' | 'correctAttempts'>[]
+    newQuestionsData: Omit<
+      Question,
+      | 'id'
+      | 'status'
+      | 'creatorId'
+      | 'creatorName'
+      | 'creatorAvatar'
+      | 'ratingAverage'
+      | 'ratingCount'
+      | 'totalAttempts'
+      | 'correctAttempts'
+    >[],
   ) => {
     const sessionId = 'sess_' + Date.now();
-    const createdQuestions: Question[] = newQuestionsData.map((data, index) => ({
-      ...data,
-      id: `q_${Date.now()}_${index}`,
-      sessionId,
-      status: 'PENDING',
-      creatorId: currentUser.id,
-      creatorName: currentUser.name,
-      creatorAvatar: currentUser.avatar,
-      ratingAverage: 0,
-      ratingCount: 0,
-      totalAttempts: 0,
-      correctAttempts: 0,
-    }));
+    const createdQuestions: Question[] = newQuestionsData.map(
+      (data, index) => ({
+        ...data,
+        id: `q_${Date.now()}_${index}`,
+        sessionId,
+        status: 'PENDING',
+        creatorId: currentUser.id,
+        creatorName: currentUser.name,
+        creatorAvatar: currentUser.avatar,
+        ratingAverage: 0,
+        ratingCount: 0,
+        totalAttempts: 0,
+        correctAttempts: 0,
+      }),
+    );
 
     const newSession: ProposeSession = {
       id: sessionId,
@@ -491,18 +747,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       creator: currentUser,
       status: 'PENDING',
       questions: createdQuestions,
-      submittedAt: 'Vừa xong'
+      submittedAt: 'Vừa xong',
     };
 
     setSessions([newSession, ...sessions]);
     setQuestions([...createdQuestions, ...questions]);
-    showToast(`Đã gửi phiên "${title}" tới Giảng viên để kiểm duyệt!`, 'success');
+    showToast(
+      `Đã gửi phiên "${title}" tới Giảng viên để kiểm duyệt!`,
+      'success',
+    );
   };
 
-  const approveSession = (sessionId: string, selectedQuestionIds: string[], note?: string, autoPost: boolean = true) => {
+  const approveSession = (
+    sessionId: string,
+    selectedQuestionIds: string[],
+    note?: string,
+    autoPost: boolean = true,
+  ) => {
     // Approve questions
     setQuestions((prev) =>
-      prev.map((q) => (selectedQuestionIds.includes(q.id) ? { ...q, status: 'APPROVED' } : q))
+      prev.map((q) =>
+        selectedQuestionIds.includes(q.id) ? { ...q, status: 'APPROVED' } : q,
+      ),
     );
 
     // Update session
@@ -514,11 +780,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             status: 'APPROVED',
             reviewedAt: 'Vừa xong',
             reviewer: currentUser,
-            lecturerFeedback: note || 'Đạt chuẩn kiểm duyệt'
+            lecturerFeedback: note || 'Đạt chuẩn kiểm duyệt',
           };
         }
         return s;
-      })
+      }),
     );
 
     // Award student points
@@ -528,16 +794,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         type: 'QUESTION_APPROVED',
         content: `🎉 Chúc mừng ${currentSession.creator.name} đã được TS. Trần Minh Đức duyệt phiên câu hỏi môn ${currentSession.subject}: "${currentSession.title}" vào Ngân hàng đề thi chính thức!`,
         subjectTag: currentSession.subject,
-        privacy: 'PUBLIC'
+        privacy: 'PUBLIC',
       });
     }
 
-    showToast('Đã phê duyệt câu hỏi thành công và thông báo cho sinh viên!', 'success');
+    showToast(
+      'Đã phê duyệt câu hỏi thành công và thông báo cho sinh viên!',
+      'success',
+    );
   };
 
-  const rejectSession = (sessionId: string, selectedQuestionIds: string[], reason: string) => {
+  const rejectSession = (
+    sessionId: string,
+    selectedQuestionIds: string[],
+    reason: string,
+  ) => {
     setQuestions((prev) =>
-      prev.map((q) => (selectedQuestionIds.includes(q.id) ? { ...q, status: 'REJECTED', rejectionReason: reason } : q))
+      prev.map((q) =>
+        selectedQuestionIds.includes(q.id)
+          ? { ...q, status: 'REJECTED', rejectionReason: reason }
+          : q,
+      ),
     );
 
     setSessions((prev) =>
@@ -548,26 +825,36 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             status: 'REJECTED',
             reviewedAt: 'Vừa xong',
             reviewer: currentUser,
-            lecturerFeedback: reason
+            lecturerFeedback: reason,
           };
         }
         return s;
-      })
+      }),
     );
 
     showToast('Đã từ chối câu hỏi kèm lý do phản hồi cho sinh viên.', 'info');
   };
 
   // Exams
-  const generateExam = (newExamData: Omit<Exam, 'id' | 'createdAt' | 'creator'>): Exam => {
+  const generateExam = (
+    newExamData: Omit<Exam, 'id' | 'createdAt' | 'creator'>,
+  ): Exam => {
     const exam: Exam = {
       ...newExamData,
       id: 'exam_' + Date.now(),
-      createdAt: 'Hôm nay lúc ' + new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-      creator: currentUser
+      createdAt:
+        'Hôm nay lúc ' +
+        new Date().toLocaleTimeString('vi-VN', {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+      creator: currentUser,
     };
     setExams([exam, ...exams]);
-    showToast(`Đã sinh thành công đề thi "${exam.title}" (${exam.totalQuestions} câu)!`, 'success');
+    showToast(
+      `Đã sinh thành công đề thi "${exam.title}" (${exam.totalQuestions} câu)!`,
+      'success',
+    );
     return exam;
   };
 
@@ -579,13 +866,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           return {
             ...g,
             userGuess: guess,
-            hasUserGuessed: true
+            hasUserGuessed: true,
           };
         }
         return g;
-      })
+      }),
     );
-    showToast(`Đã xác nhận dự đoán: ${guess}. Chờ công bố kết quả vào Chủ Nhật!`, 'success');
+    showToast(
+      `Đã xác nhận dự đoán: ${guess}. Chờ công bố kết quả vào Chủ Nhật!`,
+      'success',
+    );
   };
 
   // Cosmetics
@@ -599,7 +889,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           return { ...c, isEquipped: c.id === itemId };
         }
         return c;
-      })
+      }),
     );
 
     if (item.type === 'AVATAR_FRAME') {
@@ -616,7 +906,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (!item) return;
 
     setCosmetics((prev) =>
-      prev.map((c) => (c.id === itemId ? { ...c, isEquipped: false } : c))
+      prev.map((c) => (c.id === itemId ? { ...c, isEquipped: false } : c)),
     );
 
     if (item.type === 'AVATAR_FRAME') {
@@ -639,7 +929,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         lastMessage: 'Bắt đầu cuộc trò chuyện',
         lastMessageTime: 'Vừa xong',
         unreadCount: 0,
-        messages: []
+        messages: [],
       };
       setConversations([newConv, ...conversations]);
       conv = newConv;
@@ -677,9 +967,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       conversationId,
       senderId: currentUser.id,
       text: text.trim(),
-      timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+      timestamp: new Date().toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
       status: 'DELIVERED',
-      effect: currentUser.equippedChatEffectId
+      effect: currentUser.equippedChatEffectId,
     };
 
     setConversations((prev) =>
@@ -689,11 +982,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             ...c,
             lastMessage: text,
             lastMessageTime: newMessage.timestamp,
-            messages: [...c.messages, newMessage]
+            messages: [...c.messages, newMessage],
           };
         }
         return c;
-      })
+      }),
     );
   };
 
@@ -704,12 +997,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           return {
             ...c,
             messages: c.messages.map((m) =>
-              m.id === messageId ? { ...m, isRecalled: true, text: 'Tin nhắn đã được thu hồi' } : m
-            )
+              m.id === messageId
+                ? { ...m, isRecalled: true, text: 'Tin nhắn đã được thu hồi' }
+                : m,
+            ),
           };
         }
         return c;
-      })
+      }),
     );
     showToast('Đã thu hồi tin nhắn đối với mọi người.', 'info');
   };
@@ -717,7 +1012,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Notifications
   const markNotificationAsRead = (id: string) => {
     setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
     );
   };
 
@@ -726,7 +1021,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     showToast('Đã đánh dấu tất cả thông báo là đã đọc', 'info');
   };
 
-  const unreadNotificationsCount = notifications.filter((n) => !n.isRead).length;
+  const unreadNotificationsCount = notifications.filter(
+    (n) => !n.isRead,
+  ).length;
 
   const openReportModal = (type: string, id: string, title: string) => {
     setReportTarget({ type, id, title });
@@ -738,7 +1035,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setReportTarget(null);
   };
 
-  const openAuthModal = (mode: 'LOGIN' | 'REGISTER' | 'OTP' | 'SESSION_EXPIRED' = 'LOGIN') => {
+  const openAuthModal = (
+    mode: 'LOGIN' | 'REGISTER' | 'OTP' | 'SESSION_EXPIRED' = 'LOGIN',
+  ) => {
     setAuthModalMode(mode);
     setIsAuthModalOpen(true);
   };
@@ -758,6 +1057,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         role,
         switchRole,
         updateCurrentUser,
+        profilePhotoHistory,
+        saveProfilePhoto,
         viewingUserId,
         setViewingUserId,
         getUserById,
@@ -775,10 +1076,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         toggleDarkMode,
         posts,
         createPost,
+        updatePost,
         toggleLikePost,
         addComment,
         deletePost,
         addLecturerNote,
+        friendStatuses,
+        setFriendStatuses,
         questions,
         answerQuestion,
         rateQuestion,
@@ -813,8 +1117,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setActiveQuizQuestion,
         activePostDetail,
         setActivePostDetail,
+        activePostMediaIndex,
+        openPostMedia,
         isCreatePostModalOpen,
         setIsCreatePostModalOpen,
+        editingPostId,
+        openPostComposer,
+        closePostComposer,
         isProposeSessionModalOpen,
         setIsProposeSessionModalOpen,
         activeAIRefineQuestion,
@@ -839,7 +1148,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setIsOfflineSimulated,
         toasts,
         showToast,
-        removeToast
+        removeToast,
       }}
     >
       {children}

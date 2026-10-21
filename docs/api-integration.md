@@ -14,4 +14,6 @@ The STOMP destinations and DTO names are written in OpenAPI `info.description`, 
 
 `src/features/demo/components/modals/ApiReferenceModal.tsx` is an older UI demo map. It is not an API contract or a list of completed integrations.
 
+The social Feed/Profile create, edit, delete, comment, reply, media preview and friend-first ordering are local demo interactions. They do not call the post, comment, friendship or activity-feed endpoints. The current `GET /activity-feeds` contract exposes cursor pagination but no friend-first sorting option; that ordering needs backend support before it can be guaranteed across all pages of real data.
+
 When a feature is connected, use the typed `api` client with its exact Swagger path and method, handle the `code/message/data` envelope through `expectEnvelope`, then update this table. Multipart endpoints require the `multipartBody` serializer. Export endpoints currently return a download URL in a JSON envelope rather than a binary response.

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../demo/context/AppContext';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
+import { PostContent } from '../../feed/components/PostContent';
 import {
   Search,
   BookOpen,
@@ -17,6 +18,8 @@ export const SearchResultsView: React.FC = () => {
     posts,
     questions,
     currentUser,
+    friendStatuses,
+    setActivePostDetail,
     setActiveQuizQuestion,
     setViewingUserId,
     setActiveTab
@@ -33,8 +36,11 @@ export const SearchResultsView: React.FC = () => {
 
   const pMatch = posts.filter(
     (p) =>
-      p.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (p.subjectTag && p.subjectTag.toLowerCase().includes(searchQuery.toLowerCase()))
+      (p.author.id === currentUser.id ||
+        p.privacy === 'PUBLIC' ||
+        (p.privacy === 'FRIENDS' && friendStatuses[p.author.id] === 'FRIEND')) &&
+      (p.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        Boolean(p.subjectTag?.toLowerCase().includes(searchQuery.toLowerCase())))
   );
 
   return (
@@ -123,7 +129,11 @@ export const SearchResultsView: React.FC = () => {
                     {post.author.name}
                   </span>
                 </div>
-                <p className="text-xs text-gray-700 dark:text-gray-300">{post.content}</p>
+                <PostContent key={post.id} content={post.content} compact />
+                <button onClick={() => setActivePostDetail(post)}
+                  className="text-xs font-semibold text-blue-600 hover:underline">
+                  Xem chi tiết và bình luận
+                </button>
               </div>
             ))}
           </div>

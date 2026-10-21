@@ -3324,6 +3324,7 @@ export interface components {
             /** Format: date-time */
             created_at?: string;
             deleted?: boolean;
+            hidden?: boolean;
             /** Format: int32 */
             reply_count?: number;
             replies?: components["schemas"]["CommentResponseDto"][];
@@ -5605,9 +5606,9 @@ export interface components {
             /** @enum {string} */
             friend_request_status?: "NONE" | "PENDING" | "ACCEPTED" | "DECLINED";
             friend?: boolean;
+            followed_by?: boolean;
             blocked?: boolean;
             following?: boolean;
-            followed_by?: boolean;
         };
         CursorResponsePostResponseDto: {
             items?: components["schemas"]["PostResponseDto"][];

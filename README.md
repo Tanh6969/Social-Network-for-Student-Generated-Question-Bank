@@ -27,6 +27,10 @@ docs/                 Trạng thái tích hợp
 
 Mọi màn hình hiện có vẫn có thể xem bằng hai nút **Demo** trên trang đăng nhập. Chỉ login/logout của giao diện thật đã nối backend; các màn khác vẫn dùng mock. Vai trò của tài khoản thật lấy từ phản hồi backend, không đoán theo email. FE không gọi API admin. Token chỉ giữ trong bộ nhớ phiên trang; tải lại trang sẽ cần đăng nhập lại. Chưa có luồng refresh token.
 
+Trong bản demo, Feed và Profile hỗ trợ tạo, sửa, xóa bài viết, bình luận và trả lời một cấp. Nội dung bài viết giới hạn 500 từ; vòng đếm trong form soạn bài chuyển đỏ khi đạt ngưỡng và hiển thị số âm khi vượt ngưỡng, đồng thời không cho đăng bài quá dài. Giới hạn an toàn 5.000 ký tự tổng cộng và 64 ký tự cho mỗi từ được giữ trong xử lý nhập liệu, không hiển thị thường trực trên giao diện. Bài dài có nút **Xem thêm**. Bài của bản thân và bạn bè được ưu tiên, rồi mới sắp theo thời gian trong từng nhóm. Sau khi đăng/sửa/xóa, người dùng ở lại trang đang xem và thấy danh sách được cập nhật.
+
+Form bài viết nhận tối đa 10 ảnh hoặc một video từ máy. Mỗi ảnh tối đa 4 MB; video demo tối đa 10 MB. Ảnh trong Feed được căn giữa khung; trình xem lớn hiển thị trọn ảnh và cho chuyển ảnh, phóng to, xem video cùng bình luận. Ảnh đại diện và ảnh bìa cũng có thể thay từ máy và mở trong trình xem này. Bài viết, ảnh cá nhân, quan hệ bạn bè và media vẫn chỉ nằm trong bộ nhớ phiên trình duyệt; tải lại trang sẽ trở về dữ liệu demo ban đầu.
+
 ## Sinh code từ Swagger
 
 ```bash

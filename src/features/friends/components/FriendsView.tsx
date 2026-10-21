@@ -22,17 +22,13 @@ export const FriendsView: React.FC = () => {
     setActiveTab,
     openChatDock,
     showToast,
-    openReportModal
+    openReportModal,
+    friendStatuses,
+    setFriendStatuses
   } = useApp();
 
   const [activeMenu, setActiveMenu] = useState<'ALL' | 'REQUESTS' | 'FOLLOWING' | 'SUGGESTIONS'>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
-  const [friendStatuses, setFriendStatuses] = useState<Record<string, 'FRIEND' | 'REQUEST_SENT' | 'REQUEST_RECEIVED' | 'NONE'>>({
-    user_sv_02: 'REQUEST_RECEIVED',
-    user_sv_03: 'FRIEND',
-    user_sv_04: 'NONE'
-  });
-
   const handleAccept = (userId: string) => {
     setFriendStatuses((prev) => ({ ...prev, [userId]: 'FRIEND' }));
     showToast('Đã chấp nhận lời mời kết bạn!', 'success');
