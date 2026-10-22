@@ -15,7 +15,9 @@ import {
   ChevronRight,
   TrendingUp,
   FileCode,
-  Sparkles
+  Sparkles,
+  CheckSquare,
+  Database
 } from 'lucide-react';
 import { QuestionDifficulty, QuestionStatus } from '../../demo/types';
 
@@ -165,6 +167,42 @@ export const BankView: React.FC = () => {
                 <p className="text-[11px] text-gray-500">Độ tin cậy</p>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Quick Review & Lecturer Bank Navigation Banner */}
+        <div className="p-3.5 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/40 dark:to-indigo-950/40 border border-purple-200 dark:border-purple-800/60 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <span className="p-2 bg-purple-600 text-white rounded-xl shadow-xs">
+              <Database className="w-4 h-4" />
+            </span>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-xs text-purple-950 dark:text-purple-200">
+                  Khu vực Giảng viên: Ngân hàng đề riêng & Kiểm duyệt
+                </span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-purple-200/60 dark:bg-purple-900 text-purple-800 dark:text-purple-200 font-bold">
+                  Kho thẩm định
+                </span>
+              </div>
+              <p className="text-[11px] text-purple-700 dark:text-purple-300">
+                Câu hỏi tiềm năng sau khi duyệt sẽ vào trạng thái "Cần edit" (bảo lưu điểm SV), chỉnh sửa (PUT), chat AI và sinh đề thi.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0 w-full sm:w-auto">
+            <button
+              onClick={() => setActiveTab('lecturer-bank')}
+              className="flex-1 sm:flex-none px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 shadow-xs cursor-pointer"
+            >
+              <span>Ngân hàng đề GV</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('review')}
+              className="flex-1 sm:flex-none px-3 py-1.5 bg-white dark:bg-[#3A3B3C] border border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300 rounded-lg text-xs font-bold hover:bg-purple-50 transition cursor-pointer"
+            >
+              <span>Duyệt câu hỏi</span>
+            </button>
           </div>
         </div>
 

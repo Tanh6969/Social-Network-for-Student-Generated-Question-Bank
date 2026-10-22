@@ -5,11 +5,10 @@ import {
   X,
   Minus,
   Send,
-  Paperclip,
-  Smile,
   MoreVertical,
   Undo2,
-  AlertCircle
+  Ban,
+  Unlock,
 } from 'lucide-react';
 
 export const ChatDock: React.FC = () => {
@@ -22,11 +21,20 @@ export const ChatDock: React.FC = () => {
     restoreChatDock,
     sendMessage,
     recallMessage,
-    currentUser
+    currentUser,
+    blockUser,
+    unblockUser,
+    isBlockedByMe,
+    isBlockedEitherWay,
+    setViewingUserId,
+    setActiveTab,
   } = useApp();
 
   const [inputTexts, setInputTexts] = useState<Record<string, string>>({});
-  const [activeMessageMenu, setActiveMessageMenu] = useState<{ convId: string; msgId: string } | null>(null);
+  const [activeMessageMenu, setActiveMessageMenu] = useState<{
+    convId: string;
+    msgId: string;
+  } | null>(null);
 
   const handleSend = (convId: string) => {
     const text = inputTexts[convId] || '';
@@ -77,6 +85,9 @@ export const ChatDock: React.FC = () => {
         const conv = conversations.find((c) => c.id === convId);
         if (!conv) return null;
 
+        const isBlocked = isBlockedEitherWay(conv.partner.id);
+        const blockedByMe = isBlockedByMe(conv.partner.id);
+
         return (
           <div
             key={convId}
@@ -84,19 +95,44 @@ export const ChatDock: React.FC = () => {
           >
             {/* Header */}
             <div className="px-3 py-2.5 bg-white dark:bg-[#242526] border-b border-gray-200 dark:border-gray-700 flex items-center justify-between shadow-2xs">
-              <div className="flex items-center gap-2 truncate">
+              <div
+                onClick={() => {
+                  setViewingUserId(conv.partner.id);
+                  setActiveTab('profile');
+                }}
+                className="flex items-center gap-2 truncate cursor-pointer"
+              >
                 <AvatarWithFrame user={conv.partner} size="sm" />
                 <div className="truncate">
-                  <h4 className="font-bold text-xs text-gray-900 dark:text-gray-100 truncate">
+                  <h4 className="font-bold text-xs text-gray-900 dark:text-gray-100 hover:underline truncate">
                     {conv.partner.name}
                   </h4>
-                  <span className="text-[10px] text-emerald-500 font-medium">
-                    {conv.partner.isOnline ? 'Đang hoạt động' : 'Hoạt động 10 phút trước'}
-                  </span>
+                  {isBlocked ? (
+                    <span className="text-[10px] text-red-500 font-semibold">
+                      Không thể nhắn tin
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-emerald-500 font-medium">
+                      {conv.partner.isOnline
+                        ? 'Đang hoạt động'
+                        : 'Hoạt động 10 phút trước'}
+                    </span>
+                  )}
                 </div>
               </div>
 
               <div className="flex items-center gap-1 text-gray-500">
+                {!isBlocked && (
+                  <button
+                    onClick={() =>
+                      blockUser(conv.partner.id, 'Chặn từ cửa sổ Chat Dock')
+                    }
+                    className="p-1 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 rounded-full transition"
+                    title={`Chặn ${conv.partner.name}`}
+                  >
+                    <Ban className="w-3.5 h-3.5" />
+                  </button>
+                )}
                 <button
                   onClick={() => minimizeChatDock(convId)}
                   className="p-1 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-full transition"
@@ -131,7 +167,7 @@ export const ChatDock: React.FC = () => {
                               setActiveMessageMenu(
                                 activeMessageMenu?.msgId === msg.id
                                   ? null
-                                  : { convId, msgId: msg.id }
+                                  : { convId, msgId: msg.id },
                               )
                             }
                             className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full text-gray-400"
@@ -159,8 +195,8 @@ export const ChatDock: React.FC = () => {
                           msg.isRecalled
                             ? 'bg-gray-200 dark:bg-gray-800 text-gray-500 italic'
                             : isMine
-                            ? 'bg-blue-600 text-white rounded-br-xs shadow-xs'
-                            : 'bg-white dark:bg-[#242526] text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-bl-xs shadow-xs'
+                              ? 'bg-blue-600 text-white rounded-br-xs shadow-xs'
+                              : 'bg-white dark:bg-[#242526] text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-bl-xs shadow-xs'
                         } ${
                           msg.effect === 'effect_glow' && isMine
                             ? 'ring-1 ring-cyan-300 shadow-[0_0_10px_rgba(6,182,212,0.5)]'
@@ -178,26 +214,48 @@ export const ChatDock: React.FC = () => {
               })}
             </div>
 
-            {/* Input Bar */}
-            <div className="p-2 bg-white dark:bg-[#242526] border-t border-gray-200 dark:border-gray-700 flex items-center gap-1.5">
-              <input
-                type="text"
-                placeholder="Aa (Gửi tin nhắn...)"
-                value={inputTexts[convId] || ''}
-                onChange={(e) =>
-                  setInputTexts((prev) => ({ ...prev, [convId]: e.target.value }))
-                }
-                onKeyDown={(e) => handleKeyDown(e, convId)}
-                className="flex-1 bg-gray-100 dark:bg-[#3A3B3C] text-xs px-3 py-2 rounded-full focus:outline-hidden focus:ring-1 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
-              />
-              <button
-                onClick={() => handleSend(convId)}
-                disabled={!inputTexts[convId]?.trim()}
-                className="p-2 rounded-full text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 disabled:text-gray-400 disabled:hover:bg-transparent transition"
-              >
-                <Send className="w-4 h-4" />
-              </button>
-            </div>
+            {/* Input Bar hoặc Thông báo bị chặn (Slide 24) */}
+            {isBlocked ? (
+              <div className="p-2.5 bg-red-50 dark:bg-red-950/40 border-t border-red-200 dark:border-red-900/50 text-[11px] text-red-700 dark:text-red-300 flex items-center justify-between gap-2">
+                <span className="leading-tight">
+                  {blockedByMe
+                    ? `Đã chặn ${conv.partner.name}. Hai người không thể nhắn tin.`
+                    : 'Không thể gửi tin nhắn cho người này.'}
+                </span>
+                {blockedByMe && (
+                  <button
+                    type="button"
+                    onClick={() => unblockUser(conv.partner.id)}
+                    className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold shrink-0 flex items-center gap-1"
+                  >
+                    <Unlock className="w-3 h-3" /> Bỏ chặn
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="p-2 bg-white dark:bg-[#242526] border-t border-gray-200 dark:border-gray-700 flex items-center gap-1.5">
+                <input
+                  type="text"
+                  placeholder="Aa (Gửi tin nhắn...)"
+                  value={inputTexts[convId] || ''}
+                  onChange={(e) =>
+                    setInputTexts((prev) => ({
+                      ...prev,
+                      [convId]: e.target.value,
+                    }))
+                  }
+                  onKeyDown={(e) => handleKeyDown(e, convId)}
+                  className="flex-1 bg-gray-100 dark:bg-[#3A3B3C] text-xs px-3 py-2 rounded-full focus:outline-hidden focus:ring-1 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
+                />
+                <button
+                  onClick={() => handleSend(convId)}
+                  disabled={!inputTexts[convId]?.trim()}
+                  className="p-2 rounded-full text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 disabled:text-gray-400 disabled:hover:bg-transparent transition"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
         );
       })}

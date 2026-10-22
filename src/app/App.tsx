@@ -45,6 +45,11 @@ const ReviewDashboardView = React.lazy(() =>
     (module) => ({ default: module.ReviewDashboardView }),
   ),
 );
+const LecturerBankView = React.lazy(() =>
+  import('../features/lecturer/components/LecturerBankView').then(
+    (module) => ({ default: module.LecturerBankView }),
+  ),
+);
 const MessengerFullView = React.lazy(() =>
   import('../features/messenger/components/MessengerFullView').then(
     (module) => ({ default: module.MessengerFullView }),
@@ -137,6 +142,7 @@ const MainContent: React.FC = () => {
           {activeTab === 'game' && <MinigameView />}
           {activeTab === 'friends' && <FriendsView />}
           {activeTab === 'review' && <ReviewDashboardView />}
+          {activeTab === 'lecturer-bank' && <LecturerBankView />}
           {activeTab === 'messenger' && <MessengerFullView />}
           {activeTab === 'profile' && <ProfileView />}
           {activeTab === 'cosmetics' && <CosmeticsView />}
