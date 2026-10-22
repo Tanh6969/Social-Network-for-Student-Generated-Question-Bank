@@ -3,6 +3,7 @@ import { useApp } from '../../demo/context/AppContext';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
 import { PostContent } from '../../feed/components/PostContent';
 import { PostMediaGallery } from '../../feed/components/PostMediaGallery';
+import { PostDocuments } from '../../feed/components/PostDocuments';
 import {
   MediaLightbox,
   type LightboxItem,
@@ -495,6 +496,9 @@ export const ProfileView: React.FC = () => {
                         isVideo={post.type === 'VIDEO'}
                         onOpen={(index) => openPostMedia(post, index)}
                       />
+                    ) : null}
+                    {post.documents?.length ? (
+                      <PostDocuments documents={post.documents} />
                     ) : null}
                     <button
                       onClick={() => setActivePostDetail(post)}

@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   getMediaKind,
+  MAX_DOCUMENT_BYTES,
   MAX_IMAGE_BYTES,
   MAX_VIDEO_BYTES,
   validateMediaFile,
+  validateDocumentFile,
 } from '../src/features/feed/mediaUtils';
 
 describe('post media validation', () => {
@@ -26,6 +28,24 @@ describe('post media validation', () => {
     ).toContain('10 MB');
     expect(validateMediaFile({ type: 'application/pdf', size: 1 })).toContain(
       'ảnh hoặc video',
+    );
+  });
+
+  it('accepts PDF and Office documents up to 15 MB, and rejects other files', () => {
+    expect(
+      validateDocumentFile({ name: 'lecture.pdf', size: MAX_DOCUMENT_BYTES }),
+    ).toBeNull();
+    expect(
+      validateDocumentFile({ name: 'slides.PPTX', size: 1024 }),
+    ).toBeNull();
+    expect(
+      validateDocumentFile({
+        name: 'lecture.pdf',
+        size: MAX_DOCUMENT_BYTES + 1,
+      }),
+    ).toContain('15 MB');
+    expect(validateDocumentFile({ name: 'program.exe', size: 1024 })).toContain(
+      'PDF',
     );
   });
 });

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { ImagePlus, X } from 'lucide-react';
+import { FileText, ImagePlus, Video, X } from 'lucide-react';
 import { useApp } from '../../demo/context/AppContext';
-import type { Post } from '../../demo/types';
+import type { Post, PostDocument } from '../../demo/types';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
 import { MediaLightbox } from '../../../shared/components/MediaLightbox';
 import {
@@ -13,52 +13,65 @@ import {
 } from '../postUtils';
 import {
   getMediaKind,
+  MAX_POST_DOCUMENTS,
   MAX_POST_IMAGES,
   readMediaFile,
   revokeMediaUrl,
   validateMediaFile,
+  validateDocumentFile,
 } from '../mediaUtils';
 import { PostMediaGallery } from './PostMediaGallery';
+import { PostDocuments } from './PostDocuments';
 
 export function CreatePostModal() {
-  const { isCreatePostModalOpen, editingPostId, posts } = useApp();
+  const { isCreatePostModalOpen, editingPostId, composerMediaKind, posts } =
+    useApp();
   if (!isCreatePostModalOpen) return null;
   const editingPost = posts.find((post) => post.id === editingPostId);
   return (
-    <PostComposer key={editingPostId ?? 'new'} editingPost={editingPost} />
+    <PostComposer
+      key={`${editingPostId ?? 'new'}-${composerMediaKind ?? 'text'}`}
+      editingPost={editingPost}
+      initialMediaKind={composerMediaKind}
+    />
   );
 }
 
-function PostComposer({ editingPost }: { editingPost?: Post }) {
+function PostComposer({
+  editingPost,
+  initialMediaKind,
+}: {
+  editingPost?: Post;
+  initialMediaKind: 'image' | 'video' | 'document' | null;
+}) {
   const { currentUser, createPost, updatePost, closePostComposer, showToast } =
     useApp();
-  const fileInput = useRef<HTMLInputElement>(null);
+  const imageInput = useRef<HTMLInputElement>(null);
+  const videoInput = useRef<HTMLInputElement>(null);
+  const documentInput = useRef<HTMLInputElement>(null);
   const newMediaUrls = useRef(new Set<string>());
   const composerClosed = useRef(false);
   const [content, setContent] = useState(editingPost?.content ?? '');
   const [limitIssue, setLimitIssue] = useState<PostContentIssue | null>(null);
-  const [privacy, setPrivacy] = useState<Post['privacy']>(
-    editingPost?.privacy ?? 'PUBLIC',
-  );
-  const [subjectTag, setSubjectTag] = useState(
-    editingPost?.subjectTag ?? 'Mạng máy tính',
-  );
+  const privacy = editingPost?.privacy ?? 'PUBLIC';
   const [mediaUrls, setMediaUrls] = useState(editingPost?.mediaUrls ?? []);
+  const [documents, setDocuments] = useState<PostDocument[]>(
+    editingPost?.documents ?? [],
+  );
   const [mediaType, setMediaType] = useState<'image' | 'video'>(
-    editingPost?.type === 'VIDEO' ? 'video' : 'image',
+    editingPost?.type === 'VIDEO'
+      ? 'video'
+      : initialMediaKind === 'video'
+        ? 'video'
+        : 'image',
   );
   const [fileError, setFileError] = useState<string | null>(null);
   const [isReadingFiles, setIsReadingFiles] = useState(false);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const wordCount = countWords(content);
   const contentIssue = getPostContentIssue(content);
-  const wordsRemaining = MAX_POST_WORDS - wordCount;
-  const showRemaining =
-    wordsRemaining <= 20 || Boolean(contentIssue || limitIssue);
-  const ringIsRed = wordsRemaining <= 0 || Boolean(contentIssue || limitIssue);
-  const ringIsAmber = !ringIsRed && wordsRemaining <= 20;
-  const ringCircumference = 2 * Math.PI * 15;
-  const ringProgress = Math.min(wordCount / MAX_POST_WORDS, 1);
+  const countIsRed =
+    wordCount >= MAX_POST_WORDS || Boolean(contentIssue || limitIssue);
 
   useEffect(() => {
     const ownedUrls = newMediaUrls.current;
@@ -70,13 +83,29 @@ function PostComposer({ editingPost }: { editingPost?: Post }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (editingPost || !initialMediaKind) return;
+    const frame = requestAnimationFrame(() => {
+      (initialMediaKind === 'image'
+        ? imageInput
+        : initialMediaKind === 'video'
+          ? videoInput
+          : documentInput
+      ).current?.click();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [editingPost, initialMediaKind]);
+
   const handleContentChange = (value: string) => {
     const limited = limitPostContent(value);
     setContent(limited.content);
     setLimitIssue(limited.issue);
   };
 
-  const handleFiles = async (files?: FileList | null) => {
+  const handleFiles = async (
+    files: FileList | null,
+    expectedKind: 'image' | 'video',
+  ) => {
     if (!files?.length) return;
     setFileError(null);
     const selectedFiles = Array.from(files);
@@ -89,10 +118,17 @@ function PostComposer({ editingPost }: { editingPost?: Post }) {
     if (!selected.length) return;
     const selectedKind = getMediaKind(selected[0].type);
     if (
+      selectedKind !== expectedKind ||
       selected.some((file) => getMediaKind(file.type) !== selectedKind) ||
       (mediaUrls.length > 0 && selectedKind !== mediaType)
     ) {
-      setFileError('Chọn ảnh hoặc video riêng cho mỗi bài viết.');
+      setFileError(
+        mediaUrls.length > 0 && selectedKind !== mediaType
+          ? 'Gỡ media hiện tại trước khi đổi sang loại khác.'
+          : expectedKind === 'image'
+            ? 'Chỉ chọn tệp ảnh.'
+            : 'Chỉ chọn tệp video.',
+      );
       return;
     }
     if (
@@ -125,7 +161,7 @@ function PostComposer({ editingPost }: { editingPost?: Post }) {
       nextUrls.forEach((url) => newMediaUrls.current.add(url));
       if (nextUrls.length) {
         setMediaUrls((current) => [...current, ...nextUrls]);
-        setMediaType(selectedKind ?? 'image');
+        setMediaType(expectedKind);
       }
       if (results.some((result) => result.status === 'rejected'))
         setFileError('Không đọc được một số tệp đã chọn.');
@@ -136,9 +172,45 @@ function PostComposer({ editingPost }: { editingPost?: Post }) {
     }
   };
 
+  const handleDocuments = (files: FileList | null) => {
+    if (!files?.length) return;
+    setFileError(null);
+    const selectedFiles = Array.from(files);
+    const invalid = selectedFiles.map(validateDocumentFile).find(Boolean);
+    if (invalid) {
+      setFileError(invalid);
+      showToast(invalid, 'warning');
+    }
+    const valid = selectedFiles.filter((file) => !validateDocumentFile(file));
+    if (documents.length + valid.length > MAX_POST_DOCUMENTS) {
+      setFileError(`Mỗi bài viết tối đa ${MAX_POST_DOCUMENTS} tài liệu.`);
+      return;
+    }
+    const nextDocuments: PostDocument[] = [];
+    try {
+      valid.forEach((file) => {
+        const url = URL.createObjectURL(file);
+        newMediaUrls.current.add(url);
+        nextDocuments.push({
+          name: file.name,
+          url,
+          size: file.size,
+          mimeType: file.type,
+        });
+      });
+      setDocuments((current) => [...current, ...nextDocuments]);
+    } catch {
+      nextDocuments.forEach((document) => {
+        newMediaUrls.current.delete(document.url);
+        revokeMediaUrl(document.url);
+      });
+      setFileError('Không đọc được tài liệu đã chọn. Hãy thử lại.');
+    }
+  };
+
   const handleSave = () => {
     if (
-      (!content.trim() && !mediaUrls.length) ||
+      (!content.trim() && !mediaUrls.length && !documents.length) ||
       contentIssue ||
       isReadingFiles
     )
@@ -149,6 +221,7 @@ function PostComposer({ editingPost }: { editingPost?: Post }) {
         content: content.trim(),
         privacy,
         mediaUrls,
+        documents,
         type:
           editingPost.type === 'QUESTION_APPROVED'
             ? editingPost.type
@@ -160,8 +233,8 @@ function PostComposer({ editingPost }: { editingPost?: Post }) {
       createPost({
         content: content.trim(),
         privacy,
-        subjectTag,
         mediaUrls,
+        documents,
         type: mediaType === 'video' && mediaUrls.length ? 'VIDEO' : 'KNOWLEDGE',
       });
     }
@@ -195,53 +268,34 @@ function PostComposer({ editingPost }: { editingPost?: Post }) {
         <div className="max-h-[75vh] space-y-4 overflow-y-auto p-4">
           <div className="flex items-center gap-3">
             <AvatarWithFrame user={currentUser} size="md" />
-            <div>
-              <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
-                {currentUser.name}
-              </p>
-              <select
-                value={privacy}
-                onChange={(event) =>
-                  setPrivacy(event.target.value as Post['privacy'])
-                }
-                aria-label="Ai có thể xem bài viết"
-                className="rounded-md bg-gray-100 px-2 py-1 text-xs dark:bg-[#3A3B3C]"
-              >
-                <option value="PUBLIC">Công khai</option>
-                <option value="FRIENDS">Bạn bè</option>
-                <option value="ONLY_ME">Chỉ mình tôi</option>
-              </select>
-            </div>
+            <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
+              {currentUser.name}
+            </p>
           </div>
-          {!editingPost && (
-            <select
-              value={subjectTag}
-              onChange={(event) => setSubjectTag(event.target.value)}
-              aria-label="Môn học"
-              className="rounded-md bg-blue-50 px-2 py-1 text-xs text-blue-700 dark:bg-blue-950 dark:text-blue-300"
-            >
-              <option>Mạng máy tính</option>
-              <option>Cấu trúc dữ liệu & Giải thuật</option>
-              <option>Cơ sở dữ liệu</option>
-              <option>Giải tích 1</option>
-            </select>
-          )}
           <label htmlFor="post-content" className="sr-only">
             Nội dung bài viết
           </label>
-          <textarea
-            id="post-content"
-            autoFocus
-            rows={6}
-            value={content}
-            onChange={(event) => handleContentChange(event.target.value)}
-            aria-describedby={
-              contentIssue || limitIssue ? 'post-content-error' : undefined
-            }
-            aria-invalid={Boolean(limitIssue || contentIssue)}
-            placeholder="Bạn muốn chia sẻ điều gì?"
-            className={`w-full resize-none rounded-lg bg-transparent text-sm leading-relaxed text-gray-900 outline-none placeholder:text-gray-400 dark:text-gray-100 ${contentIssue ? 'ring-1 ring-red-500' : ''}`}
-          />
+          <div className="relative">
+            <textarea
+              id="post-content"
+              autoFocus
+              rows={6}
+              value={content}
+              onChange={(event) => handleContentChange(event.target.value)}
+              aria-describedby={
+                contentIssue || limitIssue ? 'post-content-error' : undefined
+              }
+              aria-invalid={Boolean(limitIssue || contentIssue)}
+              placeholder="Bạn muốn chia sẻ điều gì?"
+              className={`w-full resize-none rounded-lg bg-transparent pb-7 text-sm leading-relaxed text-gray-900 outline-none placeholder:text-gray-400 dark:text-gray-100 ${contentIssue ? 'ring-1 ring-red-500' : ''}`}
+            />
+            <span
+              aria-label={`${wordCount} trên ${MAX_POST_WORDS} từ`}
+              className={`pointer-events-none absolute bottom-2 right-2 text-xs tabular-nums ${countIsRed ? 'font-semibold text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}
+            >
+              {wordCount}/{MAX_POST_WORDS}
+            </span>
+          </div>
           {(contentIssue || limitIssue) && (
             <p
               id="post-content-error"
@@ -269,25 +323,80 @@ function PostComposer({ editingPost }: { editingPost?: Post }) {
               setFileError(null);
             }}
           />
+          <PostDocuments
+            documents={documents}
+            onRemove={(index) => {
+              const removed = documents[index];
+              if (removed && newMediaUrls.current.delete(removed.url))
+                revokeMediaUrl(removed.url);
+              setDocuments((current) =>
+                current.filter((_, itemIndex) => itemIndex !== index),
+              );
+              setFileError(null);
+            }}
+          />
           <input
-            ref={fileInput}
+            ref={imageInput}
             type="file"
-            accept="image/*,video/*"
+            accept="image/*"
             multiple
             className="hidden"
             onChange={(event) => {
-              void handleFiles(event.target.files);
+              void handleFiles(event.target.files, 'image');
               event.target.value = '';
             }}
           />
-          <button
-            type="button"
-            onClick={() => fileInput.current?.click()}
-            className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-[#3A3B3C]"
-          >
-            <ImagePlus className="h-4 w-4 text-emerald-600" />
-            Thêm ảnh/video
-          </button>
+          <input
+            ref={videoInput}
+            type="file"
+            accept="video/*"
+            className="hidden"
+            onChange={(event) => {
+              void handleFiles(event.target.files, 'video');
+              event.target.value = '';
+            }}
+          />
+          <input
+            ref={documentInput}
+            type="file"
+            accept=".pdf,.txt,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+            multiple
+            className="hidden"
+            onChange={(event) => {
+              handleDocuments(event.target.files);
+              event.target.value = '';
+            }}
+          />
+          <div className="flex flex-wrap gap-2">
+            {(mediaUrls.length === 0 || mediaType === 'image') && (
+              <button
+                type="button"
+                onClick={() => imageInput.current?.click()}
+                className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-[#3A3B3C] ${mediaType === 'image' && initialMediaKind === 'image' ? 'border-blue-500 text-blue-600' : 'border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-200'}`}
+              >
+                <ImagePlus className="h-4 w-4 text-emerald-600" />
+                Thêm ảnh
+              </button>
+            )}
+            {(mediaUrls.length === 0 || mediaType === 'video') && (
+              <button
+                type="button"
+                onClick={() => videoInput.current?.click()}
+                className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-[#3A3B3C] ${mediaType === 'video' && initialMediaKind === 'video' ? 'border-blue-500 text-blue-600' : 'border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-200'}`}
+              >
+                <Video className="h-4 w-4 text-blue-600" />
+                Thêm video
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => documentInput.current?.click()}
+              className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-[#3A3B3C] ${initialMediaKind === 'document' ? 'border-blue-500 text-blue-600' : 'border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-200'}`}
+            >
+              <FileText className="h-4 w-4 text-blue-600" />
+              Thêm tài liệu
+            </button>
+          </div>
           {fileError && (
             <p
               role="alert"
@@ -297,68 +406,16 @@ function PostComposer({ editingPost }: { editingPost?: Post }) {
             </p>
           )}
         </div>
-        <div className="flex items-center gap-4 border-t border-gray-100 p-4 dark:border-gray-700">
-          <div
-            className="relative h-10 w-10 shrink-0"
-            role="img"
-            aria-label={
-              wordsRemaining < 0
-                ? `Bài viết vượt giới hạn ${-wordsRemaining} từ`
-                : `Còn ${wordsRemaining} từ trước giới hạn bài viết`
-            }
-          >
-            <svg
-              viewBox="0 0 40 40"
-              className="h-full w-full -rotate-90"
-              aria-hidden="true"
-            >
-              <circle
-                cx="20"
-                cy="20"
-                r="15"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                className="text-gray-200 dark:text-gray-600"
-              />
-              <circle
-                cx="20"
-                cy="20"
-                r="15"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeDasharray={ringCircumference}
-                strokeDashoffset={ringCircumference * (1 - ringProgress)}
-                className={
-                  ringIsRed
-                    ? 'text-red-500'
-                    : ringIsAmber
-                      ? 'text-amber-500'
-                      : 'text-blue-500'
-                }
-              />
-            </svg>
-            {showRemaining && (
-              <span
-                className={`absolute inset-0 flex items-center justify-center text-xs font-medium ${ringIsRed ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-300'}`}
-              >
-                {contentIssue && contentIssue !== 'words'
-                  ? '!'
-                  : wordsRemaining}
-              </span>
-            )}
-          </div>
+        <div className="border-t border-gray-100 p-4 dark:border-gray-700">
           <button
             type="button"
             onClick={handleSave}
             disabled={
-              (!content.trim() && !mediaUrls.length) ||
+              (!content.trim() && !mediaUrls.length && !documents.length) ||
               Boolean(contentIssue) ||
               isReadingFiles
             }
-            className="flex-1 rounded-xl bg-blue-600 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 dark:disabled:bg-gray-700"
+            className="w-full rounded-xl bg-blue-600 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 dark:disabled:bg-gray-700"
           >
             {editingPost ? 'Lưu thay đổi' : 'Đăng bài viết'}
           </button>

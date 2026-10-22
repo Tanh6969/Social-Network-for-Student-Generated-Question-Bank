@@ -4,17 +4,14 @@ import { formatPostTime } from '../postUtils';
 
 export function CommentList({
   comments,
-  limit,
   onReply,
 }: {
   comments: CommentItem[];
-  limit?: number;
   onReply: (comment: CommentItem) => void;
 }) {
-  const visibleComments = limit ? comments.slice(-limit) : comments;
   return (
     <div className="space-y-3">
-      {visibleComments.map((comment) => (
+      {comments.map((comment) => (
         <div key={comment.id} className="flex items-start gap-2.5 text-xs">
           <AvatarWithFrame user={comment.author} size="sm" />
           <div className="min-w-0 flex-1">

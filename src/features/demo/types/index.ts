@@ -1,5 +1,6 @@
 export type Role = 'STUDENT' | 'LECTURER';
-export type FriendStatus = 'FRIEND' | 'REQUEST_SENT' | 'REQUEST_RECEIVED' | 'NONE';
+export type FriendStatus =
+  'FRIEND' | 'REQUEST_SENT' | 'REQUEST_RECEIVED' | 'NONE';
 
 export interface ImageCrop {
   x: number;
@@ -40,6 +41,13 @@ export interface User {
 
 export type PostType = 'KNOWLEDGE' | 'VIDEO' | 'QUESTION_APPROVED';
 
+export interface PostDocument {
+  name: string;
+  url: string;
+  size: number;
+  mimeType: string;
+}
+
 export interface Post {
   id: string;
   author: User;
@@ -47,6 +55,7 @@ export interface Post {
   content: string;
   subjectTag?: string;
   mediaUrls?: string[];
+  documents?: PostDocument[];
   videoUrl?: string;
   linkedQuestionId?: string;
   likesCount: number;
@@ -75,7 +84,8 @@ export interface CommentItem {
 }
 
 export type QuestionDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
-export type QuestionStatus = 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'AI_MODIFIED';
+export type QuestionStatus =
+  'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'AI_MODIFIED';
 
 export interface Question {
   id: string;
@@ -217,7 +227,14 @@ export interface AppNotification {
   message: string;
   timestamp: string;
   isRead: boolean;
-  type: 'FRIEND_REQUEST' | 'QUESTION_APPROVED' | 'QUESTION_REJECTED' | 'LECTURER_NOTE' | 'MINIGAME_WIN' | 'POST_REACT' | 'SYSTEM';
+  type:
+    | 'FRIEND_REQUEST'
+    | 'QUESTION_APPROVED'
+    | 'QUESTION_REJECTED'
+    | 'LECTURER_NOTE'
+    | 'MINIGAME_WIN'
+    | 'POST_REACT'
+    | 'SYSTEM';
   actor?: User;
   targetId?: string;
 }

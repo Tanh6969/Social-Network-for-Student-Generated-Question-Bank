@@ -102,7 +102,10 @@ interface AppContextType {
   createPost: (postData: Partial<Post>) => void;
   updatePost: (
     postId: string,
-    updates: Pick<Post, 'content' | 'privacy' | 'mediaUrls' | 'type'>,
+    updates: Pick<
+      Post,
+      'content' | 'privacy' | 'mediaUrls' | 'documents' | 'type'
+    >,
   ) => void;
   toggleLikePost: (postId: string) => void;
   addComment: (postId: string, text: string, parentCommentId?: string) => void;
@@ -193,13 +196,18 @@ interface AppContextType {
   activeQuizQuestion: Question | null;
   setActiveQuizQuestion: (q: Question | null) => void;
   activePostDetail: Post | null;
-  setActivePostDetail: (p: Post | null) => void;
+  setActivePostDetail: (p: Post | null, focusComment?: boolean) => void;
+  activePostCommentFocus: boolean;
   activePostMediaIndex: number;
   openPostMedia: (post: Post, index: number) => void;
   isCreatePostModalOpen: boolean;
   setIsCreatePostModalOpen: (open: boolean) => void;
   editingPostId: string | null;
-  openPostComposer: (postId?: string) => void;
+  composerMediaKind: 'image' | 'video' | 'document' | null;
+  openPostComposer: (
+    postId?: string,
+    initialMediaKind?: 'image' | 'video' | 'document',
+  ) => void;
   closePostComposer: () => void;
   isProposeSessionModalOpen: boolean;
   setIsProposeSessionModalOpen: (open: boolean) => void;
@@ -302,25 +310,36 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     null,
   );
   const [activePostMediaIndex, setActivePostMediaIndex] = useState(0);
+  const [activePostCommentFocus, setActivePostCommentFocus] = useState(false);
   const activePostDetail =
     posts.find((post) => post.id === activePostDetailId) ?? null;
-  const setActivePostDetail = (post: Post | null) => {
+  const setActivePostDetail = (post: Post | null, focusComment = false) => {
     setActivePostMediaIndex(0);
+    setActivePostCommentFocus(Boolean(post && focusComment));
     setActivePostDetailId(post?.id ?? null);
   };
   const openPostMedia = (post: Post, index: number) => {
     setActivePostMediaIndex(index);
+    setActivePostCommentFocus(false);
     setActivePostDetailId(post.id);
   };
   const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
-  const openPostComposer = (postId?: string) => {
+  const [composerMediaKind, setComposerMediaKind] = useState<
+    'image' | 'video' | 'document' | null
+  >(null);
+  const openPostComposer = (
+    postId?: string,
+    initialMediaKind?: 'image' | 'video' | 'document',
+  ) => {
     setEditingPostId(postId ?? null);
+    setComposerMediaKind(postId ? null : (initialMediaKind ?? null));
     setIsCreatePostModalOpen(true);
   };
   const closePostComposer = () => {
     setIsCreatePostModalOpen(false);
     setEditingPostId(null);
+    setComposerMediaKind(null);
   };
   const [isProposeSessionModalOpen, setIsProposeSessionModalOpen] =
     useState(false);
@@ -480,7 +499,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   // Posts
   const createPost = (postData: Partial<Post>) => {
     if (
-      (!postData.content?.trim() && !postData.mediaUrls?.length) ||
+      (!postData.content?.trim() &&
+        !postData.mediaUrls?.length &&
+        !postData.documents?.length) ||
       getPostContentIssue(postData.content ?? '')
     )
       return;
@@ -491,6 +512,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       content: postData.content || '',
       subjectTag: postData.subjectTag,
       mediaUrls: postData.mediaUrls,
+      documents: postData.documents,
       videoUrl: postData.videoUrl,
       linkedQuestionId: postData.linkedQuestionId,
       likesCount: 0,
@@ -507,10 +529,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const updatePost = (
     postId: string,
-    updates: Pick<Post, 'content' | 'privacy' | 'mediaUrls' | 'type'>,
+    updates: Pick<
+      Post,
+      'content' | 'privacy' | 'mediaUrls' | 'documents' | 'type'
+    >,
   ) => {
     if (
-      (!updates.content.trim() && !updates.mediaUrls?.length) ||
+      (!updates.content.trim() &&
+        !updates.mediaUrls?.length &&
+        !updates.documents?.length) ||
       getPostContentIssue(updates.content)
     )
       return;
@@ -530,6 +557,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
           !profilePhotoHistory.some((photo) => photo.url === url),
       )
       .forEach(revokeMediaUrl);
+    oldPost.documents
+      ?.filter(
+        (document) =>
+          !updates.documents?.some((item) => item.url === document.url),
+      )
+      .forEach((document) => revokeMediaUrl(document.url));
     showToast('Đã lưu thay đổi bài viết.', 'success');
   };
 
@@ -593,6 +626,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
           !profilePhotoHistory.some((photo) => photo.url === url),
       )
       .forEach(revokeMediaUrl);
+    oldPost.documents?.forEach((document) => revokeMediaUrl(document.url));
     if (activePostDetailId === postId) setActivePostDetailId(null);
     showToast('Đã xóa bài viết thành công!', 'info');
   };
@@ -1118,11 +1152,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         setActiveQuizQuestion,
         activePostDetail,
         setActivePostDetail,
+        activePostCommentFocus,
         activePostMediaIndex,
         openPostMedia,
         isCreatePostModalOpen,
         setIsCreatePostModalOpen,
         editingPostId,
+        composerMediaKind,
         openPostComposer,
         closePostComposer,
         isProposeSessionModalOpen,

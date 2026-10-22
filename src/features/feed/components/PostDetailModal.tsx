@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Send, ThumbsUp, X } from 'lucide-react';
 import { useApp } from '../../demo/context/AppContext';
 import type { CommentItem, Post } from '../../demo/types';
@@ -6,16 +6,19 @@ import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
 import { MediaLightbox } from '../../../shared/components/MediaLightbox';
 import { CommentList } from './CommentList';
 import { PostContent } from './PostContent';
+import { PostDocuments } from './PostDocuments';
 import { formatPostTime } from '../postUtils';
 
 export function PostDetailModal() {
-  const { activePostDetail, activePostMediaIndex } = useApp();
+  const { activePostDetail, activePostMediaIndex, activePostCommentFocus } =
+    useApp();
   if (!activePostDetail) return null;
   return (
     <PostDetail
       key={activePostDetail.id}
       post={activePostDetail}
       initialIndex={activePostMediaIndex}
+      focusComment={activePostCommentFocus}
     />
   );
 }
@@ -23,9 +26,11 @@ export function PostDetailModal() {
 function PostDetail({
   post,
   initialIndex,
+  focusComment,
 }: {
   post: Post;
   initialIndex: number;
+  focusComment: boolean;
 }) {
   const {
     currentUser,
@@ -37,6 +42,13 @@ function PostDetail({
   } = useApp();
   const [commentInput, setCommentInput] = useState('');
   const [replyTarget, setReplyTarget] = useState<CommentItem | null>(null);
+  const commentInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!focusComment) return;
+    const frame = requestAnimationFrame(() => commentInputRef.current?.focus());
+    return () => cancelAnimationFrame(frame);
+  }, [focusComment]);
 
   const submitComment = () => {
     if (!commentInput.trim()) return;
@@ -99,6 +111,9 @@ function PostDetail({
       </div>
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
         {post.content.trim() && <PostContent content={post.content} />}
+        {post.documents?.length ? (
+          <PostDocuments documents={post.documents} />
+        ) : null}
         <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-xs dark:border-gray-700">
           <button
             type="button"
@@ -110,10 +125,19 @@ function PostDetail({
           </button>
           <span className="text-gray-500">{post.commentsCount} bình luận</span>
         </div>
-        <CommentList
-          comments={post.comments ?? []}
-          onReply={(comment) => setReplyTarget(comment)}
-        />
+        {post.comments?.length ? (
+          <CommentList
+            comments={post.comments}
+            onReply={(comment) => {
+              setReplyTarget(comment);
+              commentInputRef.current?.focus();
+            }}
+          />
+        ) : (
+          <p className="py-6 text-center text-xs text-gray-500">
+            Chưa có bình luận.
+          </p>
+        )}
       </div>
       {replyTarget && (
         <div className="flex items-center justify-between px-4 pb-1 text-xs text-blue-600">
@@ -130,6 +154,7 @@ function PostDetail({
       <div className="flex items-center gap-2 border-t border-gray-200 p-3 dark:border-gray-700">
         <AvatarWithFrame user={currentUser} size="sm" />
         <input
+          ref={commentInputRef}
           type="text"
           value={commentInput}
           onChange={(event) => setCommentInput(event.target.value)}

@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useApp } from '../../demo/context/AppContext';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
-import { CommentList } from './CommentList';
 import { PostContent } from './PostContent';
 import { PostMediaGallery } from './PostMediaGallery';
+import { PostDocuments } from './PostDocuments';
 import { formatPostTime, sortFeedPosts } from '../postUtils';
 import {
   Users,
@@ -16,6 +16,7 @@ import {
   Sparkles,
   CheckSquare,
   Image,
+  FileText,
   Video,
   HelpCircle,
   ThumbsUp,
@@ -26,13 +27,11 @@ import {
   Award,
   Clock,
   CheckCircle,
-  Send,
   RefreshCw,
   SlidersHorizontal,
   ShieldCheck,
   Compass,
 } from 'lucide-react';
-import type { CommentItem } from '../../demo/types';
 
 export const FeedView: React.FC = () => {
   const {
@@ -40,7 +39,6 @@ export const FeedView: React.FC = () => {
     role,
     posts,
     toggleLikePost,
-    addComment,
     deletePost,
     friendStatuses,
     openPostComposer,
@@ -57,13 +55,29 @@ export const FeedView: React.FC = () => {
   } = useApp();
 
   const [hasNewPostsBanner, setHasNewPostsBanner] = useState(true);
-  const [commentInputs, setCommentInputs] = useState<Record<string, string>>(
-    {},
-  );
-  const [replyTargets, setReplyTargets] = useState<
-    Record<string, CommentItem | null>
-  >({});
   const [activeMenuPostId, setActiveMenuPostId] = useState<string | null>(null);
+  const [isAttachmentMenuOpen, setIsAttachmentMenuOpen] = useState(false);
+  const attachmentMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isAttachmentMenuOpen) return;
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (
+        event.target instanceof Node &&
+        !attachmentMenuRef.current?.contains(event.target)
+      )
+        setIsAttachmentMenuOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsAttachmentMenuOpen(false);
+    };
+    document.addEventListener('pointerdown', closeOnOutsideClick);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [isAttachmentMenuOpen]);
   const friendIds = new Set(
     Object.entries(friendStatuses)
       .filter(([, status]) => status === 'FRIEND')
@@ -76,20 +90,6 @@ export const FeedView: React.FC = () => {
       (post.privacy === 'FRIENDS' && friendIds.has(post.author.id)),
   );
   const orderedPosts = sortFeedPosts(visiblePosts, currentUser.id, friendIds);
-
-  const handleCommentSubmit = (postId: string) => {
-    const text = commentInputs[postId] || '';
-    if (text.trim()) {
-      addComment(postId, text, replyTargets[postId]?.id);
-      setCommentInputs((prev) => ({ ...prev, [postId]: '' }));
-      setReplyTargets((prev) => ({ ...prev, [postId]: null }));
-    }
-  };
-
-  const handleReply = (postId: string, comment: CommentItem) => {
-    setReplyTargets((previous) => ({ ...previous, [postId]: comment }));
-    document.getElementById(`comment-input-${postId}`)?.focus();
-  };
 
   return (
     <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 flex justify-between items-start gap-4 lg:gap-8 xl:gap-12 2xl:gap-16">
@@ -231,16 +231,52 @@ export const FeedView: React.FC = () => {
           </div>
 
           <div className="flex items-center justify-between pt-3 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300">
-            <button
-              onClick={() => openPostComposer()}
-              className="flex items-center justify-center gap-2 flex-1 py-2 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-lg transition"
-            >
-              <Image className="w-4.5 h-4.5 text-gray-500 dark:text-gray-400" />
-              <span>Ảnh/Tài liệu</span>
-            </button>
+            <div ref={attachmentMenuRef} className="relative flex-1">
+              <button
+                type="button"
+                onClick={() => setIsAttachmentMenuOpen((open) => !open)}
+                aria-expanded={isAttachmentMenuOpen}
+                aria-haspopup="menu"
+                className="flex w-full items-center justify-center gap-2 rounded-lg py-2 transition hover:bg-gray-100 dark:hover:bg-[#3A3B3C]"
+              >
+                <Image className="w-4.5 h-4.5 shrink-0 text-gray-500 dark:text-gray-400" />
+                <span>Ảnh/Tài liệu</span>
+              </button>
+              {isAttachmentMenuOpen && (
+                <div
+                  role="menu"
+                  className="absolute left-0 top-full z-30 mt-2 w-44 rounded-xl border border-gray-200 bg-white p-1 shadow-lg dark:border-gray-700 dark:bg-[#242526]"
+                >
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setIsAttachmentMenuOpen(false);
+                      openPostComposer(undefined, 'image');
+                    }}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-[#3A3B3C]"
+                  >
+                    <Image className="h-4 w-4" />
+                    Chọn ảnh
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setIsAttachmentMenuOpen(false);
+                      openPostComposer(undefined, 'document');
+                    }}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-[#3A3B3C]"
+                  >
+                    <FileText className="h-4 w-4" />
+                    Chọn tài liệu
+                  </button>
+                </div>
+              )}
+            </div>
 
             <button
-              onClick={() => openPostComposer()}
+              onClick={() => openPostComposer(undefined, 'video')}
               className="flex items-center justify-center gap-2 flex-1 py-2 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-lg transition"
             >
               <Video className="w-4.5 h-4.5 text-gray-500 dark:text-gray-400" />
@@ -305,10 +341,6 @@ export const FeedView: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
                       <span>{formatPostTime(post.createdAt)}</span>
-                      <span>·</span>
-                      <span className="bg-gray-100 dark:bg-[#3A3B3C] px-1.5 py-0.2 rounded text-[10px]">
-                        {post.subjectTag || 'Chia sẻ kiến thức'}
-                      </span>
                     </div>
                   </div>
                 </div>
@@ -384,6 +416,11 @@ export const FeedView: React.FC = () => {
                   onOpen={(index) => openPostMedia(post, index)}
                 />
               )}
+              {post.documents && post.documents.length > 0 && (
+                <div className="px-4 pb-3">
+                  <PostDocuments documents={post.documents} />
+                </div>
+              )}
 
               {/* Stats Bar */}
               <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between text-xs text-gray-500">
@@ -394,12 +431,13 @@ export const FeedView: React.FC = () => {
                   <span>{post.likesCount} lượt thích</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span
+                  <button
+                    type="button"
                     onClick={() => setActivePostDetail(post)}
-                    className="hover:underline cursor-pointer"
+                    className="hover:underline"
                   >
                     {post.commentsCount} bình luận
-                  </span>
+                  </button>
                   <span>{post.sharesCount} chia sẻ</span>
                 </div>
               </div>
@@ -421,7 +459,7 @@ export const FeedView: React.FC = () => {
                 </button>
 
                 <button
-                  onClick={() => setActivePostDetail(post)}
+                  onClick={() => setActivePostDetail(post, true)}
                   className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition"
                 >
                   <MessageCircle className="w-4 h-4" />
@@ -440,64 +478,6 @@ export const FeedView: React.FC = () => {
                   <Share2 className="w-4 h-4" />
                   <span>Chia sẻ</span>
                 </button>
-              </div>
-
-              {/* Inline Comments Section */}
-              <div className="p-4 bg-gray-50/50 dark:bg-[#1E1F20] border-t border-gray-100 dark:border-gray-700 space-y-3">
-                <CommentList
-                  comments={post.comments ?? []}
-                  limit={2}
-                  onReply={(comment) => handleReply(post.id, comment)}
-                />
-                {replyTargets[post.id] && (
-                  <div className="flex items-center justify-between text-xs text-blue-600">
-                    <span>
-                      Đang trả lời {replyTargets[post.id]?.author.name}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setReplyTargets((previous) => ({
-                          ...previous,
-                          [post.id]: null,
-                        }))
-                      }
-                      className="hover:underline"
-                    >
-                      Hủy
-                    </button>
-                  </div>
-                )}
-
-                {/* Comment Input */}
-                <div className="flex items-center gap-2 pt-1">
-                  <AvatarWithFrame user={currentUser} size="sm" />
-                  <div className="flex-1 relative">
-                    <input
-                      id={`comment-input-${post.id}`}
-                      type="text"
-                      placeholder="Viết câu trả lời hoặc thảo luận..."
-                      value={commentInputs[post.id] || ''}
-                      onChange={(e) =>
-                        setCommentInputs((prev) => ({
-                          ...prev,
-                          [post.id]: e.target.value,
-                        }))
-                      }
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleCommentSubmit(post.id);
-                      }}
-                      className="w-full bg-white dark:bg-[#242526] border border-gray-200 dark:border-gray-700 rounded-full px-4 py-2 text-xs text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
-                    />
-                    <button
-                      onClick={() => handleCommentSubmit(post.id)}
-                      disabled={!commentInputs[post.id]?.trim()}
-                      className="absolute right-2 top-1.5 p-1 text-blue-600 disabled:text-gray-300"
-                    >
-                      <Send className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
               </div>
             </article>
           );

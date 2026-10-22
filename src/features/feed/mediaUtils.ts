@@ -1,6 +1,20 @@
 export const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 export const MAX_VIDEO_BYTES = 10 * 1024 * 1024;
+export const MAX_DOCUMENT_BYTES = 15 * 1024 * 1024;
 export const MAX_POST_IMAGES = 10;
+export const MAX_POST_DOCUMENTS = 10;
+
+const DOCUMENT_EXTENSION = /\.(pdf|txt|doc|docx|xls|xlsx|ppt|pptx)$/iu;
+
+export function validateDocumentFile(
+  file: Pick<File, 'name' | 'size'>,
+): string | null {
+  if (!DOCUMENT_EXTENSION.test(file.name))
+    return 'Chỉ hỗ trợ tài liệu PDF, TXT, Word, Excel hoặc PowerPoint.';
+  if (file.size > MAX_DOCUMENT_BYTES)
+    return 'Tài liệu vượt quá 15 MB. Chọn tệp khác để tiếp tục.';
+  return null;
+}
 
 export type MediaKind = 'image' | 'video';
 

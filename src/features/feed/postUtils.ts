@@ -104,7 +104,10 @@ export function updateOwnedPost(
   posts: Post[],
   postId: string,
   ownerId: string,
-  updates: Pick<Post, 'content' | 'privacy' | 'mediaUrls' | 'type'>,
+  updates: Pick<
+    Post,
+    'content' | 'privacy' | 'mediaUrls' | 'documents' | 'type'
+  >,
 ): Post[] {
   return posts.map((post) =>
     post.id === postId && post.author.id === ownerId
