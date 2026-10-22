@@ -446,7 +446,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         : { coverImage: url, coverCrop: crop },
     );
   };
-
   // Sync dark mode class on root
   useEffect(() => {
     try {

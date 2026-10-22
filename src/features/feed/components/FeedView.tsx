@@ -13,7 +13,6 @@ import {
   Trophy,
   Tv,
   FileCode,
-  Sparkles,
   CheckSquare,
   Image,
   FileText,
@@ -116,16 +115,18 @@ export const FeedView: React.FC = () => {
 
         {/* Shortcuts list - Tối giản & đồng bộ màu sắc */}
         <div className="space-y-0.5 text-sm font-medium text-gray-700 dark:text-gray-200">
+          {/* 1. Đề xuất câu hỏi mới */}
           <button
-            onClick={() => setActiveTab('friends')}
-            className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left"
+            onClick={() => setActiveTab('propose')}
+            className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-semibold transition text-left cursor-pointer"
           >
-            <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/40 group-hover:text-blue-600 flex items-center justify-center transition-colors">
-              <Users className="w-5 h-5" />
+            <div className="w-9 h-9 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50 flex items-center justify-center transition-colors">
+              <PlusCircle className="w-5 h-5" />
             </div>
-            <span>Bạn bè & Giảng viên</span>
+            <span>Đề xuất câu hỏi mới</span>
           </button>
 
+          {/* 2. Ngân hàng đề thi */}
           <button
             onClick={() => setActiveTab('bank')}
             className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left"
@@ -136,46 +137,7 @@ export const FeedView: React.FC = () => {
             <span>Ngân hàng đề thi</span>
           </button>
 
-          <button
-            onClick={() => setIsProposeSessionModalOpen(true)}
-            className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-semibold transition text-left"
-          >
-            <div className="w-9 h-9 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50 flex items-center justify-center transition-colors">
-              <PlusCircle className="w-5 h-5" />
-            </div>
-            <span>Đề xuất câu hỏi mới</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('game')}
-            className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left"
-          >
-            <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/40 group-hover:text-blue-600 flex items-center justify-center transition-colors">
-              <Gamepad2 className="w-5 h-5" />
-            </div>
-            <span>Minigame dự đoán</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('game')}
-            className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left"
-          >
-            <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/40 group-hover:text-blue-600 flex items-center justify-center transition-colors">
-              <Trophy className="w-5 h-5" />
-            </div>
-            <span>Bảng xếp hạng cống hiến</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('watch')}
-            className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left"
-          >
-            <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/40 group-hover:text-blue-600 flex items-center justify-center transition-colors">
-              <Tv className="w-5 h-5" />
-            </div>
-            <span>Video học tập</span>
-          </button>
-
+          {/* 3. Sinh đề thi & Mã đề */}
           <button
             onClick={() => setActiveTab('exams')}
             className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left"
@@ -186,14 +148,37 @@ export const FeedView: React.FC = () => {
             <span>Sinh đề thi & Mã đề</span>
           </button>
 
+          {/* 4. Minigame dự đoán */}
           <button
-            onClick={() => setActiveTab('cosmetics')}
+            onClick={() => setActiveTab('game')}
             className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left"
           >
             <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/40 group-hover:text-blue-600 flex items-center justify-center transition-colors">
-              <Sparkles className="w-5 h-5" />
+              <Gamepad2 className="w-5 h-5" />
             </div>
-            <span>Kho vật phẩm cosmetics</span>
+            <span>Minigame dự đoán</span>
+          </button>
+
+          {/* 5. Video học tập */}
+          <button
+            onClick={() => setActiveTab('watch')}
+            className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left"
+          >
+            <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/40 group-hover:text-blue-600 flex items-center justify-center transition-colors">
+              <Tv className="w-5 h-5" />
+            </div>
+            <span>Video học tập</span>
+          </button>
+
+          {/* 6. Bạn bè & Giảng viên */}
+          <button
+            onClick={() => setActiveTab('friends')}
+            className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left"
+          >
+            <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/40 group-hover:text-blue-600 flex items-center justify-center transition-colors">
+              <Users className="w-5 h-5" />
+            </div>
+            <span>Bạn bè & Giảng viên</span>
           </button>
 
           {role === 'LECTURER' && (
@@ -284,8 +269,8 @@ export const FeedView: React.FC = () => {
             </button>
 
             <button
-              onClick={() => setIsProposeSessionModalOpen(true)}
-              className="flex items-center justify-center gap-2 flex-1 py-2 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-lg transition text-blue-600 dark:text-blue-400 font-semibold"
+              onClick={() => setActiveTab('propose')}
+              className="flex items-center justify-center gap-2 flex-1 py-2 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-lg transition text-blue-600 dark:text-blue-400 font-semibold cursor-pointer"
             >
               <HelpCircle className="w-4.5 h-4.5 text-blue-600 dark:text-blue-400" />
               <span>Đề xuất câu hỏi</span>

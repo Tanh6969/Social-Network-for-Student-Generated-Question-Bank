@@ -242,6 +242,7 @@ export interface AppNotification {
 export type MainTab =
   | 'feed'
   | 'bank'
+  | 'propose'
   | 'watch'
   | 'game'
   | 'friends'
@@ -252,3 +253,4 @@ export type MainTab =
   | 'settings'
   | 'exams'
   | 'search';
+
