@@ -23,11 +23,13 @@ import {
   MessageItem,
   AppNotification,
   CommentItem,
+  ApiCallLog,
 } from '../types';
 import type {
   FriendStatus,
   ImageCrop,
   ProfilePhotoHistoryItem,
+  BlockedUserEntry,
 } from '../types';
 import {
   appendComment,
@@ -115,6 +117,30 @@ interface AppContextType {
   setFriendStatuses: React.Dispatch<
     React.SetStateAction<Record<string, FriendStatus>>
   >;
+  allUsers: User[];
+  friendsList: User[];
+  getFriendsOfUser: (userId: string) => User[];
+  getMutualFriendsCount: (userId: string) => number;
+  sendFriendRequest: (userId: string) => void;
+  cancelFriendRequest: (userId: string) => void;
+  acceptFriendRequest: (userId: string) => void;
+  declineFriendRequest: (userId: string) => void;
+  unfriendUser: (userId: string) => void;
+  followingIds: string[];
+  toggleFollowUser: (userId: string) => void;
+  dismissedSuggestionIds: string[];
+  dismissSuggestion: (userId: string) => void;
+
+  // Blocking System (Slide 24)
+  blockedUsers: BlockedUserEntry[];
+  blockedByOtherIds: string[];
+  blockUser: (userId: string, reason?: string) => void;
+  unblockUser: (userId: string) => void;
+  toggleSimulatedBlockedByOther: (userId: string) => void;
+  isBlockedByMe: (userId: string) => boolean;
+  isBlockingMe: (userId: string) => boolean;
+  isBlockedEitherWay: (userId: string) => boolean;
+  filterVisibleComments: (comments?: CommentItem[]) => CommentItem[];
 
   // Questions & Bank
   questions: Question[];
@@ -130,7 +156,7 @@ interface AppContextType {
     newExplanation?: string,
   ) => void;
 
-  // Propose Sessions (SV đề xuất -> GV duyệt)
+  // Propose Sessions (SV đề xuất -> GV duyệt) - Mapping chuẩn 6 API Swagger
   sessions: ProposeSession[];
   createProposeSession: (
     title: string,
@@ -160,6 +186,32 @@ interface AppContextType {
     selectedQuestionIds: string[],
     reason: string,
   ) => void;
+
+  // Specific Question Review APIs (18. Giảng viên Duyệt Câu hỏi)
+  editQuestionByLecturer: (
+    questionId: string,
+    updates: Partial<Question>,
+  ) => void; // PUT /questions/{questionId}
+  approveQuestionsBulk: (
+    sessionId: string,
+    selectedQuestionIds: string[],
+    targetBankName?: string,
+    note?: string,
+    autoPost?: boolean,
+  ) => void; // POST /sessions/approve
+  rejectQuestionsBulk: (
+    sessionId: string,
+    selectedQuestionIds: string[],
+    reason: string,
+  ) => void; // POST /sessions/reject
+  completeReviewSession: (sessionId: string, finalFeedback?: string) => void; // POST /sessions/{sessionId}/complete-review
+  decideKeepQuestion: (questionId: string, notes?: string) => void;
+  decideDiscardQuestion: (questionId: string, reason?: string) => void;
+
+  // API Call Monitor Logs
+  apiLogs: ApiCallLog[];
+  addApiLog: (log: Omit<ApiCallLog, 'id' | 'timestamp'>) => void;
+  clearApiLogs: () => void;
 
   // Exams
   exams: Exam[];
@@ -284,7 +336,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     user_sv_02: 'REQUEST_RECEIVED',
     user_sv_03: 'FRIEND',
     user_sv_04: 'NONE',
+    user_sv_05: 'FRIEND',
+    user_sv_06: 'FRIEND',
+    user_sv_07: 'FRIEND',
+    user_sv_08: 'REQUEST_RECEIVED',
+    user_sv_09: 'NONE',
   });
+  const [followingIds, setFollowingIds] = useState<string[]>([
+    'user_gv_01',
+    'user_gv_02',
+  ]);
+  const [dismissedSuggestionIds, setDismissedSuggestionIds] = useState<
+    string[]
+  >([]);
+  const [blockedUsers, setBlockedUsers] = useState<BlockedUserEntry[]>([]);
+  const [blockedByOtherIds, setBlockedByOtherIds] = useState<string[]>([]);
   const [questions, setQuestions] = useState<Question[]>(mockQuestions);
   const [sessions, setSessions] =
     useState<ProposeSession[]>(mockProposeSessions);
@@ -381,7 +447,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const {
     isAuthenticated,
-    currentUser,
+    currentUser: rawCurrentUser,
     setCurrentUser,
     role,
     login,
@@ -390,6 +456,234 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     switchRole,
     updateCurrentUser: updateAuthCurrentUser,
   } = useAuthSession(showToast);
+
+  const blockedByMeSet = new Set(blockedUsers.map((b) => b.userId));
+  const blockedByOtherSet = new Set(blockedByOtherIds);
+  const isBlockedByMe = (userId: string) => blockedByMeSet.has(userId);
+  const isBlockingMe = (userId: string) => blockedByOtherSet.has(userId);
+  const isBlockedEitherWay = (userId: string) =>
+    blockedByMeSet.has(userId) || blockedByOtherSet.has(userId);
+
+  const allUsers: User[] = [
+    ...mockOtherUsers,
+    role === 'STUDENT' ? mockCurrentUserLecturer : mockCurrentUserStudent,
+  ].filter(
+    (u, idx, arr) =>
+      u.id !== rawCurrentUser.id &&
+      arr.findIndex((item) => item.id === u.id) === idx,
+  );
+
+  const friendsList: User[] = allUsers.filter(
+    (u) => friendStatuses[u.id] === 'FRIEND' && !isBlockedEitherWay(u.id),
+  );
+
+  const currentUser: User = {
+    ...rawCurrentUser,
+    friendsCount: friendsList.length,
+  };
+
+  // Mạng lưới bạn bè mặc định của các sinh viên khác trong hệ thống
+  const basePeerFriendsMap: Record<string, string[]> = {
+    user_sv_02: ['user_sv_03', 'user_sv_04', 'user_sv_07'],
+    user_sv_03: ['user_sv_02', 'user_sv_05', 'user_sv_06'],
+    user_sv_04: ['user_sv_02', 'user_sv_08', 'user_sv_09'],
+    user_sv_05: ['user_sv_03', 'user_sv_06', 'user_sv_08'],
+    user_sv_06: ['user_sv_03', 'user_sv_05', 'user_sv_07'],
+    user_sv_07: ['user_sv_02', 'user_sv_06', 'user_sv_09'],
+    user_sv_08: ['user_sv_04', 'user_sv_05'],
+    user_sv_09: ['user_sv_04', 'user_sv_07'],
+    user_gv_01: ['user_gv_02'],
+    user_gv_02: ['user_gv_01'],
+  };
+
+  const findRawUserById = (id: string): User => {
+    if (id === rawCurrentUser.id) return rawCurrentUser;
+    if (id === mockCurrentUserStudent.id) return mockCurrentUserStudent;
+    if (id === mockCurrentUserLecturer.id) return mockCurrentUserLecturer;
+    const found = mockOtherUsers.find((u) => u.id === id);
+    return found || mockCurrentUserStudent;
+  };
+
+  const getFriendsOfUser = (userId: string): User[] => {
+    if (userId === currentUser.id) return friendsList;
+    const peerIds = basePeerFriendsMap[userId] || [];
+    const peerUsers = peerIds
+      .filter((pid) => pid !== userId)
+      .map((pid) => findRawUserById(pid));
+    const isFriendWithMe =
+      friendStatuses[userId] === 'FRIEND' && !isBlockedEitherWay(userId);
+    const list = isFriendWithMe ? [currentUser, ...peerUsers] : peerUsers;
+    // Khử trùng lặp
+    return list.filter(
+      (u, idx, arr) => arr.findIndex((item) => item.id === u.id) === idx,
+    );
+  };
+
+  const getMutualFriendsCount = (userId: string): number => {
+    if (userId === currentUser.id) return 0;
+    const myFriendIds = new Set(friendsList.map((f) => f.id));
+    const theirFriendIds = (basePeerFriendsMap[userId] || []).filter(
+      (id) => id !== currentUser.id,
+    );
+    return theirFriendIds.filter((id) => myFriendIds.has(id)).length;
+  };
+
+  const getUserById = (id: string): User => {
+    if (id === currentUser.id) return currentUser;
+    const raw = findRawUserById(id);
+    const theirFriends = getFriendsOfUser(id);
+    return {
+      ...raw,
+      friendsCount: theirFriends.length,
+    };
+  };
+
+  // Actions quản lý bạn bè như thật
+  const sendFriendRequest = (userId: string) => {
+    if (isBlockedEitherWay(userId)) {
+      showToast('Không thể gửi lời mời kết bạn cho người đang trong danh sách chặn.', 'error');
+      return;
+    }
+    const target = findRawUserById(userId);
+    setFriendStatuses((prev) => ({ ...prev, [userId]: 'REQUEST_SENT' }));
+    showToast(`Đã gửi lời mời kết bạn tới ${target.name}!`, 'success');
+  };
+
+  const cancelFriendRequest = (userId: string) => {
+    const target = findRawUserById(userId);
+    setFriendStatuses((prev) => ({ ...prev, [userId]: 'NONE' }));
+    showToast(`Đã hủy lời mời kết bạn với ${target.name}.`, 'info');
+  };
+
+  const acceptFriendRequest = (userId: string) => {
+    if (isBlockedEitherWay(userId)) {
+      showToast('Không thể kết bạn với người đang bị chặn.', 'error');
+      return;
+    }
+    const target = findRawUserById(userId);
+    setFriendStatuses((prev) => ({ ...prev, [userId]: 'FRIEND' }));
+    showToast(`Bạn và ${target.name} đã trở thành bạn bè!`, 'success');
+  };
+
+  const declineFriendRequest = (userId: string) => {
+    const target = findRawUserById(userId);
+    setFriendStatuses((prev) => ({ ...prev, [userId]: 'NONE' }));
+    showToast(`Đã xóa lời mời kết bạn từ ${target.name}.`, 'info');
+  };
+
+  const unfriendUser = (userId: string) => {
+    const target = findRawUserById(userId);
+    setFriendStatuses((prev) => ({ ...prev, [userId]: 'NONE' }));
+    showToast(`Đã hủy kết bạn với ${target.name}.`, 'info');
+  };
+
+  const toggleFollowUser = (userId: string) => {
+    if (isBlockedEitherWay(userId)) {
+      showToast('Không thể theo dõi người dùng đang bị chặn.', 'error');
+      return;
+    }
+    const target = findRawUserById(userId);
+    setFollowingIds((prev) => {
+      const exists = prev.includes(userId);
+      if (exists) {
+        showToast(`Đã bỏ theo dõi ${target.name}.`, 'info');
+        return prev.filter((id) => id !== userId);
+      } else {
+        showToast(`Đang theo dõi ${target.name}!`, 'success');
+        return [...prev, userId];
+      }
+    });
+  };
+
+  const dismissSuggestion = (userId: string) => {
+    setDismissedSuggestionIds((prev) =>
+      prev.includes(userId) ? prev : [...prev, userId],
+    );
+  };
+
+  // Actions Chặn & Bỏ chặn theo đúng logic Slide 24:
+  // - Chặn và bỏ chặn bất kỳ ai, chặn lại sau khi bỏ chặn KHÔNG bị giới hạn thời gian
+  // - Chặn sẽ khiến người đó không còn là bạn bè của người thực hiện thao tác chặn
+  // - Chặn KHÔNG xóa bình luận, like của người đó khỏi trang cá nhân (nhưng người chặn không thấy các bình luận này)
+  // - Chặn khiến hai người không thể trao đổi tin nhắn với nhau được nữa
+  // - Chặn khiến hai người không xem được trang cá nhân của nhau
+  const blockUser = (userId: string, reason?: string) => {
+    if (userId === currentUser.id) return;
+    const target = findRawUserById(userId);
+    const wasFriend = friendStatuses[userId] === 'FRIEND';
+
+    // 1. Hủy kết bạn / hủy lời mời kết bạn ngay lập tức
+    setFriendStatuses((prev) => ({ ...prev, [userId]: 'NONE' }));
+    setFollowingIds((prev) => prev.filter((id) => id !== userId));
+
+    // 2. Thêm vào danh sách chặn (không giới hạn thời gian kể cả vừa bỏ chặn xong)
+    setBlockedUsers((prev) => {
+      const filtered = prev.filter((item) => item.userId !== userId);
+      return [
+        {
+          userId,
+          blockedAt: new Date().toLocaleString('vi-VN', {
+            hour: '2-digit',
+            minute: '2-digit',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+          }),
+          reason: reason?.trim() || 'Chặn bởi người dùng',
+        },
+        ...filtered,
+      ];
+    });
+
+    showToast(
+      wasFriend
+        ? `Đã chặn ${target.name} và hủy kết bạn. Hai người sẽ không thể nhắn tin hoặc xem trang cá nhân của nhau.`
+        : `Đã chặn ${target.name}. Hai người sẽ không thể nhắn tin hoặc xem trang cá nhân của nhau.`,
+      'warning',
+    );
+  };
+
+  const unblockUser = (userId: string) => {
+    const target = findRawUserById(userId);
+    setBlockedUsers((prev) => prev.filter((item) => item.userId !== userId));
+    showToast(
+      `Đã bỏ chặn ${target.name}. Bạn có thể xem lại trang cá nhân, nhắn tin hoặc chặn lại bất cứ lúc nào (không giới hạn thời gian).`,
+      'success',
+    );
+  };
+
+  const toggleSimulatedBlockedByOther = (userId: string) => {
+    const target = findRawUserById(userId);
+    setBlockedByOtherIds((prev) => {
+      const exists = prev.includes(userId);
+      if (exists) {
+        showToast(
+          `[Mô phỏng] ${target.name} đã bỏ chặn bạn.`,
+          'info',
+        );
+        return prev.filter((id) => id !== userId);
+      } else {
+        // Khi người kia chặn mình, quan hệ bạn bè cũng tự động bị hủy
+        setFriendStatuses((fs) => ({ ...fs, [userId]: 'NONE' }));
+        showToast(
+          `[Mô phỏng] ${target.name} vừa chặn bạn. Bạn không thể xem trang cá nhân hay nhắn tin cho người này.`,
+          'warning',
+        );
+        return [...prev, userId];
+      }
+    });
+  };
+
+  // Lọc bình luận hiển thị (ẩn bình luận/phản hồi của người bị chặn nhưng KHÔNG xóa khỏi dữ liệu gốc)
+  const filterVisibleComments = (comments?: CommentItem[]): CommentItem[] => {
+    if (!comments) return [];
+    return comments
+      .filter((c) => !isBlockedEitherWay(c.author.id))
+      .map((c) => ({
+        ...c,
+        replies: c.replies?.filter((r) => !isBlockedEitherWay(r.author.id)),
+      }));
+  };
 
   const updateCurrentUser = (updates: Partial<User>) => {
     updateAuthCurrentUser(updates);
@@ -446,6 +740,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         : { coverImage: url, coverCrop: crop },
     );
   };
+
   // Sync dark mode class on root
   useEffect(() => {
     try {
@@ -467,14 +762,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const toggleDarkMode = () => {
     setIsDarkMode((prev) => !prev);
-  };
-
-  const getUserById = (id: string): User => {
-    if (id === currentUser.id) return currentUser;
-    if (id === mockCurrentUserStudent.id) return mockCurrentUserStudent;
-    if (id === mockCurrentUserLecturer.id) return mockCurrentUserLecturer;
-    const found = mockOtherUsers.find((u) => u.id === id);
-    return found || mockCurrentUserStudent;
   };
 
   // Saved Searches
@@ -792,53 +1079,197 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     );
   };
 
-  const approveSession = (
-    sessionId: string,
-    selectedQuestionIds: string[],
-    note?: string,
-    autoPost: boolean = true,
+  // API logs state
+  const [apiLogs, setApiLogs] = useState<ApiCallLog[]>([
+    {
+      id: 'log_init_01',
+      method: 'GET',
+      endpoint: '/sessions/pending',
+      title: 'Lấy danh sách phiên đề xuất chờ duyệt',
+      timestamp: 'Hôm nay lúc 09:30:15',
+      statusCode: 200,
+      response: {
+        total: 2,
+        sessions: [
+          {
+            id: 'sess_pending_01',
+            title: 'Bộ câu hỏi trắc nghiệm Chuẩn hoá CSDL...',
+            count: 4,
+          },
+          {
+            id: 'sess_pending_02',
+            title: 'Đề xuất trắc nghiệm Quản lý Bế tắc...',
+            count: 2,
+          },
+        ],
+      },
+    },
+  ]);
+
+  const addApiLog = (logData: Omit<ApiCallLog, 'id' | 'timestamp'>) => {
+    const newLog: ApiCallLog = {
+      ...logData,
+      id: 'log_' + Date.now(),
+      timestamp: new Date().toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      }),
+    };
+    setApiLogs((prev) => [newLog, ...prev.slice(0, 29)]);
+  };
+
+  const clearApiLogs = () => {
+    setApiLogs([]);
+  };
+
+  // PUT /questions/{questionId} Giảng viên chỉnh sửa câu hỏi
+  const editQuestionByLecturer = (
+    questionId: string,
+    updates: Partial<Question>,
   ) => {
-    // Approve questions
+    const updatedQuestionPayload = {
+      ...updates,
+      isEditedByLecturer: true,
+      editedAt: 'Vừa xong',
+    };
+
     setQuestions((prev) =>
       prev.map((q) =>
-        selectedQuestionIds.includes(q.id) ? { ...q, status: 'APPROVED' } : q,
+        q.id === questionId ? { ...q, ...updatedQuestionPayload } : q,
       ),
     );
 
-    // Update session
+    setSessions((prev) =>
+      prev.map((s) => ({
+        ...s,
+        questions: s.questions.map((q) =>
+          q.id === questionId ? { ...q, ...updatedQuestionPayload } : q,
+        ),
+      })),
+    );
+
+    addApiLog({
+      method: 'PUT',
+      endpoint: `/questions/${questionId}`,
+      title: 'Giảng viên chỉnh sửa câu hỏi',
+      payload: updates,
+      response: {
+        success: true,
+        message: 'Đã cập nhật nội dung câu hỏi thành công bởi Giảng viên',
+        questionId,
+      },
+      statusCode: 200,
+    });
+
+    showToast('Đã lưu chỉnh sửa câu hỏi (PUT /questions/{id})!', 'success');
+  };
+
+  // POST /sessions/approve Phê duyệt danh sách câu hỏi -> Đưa vào ngân hàng đề GV trạng thái "Cần edit" & chốt bảo lưu điểm SV
+  const approveQuestionsBulk = (
+    sessionId: string,
+    selectedQuestionIds: string[],
+    targetBankName: string = 'Ngân hàng đề thi Giảng viên',
+    note?: string,
+    autoPost: boolean = true,
+  ) => {
+    setQuestions((prev) =>
+      prev.map((q) =>
+        selectedQuestionIds.includes(q.id)
+          ? {
+              ...q,
+              status: 'NEED_EDIT',
+              inLecturerBank: true,
+              studentPointsReserved: 20,
+              targetBankCategory: targetBankName,
+            }
+          : q,
+      ),
+    );
+
     setSessions((prev) =>
       prev.map((s) => {
         if (s.id === sessionId) {
+          const updatedQs = s.questions.map((q) =>
+            selectedQuestionIds.includes(q.id)
+              ? {
+                  ...q,
+                  status: 'NEED_EDIT' as const,
+                  inLecturerBank: true,
+                  studentPointsReserved: 20,
+                  targetBankCategory: targetBankName,
+                }
+              : q,
+          );
+          const allProcessed = updatedQs.every(
+            (q) =>
+              q.status === 'NEED_EDIT' ||
+              q.status === 'APPROVED' ||
+              q.status === 'REJECTED',
+          );
           return {
             ...s,
-            status: 'APPROVED',
-            reviewedAt: 'Vừa xong',
-            reviewer: currentUser,
-            lecturerFeedback: note || 'Đạt chuẩn kiểm duyệt',
+            status: allProcessed ? 'APPROVED' : 'PARTIAL_APPROVED',
+            questions: updatedQs,
+            targetBankName,
           };
         }
         return s;
       }),
     );
 
-    // Award student points
-    const currentSession = sessions.find((s) => s.id === sessionId);
-    if (currentSession && autoPost) {
-      createPost({
+    const targetSession = sessions.find((s) => s.id === sessionId);
+    if (targetSession) {
+      const pointsEarned = selectedQuestionIds.length * 20;
+      const newNotif: AppNotification = {
+        id: 'notif_' + Date.now(),
+        title: 'Câu hỏi được phê duyệt vào ngân hàng đề!',
+        message: `Thầy/Cô đã phê duyệt ${selectedQuestionIds.length} câu hỏi trong phiên "${targetSession.title}". Bạn nhận được +${pointsEarned} điểm cống hiến!`,
+        timestamp: 'Vừa xong',
+        isRead: false,
         type: 'QUESTION_APPROVED',
-        content: `🎉 Chúc mừng ${currentSession.creator.name} đã được TS. Trần Minh Đức duyệt phiên câu hỏi môn ${currentSession.subject}: "${currentSession.title}" vào Ngân hàng đề thi chính thức!`,
-        subjectTag: currentSession.subject,
-        privacy: 'PUBLIC',
-      });
+        actor: currentUser,
+        targetId: sessionId,
+      };
+      setNotifications((prev) => [newNotif, ...prev]);
+
+      if (autoPost) {
+        createPost({
+          type: 'QUESTION_APPROVED',
+          content: `🎉 Chúc mừng ${targetSession.creator.name} đã được Giảng viên phê duyệt ${selectedQuestionIds.length} câu hỏi môn ${targetSession.subject} ("${targetSession.title}") nạp thẳng vào ${targetBankName}!`,
+          subjectTag: targetSession.subject,
+          privacy: 'PUBLIC',
+        });
+      }
     }
 
+    addApiLog({
+      method: 'POST',
+      endpoint: '/sessions/approve',
+      title: 'Phê duyệt danh sách câu hỏi vào ngân hàng',
+      payload: {
+        sessionId,
+        questionIds: selectedQuestionIds,
+        targetBankName,
+        note,
+        autoPost,
+      },
+      response: {
+        success: true,
+        approvedCount: selectedQuestionIds.length,
+        bonusPointsAwarded: selectedQuestionIds.length * 20,
+      },
+      statusCode: 200,
+    });
+
     showToast(
-      'Đã phê duyệt câu hỏi thành công và thông báo cho sinh viên!',
+      `Đã phê duyệt ${selectedQuestionIds.length} câu hỏi vào ngân hàng đề (POST /sessions/approve)!`,
       'success',
     );
   };
 
-  const rejectSession = (
+  // POST /sessions/reject Từ chối danh sách câu hỏi
+  const rejectQuestionsBulk = (
     sessionId: string,
     selectedQuestionIds: string[],
     reason: string,
@@ -854,11 +1285,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     setSessions((prev) =>
       prev.map((s) => {
         if (s.id === sessionId) {
+          const updatedQs = s.questions.map((q) =>
+            selectedQuestionIds.includes(q.id)
+              ? { ...q, status: 'REJECTED' as const, rejectionReason: reason }
+              : q,
+          );
+          const allRejected = updatedQs.every((q) => q.status === 'REJECTED');
           return {
             ...s,
-            status: 'REJECTED',
-            reviewedAt: 'Vừa xong',
-            reviewer: currentUser,
+            status: allRejected ? 'REJECTED' : 'PARTIAL_APPROVED',
+            questions: updatedQs,
             lecturerFeedback: reason,
           };
         }
@@ -866,7 +1302,163 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       }),
     );
 
-    showToast('Đã từ chối câu hỏi kèm lý do phản hồi cho sinh viên.', 'info');
+    const targetSession = sessions.find((s) => s.id === sessionId);
+    if (targetSession) {
+      const newNotif: AppNotification = {
+        id: 'notif_' + Date.now(),
+        title: 'Phản hồi phiên câu hỏi đề xuất',
+        message: `Thầy/Cô đã từ chối ${selectedQuestionIds.length} câu hỏi trong phiên "${targetSession.title}". Lý do: "${reason}". Bạn có thể chỉnh sửa lại để nộp duyệt.`,
+        timestamp: 'Vừa xong',
+        isRead: false,
+        type: 'QUESTION_REJECTED',
+        actor: currentUser,
+        targetId: sessionId,
+      };
+      setNotifications((prev) => [newNotif, ...prev]);
+    }
+
+    addApiLog({
+      method: 'POST',
+      endpoint: '/sessions/reject',
+      title: 'Từ chối danh sách câu hỏi',
+      payload: {
+        sessionId,
+        questionIds: selectedQuestionIds,
+        reason,
+      },
+      response: {
+        success: true,
+        rejectedCount: selectedQuestionIds.length,
+        reason,
+      },
+      statusCode: 200,
+    });
+
+    showToast(
+      `Đã từ chối ${selectedQuestionIds.length} câu hỏi kèm lý do (POST /sessions/reject).`,
+      'info',
+    );
+  };
+
+  // POST /sessions/{sessionId}/complete-review Chốt hoàn tất duyệt phiên đề xuất
+  const completeReviewSession = (sessionId: string, finalFeedback?: string) => {
+    let approvedCount = 0;
+    let rejectedCount = 0;
+
+    setSessions((prev) =>
+      prev.map((s) => {
+        if (s.id === sessionId) {
+          approvedCount = s.questions.filter(
+            (q) => q.status === 'APPROVED',
+          ).length;
+          rejectedCount = s.questions.filter(
+            (q) => q.status === 'REJECTED',
+          ).length;
+          return {
+            ...s,
+            status: 'COMPLETED',
+            reviewedAt: 'Vừa xong',
+            reviewer: currentUser,
+            lecturerFeedback:
+              finalFeedback ||
+              s.lecturerFeedback ||
+              'Đã hoàn tất đánh giá toàn bộ phiên đề xuất.',
+          };
+        }
+        return s;
+      }),
+    );
+
+    addApiLog({
+      method: 'POST',
+      endpoint: `/sessions/${sessionId}/complete-review`,
+      title: 'Chốt hoàn tất duyệt phiên đề xuất',
+      payload: {
+        sessionId,
+        finalFeedback,
+      },
+      response: {
+        success: true,
+        sessionStatus: 'COMPLETED',
+        approvedQuestions: approvedCount,
+        rejectedQuestions: rejectedCount,
+        reviewedAt: new Date().toISOString(),
+      },
+      statusCode: 200,
+    });
+
+    showToast(
+      'Đã chốt hoàn tất phiên đề xuất và lưu vào Lịch sử (POST /sessions/{id}/complete-review)!',
+      'success',
+    );
+  };
+
+  // Giảng viên quyết định Giữ & Chuẩn hóa câu hỏi từ "Cần edit" -> "APPROVED"
+  const decideKeepQuestion = (questionId: string, notes?: string) => {
+    setQuestions((prev) =>
+      prev.map((q) =>
+        q.id === questionId
+          ? {
+              ...q,
+              status: 'APPROVED',
+              inLecturerBank: true,
+              isEditedByLecturer: true,
+              editedAt: 'Vừa xong',
+            }
+          : q,
+      ),
+    );
+
+    addApiLog({
+      method: 'PUT',
+      endpoint: `/questions/${questionId}`,
+      title: 'Giảng viên quyết định giữ & chuẩn hóa câu hỏi vào kho thi',
+      payload: { questionId, status: 'APPROVED', notes },
+      response: {
+        success: true,
+        message: 'Câu hỏi đã được chuẩn hóa và sẵn sàng sinh đề thi',
+      },
+      statusCode: 200,
+    });
+
+    showToast(
+      'Đã chuẩn hóa và giữ câu hỏi trong Ngân hàng đề thi chính thức!',
+      'success',
+    );
+  };
+
+  // Giảng viên quyết định Loại câu hỏi khỏi kho đề (Điểm cộng của SV vẫn được chốt bảo lưu trọn vẹn)
+  const decideDiscardQuestion = (questionId: string, reason?: string) => {
+    setQuestions((prev) =>
+      prev.map((q) =>
+        q.id === questionId
+          ? {
+              ...q,
+              status: 'REJECTED',
+              rejectionReason:
+                reason || 'Giảng viên quyết định loại bỏ sau khi thẩm định.',
+            }
+          : q,
+      ),
+    );
+
+    addApiLog({
+      method: 'POST',
+      endpoint: '/sessions/reject',
+      title: 'Giảng viên quyết định loại câu hỏi khỏi kho đề (Bảo lưu điểm SV)',
+      payload: { questionId, reason },
+      response: {
+        success: true,
+        message:
+          'Đã loại câu hỏi. Điểm cống hiến của sinh viên vẫn được bảo lưu trọn vẹn.',
+      },
+      statusCode: 200,
+    });
+
+    showToast(
+      'Đã loại câu hỏi khỏi kho đề (Điểm cộng của SV vẫn được chốt bảo lưu trọn vẹn)!',
+      'info',
+    );
   };
 
   // Exams
@@ -996,6 +1588,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const sendMessage = (conversationId: string, text: string) => {
     if (!text.trim()) return;
+    const targetConv = conversations.find((c) => c.id === conversationId);
+    if (targetConv && isBlockedEitherWay(targetConv.partner.id)) {
+      showToast(
+        'Không thể gửi tin nhắn vì hai người đang trong trạng thái chặn.',
+        'error',
+      );
+      return;
+    }
     const newMessage: MessageItem = {
       id: 'm_' + Date.now(),
       conversationId,
@@ -1117,6 +1717,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         addLecturerNote,
         friendStatuses,
         setFriendStatuses,
+        allUsers,
+        friendsList,
+        getFriendsOfUser,
+        getMutualFriendsCount,
+        sendFriendRequest,
+        cancelFriendRequest,
+        acceptFriendRequest,
+        declineFriendRequest,
+        unfriendUser,
+        followingIds,
+        toggleFollowUser,
+        dismissedSuggestionIds,
+        dismissSuggestion,
+        blockedUsers,
+        blockedByOtherIds,
+        blockUser,
+        unblockUser,
+        toggleSimulatedBlockedByOther,
+        isBlockedByMe,
+        isBlockingMe,
+        isBlockedEitherWay,
+        filterVisibleComments,
         questions,
         answerQuestion,
         rateQuestion,
@@ -1124,8 +1746,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         applyAIQuestionRefine,
         sessions,
         createProposeSession,
-        approveSession,
-        rejectSession,
+        approveSession: (sessionId, selectedQuestionIds, note, autoPost) =>
+          approveQuestionsBulk(
+            sessionId,
+            selectedQuestionIds,
+            undefined,
+            note,
+            autoPost,
+          ),
+        rejectSession: (sessionId, selectedQuestionIds, reason) =>
+          rejectQuestionsBulk(sessionId, selectedQuestionIds, reason),
+        editQuestionByLecturer,
+        approveQuestionsBulk,
+        rejectQuestionsBulk,
+        completeReviewSession,
+        decideKeepQuestion,
+        decideDiscardQuestion,
+        apiLogs,
+        addApiLog,
+        clearApiLogs,
         exams,
         generateExam,
         minigames,

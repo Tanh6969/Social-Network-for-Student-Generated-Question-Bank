@@ -26,10 +26,9 @@ import {
   Award,
   Clock,
   CheckCircle,
+  Send,
   RefreshCw,
-  SlidersHorizontal,
-  ShieldCheck,
-  Compass,
+  Ban,
 } from 'lucide-react';
 
 export const FeedView: React.FC = () => {
@@ -39,10 +38,17 @@ export const FeedView: React.FC = () => {
     posts,
     toggleLikePost,
     deletePost,
+    allUsers,
+    friendsList,
     friendStatuses,
+    getMutualFriendsCount,
+    acceptFriendRequest,
+    declineFriendRequest,
+    blockUser,
+    isBlockedEitherWay,
+    filterVisibleComments,
     openPostComposer,
     setActiveTab,
-    setIsProposeSessionModalOpen,
     setActivePostDetail,
     openPostMedia,
     minigames,
@@ -81,12 +87,18 @@ export const FeedView: React.FC = () => {
     Object.entries(friendStatuses)
       .filter(([, status]) => status === 'FRIEND')
       .map(([id]) => id),
+
+  const friendIds = new Set(friendsList.map((f) => f.id));
+  const incomingRequests = allUsers.filter(
+    (u) =>
+      friendStatuses[u.id] === 'REQUEST_RECEIVED' && !isBlockedEitherWay(u.id),
   );
   const visiblePosts = posts.filter(
     (post) =>
-      post.author.id === currentUser.id ||
-      post.privacy === 'PUBLIC' ||
-      (post.privacy === 'FRIENDS' && friendIds.has(post.author.id)),
+      !isBlockedEitherWay(post.author.id) &&
+      (post.author.id === currentUser.id ||
+        post.privacy === 'PUBLIC' ||
+        (post.privacy === 'FRIENDS' && friendIds.has(post.author.id))),
   );
   const orderedPosts = sortFeedPosts(visiblePosts, currentUser.id, friendIds);
 
@@ -173,12 +185,17 @@ export const FeedView: React.FC = () => {
           {/* 6. Bạn bè & Giảng viên */}
           <button
             onClick={() => setActiveTab('friends')}
-            className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left"
+            className="w-full group flex items-center justify-between px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left"
           >
-            <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/40 group-hover:text-blue-600 flex items-center justify-center transition-colors">
-              <Users className="w-5 h-5" />
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/40 group-hover:text-blue-600 flex items-center justify-center transition-colors">
+                <Users className="w-5 h-5" />
+              </div>
+              <span>Bạn bè & Giảng viên</span>
             </div>
-            <span>Bạn bè & Giảng viên</span>
+            <span className="text-xs font-bold text-gray-500 bg-gray-100 dark:bg-[#3A3B3C] px-2 py-0.5 rounded-full">
+              {currentUser.friendsCount}
+            </span>
           </button>
 
           {role === 'LECTURER' && (
@@ -296,6 +313,12 @@ export const FeedView: React.FC = () => {
 
         {/* Feed Posts */}
         {orderedPosts.map((post) => {
+          const visibleComments = filterVisibleComments(post.comments);
+          const visibleCommentsCount = visibleComments.reduce(
+            (sum, c) => sum + 1 + (c.replies?.length ?? 0),
+            0,
+          );
+
           return (
             <article
               key={post.id}
@@ -343,7 +366,7 @@ export const FeedView: React.FC = () => {
                   </button>
 
                   {activeMenuPostId === post.id && (
-                    <div className="absolute right-0 top-8 bg-white dark:bg-[#242526] shadow-xl border border-gray-200 dark:border-gray-700 rounded-xl py-1 w-44 z-30 text-xs">
+                    <div className="absolute right-0 top-8 bg-white dark:bg-[#242526] shadow-xl border border-gray-200 dark:border-gray-700 rounded-xl py-1 w-48 z-30 text-xs">
                       {post.author.id === currentUser.id ? (
                         <>
                           <button
@@ -367,19 +390,36 @@ export const FeedView: React.FC = () => {
                           </button>
                         </>
                       ) : (
-                        <button
-                          onClick={() => {
-                            openReportModal(
-                              'BÀI VIẾT',
-                              post.id,
-                              post.content.slice(0, 40),
-                            );
-                            setActiveMenuPostId(null);
-                          }}
-                          className="w-full px-3 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C]"
-                        >
-                          Báo cáo bài viết
-                        </button>
+                        <>
+                          <button
+                            onClick={() => {
+                              openReportModal(
+                                'BÀI VIẾT',
+                                post.id,
+                                post.content.slice(0, 40),
+                              );
+                              setActiveMenuPostId(null);
+                            }}
+                            className="w-full px-3 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C]"
+                          >
+                            Báo cáo bài viết
+                          </button>
+                          <button
+                            onClick={() => {
+                              blockUser(
+                                post.author.id,
+                                'Chặn từ menu bài viết trên Bảng tin',
+                              );
+                              setActiveMenuPostId(null);
+                            }}
+                            className="w-full px-3 py-2 text-left text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center gap-1.5 border-t border-gray-100 dark:border-gray-700"
+                          >
+                            <Ban className="w-3.5 h-3.5" />
+                            <span>
+                              Chặn {post.author.name.split(' ').slice(-1)[0]}
+                            </span>
+                          </button>
+                        </>
                       )}
                     </div>
                   )}
@@ -421,8 +461,8 @@ export const FeedView: React.FC = () => {
                     onClick={() => setActivePostDetail(post)}
                     className="hover:underline"
                   >
-                    {post.commentsCount} bình luận
-                  </button>
+                    {visibleCommentsCount} bình luận
+                  </span>
                   <span>{post.sharesCount} chia sẻ</span>
                 </div>
               </div>
@@ -503,11 +543,11 @@ export const FeedView: React.FC = () => {
           </div>
         )}
 
-        {/* Lời mời kết bạn */}
+        {/* Lời mời kết bạn thật */}
         <div className="bg-white dark:bg-[#242526] rounded-xl shadow-xs border border-gray-200 dark:border-gray-700 p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-              Lời mời kết bạn
+              Lời mời kết bạn ({incomingRequests.length})
             </span>
             <button
               onClick={() => setActiveTab('friends')}
@@ -517,35 +557,55 @@ export const FeedView: React.FC = () => {
             </button>
           </div>
 
-          <div className="flex items-center gap-3">
-            <img
-              src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80"
-              alt="Avatar"
-              className="w-11 h-11 rounded-full object-cover"
-            />
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-xs text-gray-900 dark:text-gray-100 truncate">
-                Lê Thị Thuỳ Dung
-              </p>
-              <p className="text-[11px] text-gray-500">14 bạn chung</p>
-              <div className="flex items-center gap-2 mt-1.5">
-                <button
-                  onClick={() =>
-                    showToast('Đã chấp nhận lời mời kết bạn!', 'success')
-                  }
-                  className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-medium"
-                >
-                  Xác nhận
-                </button>
-                <button
-                  onClick={() => showToast('Đã xóa lời mời.', 'info')}
-                  className="px-3 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-700 dark:text-gray-300 rounded-md text-xs font-medium"
-                >
-                  Xóa
-                </button>
-              </div>
+          {incomingRequests.length === 0 ? (
+            <p className="text-xs text-gray-400 py-2">
+              Không có lời mời kết bạn mới.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {incomingRequests.slice(0, 2).map((req) => (
+                <div key={req.id} className="flex items-center gap-3">
+                  <img
+                    src={req.avatar}
+                    alt={req.name}
+                    onClick={() => {
+                      setViewingUserId(req.id);
+                      setActiveTab('profile');
+                    }}
+                    className="w-11 h-11 rounded-full object-cover cursor-pointer"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p
+                      onClick={() => {
+                        setViewingUserId(req.id);
+                        setActiveTab('profile');
+                      }}
+                      className="font-semibold text-xs text-gray-900 dark:text-gray-100 truncate hover:underline cursor-pointer"
+                    >
+                      {req.name}
+                    </p>
+                    <p className="text-[11px] text-gray-500">
+                      {getMutualFriendsCount(req.id)} bạn chung
+                    </p>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <button
+                        onClick={() => acceptFriendRequest(req.id)}
+                        className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-medium"
+                      >
+                        Xác nhận
+                      </button>
+                      <button
+                        onClick={() => declineFriendRequest(req.id)}
+                        className="px-3 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-700 dark:text-gray-300 rounded-md text-xs font-medium"
+                      >
+                        Xóa
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
+          )}
         </div>
 
         {/* Top 3 Bảng xếp hạng tuần */}
@@ -598,38 +658,21 @@ export const FeedView: React.FC = () => {
           </div>
         </div>
 
-        {/* Người liên hệ trực tuyến (Click để mở Chat dock) */}
+        {/* Người liên hệ trực tuyến thực tế (Click để mở Chat dock) */}
         <div className="pt-2">
-          <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase px-2 mb-2 block">
-            Người liên hệ trực tuyến
-          </span>
+          <div className="flex items-center justify-between px-2 mb-2">
+            <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">
+              Bạn bè ({friendsList.length})
+            </span>
+            <button
+              onClick={() => setActiveTab('friends')}
+              className="text-[11px] text-blue-600 hover:underline font-medium"
+            >
+              Quản lý
+            </button>
+          </div>
           <div className="space-y-0.5">
-            {[
-              {
-                id: 'user_sv_02',
-                name: 'Lê Thị Thuỳ Dung',
-                avatar:
-                  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80',
-                role: 'STUDENT' as const,
-                isOnline: true,
-              },
-              {
-                id: 'user_sv_03',
-                name: 'Phạm Quang Huy',
-                avatar:
-                  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80',
-                role: 'STUDENT' as const,
-                isOnline: true,
-              },
-              {
-                id: 'user_gv_01',
-                name: 'TS. Trần Minh Đức',
-                avatar:
-                  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
-                role: 'LECTURER' as const,
-                isOnline: true,
-              },
-            ].map((contact) => (
+            {friendsList.map((contact) => (
               <div
                 key={contact.id}
                 onClick={() => openChatDock(contact.id)}
@@ -641,7 +684,9 @@ export const FeedView: React.FC = () => {
                     alt={contact.name}
                     className="w-8 h-8 rounded-full object-cover"
                   />
-                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white dark:border-[#242526] rounded-full" />
+                  {contact.isOnline && (
+                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white dark:border-[#242526] rounded-full" />
+                  )}
                 </div>
                 <span className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">
                   {contact.name}

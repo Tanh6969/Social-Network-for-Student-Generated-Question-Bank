@@ -84,8 +84,7 @@ export interface CommentItem {
 }
 
 export type QuestionDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
-export type QuestionStatus =
-  'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'AI_MODIFIED';
+export type QuestionStatus = 'DRAFT' | 'PENDING' | 'NEED_EDIT' | 'APPROVED' | 'REJECTED' | 'AI_MODIFIED';
 
 export interface Question {
   id: string;
@@ -106,6 +105,11 @@ export interface Question {
   creatorName: string;
   creatorAvatar: string;
   rejectionReason?: string;
+  isEditedByLecturer?: boolean;
+  editedAt?: string;
+  targetBankCategory?: string;
+  studentPointsReserved?: number;
+  inLecturerBank?: boolean;
   aiSuggestedChanges?: {
     originalContent: string;
     revisedContent: string;
@@ -130,12 +134,24 @@ export interface ProposeSession {
   subject: string;
   chapter: string;
   creator: User;
-  status: 'DRAFT' | 'PENDING' | 'PARTIAL_APPROVED' | 'APPROVED' | 'REJECTED';
+  status: 'DRAFT' | 'PENDING' | 'IN_REVIEW' | 'PARTIAL_APPROVED' | 'APPROVED' | 'REJECTED' | 'COMPLETED';
   questions: Question[];
   submittedAt: string;
   reviewedAt?: string;
   reviewer?: User;
   lecturerFeedback?: string;
+  targetBankName?: string;
+}
+
+export interface ApiCallLog {
+  id: string;
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  endpoint: string;
+  title: string;
+  timestamp: string;
+  payload?: any;
+  response?: any;
+  statusCode: number;
 }
 
 export interface Exam {
@@ -199,6 +215,12 @@ export interface FriendRelation {
   mutualFriendsCount: number;
 }
 
+export interface BlockedUserEntry {
+  userId: string;
+  blockedAt: string;
+  reason?: string;
+}
+
 export interface MessageItem {
   id: string;
   conversationId: string;
@@ -242,6 +264,7 @@ export interface AppNotification {
 export type MainTab =
   | 'feed'
   | 'bank'
+  | 'lecturer-bank'
   | 'propose'
   | 'watch'
   | 'game'
@@ -253,4 +276,3 @@ export type MainTab =
   | 'settings'
   | 'exams'
   | 'search';
-

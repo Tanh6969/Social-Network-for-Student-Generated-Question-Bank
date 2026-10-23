@@ -1,5 +1,8 @@
+
 import { useEffect, useRef, useState } from 'react';
-import { Send, ThumbsUp, X } from 'lucide-react';
+
+import { Flag, Send, ThumbsUp, X } from 'lucide-react';
+
 import { useApp } from '../../demo/context/AppContext';
 import type { CommentItem, Post } from '../../demo/types';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
@@ -39,6 +42,8 @@ function PostDetail({
     addComment,
     deletePost,
     openPostComposer,
+    openReportModal,
+    filterVisibleComments,
   } = useApp();
   const [commentInput, setCommentInput] = useState('');
   const [replyTarget, setReplyTarget] = useState<CommentItem | null>(null);
@@ -49,6 +54,12 @@ function PostDetail({
     const frame = requestAnimationFrame(() => commentInputRef.current?.focus());
     return () => cancelAnimationFrame(frame);
   }, [focusComment]);
+
+  const visibleComments = filterVisibleComments(post.comments);
+  const visibleCommentsCount = visibleComments.reduce(
+    (sum, c) => sum + 1 + (c.replies?.length ?? 0),
+    0,
+  );
 
   const submitComment = () => {
     if (!commentInput.trim()) return;
@@ -74,7 +85,7 @@ function PostDetail({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {post.author.id === currentUser.id && (
+          {post.author.id === currentUser.id ? (
             <>
               <button
                 type="button"
@@ -96,6 +107,22 @@ function PostDetail({
                 Xóa
               </button>
             </>
+          ) : (
+            <button
+              type="button"
+              onClick={() =>
+                openReportModal(
+                  'BÀI VIẾT',
+                  post.id,
+                  post.content.slice(0, 40),
+                )
+              }
+              className="flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-red-600"
+              title="Báo cáo bài viết"
+            >
+              <Flag className="h-3.5 w-3.5" />
+              <span>Báo cáo</span>
+            </button>
           )}
           {!mediaUrls.length && (
             <button
@@ -123,21 +150,14 @@ function PostDetail({
             <ThumbsUp className="h-4 w-4" />
             {post.likesCount} Thích
           </button>
-          <span className="text-gray-500">{post.commentsCount} bình luận</span>
+          <span className="text-gray-500">
+            {visibleCommentsCount} bình luận
+          </span>
         </div>
-        {post.comments?.length ? (
-          <CommentList
-            comments={post.comments}
-            onReply={(comment) => {
-              setReplyTarget(comment);
-              commentInputRef.current?.focus();
-            }}
-          />
-        ) : (
-          <p className="py-6 text-center text-xs text-gray-500">
-            Chưa có bình luận.
-          </p>
-        )}
+        <CommentList
+          comments={visibleComments}
+          onReply={(comment) => setReplyTarget(comment)}
+        />
       </div>
       {replyTarget && (
         <div className="flex items-center justify-between px-4 pb-1 text-xs text-blue-600">
