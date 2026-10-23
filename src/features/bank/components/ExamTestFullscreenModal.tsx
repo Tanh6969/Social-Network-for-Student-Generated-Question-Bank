@@ -20,7 +20,7 @@ import {
 interface ExamTestFullscreenModalProps {
   exam: StudentExamSet;
   onClose: () => void;
-  onRateQuestion: (questionId: string, stars: number) => void;
+  onRateQuestion: (questionId: string, stars: number, comment?: string) => void;
   currentUserId: string;
 }
 
@@ -41,6 +41,15 @@ export const ExamTestFullscreenModal: React.FC<
   const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
   const [showConfirmExit, setShowConfirmExit] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Lock body scroll on mount to prevent double scrollbars
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
 
   // Enter browser fullscreen on mount (with catch for browser permissions)
   useEffect(() => {
@@ -153,33 +162,23 @@ export const ExamTestFullscreenModal: React.FC<
           </div>
         </div>
 
-        {/* Center: Timer đếm tăng dần từ 0:00 (chỉ hiện khi đang làm bài) */}
-        {!isSubmitted && (
-          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl font-mono font-bold text-sm bg-gray-100 text-gray-800 dark:bg-[#3A3B3C] dark:text-gray-100 shadow-xs">
-            <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-            <span>{formatTime(elapsedSeconds)}</span>
-          </div>
-        )}
-
-        {/* Right Actions */}
+        {/* Right Actions: Timer, Tiến độ Đã làm, Nút thoát */}
         <div className="flex items-center gap-3">
           {!isSubmitted ? (
             <>
-              <span className="text-xs text-gray-500 hidden md:inline">
+              {/* Timer đếm tăng dần từ 0:00 đặt cạnh Đã làm */}
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-mono font-bold text-xs sm:text-sm bg-gray-100 text-gray-800 dark:bg-[#3A3B3C] dark:text-gray-100 shadow-xs">
+                <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <span>{formatTime(elapsedSeconds)}</span>
+              </div>
+
+              <span className="text-xs text-gray-500 font-medium hidden sm:inline">
                 Đã làm:{' '}
                 <strong className="text-blue-600 font-bold">
                   {answeredCount}
                 </strong>
                 /{exam.questions.length}
               </span>
-
-              <button
-                type="button"
-                onClick={() => setShowConfirmSubmit(true)}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer"
-              >
-                Nộp bài
-              </button>
 
               <button
                 type="button"
@@ -210,12 +209,8 @@ export const ExamTestFullscreenModal: React.FC<
             <div className="max-w-3xl mx-auto w-full space-y-4">
               {/* Question header */}
               <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-gray-700">
-                <span className="font-bold text-sm px-3 py-1 rounded-lg bg-blue-600 text-white">
+                <span className="font-bold text-sm px-3 py-1 rounded-lg bg-blue-600 text-white shadow-xs">
                   Câu {currentQuestionIndex + 1} / {exam.questions.length}
-                </span>
-
-                <span className="text-xs text-gray-400 truncate max-w-sm">
-                  {currentQuestion.chapter}
                 </span>
               </div>
 
@@ -275,28 +270,19 @@ export const ExamTestFullscreenModal: React.FC<
                 {currentQuestionIndex + 1} of {exam.questions.length}
               </span>
 
-              {currentQuestionIndex < exam.questions.length - 1 ? (
-                <button
-                  type="button"
-                  onClick={() =>
-                    setCurrentQuestionIndex((prev) =>
-                      Math.min(exam.questions.length - 1, prev + 1),
-                    )
-                  }
-                  className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition flex items-center gap-1.5 cursor-pointer shadow-xs"
-                >
-                  <span>Câu tiếp theo</span>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmSubmit(true)}
-                  className="px-5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition cursor-pointer shadow-xs"
-                >
-                  Hoàn tất & Nộp bài
-                </button>
-              )}
+              <button
+                type="button"
+                disabled={currentQuestionIndex >= exam.questions.length - 1}
+                onClick={() =>
+                  setCurrentQuestionIndex((prev) =>
+                    Math.min(exam.questions.length - 1, prev + 1),
+                  )
+                }
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 disabled:opacity-30 disabled:cursor-not-allowed text-white transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <span>Câu tiếp theo</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
           </main>
 
@@ -428,7 +414,7 @@ export const ExamTestFullscreenModal: React.FC<
               <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 flex items-center justify-between">
                 <span>Chi tiết đáp án & Giải thích từng câu</span>
                 <span className="text-xs text-gray-400 font-normal">
-                  Bạn có thể đánh giá từ 0 đến 5 sao cho từng câu hỏi bên dưới
+                  Bạn có thể đánh giá từ 0 đến 4 sao cho từng câu hỏi bên dưới
                 </span>
               </h3>
 
@@ -447,9 +433,6 @@ export const ExamTestFullscreenModal: React.FC<
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-xs px-2.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                           Câu {idx + 1}
-                        </span>
-                        <span className="text-gray-400 truncate max-w-[280px]">
-                          {q.chapter}
                         </span>
                       </div>
 
@@ -524,15 +507,19 @@ export const ExamTestFullscreenModal: React.FC<
                       </p>
                     </div>
 
-                    {/* Đánh giá sao câu hỏi */}
+                    {/* Đánh giá sao câu hỏi (0 - 4 sao) */}
                     <div className="pt-2 border-t border-gray-100 dark:border-gray-700/80">
                       <StarRating
                         ratingAverage={q.ratingAverage || 0}
                         ratingCount={q.ratingCount || 0}
                         userRatedStars={q.userRatedStars || 0}
-                        onRate={(stars) => onRateQuestion(q.id, stars)}
+                        userComment={q.userComment}
+                        onRate={(stars, comment) =>
+                          onRateQuestion(q.id, stars, comment)
+                        }
                         isAuthor={isAuthor}
                         size="md"
+                        allowComment={true}
                       />
                     </div>
                   </div>

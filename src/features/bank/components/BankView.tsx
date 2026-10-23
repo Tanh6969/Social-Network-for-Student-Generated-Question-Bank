@@ -202,7 +202,9 @@ export const BankView: React.FC = () => {
             liveQuestions={questions}
             currentUserId={currentUser.id}
             onBack={() => setSelectedExamId(null)}
-            onRateQuestion={(qId, stars) => rateQuestion(qId, stars)}
+            onRateQuestion={(qId, stars, comment) =>
+              rateQuestion(qId, stars, comment)
+            }
             onPracticeQuestion={(q) => setActiveQuizQuestion(q)}
             onStartPracticeExam={() => setActivePracticeExam(activeExam)}
             onViewAuthorProfile={(userId) => {
@@ -288,7 +290,9 @@ export const BankView: React.FC = () => {
         <ExamTestFullscreenModal
           exam={activePracticeExam}
           onClose={() => setActivePracticeExam(null)}
-          onRateQuestion={(qId, stars) => rateQuestion(qId, stars)}
+          onRateQuestion={(qId, stars, comment) =>
+            rateQuestion(qId, stars, comment)
+          }
           currentUserId={currentUser.id}
         />
       )}

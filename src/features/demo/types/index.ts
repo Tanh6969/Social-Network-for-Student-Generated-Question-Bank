@@ -126,6 +126,7 @@ export interface Question {
     D: number;
   };
   userRatedStars?: number;
+  userComment?: string;
 }
 
 export interface ProposeSession {

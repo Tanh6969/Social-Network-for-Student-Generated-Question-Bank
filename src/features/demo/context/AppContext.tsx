@@ -972,6 +972,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     if (isCorrect) {
       setCurrentUser((u) => ({ ...u, points: u.points + 10 }));
     }
+
+    // Track API monitor log (Slide 1: POST /questions/{questionId}/answer)
+    addApiLog({
+      method: 'POST',
+      endpoint: `/questions/${questionId}/answer`,
+      title: 'Nộp câu trả lời (POST /questions/{id}/answer)',
+      statusCode: 200,
+      payload: { selected_option: chosenOption },
+      response: {
+        code: 'SUCCESS',
+        message: isCorrect ? 'Đáp án chính xác' : 'Đáp án chưa chính xác',
+        data: {
+          is_correct: isCorrect ? 'true' : 'false',
+          correct_answer: q.correctAnswer,
+          explanation: q.explanation,
+        },
+      },
+    });
+
     return isCorrect;
   };
 
@@ -1000,6 +1019,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
             return {
               ...q,
               userRatedStars: 0,
+              userComment: undefined,
               ratingCount: newCount,
               ratingAverage: Math.min(4.0, newAvg),
             };
@@ -1024,6 +1044,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
           return {
             ...q,
             userRatedStars: clampedStars,
+            userComment: comment !== undefined ? comment : q.userComment,
             ratingCount: newCount,
             ratingAverage: newAvg,
           };
@@ -1036,10 +1057,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     addApiLog({
       method: 'POST',
       endpoint: `/questions/${questionId}/rate`,
-      title: 'Đánh giá câu hỏi (0 - 4 sao)',
-      status: 200,
-      requestBody: { rating: clampedStars.toString(), comment },
-      responseBody: {
+      title: 'Đánh giá câu hỏi 0-4 sao (POST /questions/{id}/rate)',
+      statusCode: 200,
+      payload: { rating: clampedStars.toString(), comment },
+      response: {
         code: 'SUCCESS',
         message: 'Đánh giá thành công',
         data: { new_avg_rating: '3.8', new_rating_count: '15' },
@@ -1048,6 +1069,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
     if (clampedStars <= 0) {
       showToast('Đã hủy đánh giá câu hỏi', 'info');
+    } else if (comment) {
+      showToast(
+        `Đã lưu đánh giá ${clampedStars} sao và nhận xét của bạn!`,
+        'success',
+      );
     } else {
       showToast(`Đã gửi đánh giá ${clampedStars} sao cho câu hỏi!`, 'success');
     }
