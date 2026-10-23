@@ -142,7 +142,7 @@ export const mockOtherUsers: User[] = [
   },
 ];
 
-export const mockDemoPassword = 'Demo@2026';
+export const mockDemoPassword = '123456';
 export const mockDemoAccounts: { user: User; password: string }[] = [
   { user: mockCurrentUserStudent, password: mockDemoPassword },
   ...mockOtherUsers.map((user) => ({ user, password: mockDemoPassword })),

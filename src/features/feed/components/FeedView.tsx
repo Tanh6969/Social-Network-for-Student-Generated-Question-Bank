@@ -83,10 +83,6 @@ export const FeedView: React.FC = () => {
       document.removeEventListener('keydown', closeOnEscape);
     };
   }, [isAttachmentMenuOpen]);
-  const friendIds = new Set(
-    Object.entries(friendStatuses)
-      .filter(([, status]) => status === 'FRIEND')
-      .map(([id]) => id),
 
   const friendIds = new Set(friendsList.map((f) => f.id));
   const incomingRequests = allUsers.filter(
@@ -462,7 +458,7 @@ export const FeedView: React.FC = () => {
                     className="hover:underline"
                   >
                     {visibleCommentsCount} bình luận
-                  </span>
+                  </button>
                   <span>{post.sharesCount} chia sẻ</span>
                 </div>
               </div>

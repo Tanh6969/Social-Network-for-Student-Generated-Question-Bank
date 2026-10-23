@@ -1,7 +1,10 @@
 import { useRef, useState } from 'react';
 import { authApi } from '../../api/auth';
 import { tokenStore } from '../../api/token';
-import { mockCurrentUserStudent } from '../../mocks/mockData';
+import {
+  mockCurrentUserStudent,
+  mockCurrentUserLecturer,
+} from '../../mocks/mockData';
 import type { Role, User } from '../demo/types';
 import { mapAuthUser } from './mapAuthUser';
 import { authenticateMockAccount } from './mockAuthentication';

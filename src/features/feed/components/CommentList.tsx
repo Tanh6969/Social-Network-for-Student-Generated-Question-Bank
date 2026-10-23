@@ -6,9 +6,11 @@ import { formatPostTime } from '../postUtils';
 export function CommentList({
   comments,
   onReply,
+  limit,
 }: {
   comments: CommentItem[];
   onReply: (comment: CommentItem) => void;
+  limit?: number;
 }) {
   const { filterVisibleComments, setViewingUserId, setActiveTab } = useApp();
   const unblockedComments = filterVisibleComments(comments);
@@ -23,7 +25,7 @@ export function CommentList({
 
   return (
     <div className="space-y-3">
-      {comments.map((comment) => (
+      {visibleComments.map((comment) => (
         <div key={comment.id} className="flex items-start gap-2.5 text-xs">
           <AvatarWithFrame
             user={comment.author}

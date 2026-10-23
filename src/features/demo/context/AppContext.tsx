@@ -449,7 +449,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     currentUser: rawCurrentUser,
     setCurrentUser,
     role,
-    login,
     loginWithCredentials,
     logout,
     switchRole,
@@ -1683,7 +1682,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     <AppContext.Provider
       value={{
         isAuthenticated,
-        login,
         loginWithCredentials,
         logout,
         currentUser,
