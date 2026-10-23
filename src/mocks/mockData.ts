@@ -122,7 +122,31 @@ export const mockOtherUsers: User[] = [
     followersCount: 24,
     isOnline: true,
     verifiedLecturer: false,
-  }
+  },
+  {
+    id: 'user_sv_05',
+    name: 'Đặng Quốc Bảo',
+    role: 'STUDENT',
+    email: 'bao.dq21@truong.edu.vn',
+    avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=300&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=1200&q=80',
+    bio: 'Lập trình nhúng & IoT',
+    faculty: 'Khoa Điện tử',
+    classOrTitle: 'K65 - DTVT',
+    points: 790,
+    approvedQuestionsCount: 8,
+    friendsCount: 110,
+    followersCount: 15,
+    isOnline: false,
+    verifiedLecturer: false,
+  },
+];
+
+export const mockDemoPassword = 'Demo@2026';
+export const mockDemoAccounts: { user: User; password: string }[] = [
+  { user: mockCurrentUserStudent, password: mockDemoPassword },
+  ...mockOtherUsers.map((user) => ({ user, password: mockDemoPassword })),
+  { user: mockCurrentUserLecturer, password: mockDemoPassword },
 ];
 
 export const mockQuestions: Question[] = [
@@ -444,23 +468,7 @@ export const mockLeaderboard: LeaderboardUser[] = [
   },
   {
     rank: 5,
-    user: {
-      id: 'user_sv_05',
-      name: 'Đặng Quốc Bảo',
-      role: 'STUDENT',
-      email: 'bao.dq21@truong.edu.vn',
-      avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=300&q=80',
-      coverImage: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=1200&q=80',
-      bio: 'Lập trình nhúng & IoT',
-      faculty: 'Khoa Điện tử',
-      classOrTitle: 'K65 - DTVT',
-      points: 790,
-      approvedQuestionsCount: 8,
-      friendsCount: 110,
-      followersCount: 15,
-      isOnline: false,
-      verifiedLecturer: false
-    },
+    user: mockOtherUsers[4],
     score: 790,
     weekContribution: 8,
     badgeTitle: 'Tích cực Đóng góp'
