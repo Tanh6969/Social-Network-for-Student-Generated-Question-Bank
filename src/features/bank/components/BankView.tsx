@@ -8,6 +8,7 @@ import {
 } from '../studentBankData';
 import { ExamSetCard } from './ExamSetCard';
 import { ExamDetailView } from './ExamDetailView';
+import { ExamTestFullscreenModal } from './ExamTestFullscreenModal';
 import {
   BookOpen,
   Search,
@@ -31,6 +32,10 @@ export const BankView: React.FC = () => {
 
   // Selected Exam for Drilldown Detail View
   const [selectedExamId, setSelectedExamId] = useState<string | null>(null);
+
+  // Fullscreen Exam Practice Modal
+  const [activePracticeExam, setActivePracticeExam] =
+    useState<StudentExamSet | null>(null);
 
   // Filters & Search
   const [searchTerm, setSearchTerm] = useState('');
@@ -199,6 +204,7 @@ export const BankView: React.FC = () => {
             onBack={() => setSelectedExamId(null)}
             onRateQuestion={(qId, stars) => rateQuestion(qId, stars)}
             onPracticeQuestion={(q) => setActiveQuizQuestion(q)}
+            onStartPracticeExam={() => setActivePracticeExam(activeExam)}
             onViewAuthorProfile={(userId) => {
               setViewingUserId(userId);
               setActiveTab('profile');
@@ -257,11 +263,7 @@ export const BankView: React.FC = () => {
                     key={exam.id}
                     exam={exam}
                     onSelectExam={(e) => setSelectedExamId(e.id)}
-                    onQuickPractice={(e) => {
-                      if (e.questions.length > 0) {
-                        setActiveQuizQuestion(e.questions[0]);
-                      }
-                    }}
+                    onQuickPractice={(e) => setActivePracticeExam(e)}
                     onViewAuthorProfile={(userId) => {
                       setViewingUserId(userId);
                       setActiveTab('profile');
@@ -280,6 +282,16 @@ export const BankView: React.FC = () => {
           </>
         )}
       </main>
+
+      {/* ================= MODAL LÀM THI THỬ TOÀN MÀN HÌNH ================= */}
+      {activePracticeExam && (
+        <ExamTestFullscreenModal
+          exam={activePracticeExam}
+          onClose={() => setActivePracticeExam(null)}
+          onRateQuestion={(qId, stars) => rateQuestion(qId, stars)}
+          currentUserId={currentUser.id}
+        />
+      )}
     </div>
   );
 };

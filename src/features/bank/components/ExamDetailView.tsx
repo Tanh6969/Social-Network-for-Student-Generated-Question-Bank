@@ -17,7 +17,8 @@ interface ExamDetailViewProps {
   currentUserId: string;
   onBack: () => void;
   onRateQuestion: (questionId: string, stars: number) => void;
-  onPracticeQuestion: (question: Question) => void;
+  onPracticeQuestion?: (question: Question) => void;
+  onStartPracticeExam: () => void;
   onViewAuthorProfile: (userId: string) => void;
 }
 
@@ -28,6 +29,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
   onBack,
   onRateQuestion,
   onPracticeQuestion,
+  onStartPracticeExam,
   onViewAuthorProfile,
 }) => {
   const resolvedQuestions = exam.questions.map((q) => {
@@ -156,7 +158,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
 
             <button
               type="button"
-              onClick={() => onPracticeQuestion(resolvedQuestions[0])}
+              onClick={onStartPracticeExam}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer"
             >
               <PlayCircle className="w-4 h-4" />

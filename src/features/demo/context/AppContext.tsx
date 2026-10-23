@@ -147,7 +147,7 @@ interface AppContextType {
     questionId: string,
     chosenOption: 'A' | 'B' | 'C' | 'D',
   ) => boolean;
-  rateQuestion: (questionId: string, stars: number) => void;
+  rateQuestion: (questionId: string, stars: number, comment?: string) => void;
   updateQuestion: (questionId: string, updates: Partial<Question>) => void;
   applyAIQuestionRefine: (
     questionId: string,
@@ -975,7 +975,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     return isCorrect;
   };
 
-  const rateQuestion = (questionId: string, stars: number) => {
+  const rateQuestion = (questionId: string, stars: number, comment?: string) => {
+    const clampedStars = Math.min(4, Math.max(0, stars));
     setQuestions((prev) =>
       prev.map((q) => {
         if (q.id === questionId) {
@@ -983,7 +984,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
           let newCount = q.ratingCount;
           let newAvg = q.ratingAverage;
 
-          if (stars <= 0) {
+          if (clampedStars <= 0) {
             if (prevStars > 0) {
               newCount = Math.max(0, q.ratingCount - 1);
               newAvg =
@@ -1000,27 +1001,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
               ...q,
               userRatedStars: 0,
               ratingCount: newCount,
-              ratingAverage: newAvg,
+              ratingAverage: Math.min(4.0, newAvg),
             };
           }
 
           if (prevStars > 0) {
             newAvg = Number(
               (
-                (q.ratingAverage * q.ratingCount - prevStars + stars) /
+                (q.ratingAverage * q.ratingCount - prevStars + clampedStars) /
                 q.ratingCount
               ).toFixed(1),
             );
           } else {
             newCount = q.ratingCount + 1;
             newAvg = Number(
-              ((q.ratingAverage * q.ratingCount + stars) / newCount).toFixed(1),
+              ((q.ratingAverage * q.ratingCount + clampedStars) / newCount).toFixed(1),
             );
           }
 
+          newAvg = Math.min(4.0, Math.max(0, newAvg));
+
           return {
             ...q,
-            userRatedStars: stars,
+            userRatedStars: clampedStars,
             ratingCount: newCount,
             ratingAverage: newAvg,
           };
@@ -1028,10 +1031,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         return q;
       }),
     );
-    if (stars <= 0) {
+
+    // Track API monitor log (Slide 4: POST /questions/{questionId}/rate)
+    addApiLog({
+      method: 'POST',
+      endpoint: `/questions/${questionId}/rate`,
+      title: 'Đánh giá câu hỏi (0 - 4 sao)',
+      status: 200,
+      requestBody: { rating: clampedStars.toString(), comment },
+      responseBody: {
+        code: 'SUCCESS',
+        message: 'Đánh giá thành công',
+        data: { new_avg_rating: '3.8', new_rating_count: '15' },
+      },
+    });
+
+    if (clampedStars <= 0) {
       showToast('Đã hủy đánh giá câu hỏi', 'info');
     } else {
-      showToast(`Đã gửi đánh giá ${stars} sao cho câu hỏi!`, 'success');
+      showToast(`Đã gửi đánh giá ${clampedStars} sao cho câu hỏi!`, 'success');
     }
   };
 

@@ -114,7 +114,7 @@ export const initialStudentExamSets: StudentExamSet[] = [
     description:
       'Đề cương bám sát các dạng câu hỏi trắc nghiệm kiểm soát tắc nghẽn, bắt tay 3 bước TCP và phân giải tên miền DNS.',
     totalAttempts: 185,
-    ratingAverage: 4.8,
+    ratingAverage: 3.8,
     ratingCount: 42,
     tags: ['Giữa kỳ', 'Trọng tâm', 'CCNA'],
     questions: [
@@ -141,7 +141,7 @@ export const initialStudentExamSets: StudentExamSet[] = [
         creatorId: mockCurrentUserStudent.id,
         creatorName: mockCurrentUserStudent.name,
         creatorAvatar: mockCurrentUserStudent.avatar,
-        ratingAverage: 4.7,
+        ratingAverage: 3.7,
         ratingCount: 29,
         totalAttempts: 120,
         correctAttempts: 98,
@@ -162,7 +162,7 @@ export const initialStudentExamSets: StudentExamSet[] = [
     description:
       'Tuyển tập các câu hỏi nâng cao tìm bao đóng thuộc tính, xác định tập khóa ứng viên tối tiểu và phân rã bảo toàn phụ thuộc hàm.',
     totalAttempts: 240,
-    ratingAverage: 4.9,
+    ratingAverage: 3.9,
     ratingCount: 56,
     tags: ['Khóa ứng viên', 'BCNF', '3NF'],
     questions: [
@@ -185,7 +185,7 @@ export const initialStudentExamSets: StudentExamSet[] = [
     description:
       'Gồm các câu hỏi kiểm tra 4 điều kiện Coffman, thuật toán tránh bế tắc Banker Dijkstra và bài toán đồng bộ Semaphore.',
     totalAttempts: 160,
-    ratingAverage: 4.6,
+    ratingAverage: 3.6,
     ratingCount: 31,
     tags: ['Banker', 'Deadlock', 'Coffman'],
     questions: [
@@ -212,7 +212,7 @@ export const initialStudentExamSets: StudentExamSet[] = [
         creatorId: mockOtherUsers[1].id,
         creatorName: mockOtherUsers[1].name,
         creatorAvatar: mockOtherUsers[1].avatar,
-        ratingAverage: 4.8,
+        ratingAverage: 3.8,
         ratingCount: 22,
         totalAttempts: 88,
         correctAttempts: 74,
@@ -233,7 +233,7 @@ export const initialStudentExamSets: StudentExamSet[] = [
     description:
       'Ôn tập độ phức tạp thời gian các thao tác quay cây đơn/kép trên AVL và thứ tự duyệt đỉnh đồ thị.',
     totalAttempts: 310,
-    ratingAverage: 4.7,
+    ratingAverage: 3.7,
     ratingCount: 68,
     tags: ['Cây AVL', 'Đồ thị', 'Độ phức tạp'],
     questions: [
@@ -259,7 +259,7 @@ export const initialStudentExamSets: StudentExamSet[] = [
         creatorId: mockOtherUsers[3].id,
         creatorName: mockOtherUsers[3].name,
         creatorAvatar: mockOtherUsers[3].avatar,
-        ratingAverage: 4.6,
+        ratingAverage: 3.6,
         ratingCount: 35,
         totalAttempts: 140,
         correctAttempts: 122,
@@ -280,7 +280,7 @@ export const initialStudentExamSets: StudentExamSet[] = [
     description:
       'Các câu hỏi phân loại về khai triển Taylor-Maclaurin, quy tắc L’Hospital và xét sự hội tụ của tích phân suy rộng loại 1.',
     totalAttempts: 195,
-    ratingAverage: 4.5,
+    ratingAverage: 3.5,
     ratingCount: 34,
     tags: ['Vi phân', 'Tích phân', 'Taylor'],
     questions: [
@@ -306,7 +306,7 @@ export const initialStudentExamSets: StudentExamSet[] = [
         creatorId: mockCurrentUserStudent.id,
         creatorName: mockCurrentUserStudent.name,
         creatorAvatar: mockCurrentUserStudent.avatar,
-        ratingAverage: 4.9,
+        ratingAverage: 3.9,
         ratingCount: 18,
         totalAttempts: 95,
         correctAttempts: 68,
