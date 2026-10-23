@@ -62,7 +62,6 @@ export interface Toast {
 interface AppContextType {
   // Auth state
   isAuthenticated: boolean;
-  login: (asRole?: Role, customUser?: Partial<User>) => void;
   loginWithCredentials: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 

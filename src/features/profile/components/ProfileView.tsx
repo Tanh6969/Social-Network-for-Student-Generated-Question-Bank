@@ -9,6 +9,7 @@ import {
 } from '../../../shared/components/MediaLightbox';
 import { ProfilePhotoEditor, type PhotoOption } from './ProfilePhotoEditor';
 import { ProfilePhotoLibrary } from './ProfilePhotoLibrary';
+import { EditProfileModal } from './EditProfileModal';
 import { formatPostTime } from '../../feed/postUtils';
 import {
   Camera,
@@ -52,8 +53,7 @@ export const ProfileView: React.FC = () => {
   const [activeTab, setActiveTabLocal] = useState<
     'POSTS' | 'ABOUT' | 'PHOTOS' | 'QUESTIONS' | 'FRIENDS'
   >('POSTS');
-  const [isEditingBio, setIsEditingBio] = useState(false);
-  const [bioInput, setBioInput] = useState(currentUser.bio);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileMedia, setProfileMedia] = useState<'avatar' | 'cover' | null>(
     null,
   );
@@ -142,11 +142,6 @@ export const ProfileView: React.FC = () => {
       })),
       index,
     });
-  };
-
-  const handleSaveBio = () => {
-    updateCurrentUser({ bio: bioInput });
-    setIsEditingBio(false);
   };
 
   return (
@@ -256,11 +251,11 @@ export const ProfileView: React.FC = () => {
                   </button>
 
                   <button
-                    onClick={() => setIsEditingBio(true)}
+                    onClick={() => setIsEditingProfile(true)}
                     className="px-4 py-2 bg-gray-100 dark:bg-[#3A3B3C] text-gray-800 dark:text-gray-200 rounded-xl text-xs font-bold hover:bg-gray-200 transition flex items-center gap-1.5"
                   >
                     <Edit className="w-4 h-4" />
-                    <span>Chỉnh sửa tiểu sử</span>
+                    <span>Chỉnh sửa trang cá nhân</span>
                   </button>
                 </>
               ) : (
@@ -354,34 +349,9 @@ export const ProfileView: React.FC = () => {
                 Giới thiệu
               </h3>
 
-              {isEditingBio ? (
-                <div className="space-y-2">
-                  <textarea
-                    rows={3}
-                    value={bioInput}
-                    onChange={(e) => setBioInput(e.target.value)}
-                    className="w-full p-2 text-xs border rounded-lg bg-gray-50 dark:bg-[#3A3B3C]"
-                  />
-                  <div className="flex justify-end gap-2">
-                    <button
-                      onClick={() => setIsEditingBio(false)}
-                      className="px-3 py-1 text-xs border rounded-lg"
-                    >
-                      Hủy
-                    </button>
-                    <button
-                      onClick={handleSaveBio}
-                      className="px-3 py-1 text-xs bg-blue-600 text-white rounded-lg font-bold"
-                    >
-                      Lưu
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed italic text-center">
-                  "{targetUser.bio || 'Chưa cập nhật tiểu sử.'}"
-                </p>
-              )}
+              <p className="text-center text-xs leading-relaxed text-gray-700 dark:text-gray-300">
+                {targetUser.bio || 'Chưa cập nhật tiểu sử.'}
+              </p>
 
               <div className="pt-2 border-t border-gray-100 dark:border-gray-700 space-y-2 text-xs text-gray-600 dark:text-gray-400">
                 <p>
@@ -565,6 +535,16 @@ export const ProfileView: React.FC = () => {
             showToast('Đã cập nhật ảnh.', 'success');
           }}
           onClose={() => setEditorKind(null)}
+        />
+      )}
+      {isEditingProfile && isMe && (
+        <EditProfileModal
+          user={currentUser}
+          onClose={() => setIsEditingProfile(false)}
+          onSave={(updates) => {
+            updateCurrentUser(updates);
+            setIsEditingProfile(false);
+          }}
         />
       )}
       {profileMedia && (
