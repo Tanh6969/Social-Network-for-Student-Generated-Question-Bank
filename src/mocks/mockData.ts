@@ -576,7 +576,45 @@ export const mockPosts: Post[] = [
     sharesCount: 11,
     privacy: 'PUBLIC',
     createdAt: new Date(Date.now() - 26 * 60 * 60_000).toISOString(),
-  }
+  },
+  {
+    id: 'post_video_02',
+    author: mockCurrentUserLecturer,
+    type: 'VIDEO',
+    content: '🌐 [Bài giảng Mạng máy tính] Video hướng dẫn chi tiết cách bắt và phân tích gói tin TCP 3-Way Handshake bằng Wireshark. Sinh viên lưu lại để làm bài tập lớn chương 3 nhé!',
+    subjectTag: 'Mạng máy tính',
+    videoUrl: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=1000&q=80',
+    likesCount: 156,
+    isLiked: true,
+    commentsCount: 2,
+    sharesCount: 38,
+    privacy: 'PUBLIC',
+    createdAt: new Date(Date.now() - 12 * 60 * 60_000).toISOString(),
+    comments: [
+      {
+        id: 'c_vid_01',
+        author: mockCurrentUserStudent,
+        content: 'Thầy giải thích đoạn cờ SYN và ACK trực quan dễ hiểu quá ạ!',
+        createdAt: new Date(Date.now() - 10 * 60 * 60_000).toISOString(),
+        likesCount: 5,
+        isLiked: false,
+      },
+    ],
+  },
+  {
+    id: 'post_video_03',
+    author: mockOtherUsers[0],
+    type: 'VIDEO',
+    content: '📊 Video tóm tắt Chuẩn hoá Cơ sở dữ liệu: Phân biệt 1NF, 2NF, 3NF và BCNF chỉ trong 5 phút kèm bài tập mẫu!',
+    subjectTag: 'Cơ sở dữ liệu',
+    videoUrl: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1000&q=80',
+    likesCount: 78,
+    isLiked: false,
+    commentsCount: 1,
+    sharesCount: 19,
+    privacy: 'PUBLIC',
+    createdAt: new Date(Date.now() - 36 * 60 * 60_000).toISOString(),
+  },
 ];
 
 export const mockMinigames: Minigame[] = [

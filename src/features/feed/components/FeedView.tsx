@@ -53,7 +53,6 @@ export const FeedView: React.FC = () => {
     openPostMedia,
     minigames,
     leaderboard,
-    openChatDock,
     setViewingUserId,
     showToast,
     openReportModal,
@@ -648,44 +647,6 @@ export const FeedView: React.FC = () => {
                 </div>
                 <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 shrink-0">
                   {lead.score} đ
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Người liên hệ trực tuyến thực tế (Click để mở Chat dock) */}
-        <div className="pt-2">
-          <div className="flex items-center justify-between px-2 mb-2">
-            <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">
-              Bạn bè ({friendsList.length})
-            </span>
-            <button
-              onClick={() => setActiveTab('friends')}
-              className="text-[11px] text-blue-600 hover:underline font-medium"
-            >
-              Quản lý
-            </button>
-          </div>
-          <div className="space-y-0.5">
-            {friendsList.map((contact) => (
-              <div
-                key={contact.id}
-                onClick={() => openChatDock(contact.id)}
-                className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] text-gray-800 dark:text-gray-200 cursor-pointer transition"
-              >
-                <div className="relative">
-                  <img
-                    src={contact.avatar}
-                    alt={contact.name}
-                    className="w-8 h-8 rounded-full object-cover"
-                  />
-                  {contact.isOnline && (
-                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white dark:border-[#242526] rounded-full" />
-                  )}
-                </div>
-                <span className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">
-                  {contact.name}
                 </span>
               </div>
             ))}
