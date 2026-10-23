@@ -268,14 +268,14 @@ export const QuestionQuizModal: React.FC = () => {
               {/* Rating 0 to 4 stars (BANK.09) */}
               <div className="p-4 bg-gray-50 dark:bg-[#1E1F20] rounded-xl border border-gray-200 dark:border-gray-700 text-center">
                 <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-2">
-                  Đánh giá chất lượng câu hỏi này (0 – 4 sao)
+                  Đánh giá chất lượng câu hỏi này (1 – 5 sao)
                 </span>
                 <div className="flex items-center justify-center gap-2 mb-2">
-                  {[1, 2, 3, 4].map((star) => (
+                  {[1, 2, 3, 4, 5].map((star) => (
                     <button
                       key={star}
                       onClick={() => handleRate(star)}
-                      className="p-1 hover:scale-110 transition"
+                      className="p-1 hover:scale-110 transition cursor-pointer"
                     >
                       <Star
                         className={`w-7 h-7 ${

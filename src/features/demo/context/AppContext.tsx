@@ -979,10 +979,45 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     setQuestions((prev) =>
       prev.map((q) => {
         if (q.id === questionId) {
-          const newCount = q.ratingCount + 1;
-          const newAvg = Number(
-            ((q.ratingAverage * q.ratingCount + stars) / newCount).toFixed(1),
-          );
+          const prevStars = q.userRatedStars || 0;
+          let newCount = q.ratingCount;
+          let newAvg = q.ratingAverage;
+
+          if (stars <= 0) {
+            if (prevStars > 0) {
+              newCount = Math.max(0, q.ratingCount - 1);
+              newAvg =
+                newCount > 0
+                  ? Number(
+                      (
+                        (q.ratingAverage * q.ratingCount - prevStars) /
+                        newCount
+                      ).toFixed(1),
+                    )
+                  : 0;
+            }
+            return {
+              ...q,
+              userRatedStars: 0,
+              ratingCount: newCount,
+              ratingAverage: newAvg,
+            };
+          }
+
+          if (prevStars > 0) {
+            newAvg = Number(
+              (
+                (q.ratingAverage * q.ratingCount - prevStars + stars) /
+                q.ratingCount
+              ).toFixed(1),
+            );
+          } else {
+            newCount = q.ratingCount + 1;
+            newAvg = Number(
+              ((q.ratingAverage * q.ratingCount + stars) / newCount).toFixed(1),
+            );
+          }
+
           return {
             ...q,
             userRatedStars: stars,
@@ -993,7 +1028,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         return q;
       }),
     );
-    showToast(`Đã gửi đánh giá ${stars} sao cho câu hỏi!`, 'success');
+    if (stars <= 0) {
+      showToast('Đã hủy đánh giá câu hỏi', 'info');
+    } else {
+      showToast(`Đã gửi đánh giá ${stars} sao cho câu hỏi!`, 'success');
+    }
   };
 
   const updateQuestion = (questionId: string, updates: Partial<Question>) => {
