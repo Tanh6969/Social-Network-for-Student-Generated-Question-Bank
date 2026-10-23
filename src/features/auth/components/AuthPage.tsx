@@ -9,7 +9,9 @@ import {
   EyeOff,
   Mail,
   Lock,
+  KeyRound,
 } from 'lucide-react';
+import { mockDemoPassword } from '../../../mocks/mockData';
 
 export const AuthPage: React.FC = () => {
   const { loginWithCredentials, showToast } = useApp();
@@ -133,11 +135,10 @@ export const AuthPage: React.FC = () => {
                           setLoginError('');
                         }}
                         aria-invalid={Boolean(loginError)}
-                        className={`w-full pl-9 pr-3 py-2.5 rounded-xl border bg-gray-50 text-xs text-gray-900 transition focus:outline-hidden focus:ring-2 dark:bg-[#3A3B3C] dark:text-gray-100 ${
-                          loginError
+                        className={`w-full pl-9 pr-3 py-2.5 rounded-xl border bg-gray-50 text-xs text-gray-900 transition focus:outline-hidden focus:ring-2 dark:bg-[#3A3B3C] dark:text-gray-100 ${loginError
                             ? 'border-red-500 focus:ring-red-500'
                             : 'border-gray-300 focus:ring-blue-500 dark:border-gray-600'
-                        }`}
+                          }`}
                       />
                     </div>
                   </div>
@@ -176,11 +177,10 @@ export const AuthPage: React.FC = () => {
                           setLoginError('');
                         }}
                         aria-invalid={Boolean(loginError)}
-                        className={`w-full pl-9 pr-9 py-2.5 rounded-xl border bg-gray-50 text-xs text-gray-900 transition focus:outline-hidden focus:ring-2 dark:bg-[#3A3B3C] dark:text-gray-100 ${
-                          loginError
+                        className={`w-full pl-9 pr-9 py-2.5 rounded-xl border bg-gray-50 text-xs text-gray-900 transition focus:outline-hidden focus:ring-2 dark:bg-[#3A3B3C] dark:text-gray-100 ${loginError
                             ? 'border-red-500 focus:ring-red-500'
                             : 'border-gray-300 focus:ring-blue-500 dark:border-gray-600'
-                        }`}
+                          }`}
                       />
                       <button
                         type="button"
@@ -212,6 +212,82 @@ export const AuthPage: React.FC = () => {
                     {isSubmitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
                   </button>
                 </form>
+
+                {/* Ghi chú tài khoản test cho team */}
+                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700/80 space-y-3">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                      <KeyRound className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                      Tài khoản test (Mật khẩu: <code className="bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded text-blue-600 dark:text-blue-400 font-mono font-bold">{mockDemoPassword}</code>)
+                    </span>
+                    <span className="text-[10px] text-gray-400">Nhấn để điền</span>
+                  </div>
+
+                  {/* Nhóm Giảng viên */}
+                  <div className="space-y-1">
+                    <span className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 block">
+                      Giảng viên:
+                    </span>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {[
+                        { email: 'gv1@gmail.com', name: 'TS. Trần Minh Đức' },
+                        { email: 'gv2@gmail.com', name: 'PGS. TS. Vũ Hải Yến' },
+                      ].map((acc) => (
+                        <button
+                          key={acc.email}
+                          type="button"
+                          onClick={() => {
+                            setEmail(acc.email);
+                            setPassword(mockDemoPassword);
+                            setLoginError('');
+                          }}
+                          className="px-2 py-1.5 bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/40 dark:hover:bg-purple-900/60 border border-purple-200 dark:border-purple-800 rounded-lg text-left transition cursor-pointer"
+                        >
+                          <p className="text-[11px] font-bold text-purple-700 dark:text-purple-300 truncate font-mono">
+                            {acc.email}
+                          </p>
+                          <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                            {acc.name}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Nhóm Sinh viên */}
+                  <div className="space-y-1">
+                    <span className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 block">
+                      Sinh viên:
+                    </span>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {[
+                        { email: 'sv1@gmail.com', name: 'Văn Nam' },
+                        { email: 'sv2@gmail.com', name: 'Thuỳ Dung' },
+                        { email: 'sv3@gmail.com', name: 'Quang Huy' },
+                        { email: 'sv4@gmail.com', name: 'Mai Anh' },
+                        { email: 'sv5@gmail.com', name: 'Quốc Bảo' },
+                      ].map((acc) => (
+                        <button
+                          key={acc.email}
+                          type="button"
+                          onClick={() => {
+                            setEmail(acc.email);
+                            setPassword(mockDemoPassword);
+                            setLoginError('');
+                          }}
+                          className="px-2 py-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800 rounded-lg text-left transition cursor-pointer"
+                        >
+                          <p className="text-[11px] font-bold text-blue-700 dark:text-blue-300 truncate font-mono">
+                            {acc.email}
+                          </p>
+                          <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                            {acc.name}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
 
               </div>
             </div>

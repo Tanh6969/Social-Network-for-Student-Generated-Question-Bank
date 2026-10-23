@@ -206,23 +206,7 @@ export const ReviewDashboardView: React.FC = () => {
           </div>
         </div>
 
-        {/* Role Helper Banner */}
-        {role !== 'LECTURER' && (
-          <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center justify-between text-xs text-amber-900 dark:text-amber-200">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-              <span>
-                Bạn hiện đang đăng nhập với vai trò <strong>Sinh viên ({currentUser.name})</strong>. Chuyển sang Giảng viên để có đầy đủ quyền hạn phê duyệt và hoàn tất phiên.
-              </span>
-            </div>
-            <button
-              onClick={() => switchRole('LECTURER')}
-              className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg shrink-0 transition"
-            >
-              Chuyển sang Giảng viên (TS. Đức)
-            </button>
-          </div>
-        )}
+
 
         {/* 4 Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 text-xs">

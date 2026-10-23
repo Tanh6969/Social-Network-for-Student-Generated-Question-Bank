@@ -96,7 +96,7 @@ import { WifiOff } from 'lucide-react';
 
 const MainContent: React.FC = () => {
   const location = useLocation();
-  const { isAuthenticated, activeTab, isOfflineSimulated } = useApp();
+  const { isAuthenticated, activeTab, isOfflineSimulated, role } = useApp();
 
   // Authentication and the local demo entry points share the login screen.
   if (!isAuthenticated) {
@@ -141,8 +141,10 @@ const MainContent: React.FC = () => {
           {activeTab === 'watch' && <VideoWatchView />}
           {activeTab === 'game' && <MinigameView />}
           {activeTab === 'friends' && <FriendsView />}
-          {activeTab === 'review' && <ReviewDashboardView />}
-          {activeTab === 'lecturer-bank' && <LecturerBankView />}
+          {activeTab === 'review' &&
+            (role === 'LECTURER' ? <ReviewDashboardView /> : <FeedView />)}
+          {activeTab === 'lecturer-bank' &&
+            (role === 'LECTURER' ? <LecturerBankView /> : <FeedView />)}
           {activeTab === 'messenger' && <MessengerFullView />}
           {activeTab === 'profile' && <ProfileView />}
           {activeTab === 'cosmetics' && <CosmeticsView />}

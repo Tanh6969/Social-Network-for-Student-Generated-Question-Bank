@@ -362,50 +362,44 @@ export const Navbar: React.FC = () => {
         </button>
 
         {/* Tab Ngân hàng đề của Giảng viên (Kho riêng của GV) */}
-        <button
-          onClick={() => {
-            if (role !== 'LECTURER') {
-              switchRole('LECTURER');
-            }
-            handleTabClick('lecturer-bank');
-          }}
-          className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-none transition-colors ${
-            activeTab === 'lecturer-bank'
-              ? 'text-purple-600 dark:text-purple-400 border-b-[3px] border-purple-600 font-bold'
-              : 'text-purple-600/80 dark:text-purple-400/80'
-          }`}
-          title="Ngân hàng đề riêng của Giảng viên (Biên tập, Chat AI & Sinh đề)"
-        >
-          <Database className={`w-6 h-6 ${activeTab === 'lecturer-bank' ? 'stroke-[2.5]' : ''}`} />
-          {needEditCount > 0 && (
-            <span className="absolute top-2 right-3 px-1.5 py-0.5 text-[10px] font-bold bg-amber-500 text-white rounded-full">
-              {needEditCount}
-            </span>
-          )}
-        </button>
+        {role === 'LECTURER' && (
+          <button
+            onClick={() => handleTabClick('lecturer-bank')}
+            className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-none transition-colors ${
+              activeTab === 'lecturer-bank'
+                ? 'text-purple-600 dark:text-purple-400 border-b-[3px] border-purple-600 font-bold'
+                : 'text-purple-600/80 dark:text-purple-400/80'
+            }`}
+            title="Ngân hàng đề riêng của Giảng viên (Biên tập, Chat AI & Sinh đề)"
+          >
+            <Database className={`w-6 h-6 ${activeTab === 'lecturer-bank' ? 'stroke-[2.5]' : ''}`} />
+            {needEditCount > 0 && (
+              <span className="absolute top-2 right-3 px-1.5 py-0.5 text-[10px] font-bold bg-amber-500 text-white rounded-full">
+                {needEditCount}
+              </span>
+            )}
+          </button>
+        )}
 
         {/* Tab Kiểm duyệt cho Giảng viên (REVIEW.01 - 18. Question Review APIs) */}
-        <button
-          onClick={() => {
-            if (role !== 'LECTURER') {
-              switchRole('LECTURER');
-            }
-            handleTabClick('review');
-          }}
-          className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-none transition-colors ${
-            activeTab === 'review'
-              ? 'text-purple-600 dark:text-purple-400 border-b-[3px] border-purple-600 font-bold'
-              : 'text-purple-600/80 dark:text-purple-400/80'
-          }`}
-          title="Giảng viên Duyệt câu hỏi (18. Question Review APIs)"
-        >
-          <CheckSquare className={`w-6 h-6 ${activeTab === 'review' ? 'stroke-[2.5]' : ''}`} />
-          {pendingSessionsCount > 0 && (
-            <span className="absolute top-2 right-3 px-1.5 py-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full animate-pulse-subtle">
-              {pendingSessionsCount}
-            </span>
-          )}
-        </button>
+        {role === 'LECTURER' && (
+          <button
+            onClick={() => handleTabClick('review')}
+            className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-none transition-colors ${
+              activeTab === 'review'
+                ? 'text-purple-600 dark:text-purple-400 border-b-[3px] border-purple-600 font-bold'
+                : 'text-purple-600/80 dark:text-purple-400/80'
+            }`}
+            title="Giảng viên Duyệt câu hỏi (18. Question Review APIs)"
+          >
+            <CheckSquare className={`w-6 h-6 ${activeTab === 'review' ? 'stroke-[2.5]' : ''}`} />
+            {pendingSessionsCount > 0 && (
+              <span className="absolute top-2 right-3 px-1.5 py-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full animate-pulse-subtle">
+                {pendingSessionsCount}
+              </span>
+            )}
+          </button>
+        )}
       </nav>
 
       {/* RIGHT: Action Round Buttons */}
@@ -725,50 +719,25 @@ export const Navbar: React.FC = () => {
                   <span>Hướng dẫn sử dụng (Tour)</span>
                 </button>
 
-                <button
-                  onClick={() => {
-                    if (role !== 'LECTURER') {
-                      switchRole('LECTURER');
-                    }
-                    handleTabClick('lecturer-bank');
-                    setIsUserMenuOpen(false);
-                  }}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-950/40 text-purple-700 dark:text-purple-300 font-bold transition text-left"
-                >
-                  <div className="flex items-center gap-3">
-                    <Database className="w-4 h-4 text-purple-600" />
-                    <span>Ngân hàng đề của Giảng viên</span>
-                  </div>
-                  {needEditCount > 0 && (
-                    <span className="text-[10px] bg-amber-500 text-white font-bold px-1.5 py-0.5 rounded-full">
-                      {needEditCount} Cần edit
-                    </span>
-                  )}
-                </button>
-
-                <button
-                  onClick={() => {
-                    const nextRole = role === 'LECTURER' ? 'STUDENT' : 'LECTURER';
-                    switchRole(nextRole);
-                    if (nextRole === 'LECTURER') {
-                      setActiveTab('review');
-                    }
-                    setIsUserMenuOpen(false);
-                  }}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-950/40 text-purple-700 dark:text-purple-300 font-bold transition text-left"
-                >
-                  <div className="flex items-center gap-3">
-                    <CheckSquare className="w-4 h-4 text-purple-600" />
-                    <span>
-                      {role === 'LECTURER'
-                        ? 'Chuyển sang Sinh viên'
-                        : 'Chuyển sang Giảng viên (TS. Đức)'}
-                    </span>
-                  </div>
-                  <span className="text-[10px] bg-purple-100 dark:bg-purple-900 px-2 py-0.5 rounded-full">
-                    {role === 'LECTURER' ? 'GV' : 'SV'}
-                  </span>
-                </button>
+                {role === 'LECTURER' && (
+                  <button
+                    onClick={() => {
+                      handleTabClick('lecturer-bank');
+                      setIsUserMenuOpen(false);
+                    }}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-950/40 text-purple-700 dark:text-purple-300 font-bold transition text-left"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Database className="w-4 h-4 text-purple-600" />
+                      <span>Ngân hàng đề của Giảng viên</span>
+                    </div>
+                    {needEditCount > 0 && (
+                      <span className="text-[10px] bg-amber-500 text-white font-bold px-1.5 py-0.5 rounded-full">
+                        {needEditCount} Cần edit
+                      </span>
+                    )}
+                  </button>
+                )}
 
                 <div className="border-t border-gray-100 dark:border-gray-700 pt-1">
                   <button
