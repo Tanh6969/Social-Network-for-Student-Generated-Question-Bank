@@ -1,15 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import type { CommentItem, Post } from '../src/features/demo/types';
+import { getMockFeedPage } from '../src/features/feed/feedPagination';
 import {
   appendComment,
   countWords,
+  findPostComment,
   getPostContentIssue,
   limitPostContent,
   MAX_POST_CHARACTERS,
   MAX_POST_WORD_CHARACTERS,
   removeOwnedPost,
+  removeOwnedComment,
   sortFeedPosts,
   updateOwnedPost,
+  updateOwnedComment,
 } from '../src/features/feed/postUtils';
 
 const post = (id: string, authorId: string, createdAt: string): Post =>
@@ -21,8 +25,8 @@ const post = (id: string, authorId: string, createdAt: string): Post =>
     commentsCount: 0,
   }) as Post;
 
-const comment = (id: string): CommentItem =>
-  ({ id, content: id, replies: [] }) as unknown as CommentItem;
+const comment = (id: string, authorId = 'me'): CommentItem =>
+  ({ id, author: { id: authorId }, content: id, replies: [] }) as CommentItem;
 
 describe('feed interactions', () => {
   it('keeps over-limit words visible for correction and blocks publishing', () => {
@@ -75,6 +79,21 @@ describe('feed interactions', () => {
     expect(posts[0].id).toBe('stranger-new');
   });
 
+  it('loads every ordered post once across feed pages', () => {
+    const ids = Array.from({ length: 23 }, (_, index) => `post-${index}`);
+    expect(getMockFeedPage(ids, 0).postIds).toEqual(ids.slice(0, 5));
+    const seen: string[] = [];
+    let cursor: number | null = 0;
+    while (cursor !== null) {
+      const page = getMockFeedPage(ids, cursor, 8);
+      seen.push(...page.postIds);
+      cursor = page.nextCursor;
+    }
+    expect(seen).toEqual(ids);
+    expect(new Set(seen).size).toBe(ids.length);
+    expect(getMockFeedPage([], 0).nextCursor).toBeNull();
+  });
+
   it('adds a comment and one-level reply without mutating the prior post', () => {
     const parent = comment('parent');
     const original = {
@@ -110,6 +129,53 @@ describe('feed interactions', () => {
     expect(
       appendComment([original], 'post', comment('reply'), 'missing')[0],
     ).toBe(original);
+  });
+
+  it('edits only owned comments and one-level replies', () => {
+    const root = { ...comment('root', 'other'), replies: [comment('reply')] };
+    const original = {
+      ...post('post', 'other', '2026-10-16T11:00:00Z'),
+      comments: [root],
+    };
+    const edited = updateOwnedComment(
+      [original],
+      'post',
+      'reply',
+      'me',
+      '  đã sửa  ',
+    )[0];
+    expect(findPostComment(edited, 'reply')?.content).toBe('đã sửa');
+    expect(findPostComment(original, 'reply')?.content).toBe('reply');
+    expect(
+      updateOwnedComment([original], 'post', 'root', 'me', 'không được')[0],
+    ).toBe(original);
+    expect(
+      updateOwnedComment([original], 'post', 'reply', 'me', '   '),
+    ).toEqual([original]);
+  });
+
+  it('deletes an owned reply or root and updates the total including replies', () => {
+    const root = { ...comment('root'), replies: [comment('reply', 'other')] };
+    const original = {
+      ...post('post', 'me', '2026-10-16T11:00:00Z'),
+      comments: [root],
+      commentsCount: 2,
+    };
+    expect(removeOwnedComment([original], 'post', 'reply', 'me')[0]).toBe(
+      original,
+    );
+    const afterReply = removeOwnedComment(
+      [original],
+      'post',
+      'reply',
+      'other',
+    )[0];
+    expect(afterReply.commentsCount).toBe(1);
+    expect(afterReply.comments?.[0].replies).toEqual([]);
+    const afterRoot = removeOwnedComment([original], 'post', 'root', 'me')[0];
+    expect(afterRoot.commentsCount).toBe(0);
+    expect(afterRoot.comments).toEqual([]);
+    expect(original.comments[0].replies).toHaveLength(1);
   });
 
   it('only edits or deletes posts owned by the current user', () => {

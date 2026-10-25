@@ -100,6 +100,91 @@ export function appendComment(
   });
 }
 
+export function findPostComment(
+  post: Post,
+  commentId: string,
+): CommentItem | undefined {
+  for (const comment of post.comments ?? []) {
+    if (comment.id === commentId) return comment;
+    const reply = comment.replies?.find((item) => item.id === commentId);
+    if (reply) return reply;
+  }
+  return undefined;
+}
+
+export function updateOwnedComment(
+  posts: Post[],
+  postId: string,
+  commentId: string,
+  ownerId: string,
+  content: string,
+): Post[] {
+  const trimmed = content.trim();
+  if (!trimmed) return posts;
+  return posts.map((post) => {
+    if (post.id !== postId || !findPostComment(post, commentId)) return post;
+    let changed = false;
+    const comments = (post.comments ?? []).map((comment) => {
+      if (comment.id === commentId && comment.author.id === ownerId) {
+        changed = true;
+        return { ...comment, content: trimmed };
+      }
+      let replyChanged = false;
+      const replies = comment.replies?.map((reply) => {
+        if (reply.id !== commentId || reply.author.id !== ownerId) return reply;
+        changed = true;
+        replyChanged = true;
+        return { ...reply, content: trimmed };
+      });
+      return replyChanged ? { ...comment, replies } : comment;
+    });
+    return changed ? { ...post, comments } : post;
+  });
+}
+
+export function removeOwnedComment(
+  posts: Post[],
+  postId: string,
+  commentId: string,
+  ownerId: string,
+): Post[] {
+  return posts.map((post) => {
+    if (post.id !== postId || !post.comments?.length) return post;
+    const root = post.comments.find((comment) => comment.id === commentId);
+    if (root) {
+      if (root.author.id !== ownerId) return post;
+      return {
+        ...post,
+        comments: post.comments.filter((comment) => comment.id !== commentId),
+        commentsCount: Math.max(
+          0,
+          post.commentsCount - 1 - (root.replies?.length ?? 0),
+        ),
+      };
+    }
+    const parent = post.comments.find((comment) =>
+      comment.replies?.some(
+        (reply) => reply.id === commentId && reply.author.id === ownerId,
+      ),
+    );
+    if (!parent) return post;
+    return {
+      ...post,
+      comments: post.comments.map((comment) =>
+        comment.id === parent.id
+          ? {
+              ...comment,
+              replies: comment.replies?.filter(
+                (reply) => reply.id !== commentId,
+              ),
+            }
+          : comment,
+      ),
+      commentsCount: Math.max(0, post.commentsCount - 1),
+    };
+  });
+}
+
 export function updateOwnedPost(
   posts: Post[],
   postId: string,

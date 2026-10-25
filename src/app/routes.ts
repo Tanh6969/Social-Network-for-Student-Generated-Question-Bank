@@ -22,3 +22,11 @@ export function tabFromPath(pathname: string): MainTab | null {
     )?.[0] as MainTab) ?? null
   );
 }
+
+export function postLoginDestination(search: string): string {
+  const next = new URLSearchParams(search).get('next');
+  if (!next || !next.startsWith('/') || next.startsWith('//'))
+    return tabPaths.feed;
+  const pathname = next.split(/[?#]/u)[0];
+  return tabFromPath(pathname) ? next : tabPaths.feed;
+}

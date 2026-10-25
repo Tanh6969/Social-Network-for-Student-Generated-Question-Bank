@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import { Navigate, useLocation } from 'react-router';
-import { tabFromPath } from './routes';
+import { postLoginDestination, tabFromPath } from './routes';
 import { useApp } from '../features/demo/context/AppContext';
 import { Navbar } from '../shared/components/Navbar';
 import { ChatDock } from '../shared/components/ChatDock';
@@ -92,14 +92,20 @@ const MainContent: React.FC = () => {
   if (!isAuthenticated) {
     return (
       <>
-        {location.pathname !== '/login' && <Navigate to="/login" replace />}
+        {location.pathname !== '/login' && (
+          <Navigate
+            to={`/login?next=${encodeURIComponent(`${location.pathname}${location.search}`)}`}
+            replace
+          />
+        )}
         <AuthPage />
         <ToastContainer />
       </>
     );
   }
 
-  if (!tabFromPath(location.pathname)) return <Navigate to="/feed" replace />;
+  if (!tabFromPath(location.pathname))
+    return <Navigate to={postLoginDestination(location.search)} replace />;
 
   return (
     <div className="min-h-screen bg-[#F0F2F5] dark:bg-[#18191A] text-[#050505] dark:text-[#E4E6EB] transition-colors duration-200 flex flex-col pt-14">

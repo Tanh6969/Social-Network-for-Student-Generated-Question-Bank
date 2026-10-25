@@ -37,6 +37,8 @@ function PostDetail({
     setActivePostDetail,
     toggleLikePost,
     addComment,
+    editComment,
+    deleteComment,
     deletePost,
     openPostComposer,
   } = useApp();
@@ -121,16 +123,27 @@ function PostDetail({
             className={`flex items-center gap-1.5 font-semibold ${post.isLiked ? 'text-blue-600' : 'text-gray-600'}`}
           >
             <ThumbsUp className="h-4 w-4" />
-            {post.likesCount} Thích
+            Thích
           </button>
-          <span className="text-gray-500">{post.commentsCount} bình luận</span>
+          <div className="flex gap-3 text-gray-500">
+            {post.likesCount > 0 && <span>{post.likesCount} lượt thích</span>}
+            {post.commentsCount > 0 && (
+              <span>{post.commentsCount} bình luận</span>
+            )}
+          </div>
         </div>
         {post.comments?.length ? (
           <CommentList
             comments={post.comments}
+            currentUserId={currentUser.id}
             onReply={(comment) => {
               setReplyTarget(comment);
               commentInputRef.current?.focus();
+            }}
+            onEdit={(comment, text) => editComment(post.id, comment.id, text)}
+            onDelete={(comment) => {
+              deleteComment(post.id, comment.id);
+              if (replyTarget?.id === comment.id) setReplyTarget(null);
             }}
           />
         ) : (

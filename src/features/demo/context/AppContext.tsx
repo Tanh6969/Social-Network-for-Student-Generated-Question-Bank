@@ -31,8 +31,11 @@ import type {
 } from '../types';
 import {
   appendComment,
+  findPostComment,
   getPostContentIssue,
+  removeOwnedComment,
   removeOwnedPost,
+  updateOwnedComment,
   updateOwnedPost,
 } from '../../feed/postUtils';
 import { revokeMediaUrl } from '../../feed/mediaUtils';
@@ -109,6 +112,8 @@ interface AppContextType {
   ) => void;
   toggleLikePost: (postId: string) => void;
   addComment: (postId: string, text: string, parentCommentId?: string) => void;
+  editComment: (postId: string, commentId: string, text: string) => void;
+  deleteComment: (postId: string, commentId: string) => void;
   deletePost: (postId: string) => void;
   addLecturerNote: (postId: string, note: string) => void;
   friendStatuses: Record<string, FriendStatus>;
@@ -311,12 +316,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   );
   const [activePostMediaIndex, setActivePostMediaIndex] = useState(0);
   const [activePostCommentFocus, setActivePostCommentFocus] = useState(false);
-  const activePostDetail =
-    posts.find((post) => post.id === activePostDetailId) ?? null;
   const setActivePostDetail = (post: Post | null, focusComment = false) => {
     setActivePostMediaIndex(0);
     setActivePostCommentFocus(Boolean(post && focusComment));
     setActivePostDetailId(post?.id ?? null);
+    if (
+      !post &&
+      location.pathname === '/feed' &&
+      new URLSearchParams(location.search).has('post')
+    )
+      navigate('/feed', { replace: true });
   };
   const openPostMedia = (post: Post, index: number) => {
     setActivePostMediaIndex(index);
@@ -390,6 +399,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     switchRole,
     updateCurrentUser: updateAuthCurrentUser,
   } = useAuthSession(showToast);
+
+  const sharedPostId =
+    location.pathname === '/feed'
+      ? new URLSearchParams(location.search).get('post')
+      : null;
+  const sharedPost = sharedPostId
+    ? posts.find((post) => post.id === sharedPostId)
+    : null;
+  const canViewSharedPost =
+    sharedPost &&
+    (sharedPost.author.id === currentUser.id ||
+      sharedPost.privacy === 'PUBLIC' ||
+      (sharedPost.privacy === 'FRIENDS' &&
+        friendStatuses[sharedPost.author.id] === 'FRIEND'));
+  const activePostDetail = sharedPostId
+    ? canViewSharedPost
+      ? sharedPost
+      : null
+    : (posts.find((post) => post.id === activePostDetailId) ?? null);
 
   const updateCurrentUser = (updates: Partial<User>) => {
     updateAuthCurrentUser(updates);
@@ -612,6 +640,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     showToast('Đã gửi bình luận!', 'success');
   };
 
+  const editComment = (postId: string, commentId: string, text: string) => {
+    const post = posts.find((item) => item.id === postId);
+    const comment = post && findPostComment(post, commentId);
+    if (!text.trim() || comment?.author.id !== currentUser.id) return;
+    setPosts((previous) =>
+      updateOwnedComment(previous, postId, commentId, currentUser.id, text),
+    );
+    showToast('Đã sửa bình luận.', 'success');
+  };
+
+  const deleteComment = (postId: string, commentId: string) => {
+    const post = posts.find((item) => item.id === postId);
+    const comment = post && findPostComment(post, commentId);
+    if (comment?.author.id !== currentUser.id) return;
+    setPosts((previous) =>
+      removeOwnedComment(previous, postId, commentId, currentUser.id),
+    );
+    showToast('Đã xóa bình luận.', 'info');
+  };
+
   const deletePost = (postId: string) => {
     const oldPost = posts.find(
       (post) => post.id === postId && post.author.id === currentUser.id,
@@ -628,6 +676,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       .forEach(revokeMediaUrl);
     oldPost.documents?.forEach((document) => revokeMediaUrl(document.url));
     if (activePostDetailId === postId) setActivePostDetailId(null);
+    if (sharedPostId === postId) navigate('/feed', { replace: true });
     showToast('Đã xóa bài viết thành công!', 'info');
   };
 
@@ -1114,6 +1163,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         updatePost,
         toggleLikePost,
         addComment,
+        editComment,
+        deleteComment,
         deletePost,
         addLecturerNote,
         friendStatuses,

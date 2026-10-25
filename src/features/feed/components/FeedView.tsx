@@ -1,10 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router';
 import { useApp } from '../../demo/context/AppContext';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
 import { PostContent } from './PostContent';
 import { PostMediaGallery } from './PostMediaGallery';
 import { PostDocuments } from './PostDocuments';
+import { PostShareButton } from './PostShareButton';
 import { formatPostTime, sortFeedPosts } from '../postUtils';
+import { useFeedPages } from '../useFeedPages';
 import {
   Users,
   BookOpen,
@@ -21,7 +24,6 @@ import {
   HelpCircle,
   ThumbsUp,
   MessageCircle,
-  Share2,
   MoreHorizontal,
   Bookmark,
   Award,
@@ -38,6 +40,7 @@ export const FeedView: React.FC = () => {
     currentUser,
     role,
     posts,
+    activePostDetail,
     toggleLikePost,
     deletePost,
     friendStatuses,
@@ -53,11 +56,16 @@ export const FeedView: React.FC = () => {
     showToast,
     openReportModal,
   } = useApp();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const unavailablePost =
+    new URLSearchParams(location.search).has('post') && !activePostDetail;
 
   const [hasNewPostsBanner, setHasNewPostsBanner] = useState(true);
   const [activeMenuPostId, setActiveMenuPostId] = useState<string | null>(null);
   const [isAttachmentMenuOpen, setIsAttachmentMenuOpen] = useState(false);
   const attachmentMenuRef = useRef<HTMLDivElement>(null);
+  const feedSentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isAttachmentMenuOpen) return;
@@ -90,6 +98,7 @@ export const FeedView: React.FC = () => {
       (post.privacy === 'FRIENDS' && friendIds.has(post.author.id)),
   );
   const orderedPosts = sortFeedPosts(visiblePosts, currentUser.id, friendIds);
+  const feedPages = useFeedPages(orderedPosts, feedSentinelRef);
 
   return (
     <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 flex justify-between items-start gap-4 lg:gap-8 xl:gap-12 2xl:gap-16">
@@ -310,7 +319,19 @@ export const FeedView: React.FC = () => {
         )}
 
         {/* Feed Posts */}
-        {orderedPosts.map((post) => {
+        {unavailablePost && (
+          <div className="rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-700 dark:border-gray-700 dark:bg-[#242526] dark:text-gray-200">
+            Bài viết này không tồn tại hoặc bạn không có quyền xem.
+            <button
+              type="button"
+              onClick={() => navigate('/feed', { replace: true })}
+              className="ml-2 font-semibold text-blue-600 hover:underline"
+            >
+              Về bảng tin
+            </button>
+          </div>
+        )}
+        {feedPages.visiblePosts.map((post) => {
           return (
             <article
               key={post.id}
@@ -423,24 +444,29 @@ export const FeedView: React.FC = () => {
               )}
 
               {/* Stats Bar */}
-              <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between text-xs text-gray-500">
-                <div className="flex items-center gap-1.5">
-                  <span className="p-1 bg-blue-600 text-white rounded-full">
-                    <ThumbsUp className="w-2.5 h-2.5" />
-                  </span>
-                  <span>{post.likesCount} lượt thích</span>
+              {(post.likesCount > 0 || post.commentsCount > 0) && (
+                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-2 text-xs text-gray-500 dark:border-gray-700">
+                  <div className="flex items-center gap-1.5">
+                    {post.likesCount > 0 && (
+                      <>
+                        <span className="rounded-full bg-blue-600 p-1 text-white">
+                          <ThumbsUp className="h-2.5 w-2.5" />
+                        </span>
+                        <span>{post.likesCount} lượt thích</span>
+                      </>
+                    )}
+                  </div>
+                  {post.commentsCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setActivePostDetail(post)}
+                      className="hover:underline"
+                    >
+                      {post.commentsCount} bình luận
+                    </button>
+                  )}
                 </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setActivePostDetail(post)}
-                    className="hover:underline"
-                  >
-                    {post.commentsCount} bình luận
-                  </button>
-                  <span>{post.sharesCount} chia sẻ</span>
-                </div>
-              </div>
+              )}
 
               {/* Action Buttons: Thích | Bình luận | Chia sẻ */}
               <div className="px-2 py-1 flex items-center justify-between text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-300">
@@ -466,22 +492,45 @@ export const FeedView: React.FC = () => {
                   <span>Bình luận</span>
                 </button>
 
-                <button
-                  onClick={() =>
-                    showToast(
-                      'Đã sao chép liên kết chia sẻ bài viết!',
-                      'success',
-                    )
-                  }
-                  className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition"
-                >
-                  <Share2 className="w-4 h-4" />
-                  <span>Chia sẻ</span>
-                </button>
+                <PostShareButton postId={post.id} showToast={showToast} />
               </div>
             </article>
           );
         })}
+        <div
+          ref={feedSentinelRef}
+          className="py-3 text-center text-xs text-gray-500"
+        >
+          {feedPages.isLoadingMore && (
+            <div
+              role="status"
+              aria-label="Đang tải bài viết"
+              className="animate-pulse rounded-xl border border-gray-200 bg-white p-4 text-left shadow-xs dark:border-gray-700 dark:bg-[#242526]"
+            >
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700" />
+                <div className="space-y-2">
+                  <div className="h-3 w-28 rounded bg-gray-200 dark:bg-gray-700" />
+                  <div className="h-2 w-20 rounded bg-gray-200 dark:bg-gray-700" />
+                </div>
+              </div>
+              <div className="mt-5 h-3 w-full rounded bg-gray-200 dark:bg-gray-700" />
+              <div className="mt-2 h-3 w-2/3 rounded bg-gray-200 dark:bg-gray-700" />
+            </div>
+          )}
+          {feedPages.hasMore && !feedPages.isLoadingMore && (
+            <button
+              type="button"
+              onClick={feedPages.loadMore}
+              className="font-semibold text-blue-600 hover:underline"
+            >
+              Xem thêm bài viết
+            </button>
+          )}
+          {!feedPages.hasMore && feedPages.visiblePosts.length > 0 && (
+            <span>Đã xem hết bài viết.</span>
+          )}
+        </div>
       </main>
 
       {/* ================= CỘT PHẢI (sticky sát lề phải) ================= */}
