@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Send, ThumbsUp, X } from 'lucide-react';
+
+import { Flag, Send, ThumbsUp, X } from 'lucide-react';
+
 import { useApp } from '../../demo/context/AppContext';
 import type { CommentItem, Post } from '../../demo/types';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
@@ -41,6 +43,8 @@ function PostDetail({
     deleteComment,
     deletePost,
     openPostComposer,
+    openReportModal,
+    filterVisibleComments,
   } = useApp();
   const [commentInput, setCommentInput] = useState('');
   const [replyTarget, setReplyTarget] = useState<CommentItem | null>(null);
@@ -51,6 +55,12 @@ function PostDetail({
     const frame = requestAnimationFrame(() => commentInputRef.current?.focus());
     return () => cancelAnimationFrame(frame);
   }, [focusComment]);
+
+  const visibleComments = filterVisibleComments(post.comments);
+  const visibleCommentsCount = visibleComments.reduce(
+    (sum, c) => sum + 1 + (c.replies?.length ?? 0),
+    0,
+  );
 
   const submitComment = () => {
     if (!commentInput.trim()) return;
@@ -76,7 +86,7 @@ function PostDetail({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {post.author.id === currentUser.id && (
+          {post.author.id === currentUser.id ? (
             <>
               <button
                 type="button"
@@ -98,6 +108,18 @@ function PostDetail({
                 Xóa
               </button>
             </>
+          ) : (
+            <button
+              type="button"
+              onClick={() =>
+                openReportModal('BÀI VIẾT', post.id, post.content.slice(0, 40))
+              }
+              className="flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-red-600"
+              title="Báo cáo bài viết"
+            >
+              <Flag className="h-3.5 w-3.5" />
+              <span>Báo cáo</span>
+            </button>
           )}
           {!mediaUrls.length && (
             <button
@@ -127,14 +149,14 @@ function PostDetail({
           </button>
           <div className="flex gap-3 text-gray-500">
             {post.likesCount > 0 && <span>{post.likesCount} lượt thích</span>}
-            {post.commentsCount > 0 && (
-              <span>{post.commentsCount} bình luận</span>
+            {visibleCommentsCount > 0 && (
+              <span>{visibleCommentsCount} bình luận</span>
             )}
           </div>
         </div>
-        {post.comments?.length ? (
+        {visibleComments.length ? (
           <CommentList
-            comments={post.comments}
+            comments={visibleComments}
             currentUserId={currentUser.id}
             onReply={(comment) => {
               setReplyTarget(comment);

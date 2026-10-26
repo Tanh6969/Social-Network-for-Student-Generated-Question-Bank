@@ -20,7 +20,9 @@ import {
   HelpCircle,
   LogOut,
   X,
-  FileCode
+  FileCode,
+  FilePlus,
+  Database
 } from 'lucide-react';
 import { MainTab } from '../../features/demo/types';
 
@@ -46,7 +48,9 @@ export const Navbar: React.FC = () => {
     markAllNotificationsAsRead,
     unreadNotificationsCount,
     sessions,
+    questions,
     setIsTourGuideOpen,
+    switchRole,
     logout
   } = useApp();
 
@@ -86,6 +90,7 @@ export const Navbar: React.FC = () => {
   }, []);
 
   const pendingSessionsCount = sessions.filter((s) => s.status === 'PENDING').length;
+  const needEditCount = questions.filter((q) => q.status === 'NEED_EDIT').length;
   const unreadMessagesCount = conversations.reduce((acc, c) => acc + c.unreadCount, 0);
 
   const closeAllDropdowns = () => {
@@ -273,12 +278,12 @@ export const Navbar: React.FC = () => {
         </div>
       </div>
 
-      {/* CENTER: 5-6 Big Tab Icons with Facebook Underline */}
-      <nav className="hidden md:flex items-center justify-center flex-1 max-w-[620px] h-full">
+      {/* CENTER: Big Tab Icons with Facebook Underline */}
+      <nav className="hidden md:flex items-center justify-center flex-1 max-w-[680px] h-full">
         {/* Trang chủ */}
         <button
           onClick={() => handleTabClick('feed')}
-          className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-lg transition-colors ${
+          className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-none transition-colors ${
             activeTab === 'feed'
               ? 'text-blue-600 dark:text-blue-400 border-b-[3px] border-blue-600'
               : 'text-gray-500 dark:text-gray-400'
@@ -288,10 +293,23 @@ export const Navbar: React.FC = () => {
           <Home className={`w-6 h-6 ${activeTab === 'feed' ? 'stroke-[2.5]' : ''}`} />
         </button>
 
+        {/* Đề xuất câu hỏi */}
+        <button
+          onClick={() => handleTabClick('propose')}
+          className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-none transition-colors ${
+            activeTab === 'propose'
+              ? 'text-blue-600 dark:text-blue-400 border-b-[3px] border-blue-600'
+              : 'text-gray-500 dark:text-gray-400'
+          }`}
+          title="Đề xuất phiên câu hỏi thi (Sessions)"
+        >
+          <FilePlus className={`w-6 h-6 ${activeTab === 'propose' ? 'stroke-[2.5]' : ''}`} />
+        </button>
+
         {/* Ngân hàng đề */}
         <button
           onClick={() => handleTabClick('bank')}
-          className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-lg transition-colors ${
+          className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-none transition-colors ${
             activeTab === 'bank'
               ? 'text-blue-600 dark:text-blue-400 border-b-[3px] border-blue-600'
               : 'text-gray-500 dark:text-gray-400'
@@ -307,7 +325,7 @@ export const Navbar: React.FC = () => {
         {/* Video học tập */}
         <button
           onClick={() => handleTabClick('watch')}
-          className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-lg transition-colors ${
+          className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-none transition-colors ${
             activeTab === 'watch'
               ? 'text-blue-600 dark:text-blue-400 border-b-[3px] border-blue-600'
               : 'text-gray-500 dark:text-gray-400'
@@ -320,7 +338,7 @@ export const Navbar: React.FC = () => {
         {/* Minigame */}
         <button
           onClick={() => handleTabClick('game')}
-          className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-lg transition-colors ${
+          className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-none transition-colors ${
             activeTab === 'game'
               ? 'text-blue-600 dark:text-blue-400 border-b-[3px] border-blue-600'
               : 'text-gray-500 dark:text-gray-400'
@@ -333,7 +351,7 @@ export const Navbar: React.FC = () => {
         {/* Bạn bè */}
         <button
           onClick={() => handleTabClick('friends')}
-          className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-lg transition-colors ${
+          className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-none transition-colors ${
             activeTab === 'friends'
               ? 'text-blue-600 dark:text-blue-400 border-b-[3px] border-blue-600'
               : 'text-gray-500 dark:text-gray-400'
@@ -343,20 +361,40 @@ export const Navbar: React.FC = () => {
           <Users className={`w-6 h-6 ${activeTab === 'friends' ? 'stroke-[2.5]' : ''}`} />
         </button>
 
-        {/* Tab Kiểm duyệt cho Giảng viên */}
+        {/* Tab Ngân hàng đề của Giảng viên (Kho riêng của GV) */}
+        {role === 'LECTURER' && (
+          <button
+            onClick={() => handleTabClick('lecturer-bank')}
+            className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-none transition-colors ${
+              activeTab === 'lecturer-bank'
+                ? 'text-purple-600 dark:text-purple-400 border-b-[3px] border-purple-600 font-bold'
+                : 'text-purple-600/80 dark:text-purple-400/80'
+            }`}
+            title="Ngân hàng đề riêng của Giảng viên (Biên tập, Chat AI & Sinh đề)"
+          >
+            <Database className={`w-6 h-6 ${activeTab === 'lecturer-bank' ? 'stroke-[2.5]' : ''}`} />
+            {needEditCount > 0 && (
+              <span className="absolute top-2 right-3 px-1.5 py-0.5 text-[10px] font-bold bg-amber-500 text-white rounded-full">
+                {needEditCount}
+              </span>
+            )}
+          </button>
+        )}
+
+        {/* Tab Kiểm duyệt cho Giảng viên (REVIEW.01 - 18. Question Review APIs) */}
         {role === 'LECTURER' && (
           <button
             onClick={() => handleTabClick('review')}
-            className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-lg transition-colors ${
+            className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-none transition-colors ${
               activeTab === 'review'
-                ? 'text-blue-600 dark:text-blue-400 border-b-[3px] border-blue-600'
-                : 'text-purple-600 dark:text-purple-400 font-medium'
+                ? 'text-purple-600 dark:text-purple-400 border-b-[3px] border-purple-600 font-bold'
+                : 'text-purple-600/80 dark:text-purple-400/80'
             }`}
-            title="Kiểm duyệt câu hỏi"
+            title="Giảng viên Duyệt câu hỏi (18. Question Review APIs)"
           >
             <CheckSquare className={`w-6 h-6 ${activeTab === 'review' ? 'stroke-[2.5]' : ''}`} />
             {pendingSessionsCount > 0 && (
-              <span className="absolute top-2 right-3 px-1.5 py-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full">
+              <span className="absolute top-2 right-3 px-1.5 py-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full animate-pulse-subtle">
                 {pendingSessionsCount}
               </span>
             )}
@@ -405,6 +443,18 @@ export const Navbar: React.FC = () => {
                   <BookOpen className="w-5 h-5 text-blue-600 mb-1" />
                   <span className="font-semibold block text-gray-800 dark:text-gray-200">Ngân hàng đề</span>
                   <span className="text-[10px] text-gray-500">Đóng góp & ôn tập</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    handleTabClick('propose');
+                    setIsGridMenuOpen(false);
+                  }}
+                  className="p-2.5 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-left transition"
+                >
+                  <FilePlus className="w-5 h-5 text-emerald-600 mb-1" />
+                  <span className="font-semibold block text-gray-800 dark:text-gray-200">Đề xuất câu hỏi</span>
+                  <span className="text-[10px] text-gray-500">Biên soạn & duyệt</span>
                 </button>
 
                 <button
@@ -668,6 +718,26 @@ export const Navbar: React.FC = () => {
                   <HelpCircle className="w-4 h-4 text-blue-500" />
                   <span>Hướng dẫn sử dụng (Tour)</span>
                 </button>
+
+                {role === 'LECTURER' && (
+                  <button
+                    onClick={() => {
+                      handleTabClick('lecturer-bank');
+                      setIsUserMenuOpen(false);
+                    }}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-950/40 text-purple-700 dark:text-purple-300 font-bold transition text-left"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Database className="w-4 h-4 text-purple-600" />
+                      <span>Ngân hàng đề của Giảng viên</span>
+                    </div>
+                    {needEditCount > 0 && (
+                      <span className="text-[10px] bg-amber-500 text-white font-bold px-1.5 py-0.5 rounded-full">
+                        {needEditCount} Cần edit
+                      </span>
+                    )}
+                  </button>
+                )}
 
                 <div className="border-t border-gray-100 dark:border-gray-700 pt-1">
                   <button

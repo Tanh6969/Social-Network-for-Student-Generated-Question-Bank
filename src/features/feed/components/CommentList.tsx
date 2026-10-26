@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import type { CommentItem } from '../../demo/types';
+import { useApp } from '../../demo/context/AppContext';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
 import { formatPostTime } from '../postUtils';
 
@@ -13,14 +14,21 @@ interface CommentActions {
 export function CommentList({
   comments,
   onReply,
+  limit,
   ...actions
 }: {
   comments: CommentItem[];
   onReply: (comment: CommentItem) => void;
+  limit?: number;
 } & CommentActions) {
+  const { filterVisibleComments } = useApp();
+  const unblockedComments = filterVisibleComments(comments);
+  const visibleComments = limit
+    ? unblockedComments.slice(-limit)
+    : unblockedComments;
   return (
     <div className="space-y-3">
-      {comments.map((comment) => (
+      {visibleComments.map((comment) => (
         <CommentRow
           key={comment.id}
           comment={comment}
@@ -48,7 +56,12 @@ function CommentRow({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(comment.content);
   const menuRef = useRef<HTMLDivElement>(null);
+  const { setViewingUserId, setActiveTab } = useApp();
   const isOwner = comment.author.id === currentUserId;
+  const openAuthorProfile = () => {
+    setViewingUserId(comment.author.id);
+    setActiveTab('profile');
+  };
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -80,11 +93,18 @@ function CommentRow({
     <div
       className={`flex items-start gap-2.5 text-xs ${isReply ? 'mt-2 ml-4' : ''}`}
     >
-      <AvatarWithFrame user={comment.author} size={isReply ? 'xs' : 'sm'} />
+      <AvatarWithFrame
+        user={comment.author}
+        size={isReply ? 'xs' : 'sm'}
+        onClick={openAuthorProfile}
+      />
       <div className="min-w-0 flex-1">
         <div className="flex items-start gap-1">
           <div className="min-w-0 flex-1 rounded-2xl bg-gray-100 px-3 py-2 dark:bg-[#3A3B3C]">
-            <span className="block font-bold text-gray-900 dark:text-gray-100">
+            <span
+              onClick={openAuthorProfile}
+              className="block cursor-pointer font-bold text-gray-900 hover:underline dark:text-gray-100"
+            >
               {comment.author.name}
             </span>
             {editing ? (

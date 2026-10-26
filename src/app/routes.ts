@@ -3,6 +3,8 @@ import type { MainTab } from '../features/demo/types';
 export const tabPaths: Record<MainTab, string> = {
   feed: '/feed',
   bank: '/bank',
+  'lecturer-bank': '/lecturer-bank',
+  propose: '/propose',
   watch: '/watch',
   game: '/games',
   friends: '/friends',

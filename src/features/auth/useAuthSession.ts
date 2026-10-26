@@ -2,18 +2,19 @@ import { useRef, useState } from 'react';
 import { authApi } from '../../api/auth';
 import { tokenStore } from '../../api/token';
 import {
-  mockCurrentUserLecturer,
   mockCurrentUserStudent,
+  mockCurrentUserLecturer,
 } from '../../mocks/mockData';
 import type { Role, User } from '../demo/types';
 import { mapAuthUser } from './mapAuthUser';
+import { authenticateMockAccount } from './mockAuthentication';
 
 type Notify = (
   message: string,
   type?: 'success' | 'info' | 'warning' | 'error',
 ) => void;
 
-/** API session and clearly separate local demo entry points. */
+/** Authenticates demo credentials locally and all other accounts through the API. */
 export function useAuthSession(notify: Notify) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [sessionKind, setSessionKind] = useState<'demo' | 'api' | null>(null);
@@ -21,32 +22,19 @@ export function useAuthSession(notify: Notify) {
   const [role, setRole] = useState<Role>('STUDENT');
   const [currentUser, setCurrentUser] = useState<User>(mockCurrentUserStudent);
 
-  const login = (asRole: Role = 'STUDENT', customUser?: Partial<User>) => {
-    accessToken.current = null;
-    tokenStore.set(null);
-    setSessionKind('demo');
-    setRole(asRole);
-    setCurrentUser(
-      customUser
-        ? {
-            ...(asRole === 'LECTURER'
-              ? mockCurrentUserLecturer
-              : mockCurrentUserStudent),
-            ...customUser,
-            role: asRole,
-          }
-        : asRole === 'LECTURER'
-          ? mockCurrentUserLecturer
-          : mockCurrentUserStudent,
-    );
-    setIsAuthenticated(true);
-    notify(
-      `Đã vào bản demo với vai trò ${asRole === 'LECTURER' ? 'Giảng viên' : 'Sinh viên'}.`,
-      'info',
-    );
-  };
-
   const loginWithCredentials = async (email: string, password: string) => {
+    const mockUser = authenticateMockAccount(email, password);
+    if (mockUser) {
+      accessToken.current = null;
+      tokenStore.set(null);
+      setCurrentUser(mockUser);
+      setRole(mockUser.role);
+      setSessionKind('demo');
+      setIsAuthenticated(true);
+      notify('Đăng nhập tài khoản demo thành công.', 'success');
+      return;
+    }
+
     const account = await authApi.login(email, password);
     let user: User;
     try {
@@ -112,7 +100,6 @@ export function useAuthSession(notify: Notify) {
     currentUser,
     setCurrentUser,
     role,
-    login,
     loginWithCredentials,
     logout,
     switchRole,

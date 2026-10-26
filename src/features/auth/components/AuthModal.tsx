@@ -17,6 +17,7 @@ export const AuthModal: React.FC = () => {
     isAuthModalOpen,
     closeAuthModal,
     authModalMode,
+    loginWithCredentials,
     switchRole,
     showToast
   } = useApp();
@@ -26,20 +27,33 @@ export const AuthModal: React.FC = () => {
   );
 
   // Form states
-  const [email, setEmail] = useState('tuananh@truong.edu.vn');
-  const [password, setPassword] = useState('MatKhau@2026');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [name, setName] = useState('Tuấn Anh gay');
   const [roleSelect, setRoleSelect] = useState<Role>('STUDENT');
   const [otpCodes, setOtpCodes] = useState(['5', '8', '2', '9', '1', '4']);
   const [countdown, setCountdown] = useState(48);
+  const [loginError, setLoginError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isAuthModalOpen) return null;
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    switchRole(roleSelect);
-    showToast(`Đăng nhập thành công với tài khoản ${roleSelect === 'LECTURER' ? 'Giảng viên' : 'Sinh viên'}!`, 'success');
-    closeAuthModal();
+    if (isSubmitting) return;
+    setLoginError('');
+    setIsSubmitting(true);
+    try {
+      await loginWithCredentials(email, password);
+      closeAuthModal();
+    } catch (error) {
+      setLoginError(
+        error instanceof Error ? error.message : 'Đăng nhập thất bại.',
+      );
+      setPassword('');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleRegister = (e: React.FormEvent) => {
@@ -98,13 +112,23 @@ export const AuthModal: React.FC = () => {
               <form onSubmit={handleLogin} className="space-y-3">
                 <div>
                   <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                    Email trường
+                    Email tài khoản
                   </label>
                   <input
                     type="email"
+                    autoComplete="username"
+                    required
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full p-2.5 text-xs border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] text-gray-900 dark:text-gray-100"
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      setLoginError('');
+                    }}
+                    aria-invalid={Boolean(loginError)}
+                    className={`w-full rounded-xl border p-2.5 text-xs text-gray-900 dark:bg-[#3A3B3C] dark:text-gray-100 ${
+                      loginError
+                        ? 'border-red-500'
+                        : 'border-gray-300 dark:border-gray-600'
+                    } bg-gray-50`}
                   />
                 </div>
 
@@ -114,47 +138,37 @@ export const AuthModal: React.FC = () => {
                   </label>
                   <input
                     type="password"
+                    autoComplete="current-password"
+                    required
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full p-2.5 text-xs border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] text-gray-900 dark:text-gray-100"
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setLoginError('');
+                    }}
+                    aria-invalid={Boolean(loginError)}
+                    className={`w-full rounded-xl border p-2.5 text-xs text-gray-900 dark:bg-[#3A3B3C] dark:text-gray-100 ${
+                      loginError
+                        ? 'border-red-500'
+                        : 'border-gray-300 dark:border-gray-600'
+                    } bg-gray-50`}
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                    Đăng nhập thử với vai trò:
-                  </label>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <button
-                      type="button"
-                      onClick={() => setRoleSelect('STUDENT')}
-                      className={`p-2 rounded-lg font-bold border transition ${
-                        roleSelect === 'STUDENT'
-                          ? 'border-blue-600 bg-blue-50 text-blue-600'
-                          : 'border-gray-200 text-gray-600'
-                      }`}
-                    >
-                      Sinh viên
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setRoleSelect('LECTURER')}
-                      className={`p-2 rounded-lg font-bold border transition ${
-                        roleSelect === 'LECTURER'
-                          ? 'border-purple-600 bg-purple-50 text-purple-600'
-                          : 'border-gray-200 text-gray-600'
-                      }`}
-                    >
-                      Giảng viên
-                    </button>
-                  </div>
-                </div>
+                {loginError && (
+                  <p
+                    role="alert"
+                    className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300"
+                  >
+                    {loginError}
+                  </p>
+                )}
 
                 <button
                   type="submit"
-                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition"
+                  disabled={isSubmitting}
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-bold text-xs rounded-xl shadow-md transition"
                 >
-                  Đăng nhập
+                  {isSubmitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
                 </button>
               </form>
 

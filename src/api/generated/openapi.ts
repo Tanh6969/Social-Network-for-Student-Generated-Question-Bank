@@ -3323,6 +3323,7 @@ export interface components {
             author?: components["schemas"]["AuthorDto"];
             /** Format: date-time */
             created_at?: string;
+            deleted?: boolean;
             hidden?: boolean;
             /** Format: int32 */
             reply_count?: number;
@@ -7079,8 +7080,8 @@ export interface components {
             code?: string;
             /** Format: date-time */
             followed_at?: string;
-            following_me?: boolean;
             friend?: boolean;
+            following_me?: boolean;
         };
         GlobalResponseFollowingListResponseDto: {
             code?: string;
@@ -7426,8 +7427,8 @@ export interface components {
             reply_to_message?: components["schemas"]["ReplyMessagePreviewDto"];
             /** Format: date-time */
             created_at?: string;
-            edited?: boolean;
             revoked?: boolean;
+            edited?: boolean;
         };
         MessageListResponseDto: {
             /** Format: int64 */
@@ -7612,7 +7613,8 @@ export interface components {
         ActivityFeedItemDto: {
             /** Format: int64 */
             feed_id?: number;
-            target_type?: string;
+            /** @enum {string} */
+            target_type?: "POST" | "QUESTION" | "SESSION" | "BADGE" | "COSMETIC" | "USER" | "SUBJECT";
             /** Format: int64 */
             target_id?: number;
             /** @enum {string} */

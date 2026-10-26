@@ -20,6 +20,11 @@ const BankView = React.lazy(() =>
     default: module.BankView,
   })),
 );
+const ProposeView = React.lazy(() =>
+  import('../features/propose/components/ProposeView').then((module) => ({
+    default: module.ProposeView,
+  })),
+);
 const VideoWatchView = React.lazy(() =>
   import('../features/watch/components/VideoWatchView').then((module) => ({
     default: module.VideoWatchView,
@@ -39,6 +44,11 @@ const ReviewDashboardView = React.lazy(() =>
   import('../features/lecturer/components/ReviewDashboardView').then(
     (module) => ({ default: module.ReviewDashboardView }),
   ),
+);
+const LecturerBankView = React.lazy(() =>
+  import('../features/lecturer/components/LecturerBankView').then((module) => ({
+    default: module.LecturerBankView,
+  })),
 );
 const MessengerFullView = React.lazy(() =>
   import('../features/messenger/components/MessengerFullView').then(
@@ -86,7 +96,7 @@ import { WifiOff } from 'lucide-react';
 
 const MainContent: React.FC = () => {
   const location = useLocation();
-  const { isAuthenticated, activeTab, isOfflineSimulated } = useApp();
+  const { isAuthenticated, activeTab, isOfflineSimulated, role } = useApp();
 
   // Authentication and the local demo entry points share the login screen.
   if (!isAuthenticated) {
@@ -133,10 +143,14 @@ const MainContent: React.FC = () => {
         <div className="flex-1">
           {activeTab === 'feed' && <FeedView />}
           {activeTab === 'bank' && <BankView />}
+          {activeTab === 'propose' && <ProposeView />}
           {activeTab === 'watch' && <VideoWatchView />}
           {activeTab === 'game' && <MinigameView />}
           {activeTab === 'friends' && <FriendsView />}
-          {activeTab === 'review' && <ReviewDashboardView />}
+          {activeTab === 'review' &&
+            (role === 'LECTURER' ? <ReviewDashboardView /> : <FeedView />)}
+          {activeTab === 'lecturer-bank' &&
+            (role === 'LECTURER' ? <LecturerBankView /> : <FeedView />)}
           {activeTab === 'messenger' && <MessengerFullView />}
           {activeTab === 'profile' && <ProfileView />}
           {activeTab === 'cosmetics' && <CosmeticsView />}
