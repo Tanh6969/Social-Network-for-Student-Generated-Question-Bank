@@ -72,6 +72,9 @@ function PostComposer({
   const contentIssue = getPostContentIssue(content);
   const countIsRed =
     wordCount >= MAX_POST_WORDS || Boolean(contentIssue || limitIssue);
+  const showImageAndDocumentActions = initialMediaKind !== 'video';
+  const showVideoAction =
+    initialMediaKind === null || initialMediaKind === 'video';
 
   useEffect(() => {
     const ownedUrls = newMediaUrls.current;
@@ -368,34 +371,38 @@ function PostComposer({
             }}
           />
           <div className="flex flex-wrap gap-2">
-            {(mediaUrls.length === 0 || mediaType === 'image') && (
+            {showImageAndDocumentActions &&
+              (mediaUrls.length === 0 || mediaType === 'image') && (
+                <button
+                  type="button"
+                  onClick={() => imageInput.current?.click()}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-[#3A3B3C] ${mediaType === 'image' && initialMediaKind === 'image' ? 'border-blue-500 text-blue-600' : 'border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-200'}`}
+                >
+                  <ImagePlus className="h-4 w-4 text-emerald-600" />
+                  Thêm ảnh
+                </button>
+              )}
+            {showVideoAction &&
+              (mediaUrls.length === 0 || mediaType === 'video') && (
+                <button
+                  type="button"
+                  onClick={() => videoInput.current?.click()}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-[#3A3B3C] ${mediaType === 'video' && initialMediaKind === 'video' ? 'border-blue-500 text-blue-600' : 'border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-200'}`}
+                >
+                  <Video className="h-4 w-4 text-blue-600" />
+                  Thêm video
+                </button>
+              )}
+            {showImageAndDocumentActions && (
               <button
                 type="button"
-                onClick={() => imageInput.current?.click()}
-                className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-[#3A3B3C] ${mediaType === 'image' && initialMediaKind === 'image' ? 'border-blue-500 text-blue-600' : 'border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-200'}`}
+                onClick={() => documentInput.current?.click()}
+                className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-[#3A3B3C] ${initialMediaKind === 'document' ? 'border-blue-500 text-blue-600' : 'border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-200'}`}
               >
-                <ImagePlus className="h-4 w-4 text-emerald-600" />
-                Thêm ảnh
+                <FileText className="h-4 w-4 text-blue-600" />
+                Thêm tài liệu
               </button>
             )}
-            {(mediaUrls.length === 0 || mediaType === 'video') && (
-              <button
-                type="button"
-                onClick={() => videoInput.current?.click()}
-                className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-[#3A3B3C] ${mediaType === 'video' && initialMediaKind === 'video' ? 'border-blue-500 text-blue-600' : 'border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-200'}`}
-              >
-                <Video className="h-4 w-4 text-blue-600" />
-                Thêm video
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => documentInput.current?.click()}
-              className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-[#3A3B3C] ${initialMediaKind === 'document' ? 'border-blue-500 text-blue-600' : 'border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-200'}`}
-            >
-              <FileText className="h-4 w-4 text-blue-600" />
-              Thêm tài liệu
-            </button>
           </div>
           {fileError && (
             <p

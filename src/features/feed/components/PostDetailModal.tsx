@@ -39,8 +39,6 @@ function PostDetail({
     setActivePostDetail,
     toggleLikePost,
     addComment,
-    editComment,
-    deleteComment,
     deletePost,
     openPostComposer,
     openReportModal,
@@ -157,15 +155,9 @@ function PostDetail({
         {visibleComments.length ? (
           <CommentList
             comments={visibleComments}
-            currentUserId={currentUser.id}
             onReply={(comment) => {
               setReplyTarget(comment);
               commentInputRef.current?.focus();
-            }}
-            onEdit={(comment, text) => editComment(post.id, comment.id, text)}
-            onDelete={(comment) => {
-              deleteComment(post.id, comment.id);
-              if (replyTarget?.id === comment.id) setReplyTarget(null);
             }}
           />
         ) : (

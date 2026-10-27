@@ -33,11 +33,8 @@ import type {
 } from '../types';
 import {
   appendComment,
-  findPostComment,
   getPostContentIssue,
-  removeOwnedComment,
   removeOwnedPost,
-  updateOwnedComment,
   updateOwnedPost,
 } from '../../feed/postUtils';
 import { revokeMediaUrl } from '../../feed/mediaUtils';
@@ -113,8 +110,6 @@ interface AppContextType {
   ) => void;
   toggleLikePost: (postId: string) => void;
   addComment: (postId: string, text: string, parentCommentId?: string) => void;
-  editComment: (postId: string, commentId: string, text: string) => void;
-  deleteComment: (postId: string, commentId: string) => void;
   deletePost: (postId: string) => void;
   addLecturerNote: (postId: string, note: string) => void;
   friendStatuses: Record<string, FriendStatus>;
@@ -923,26 +918,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       appendComment(previous, postId, newComment, parentCommentId),
     );
     showToast('Đã gửi bình luận!', 'success');
-  };
-
-  const editComment = (postId: string, commentId: string, text: string) => {
-    const post = posts.find((item) => item.id === postId);
-    const comment = post && findPostComment(post, commentId);
-    if (!text.trim() || comment?.author.id !== currentUser.id) return;
-    setPosts((previous) =>
-      updateOwnedComment(previous, postId, commentId, currentUser.id, text),
-    );
-    showToast('Đã sửa bình luận.', 'success');
-  };
-
-  const deleteComment = (postId: string, commentId: string) => {
-    const post = posts.find((item) => item.id === postId);
-    const comment = post && findPostComment(post, commentId);
-    if (comment?.author.id !== currentUser.id) return;
-    setPosts((previous) =>
-      removeOwnedComment(previous, postId, commentId, currentUser.id),
-    );
-    showToast('Đã xóa bình luận.', 'info');
   };
 
   const deletePost = (postId: string) => {
@@ -1850,8 +1825,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         updatePost,
         toggleLikePost,
         addComment,
-        editComment,
-        deleteComment,
         deletePost,
         addLecturerNote,
         friendStatuses,

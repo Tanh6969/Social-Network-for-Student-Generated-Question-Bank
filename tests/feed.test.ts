@@ -4,16 +4,13 @@ import { getMockFeedPage } from '../src/features/feed/feedPagination';
 import {
   appendComment,
   countWords,
-  findPostComment,
   getPostContentIssue,
   limitPostContent,
   MAX_POST_CHARACTERS,
   MAX_POST_WORD_CHARACTERS,
   removeOwnedPost,
-  removeOwnedComment,
   sortFeedPosts,
   updateOwnedPost,
-  updateOwnedComment,
 } from '../src/features/feed/postUtils';
 
 const post = (id: string, authorId: string, createdAt: string): Post =>
@@ -129,53 +126,6 @@ describe('feed interactions', () => {
     expect(
       appendComment([original], 'post', comment('reply'), 'missing')[0],
     ).toBe(original);
-  });
-
-  it('edits only owned comments and one-level replies', () => {
-    const root = { ...comment('root', 'other'), replies: [comment('reply')] };
-    const original = {
-      ...post('post', 'other', '2026-10-16T11:00:00Z'),
-      comments: [root],
-    };
-    const edited = updateOwnedComment(
-      [original],
-      'post',
-      'reply',
-      'me',
-      '  đã sửa  ',
-    )[0];
-    expect(findPostComment(edited, 'reply')?.content).toBe('đã sửa');
-    expect(findPostComment(original, 'reply')?.content).toBe('reply');
-    expect(
-      updateOwnedComment([original], 'post', 'root', 'me', 'không được')[0],
-    ).toBe(original);
-    expect(
-      updateOwnedComment([original], 'post', 'reply', 'me', '   '),
-    ).toEqual([original]);
-  });
-
-  it('deletes an owned reply or root and updates the total including replies', () => {
-    const root = { ...comment('root'), replies: [comment('reply', 'other')] };
-    const original = {
-      ...post('post', 'me', '2026-10-16T11:00:00Z'),
-      comments: [root],
-      commentsCount: 2,
-    };
-    expect(removeOwnedComment([original], 'post', 'reply', 'me')[0]).toBe(
-      original,
-    );
-    const afterReply = removeOwnedComment(
-      [original],
-      'post',
-      'reply',
-      'other',
-    )[0];
-    expect(afterReply.commentsCount).toBe(1);
-    expect(afterReply.comments?.[0].replies).toEqual([]);
-    const afterRoot = removeOwnedComment([original], 'post', 'root', 'me')[0];
-    expect(afterRoot.commentsCount).toBe(0);
-    expect(afterRoot.comments).toEqual([]);
-    expect(original.comments[0].replies).toHaveLength(1);
   });
 
   it('only edits or deletes posts owned by the current user', () => {
