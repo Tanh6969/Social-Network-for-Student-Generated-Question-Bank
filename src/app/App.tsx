@@ -45,6 +45,11 @@ const ReviewDashboardView = React.lazy(() =>
     (module) => ({ default: module.ReviewDashboardView }),
   ),
 );
+const LecturerBankView = React.lazy(() =>
+  import('../features/lecturer/components/LecturerBankView').then(
+    (module) => ({ default: module.LecturerBankView }),
+  ),
+);
 const MessengerFullView = React.lazy(() =>
   import('../features/messenger/components/MessengerFullView').then(
     (module) => ({ default: module.MessengerFullView }),
@@ -91,7 +96,7 @@ import { WifiOff } from 'lucide-react';
 
 const MainContent: React.FC = () => {
   const location = useLocation();
-  const { isAuthenticated, activeTab, isOfflineSimulated } = useApp();
+  const { isAuthenticated, activeTab, isOfflineSimulated, role } = useApp();
 
   // Authentication and the local demo entry points share the login screen.
   if (!isAuthenticated) {
@@ -136,7 +141,10 @@ const MainContent: React.FC = () => {
           {activeTab === 'watch' && <VideoWatchView />}
           {activeTab === 'game' && <MinigameView />}
           {activeTab === 'friends' && <FriendsView />}
-          {activeTab === 'review' && <ReviewDashboardView />}
+          {activeTab === 'review' &&
+            (role === 'LECTURER' ? <ReviewDashboardView /> : <FeedView />)}
+          {activeTab === 'lecturer-bank' &&
+            (role === 'LECTURER' ? <LecturerBankView /> : <FeedView />)}
           {activeTab === 'messenger' && <MessengerFullView />}
           {activeTab === 'profile' && <ProfileView />}
           {activeTab === 'cosmetics' && <CosmeticsView />}
