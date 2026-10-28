@@ -32,6 +32,7 @@ import {
   Heart,
   GraduationCap,
   ChevronRight,
+  ChevronLeft,
   Info,
   Clock,
 } from 'lucide-react';
@@ -51,6 +52,8 @@ export const ProposeView: React.FC = () => {
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [filterSubjectId, setFilterSubjectId] = useState<number | undefined>(undefined);
   const [filterStatus, setFilterStatus] = useState<'PENDING' | 'REVIEWING' | 'RESOLVED' | undefined>(undefined);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
   const [paginationCursor, setPaginationCursor] = useState<{
     after?: number;
     has_next?: boolean;
@@ -157,6 +160,19 @@ export const ProposeView: React.FC = () => {
       fetchMySubmissions();
     }
   }, [activeTab, fetchMySubmissions]);
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterSubjectId, filterStatus]);
+
+  // Pagination calculations for My Submissions
+  const totalPages = Math.max(1, Math.ceil(submissions.length / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedSubmissions = submissions.slice(
+    (safeCurrentPage - 1) * pageSize,
+    safeCurrentPage * pageSize
+  );
 
   // Question editing handlers
   const currentQ = questions[activeQIndex] || questions[0];
@@ -812,14 +828,6 @@ export const ProposeView: React.FC = () => {
 
               <div className="flex items-center gap-2.5 flex-wrap">
                 <button
-                  type="button"
-                  onClick={() => setActiveTab('create')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>+ Soạn phiên mới</span>
-                </button>
-                <button
                   onClick={() => fetchMySubmissions()}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-300 dark:border-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition cursor-pointer"
                 >
@@ -876,133 +884,231 @@ export const ProposeView: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <div className="space-y-3">
-                {submissions.map((sub) => {
-                  const status = sub.status || 'PENDING';
-                  const isPending = status === 'PENDING';
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  {paginatedSubmissions.map((sub) => {
+                    const status = sub.status || 'PENDING';
+                    const isPending = status === 'PENDING';
 
-                  return (
-                    <div
-                      key={sub.session_id}
-                      className="bg-white dark:bg-[#242526] rounded-2xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700 shadow-xs hover:border-blue-400 dark:hover:border-blue-600 transition space-y-3"
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="space-y-1 max-w-2xl">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {status === 'RESOLVED' ? (
-                              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
-                                <CheckCircle2 className="w-3 h-3" />
-                                <span>Đã duyệt</span>
-                              </span>
-                            ) : status === 'REVIEWING' ? (
-                              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                <span>Đang thẩm định</span>
-                              </span>
-                            ) : (
-                              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                <span>Chờ duyệt</span>
-                              </span>
+                    return (
+                      <div
+                        key={sub.session_id}
+                        className="bg-white dark:bg-[#242526] rounded-2xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700 shadow-xs hover:border-blue-400 dark:hover:border-blue-600 transition space-y-3"
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="space-y-1 max-w-2xl">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {status === 'RESOLVED' ? (
+                                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  <span>Đã duyệt</span>
+                                </span>
+                              ) : status === 'REVIEWING' ? (
+                                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  <span>Đang thẩm định</span>
+                                </span>
+                              ) : (
+                                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  <span>Chờ duyệt</span>
+                                </span>
+                              )}
+                            </div>
+
+                            <h4
+                              className="font-bold text-base text-gray-900 dark:text-gray-100 hover:text-blue-600 cursor-pointer"
+                              onClick={() => setSelectedDetailId(sub.session_id || null)}
+                            >
+                              {sub.title}
+                            </h4>
+
+                            {sub.content && (
+                              <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+                                {sub.content}
+                              </p>
                             )}
                           </div>
 
-                          <h4
-                            className="font-bold text-base text-gray-900 dark:text-gray-100 hover:text-blue-600 cursor-pointer"
-                            onClick={() => setSelectedDetailId(sub.session_id || null)}
-                          >
-                            {sub.title}
-                          </h4>
+                          {/* Actions */}
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              onClick={() => setSelectedDetailId(sub.session_id || null)}
+                              className="px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition cursor-pointer flex items-center gap-1.5"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>Chi tiết</span>
+                            </button>
 
-                          {sub.content && (
-                            <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
-                              {sub.content}
-                            </p>
+                            <button
+                              disabled={!isPending}
+                              onClick={() => isPending && setSelectedEditId(sub.session_id || null)}
+                              className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition flex items-center gap-1.5 ${
+                                isPending
+                                  ? 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 cursor-pointer shadow-2xs'
+                                  : 'opacity-40 cursor-not-allowed border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-[#3A3B3C] text-gray-400 dark:text-gray-500'
+                              }`}
+                              title={
+                                isPending
+                                  ? 'Chỉnh sửa phiên đề xuất'
+                                  : 'Chỉ có thể chỉnh sửa khi ở trạng thái Chờ duyệt'
+                              }
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                              <span>Sửa</span>
+                            </button>
+
+                            <button
+                              disabled={!isPending}
+                              onClick={() =>
+                                isPending && handleDeleteSubmission(sub.session_id!, sub.title)
+                              }
+                              className={`p-1.5 rounded-xl border transition ${
+                                isPending
+                                  ? 'border-red-200 dark:border-red-900/50 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer shadow-2xs'
+                                  : 'opacity-40 cursor-not-allowed border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-[#3A3B3C] text-gray-400 dark:text-gray-500'
+                              }`}
+                              title={
+                                isPending
+                                  ? 'Hủy & xóa phiên đề xuất'
+                                  : 'Chỉ có thể xóa khi ở trạng thái Chờ duyệt'
+                              }
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                      {/* Metadata footer */}
+                      <div className="pt-2 border-t border-gray-100 dark:border-gray-800 flex flex-wrap items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-400">
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <span className="font-semibold text-gray-700 dark:text-gray-300">
+                            Môn: {sub.subject_name || sub.subject_code} ({sub.subject_code})
+                          </span>
+                          <span>•</span>
+                          <span>{sub.question_counts || 0} câu trắc nghiệm</span>
+                          {sub.created_at && (
+                            <>
+                              <span>•</span>
+                              <div className="flex items-center gap-1">
+                                <Calendar className="w-3.5 h-3.5" />
+                                <span>{new Date(sub.created_at).toLocaleDateString('vi-VN')}</span>
+                              </div>
+                            </>
                           )}
                         </div>
 
-                        {/* Actions */}
-                        <div className="flex items-center gap-2 shrink-0">
-                          <button
-                            onClick={() => setSelectedDetailId(sub.session_id || null)}
-                            className="px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition cursor-pointer flex items-center gap-1.5"
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                            <span>Chi tiết</span>
-                          </button>
-
-                          <button
-                            disabled={!isPending}
-                            onClick={() => isPending && setSelectedEditId(sub.session_id || null)}
-                            className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition flex items-center gap-1.5 ${
-                              isPending
-                                ? 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 cursor-pointer shadow-2xs'
-                                : 'opacity-40 cursor-not-allowed border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-[#3A3B3C] text-gray-400 dark:text-gray-500'
-                            }`}
-                            title={
-                              isPending
-                                ? 'Chỉnh sửa phiên đề xuất'
-                                : 'Chỉ có thể chỉnh sửa khi ở trạng thái Chờ duyệt'
-                            }
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                            <span>Sửa</span>
-                          </button>
-
-                          <button
-                            disabled={!isPending}
-                            onClick={() =>
-                              isPending && handleDeleteSubmission(sub.session_id!, sub.title)
-                            }
-                            className={`p-1.5 rounded-xl border transition ${
-                              isPending
-                                ? 'border-red-200 dark:border-red-900/50 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer shadow-2xs'
-                                : 'opacity-40 cursor-not-allowed border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-[#3A3B3C] text-gray-400 dark:text-gray-500'
-                            }`}
-                            title={
-                              isPending
-                                ? 'Hủy & xóa phiên đề xuất'
-                                : 'Chỉ có thể xóa khi ở trạng thái Chờ duyệt'
-                            }
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-
-                    {/* Metadata footer */}
-                    <div className="pt-2 border-t border-gray-100 dark:border-gray-800 flex flex-wrap items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-400">
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <span className="font-semibold text-gray-700 dark:text-gray-300">
-                          Môn: {sub.subject_name || sub.subject_code} ({sub.subject_code})
-                        </span>
-                        <span>•</span>
-                        <span>{sub.question_counts || 0} câu trắc nghiệm</span>
-                        {sub.created_at && (
-                          <>
-                            <span>•</span>
-                            <div className="flex items-center gap-1">
-                              <Calendar className="w-3.5 h-3.5" />
-                              <span>{new Date(sub.created_at).toLocaleDateString('vi-VN')}</span>
-                            </div>
-                          </>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1">
-                          <Heart className="w-3.5 h-3.5 text-rose-500" />
-                          <span>{sub.react_count || 0}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <MessageSquare className="w-3.5 h-3.5 text-blue-500" />
-                          <span>{sub.comment_count || 0}</span>
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1">
+                            <Heart className="w-3.5 h-3.5 text-rose-500" />
+                            <span>{sub.react_count || 0}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <MessageSquare className="w-3.5 h-3.5 text-blue-500" />
+                            <span>{sub.comment_count || 0}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
+                  );
+                })}
+                </div>
+
+                {/* Phân trang (Pagination) */}
+                {submissions.length > 0 && (
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 pb-1 px-1 text-xs text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700/60 mt-4">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span>
+                        Hiển thị{' '}
+                        <span className="font-semibold text-gray-900 dark:text-gray-100">
+                          {(safeCurrentPage - 1) * pageSize + 1}
+                        </span>
+                        -
+                        <span className="font-semibold text-gray-900 dark:text-gray-100">
+                          {Math.min(safeCurrentPage * pageSize, submissions.length)}
+                        </span>{' '}
+                        trong tổng số{' '}
+                        <span className="font-bold text-blue-600">{submissions.length}</span> phiên
+                      </span>
+
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-gray-400">•</span>
+                        <span>Mỗi trang:</span>
+                        <select
+                          value={pageSize}
+                          onChange={(e) => {
+                            setPageSize(Number(e.target.value));
+                            setCurrentPage(1);
+                          }}
+                          className="px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#3A3B3C] text-xs font-semibold text-gray-700 dark:text-gray-300 focus:outline-hidden cursor-pointer"
+                        >
+                          <option value={3}>3 phiên</option>
+                          <option value={5}>5 phiên</option>
+                          <option value={10}>10 phiên</option>
+                          <option value={20}>20 phiên</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {totalPages > 1 && (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                          disabled={safeCurrentPage === 1}
+                          className="px-2.5 py-1.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#242526] text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-100 dark:hover:bg-[#3A3B3C] disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer flex items-center gap-1"
+                        >
+                          <ChevronLeft className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Trước</span>
+                        </button>
+
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: totalPages }, (_, i) => i + 1)
+                            .filter((page) => {
+                              return (
+                                page === 1 ||
+                                page === totalPages ||
+                                Math.abs(page - safeCurrentPage) <= 1
+                              );
+                            })
+                            .map((page, idx, arr) => {
+                              const prev = arr[idx - 1];
+                              const hasGap = prev && page - prev > 1;
+
+                              return (
+                                <React.Fragment key={page}>
+                                  {hasGap && (
+                                    <span className="px-1 text-gray-400 font-bold">...</span>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => setCurrentPage(page)}
+                                    className={`w-8 h-8 rounded-xl text-xs font-bold transition cursor-pointer ${
+                                      page === safeCurrentPage
+                                        ? 'bg-blue-600 text-white shadow-xs'
+                                        : 'border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#242526] text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C]'
+                                    }`}
+                                  >
+                                    {page}
+                                  </button>
+                                </React.Fragment>
+                              );
+                            })}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                          disabled={safeCurrentPage === totalPages}
+                          className="px-2.5 py-1.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#242526] text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-100 dark:hover:bg-[#3A3B3C] disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer flex items-center gap-1"
+                        >
+                          <span className="hidden sm:inline">Sau</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
                   </div>
-                );
-              })}
+                )}
               </div>
             )}
           </div>
