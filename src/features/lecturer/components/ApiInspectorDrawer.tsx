@@ -193,7 +193,7 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
         {/* Drawer Header */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-[#242526]">
           <div className="flex items-center gap-2.5">
-            <span className="p-2 rounded-xl bg-purple-600 text-white shadow-xs">
+            <span className="p-2 rounded-xl bg-blue-600 text-white shadow-xs">
               <Server className="w-5 h-5" />
             </span>
             <div>
@@ -219,7 +219,7 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
             onClick={() => setActiveTab('SWAGGER')}
             className={`flex-1 py-3 border-b-2 text-center transition flex items-center justify-center gap-1.5 ${
               activeTab === 'SWAGGER'
-                ? 'border-purple-600 text-purple-600 dark:text-purple-400 bg-purple-50/30 dark:bg-purple-950/20'
+                ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-950/20'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -230,7 +230,7 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
             onClick={() => setActiveTab('LIVE_LOGS')}
             className={`flex-1 py-3 border-b-2 text-center transition flex items-center justify-center gap-1.5 ${
               activeTab === 'LIVE_LOGS'
-                ? 'border-purple-600 text-purple-600 dark:text-purple-400 bg-purple-50/30 dark:bg-purple-950/20'
+                ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-950/20'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -254,7 +254,7 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
                     onClick={() => setSelectedApiIndex(idx)}
                     className={`p-2.5 rounded-xl border cursor-pointer transition flex items-center justify-between ${
                       selectedApiIndex === idx
-                        ? 'border-purple-600 bg-purple-50/60 dark:bg-purple-950/40 ring-1 ring-purple-600'
+                        ? 'border-blue-600 bg-blue-50/60 dark:bg-blue-950/40 ring-1 ring-blue-600'
                         : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-[#242526] hover:bg-gray-50 dark:hover:bg-[#2A2B2D]'
                     }`}
                   >
@@ -309,7 +309,7 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
                             className="p-2 rounded bg-white dark:bg-[#1E1F20] border border-gray-200 dark:border-gray-700 flex items-center justify-between"
                           >
                             <div>
-                              <span className="font-mono font-bold text-purple-600 dark:text-purple-400">
+                              <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
                                 {p.name}
                               </span>{' '}
                               <span className="text-[10px] text-gray-400">({p.type})</span>
@@ -335,7 +335,7 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
                           onClick={() =>
                             handleCopy(JSON.stringify(currentApi.requestBody, null, 2), 'req_spec')
                           }
-                          className="text-[11px] text-purple-600 hover:underline flex items-center gap-1"
+                          className="text-[11px] text-blue-600 hover:underline flex items-center gap-1"
                         >
                           <Copy className="w-3 h-3" />
                           <span>{copiedLogId === 'req_spec' ? 'Đã sao chép' : 'Sao chép'}</span>
@@ -357,7 +357,7 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
                         onClick={() =>
                           handleCopy(JSON.stringify(currentApi.responseBody, null, 2), 'res_spec')
                         }
-                        className="text-[11px] text-purple-600 hover:underline flex items-center gap-1"
+                        className="text-[11px] text-blue-600 hover:underline flex items-center gap-1"
                       >
                         <Copy className="w-3 h-3" />
                         <span>{copiedLogId === 'res_spec' ? 'Đã sao chép' : 'Sao chép'}</span>
@@ -468,7 +468,7 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
           <span>Chuẩn đặc tả OpenAPI 3.0 / RESTful</span>
           <button
             onClick={onClose}
-            className="px-4 py-1.5 bg-purple-600 text-white rounded-lg font-bold hover:bg-purple-700 transition"
+            className="px-4 py-1.5 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition"
           >
             Đóng
           </button>

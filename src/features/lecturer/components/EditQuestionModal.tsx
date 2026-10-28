@@ -144,9 +144,9 @@ export const EditQuestionModal: React.FC<EditQuestionModalProps> = ({
     <div className="fixed inset-0 z-[230] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
       <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-2xl max-w-2xl w-full max-h-[92vh] flex flex-col border border-gray-200 dark:border-gray-700 overflow-hidden">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-purple-50 dark:bg-purple-950/30 shrink-0">
+        <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-blue-50 dark:bg-blue-950/30 shrink-0">
           <div className="flex items-center gap-2.5">
-            <span className="p-2 rounded-xl bg-purple-600 text-white shadow-xs">
+            <span className="p-2 rounded-xl bg-blue-600 text-white shadow-xs">
               <Edit3 className="w-5 h-5" />
             </span>
             <div>
@@ -187,7 +187,7 @@ export const EditQuestionModal: React.FC<EditQuestionModalProps> = ({
               onChange={(e) => setContent(e.target.value)}
               placeholder="Nhập nội dung câu hỏi..."
               required
-              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1E1F20] text-sm text-gray-900 dark:text-gray-100 focus:border-purple-500 focus:outline-hidden resize-y break-words"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1E1F20] text-sm text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:outline-hidden resize-y break-words"
             />
           </div>
 
@@ -226,7 +226,7 @@ export const EditQuestionModal: React.FC<EditQuestionModalProps> = ({
                     onChange={(e) => handleOptionTextChange(opt.key, e.target.value)}
                     placeholder={`Nội dung đáp án ${opt.key}...`}
                     required
-                    className="w-full px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#242526] text-xs text-gray-900 dark:text-gray-100 focus:border-purple-500 focus:outline-hidden resize-y min-h-[42px] break-words leading-relaxed"
+                    className="w-full px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#242526] text-xs text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:outline-hidden resize-y min-h-[42px] break-words leading-relaxed"
                   />
                 </div>
 
@@ -253,22 +253,22 @@ export const EditQuestionModal: React.FC<EditQuestionModalProps> = ({
               value={explanation}
               onChange={(e) => setExplanation(e.target.value)}
               placeholder="Giải thích vì sao đáp án này đúng để hỗ trợ sinh viên khi ôn tập..."
-              className="w-full px-3.5 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1E1F20] text-xs text-gray-900 dark:text-gray-100 focus:border-purple-500 focus:outline-hidden resize-y break-words"
+              className="w-full px-3.5 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1E1F20] text-xs text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:outline-hidden resize-y break-words"
             />
           </div>
 
           {/* Auto Approve Checkbox */}
-          <div className="p-3.5 rounded-xl bg-purple-50/70 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900/50 flex items-start gap-2.5">
+          <div className="p-3.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/50 flex items-start gap-2.5">
             <input
               type="checkbox"
               id="auto-approve-checkbox"
               checked={autoApprove}
               onChange={(e) => setAutoApprove(e.target.checked)}
-              className="mt-0.5 w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500 cursor-pointer"
+              className="mt-0.5 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
             />
             <label
               htmlFor="auto-approve-checkbox"
-              className="text-xs text-purple-900 dark:text-purple-200 leading-relaxed cursor-pointer select-none"
+              className="text-xs text-blue-900 dark:text-blue-200 leading-relaxed cursor-pointer select-none"
             >
               <span className="font-bold block">Tự động phê duyệt vào ngân hàng đề (auto_approve)</span>
               <span>
@@ -290,7 +290,7 @@ export const EditQuestionModal: React.FC<EditQuestionModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+              className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
             >
               {isSubmitting && (
                 <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />

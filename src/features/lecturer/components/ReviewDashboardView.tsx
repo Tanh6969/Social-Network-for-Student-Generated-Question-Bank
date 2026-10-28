@@ -230,13 +230,13 @@ export const ReviewDashboardView: React.FC = () => {
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="p-2.5 rounded-xl bg-purple-600 text-white shadow-xs">
+              <span className="p-2.5 rounded-xl bg-blue-600 text-white shadow-xs">
                 <CheckSquare className="w-5 h-5" />
               </span>
               <h1 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-gray-100 tracking-tight">
                 Kiểm duyệt câu hỏi
               </h1>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
                 Dành cho Giảng viên
               </span>
             </div>
@@ -258,11 +258,11 @@ export const ReviewDashboardView: React.FC = () => {
             </button>
 
             <button
-              onClick={() => setActiveTab('lecturer-bank')}
-              className="px-3.5 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:hover:bg-purple-900 dark:text-purple-300 border border-purple-200 dark:border-purple-800 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+              onClick={() => setActiveTab('exams')}
+              className="px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:hover:bg-blue-900 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
             >
-              <Database className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-              <span>Ngân hàng đề của Giảng viên</span>
+              <Database className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <span>Quản lý đề thi & Xuất file</span>
             </button>
           </div>
         </div>
@@ -290,7 +290,7 @@ export const ReviewDashboardView: React.FC = () => {
               }}
               className={`flex-1 lg:flex-initial flex items-center justify-between gap-2.5 px-3.5 py-3 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap ${
                 activeTab === 'PENDING'
-                  ? 'bg-purple-600 text-white shadow-xs'
+                  ? 'bg-blue-600 text-white shadow-xs'
                   : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C]'
               }`}
             >
@@ -317,7 +317,7 @@ export const ReviewDashboardView: React.FC = () => {
               }}
               className={`flex-1 lg:flex-initial flex items-center justify-between gap-2.5 px-3.5 py-3 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap ${
                 activeTab === 'REVIEWING'
-                  ? 'bg-purple-600 text-white shadow-xs'
+                  ? 'bg-blue-600 text-white shadow-xs'
                   : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C]'
               }`}
             >
@@ -344,7 +344,7 @@ export const ReviewDashboardView: React.FC = () => {
               }}
               className={`flex-1 lg:flex-initial flex items-center justify-between gap-2.5 px-3.5 py-3 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap ${
                 activeTab === 'HISTORY'
-                  ? 'bg-purple-600 text-white shadow-xs'
+                  ? 'bg-blue-600 text-white shadow-xs'
                   : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C]'
               }`}
             >
@@ -367,7 +367,7 @@ export const ReviewDashboardView: React.FC = () => {
           {/* Helpful Note Box for Lecturer */}
           <div className="hidden lg:block mt-4 p-3 bg-gray-50 dark:bg-[#1E1F20] rounded-xl border border-gray-100 dark:border-gray-800 text-[11px] text-gray-500 dark:text-gray-400 space-y-1">
             <p className="font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1">
-              <Info className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+              <Info className="w-3.5 h-3.5 text-blue-600 shrink-0" />
               Quy trình kiểm duyệt:
             </p>
             <p>1. Chọn phiên Chờ kiểm duyệt để bắt đầu thẩm định.</p>
@@ -422,7 +422,7 @@ export const ReviewDashboardView: React.FC = () => {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Tìm theo tiêu đề phiên, môn học, sinh viên..."
-                    className="w-full pl-9 pr-3 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                    className="w-full pl-9 pr-3 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
                   />
                 </div>
 
@@ -432,7 +432,7 @@ export const ReviewDashboardView: React.FC = () => {
                     <select
                       value={selectedSubjectId}
                       onChange={(e) => setSelectedSubjectId(e.target.value)}
-                      className="appearance-none pl-3 pr-8 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 font-semibold focus:ring-2 focus:ring-purple-500 focus:outline-hidden cursor-pointer"
+                      className="appearance-none pl-3 pr-8 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-hidden cursor-pointer"
                     >
                       <option value="ALL">Tất cả môn học ({distinctTopics.length})</option>
                       {distinctTopics.map((topic) => (
@@ -449,7 +449,7 @@ export const ReviewDashboardView: React.FC = () => {
                     <select
                       value={historyResultFilter}
                       onChange={(e) => setHistoryResultFilter(e.target.value as 'ALL' | 'RESOLVED' | 'REJECTED')}
-                      className="pl-3 pr-8 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 font-semibold focus:ring-2 focus:ring-purple-500 focus:outline-hidden cursor-pointer"
+                      className="pl-3 pr-8 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-hidden cursor-pointer"
                     >
                       <option value="ALL">Tất cả trạng thái</option>
                       <option value="RESOLVED">Đã phê chuẩn (RESOLVED)</option>
@@ -462,7 +462,7 @@ export const ReviewDashboardView: React.FC = () => {
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value as 'NEWEST' | 'OLDEST')}
-                      className="appearance-none pl-3 pr-8 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 font-semibold focus:ring-2 focus:ring-purple-500 focus:outline-hidden cursor-pointer"
+                      className="appearance-none pl-3 pr-8 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-hidden cursor-pointer"
                     >
                       <option value="NEWEST">Mới nhất trước</option>
                       <option value="OLDEST">Cũ nhất trước</option>
@@ -504,7 +504,7 @@ export const ReviewDashboardView: React.FC = () => {
                   </p>
                   <button
                     onClick={fetchSessions}
-                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
                     <span>Thử lại</span>
@@ -555,7 +555,7 @@ export const ReviewDashboardView: React.FC = () => {
                         <div className="space-y-3">
                           {/* Card Header: Subject Topic + Status Badge */}
                           <div className="flex items-start justify-between gap-2">
-                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/60 dark:text-purple-300 truncate max-w-[65%]">
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 truncate max-w-[65%]">
                               {session.topic || 'Chưa phân môn'}
                             </span>
 
@@ -578,7 +578,7 @@ export const ReviewDashboardView: React.FC = () => {
 
                           {/* Session Title */}
                           <div>
-                            <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 group-hover:text-purple-600 transition line-clamp-2">
+                            <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 group-hover:text-blue-600 transition line-clamp-2">
                               {session.title || 'Phiên đề xuất không có tiêu đề'}
                             </h3>
                             {session.content && (
@@ -597,7 +597,7 @@ export const ReviewDashboardView: React.FC = () => {
                                 className="w-8 h-8 rounded-full object-cover shrink-0"
                               />
                             ) : (
-                              <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center text-purple-600 dark:text-purple-300 shrink-0">
+                              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-950/50 flex items-center justify-center text-blue-600 dark:text-blue-300 shrink-0">
                                 <UserIcon className="w-4 h-4" />
                               </div>
                             )}
@@ -633,7 +633,7 @@ export const ReviewDashboardView: React.FC = () => {
                           {activeTab === 'PENDING' && (
                             <button
                               onClick={() => handleStartReview(session)}
-                              className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-xs"
+                              className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-xs"
                             >
                               <span>Bắt đầu kiểm duyệt</span>
                               <ChevronRight className="w-3.5 h-3.5" />
@@ -721,7 +721,7 @@ export const ReviewDashboardView: React.FC = () => {
                           onClick={() => setCurrentPage(page)}
                           className={`w-8 h-8 rounded-xl font-bold transition cursor-pointer text-xs ${
                             currentPage === page
-                              ? 'bg-purple-600 text-white shadow-xs'
+                              ? 'bg-blue-600 text-white shadow-xs'
                               : 'border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C]'
                           }`}
                         >

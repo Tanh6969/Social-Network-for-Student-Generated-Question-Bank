@@ -210,13 +210,13 @@ export const LecturerBankView: React.FC = () => {
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="p-2 rounded-xl bg-purple-600 text-white shadow-xs">
+              <span className="p-2 rounded-xl bg-blue-600 text-white shadow-xs">
                 <Database className="w-5 h-5" />
               </span>
               <h1 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-gray-100 tracking-tight">
                 Ngân Hàng Đề Thi Riêng Của Giảng Viên
               </h1>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
                 TS. Trần Minh Đức
               </span>
             </div>
@@ -228,8 +228,8 @@ export const LecturerBankView: React.FC = () => {
           {/* Action CTAs */}
           <div className="flex items-center gap-2 flex-wrap">
             <button
-              onClick={() => setIsExamWizardOpen(true)}
-              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-xs"
+              onClick={() => setActiveTab('exams')}
+              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-xs cursor-pointer"
             >
               <Layers className="w-4 h-4" />
               <span>Sinh đề thi (Bốc tách ngẫu nhiên / Có chủ đích)</span>
@@ -308,12 +308,12 @@ export const LecturerBankView: React.FC = () => {
             onClick={() => setActiveFilterTab('ALL')}
             className={`p-3 rounded-xl border cursor-pointer transition ${
               activeFilterTab === 'ALL'
-                ? 'bg-purple-50 dark:bg-purple-950/40 border-purple-300 dark:border-purple-800 ring-1 ring-purple-500'
+                ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-300 dark:border-blue-800 ring-1 ring-blue-500'
                 : 'bg-gray-50 dark:bg-[#1E1F20] border-gray-100 dark:border-gray-800 hover:border-gray-300'
             }`}
           >
             <span className="text-gray-500 font-bold block flex items-center gap-1">
-              <Database className="w-3.5 h-3.5 text-purple-600" /> Tổng ngân hàng GV
+              <Database className="w-3.5 h-3.5 text-blue-600" /> Tổng ngân hàng GV
             </span>
             <span className="text-xl font-black text-gray-900 dark:text-gray-100">
               {questions.length} câu
@@ -335,7 +335,7 @@ export const LecturerBankView: React.FC = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Tìm theo nội dung câu hỏi, chương, tác giả..."
-            className="w-full pl-9 pr-3 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+            className="w-full pl-9 pr-3 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
           />
         </div>
 
@@ -345,7 +345,7 @@ export const LecturerBankView: React.FC = () => {
           <select
             value={selectedSubject}
             onChange={(e) => setSelectedSubject(e.target.value)}
-            className="px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 font-semibold focus:outline-hidden focus:ring-2 focus:ring-purple-500"
+            className="px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-500"
           >
             <option value="ALL">Tất cả môn học</option>
             {subjectsList.map((subj) => (
@@ -359,7 +359,7 @@ export const LecturerBankView: React.FC = () => {
           <select
             value={selectedDifficulty}
             onChange={(e) => setSelectedDifficulty(e.target.value)}
-            className="px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 font-semibold focus:outline-hidden focus:ring-2 focus:ring-purple-500"
+            className="px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-500"
           >
             <option value="ALL">Mọi độ khó</option>
             <option value="EASY">Dễ (Nhận biết)</option>
@@ -379,7 +379,7 @@ export const LecturerBankView: React.FC = () => {
             <span className="font-bold text-xs text-gray-700 dark:text-gray-300">
               Danh sách câu hỏi ({lecturerQuestions.length})
             </span>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
               {activeFilterTab === 'NEED_EDIT'
                 ? 'Cần edit'
                 : activeFilterTab === 'APPROVED'
@@ -400,7 +400,7 @@ export const LecturerBankView: React.FC = () => {
                   onClick={() => setSelectedQuestionId(q.id)}
                   className={`p-3 rounded-xl border cursor-pointer text-xs transition relative ${
                     isSelected
-                      ? 'border-purple-600 bg-purple-50/70 dark:bg-purple-950/40 ring-1 ring-purple-600'
+                      ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 ring-1 ring-blue-600'
                       : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-[#242526] hover:bg-gray-50 dark:hover:bg-[#3A3B3C]'
                   }`}
                 >
@@ -463,7 +463,7 @@ export const LecturerBankView: React.FC = () => {
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-gray-100 dark:border-gray-700 pb-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-black text-purple-600 dark:text-purple-400 uppercase tracking-wider">
+                    <span className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider">
                       Biên Tập Câu Hỏi ({activeQuestion.id})
                     </span>
                     {activeQuestion.status === 'NEED_EDIT' && (
@@ -485,7 +485,7 @@ export const LecturerBankView: React.FC = () => {
                 {/* Question Edit Button: PUT /questions/{id} */}
                 <button
                   onClick={() => setIsEditModalOpen(true)}
-                  className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+                  className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
                 >
                   <Edit3 className="w-3.5 h-3.5" />
                   <span>Chỉnh sửa câu hỏi (PUT)</span>
@@ -607,7 +607,7 @@ export const LecturerBankView: React.FC = () => {
           {/* AI Header */}
           <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-gray-700">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center shadow-xs">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-xs">
                 <Sparkles className="w-4 h-4" />
               </div>
               <div>
@@ -617,7 +617,7 @@ export const LecturerBankView: React.FC = () => {
                 <p className="text-[10px] text-gray-400">Tự động cải thiện văn phong & câu hỏi</p>
               </div>
             </div>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
               Online
             </span>
           </div>
@@ -630,25 +630,25 @@ export const LecturerBankView: React.FC = () => {
             <div className="grid grid-cols-2 gap-1.5 text-[11px]">
               <button
                 onClick={() => handleSendAiPrompt('Cải thiện văn phong sư phạm và làm rõ câu hỏi')}
-                className="p-1.5 text-left rounded-lg bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/40 dark:hover:bg-purple-900/40 text-purple-700 dark:text-purple-300 font-semibold border border-purple-200 dark:border-purple-800/60 transition truncate"
+                className="p-1.5 text-left rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-semibold border border-blue-200 dark:border-blue-800/60 transition truncate"
               >
                 ✨ Chuẩn hóa văn phong
               </button>
               <button
                 onClick={() => handleSendAiPrompt('Tối ưu hóa 3 phương án gây nhiễu B, C, D có tính phân loại cao')}
-                className="p-1.5 text-left rounded-lg bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/40 dark:hover:bg-purple-900/40 text-purple-700 dark:text-purple-300 font-semibold border border-purple-200 dark:border-purple-800/60 transition truncate"
+                className="p-1.5 text-left rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-semibold border border-blue-200 dark:border-blue-800/60 transition truncate"
               >
                 🎯 Tối ưu đáp án nhiễu
               </button>
               <button
                 onClick={() => handleSendAiPrompt('Bổ sung lời giải thích chi tiết có trích dẫn giáo trình')}
-                className="p-1.5 text-left rounded-lg bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/40 dark:hover:bg-purple-900/40 text-purple-700 dark:text-purple-300 font-semibold border border-purple-200 dark:border-purple-800/60 transition truncate"
+                className="p-1.5 text-left rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-semibold border border-blue-200 dark:border-blue-800/60 transition truncate"
               >
                 📖 Thêm giải thích chuẩn
               </button>
               <button
                 onClick={() => handleSendAiPrompt('Đơn giản hóa câu văn để sinh viên dễ hiểu')}
-                className="p-1.5 text-left rounded-lg bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/40 dark:hover:bg-purple-900/40 text-purple-700 dark:text-purple-300 font-semibold border border-purple-200 dark:border-purple-800/60 transition truncate"
+                className="p-1.5 text-left rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-semibold border border-blue-200 dark:border-blue-800/60 transition truncate"
               >
                 ⚡ Rút gọn súc tích
               </button>
@@ -667,7 +667,7 @@ export const LecturerBankView: React.FC = () => {
                 <div
                   className={`p-3 rounded-2xl max-w-[90%] space-y-2 leading-relaxed ${
                     msg.sender === 'LECTURER'
-                      ? 'bg-purple-600 text-white rounded-tr-xs shadow-xs'
+                      ? 'bg-blue-600 text-white rounded-tr-xs shadow-xs'
                       : 'bg-gray-100 dark:bg-[#1E1F20] text-gray-800 dark:text-gray-200 rounded-tl-xs border border-gray-200 dark:border-gray-700'
                   }`}
                 >
@@ -675,8 +675,8 @@ export const LecturerBankView: React.FC = () => {
 
                   {/* AI Suggested Content & Apply Button */}
                   {msg.suggestedContent && (
-                    <div className="mt-2 pt-2 border-t border-purple-400/40 dark:border-gray-700 space-y-1.5 bg-white/10 dark:bg-black/20 p-2 rounded-xl">
-                      <span className="font-bold text-[10px] uppercase tracking-wider block text-purple-700 dark:text-purple-300">
+                    <div className="mt-2 pt-2 border-t border-blue-400/40 dark:border-gray-700 space-y-1.5 bg-white/10 dark:bg-black/20 p-2 rounded-xl">
+                      <span className="font-bold text-[10px] uppercase tracking-wider block text-blue-700 dark:text-blue-300">
                         Bản đề xuất sửa đổi của AI:
                       </span>
                       <p className="text-[11px] italic font-medium">{msg.suggestedContent}</p>
@@ -696,7 +696,7 @@ export const LecturerBankView: React.FC = () => {
 
             {isAiThinking && (
               <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-[#1E1F20] rounded-xl text-gray-500 text-xs">
-                <Sparkles className="w-4 h-4 text-purple-600 animate-spin" />
+                <Sparkles className="w-4 h-4 text-blue-600 animate-spin" />
                 <span>Trợ lý AI đang phân tích và cải thiện văn phong...</span>
               </div>
             )}
@@ -715,14 +715,14 @@ export const LecturerBankView: React.FC = () => {
               value={aiInputPrompt}
               onChange={(e) => setAiInputPrompt(e.target.value)}
               placeholder="Gõ yêu cầu sửa câu hỏi (VD: làm rõ câu hỏi hơn)..."
-              className="flex-1 px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-xs text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-purple-500"
+              className="flex-1 px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-xs text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
             />
             <button
               type="submit"
               disabled={!aiInputPrompt.trim() || isAiThinking}
               className={`p-2 rounded-xl text-white transition ${
                 aiInputPrompt.trim() && !isAiThinking
-                  ? 'bg-purple-600 hover:bg-purple-700 shadow-xs'
+                  ? 'bg-blue-600 hover:bg-blue-700 shadow-xs'
                   : 'bg-gray-300 dark:bg-gray-700 cursor-not-allowed'
               }`}
             >

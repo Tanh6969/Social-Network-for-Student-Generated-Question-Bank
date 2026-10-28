@@ -4,165 +4,195 @@ import {
   FileCode,
   Plus,
   Download,
-  Copy,
-  Clock,
+  Database,
   Layers,
-  CheckCircle2,
-  ChevronRight,
-  BookOpen
+  Sparkles,
+  BookOpen,
+  ArrowRight,
+  ShieldAlert,
 } from 'lucide-react';
-import { Exam } from '../../demo/types';
+import { ExamDetailResponse } from '../../../api';
+import { ExamListView } from './exams/ExamListView';
+import { ExamGenerateForm } from './exams/ExamGenerateForm';
+import { QuestionBankExportView } from './exams/QuestionBankExportView';
+import { ExamDetailView } from './exams/ExamDetailView';
+
+export type ExamViewTab = 'LIST' | 'GENERATE' | 'EXPORT_BANK';
 
 export const ExamsView: React.FC = () => {
-  const { exams, setIsExamWizardOpen, showToast } = useApp();
-  const [selectedExam, setSelectedExam] = useState<Exam>(exams[0] || null);
-  const [showAnswers, setShowAnswers] = useState(false);
+  const { role, switchRole, setActiveTab, showToast } = useApp();
+
+  // Active sub-tab
+  const [activeSubTab, setActiveSubTab] = useState<ExamViewTab>('LIST');
+
+  // Currently viewing exam detail (null = show tab views)
+  const [viewingExamId, setViewingExamId] = useState<number | null>(null);
+  const [newlyCreatedExam, setNewlyCreatedExam] = useState<ExamDetailResponse | null>(null);
+
+  // If user is not LECTURER, prevent access and show helpful notice
+  if (role !== 'LECTURER') {
+    return (
+      <div className="w-full max-w-2xl mx-auto px-4 py-16 text-center space-y-4">
+        <div className="w-16 h-16 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto shadow-xs">
+          <ShieldAlert className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+          Khu vực dành riêng cho Giảng viên
+        </h2>
+        <p className="text-xs text-gray-500 max-w-md mx-auto leading-relaxed">
+          Chức năng Quản lý đề thi và Xuất ngân hàng câu hỏi chỉ khả dụng cho tài khoản Giảng viên để bảo mật ma trận đề thi và đáp án học thuật.
+        </p>
+        <div className="pt-2 flex items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => switchRole('LECTURER')}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>Chuyển sang vai trò Giảng viên</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('feed')}
+            className="px-4 py-2 bg-gray-100 dark:bg-[#3A3B3C] text-gray-700 dark:text-gray-300 rounded-xl text-xs font-semibold hover:bg-gray-200 transition cursor-pointer"
+          >
+            Quay về Trang chủ
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Handler when an exam is created from generator
+  const handleExamCreated = (exam: ExamDetailResponse) => {
+    if (exam.exam_id) {
+      setNewlyCreatedExam(exam);
+      setViewingExamId(exam.exam_id);
+    } else {
+      setActiveSubTab('LIST');
+    }
+  };
 
   return (
-    <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 flex flex-col lg:flex-row gap-6 lg:gap-8 xl:gap-10 items-start">
-      {/* CỘT TRÁI: Danh sách đề thi (sticky sát lề trái) */}
-      <aside className="w-full lg:w-96 shrink-0 space-y-4 select-none lg:sticky lg:top-18">
-        <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="font-bold text-base text-gray-900 dark:text-gray-100 flex items-center gap-2">
-              <FileCode className="w-5 h-5 text-purple-600" />
-              <span>Đề thi đã sinh</span>
-            </h2>
+    <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 space-y-4">
+      {/* Top Banner Header */}
+      <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-5">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <span className="p-2.5 rounded-xl bg-blue-600 text-white shadow-xs">
+                <FileCode className="w-5 h-5" />
+              </span>
+              <h1 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-gray-100 tracking-tight">
+                Quản lý Đề thi & Xuất dữ liệu
+              </h1>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                Dành cho Giảng viên
+              </span>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Sinh đề thi tự động từ câu hỏi đã duyệt, quản lý danh sách đề thi đã tạo và xuất dữ liệu ra định dạng PDF / Excel.
+            </p>
+          </div>
+
+          {/* Quick Header CTA */}
+          {!viewingExamId && (
+            <div className="flex items-center gap-2 flex-wrap">
+              {activeSubTab !== 'GENERATE' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setViewingExamId(null);
+                    setActiveSubTab('GENERATE');
+                  }}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Tạo đề thi mới</span>
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* 3 Main Area Navigation Tabs (Only when not in exam detail view) */}
+        {!viewingExamId && (
+          <div className="flex items-center gap-2 border-t border-gray-100 dark:border-gray-700 pt-4 mt-4 overflow-x-auto">
             <button
-              onClick={() => setIsExamWizardOpen(true)}
-              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition flex items-center gap-1 shadow-xs"
+              type="button"
+              onClick={() => setActiveSubTab('LIST')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shrink-0 ${
+                activeSubTab === 'LIST'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'bg-gray-100 dark:bg-[#3A3B3C] text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#4E4F50]'
+              }`}
             >
-              <Plus className="w-4 h-4" />
-              <span>Sinh đề mới</span>
+              <FileCode className="w-4 h-4" />
+              <span>Danh sách đề thi</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('GENERATE')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shrink-0 ${
+                activeSubTab === 'GENERATE'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'bg-gray-100 dark:bg-[#3A3B3C] text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#4E4F50]'
+              }`}
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>Tạo đề thi tự động</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('EXPORT_BANK')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shrink-0 ${
+                activeSubTab === 'EXPORT_BANK'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'bg-gray-100 dark:bg-[#3A3B3C] text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#4E4F50]'
+              }`}
+            >
+              <Download className="w-4 h-4" />
+              <span>Xuất ngân hàng câu hỏi</span>
             </button>
           </div>
+        )}
+      </div>
 
-          <div className="space-y-2">
-            {exams.map((exam) => (
-              <div
-                key={exam.id}
-                onClick={() => setSelectedExam(exam)}
-                className={`p-3.5 rounded-xl border cursor-pointer transition ${
-                  selectedExam?.id === exam.id
-                    ? 'border-blue-600 bg-blue-50/60 dark:bg-blue-950/40 ring-1 ring-blue-600'
-                    : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#3A3B3C]'
-                }`}
-              >
-                <span className="text-[11px] font-medium bg-gray-100 dark:bg-[#3A3B3C] text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-md">
-                  {exam.subject}
-                </span>
-                <h4 className="font-bold text-xs text-gray-900 dark:text-gray-100 mt-1.5">
-                  {exam.title}
-                </h4>
-                <div className="flex items-center justify-between text-[11px] text-gray-500 mt-2">
-                  <span>{exam.totalQuestions} câu · {exam.durationMinutes} phút</span>
-                  <span>{exam.createdAt}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </aside>
-
-      {/* CỘT PHẢI: Chi tiết đề thi & Xuất file */}
-      <main className="flex-1 bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-6 space-y-4">
-        {selectedExam ? (
-          <>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700 gap-3">
-              <div>
-                <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase">
-                  Chi tiết đề thi & Phân bổ ma trận
-                </span>
-                <h3 className="text-lg font-black text-gray-900 dark:text-gray-100 mt-0.5">
-                  {selectedExam.title}
-                </h3>
-                <p className="text-xs text-gray-500">
-                  Các mã đề đã trộn: <strong>{selectedExam.examCodes.join(', ')}</strong>
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setShowAnswers(!showAnswers)}
-                  className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-xl text-xs font-semibold hover:bg-gray-100"
-                >
-                  {showAnswers ? 'Ẩn đáp án' : 'Hiện đáp án'}
-                </button>
-
-                <button
-                  onClick={() => showToast('Đang tải xuống bộ đề thi PDF kèm đáp án...', 'success')}
-                  className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center gap-1.5"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>Xuất file in (PDF)</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Matrix preview */}
-            <div className="grid grid-cols-3 gap-3 p-3 bg-gray-50 dark:bg-[#1E1F20] rounded-xl text-xs text-center border">
-              <div>
-                <span className="text-gray-500 block">Dễ</span>
-                <strong className="text-emerald-600 text-sm">
-                  {selectedExam.difficultyMatrix.easy} câu
-                </strong>
-              </div>
-              <div>
-                <span className="text-gray-500 block">Trung bình</span>
-                <strong className="text-amber-600 text-sm">
-                  {selectedExam.difficultyMatrix.medium} câu
-                </strong>
-              </div>
-              <div>
-                <span className="text-gray-500 block">Khó</span>
-                <strong className="text-red-600 text-sm">
-                  {selectedExam.difficultyMatrix.hard} câu
-                </strong>
-              </div>
-            </div>
-
-            {/* Questions preview */}
-            <div className="space-y-4 pt-2">
-              <h4 className="font-bold text-xs uppercase tracking-wider text-gray-500">
-                Mẫu nội dung câu hỏi (Mã đề 101):
-              </h4>
-
-              {selectedExam.questions.map((q, idx) => (
-                <div
-                  key={q.id}
-                  className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#242526] space-y-2 text-xs"
-                >
-                  <div className="flex justify-between font-bold text-gray-900 dark:text-gray-100">
-                    <span>Câu {idx + 1}: {q.content}</span>
-                    <span className="text-gray-400 font-normal">[{q.difficulty}]</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] pt-1">
-                    {q.options.map((opt) => (
-                      <div
-                        key={opt.id}
-                        className={`p-2 rounded-lg border ${
-                          showAnswers && opt.id === q.correctAnswer
-                            ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-400 text-emerald-800 font-bold'
-                            : 'border-gray-200 text-gray-700 dark:text-gray-300'
-                        }`}
-                      >
-                        <strong>{opt.id}.</strong> {opt.text}
-                      </div>
-                    ))}
-                  </div>
-
-                  {showAnswers && (
-                    <p className="text-[11px] text-blue-700 dark:text-blue-300 pt-1 border-t">
-                      <strong>Đáp án đúng: {q.correctAnswer}</strong> – {q.explanation}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </>
+      {/* Main Content Area */}
+      <main className="w-full">
+        {viewingExamId ? (
+          <ExamDetailView
+            examId={viewingExamId}
+            initialData={newlyCreatedExam?.exam_id === viewingExamId ? newlyCreatedExam : null}
+            onBack={() => {
+              setViewingExamId(null);
+              setNewlyCreatedExam(null);
+            }}
+            showToast={showToast}
+          />
         ) : (
-          <div className="text-center text-gray-400 py-12">Chưa chọn đề thi nào</div>
+          <>
+            {activeSubTab === 'LIST' && (
+              <ExamListView
+                onSelectExam={(id) => setViewingExamId(id)}
+                onNavigateToGenerate={() => setActiveSubTab('GENERATE')}
+                showToast={showToast}
+              />
+            )}
+
+            {activeSubTab === 'GENERATE' && (
+              <ExamGenerateForm
+                onExamCreated={handleExamCreated}
+                showToast={showToast}
+              />
+            )}
+
+            {activeSubTab === 'EXPORT_BANK' && (
+              <QuestionBankExportView showToast={showToast} />
+            )}
+          </>
         )}
       </main>
     </div>

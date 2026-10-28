@@ -297,7 +297,7 @@ export const ExamGeneratorWizard: React.FC = () => {
           {step === 2 && (
             <button
               onClick={handleGenerate}
-              className="ml-auto px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow-md"
+              className="ml-auto px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md"
             >
               Bắt đầu sinh đề & trộn mã
             </button>

@@ -375,7 +375,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                   onClick={() => setQuestionFilter('ALL')}
                   className={`px-3 py-1.5 rounded-full font-bold transition text-xs cursor-pointer ${
                     questionFilter === 'ALL'
-                      ? 'bg-purple-600 text-white shadow-2xs'
+                      ? 'bg-blue-600 text-white shadow-2xs'
                       : 'bg-gray-100 dark:bg-[#3A3B3C] text-gray-700 dark:text-gray-300 hover:bg-gray-200'
                   }`}
                 >
@@ -681,7 +681,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                           <button
                             type="button"
                             onClick={() => setEditingQuestion(q)}
-                            className="px-3 py-1.5 rounded-xl border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 font-semibold hover:bg-purple-100 dark:hover:bg-purple-900/40 transition cursor-pointer flex items-center gap-1.5"
+                            className="px-3 py-1.5 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/40 transition cursor-pointer flex items-center gap-1.5"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                             <span>Chỉnh sửa</span>

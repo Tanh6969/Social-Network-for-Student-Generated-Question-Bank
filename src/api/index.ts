@@ -3,6 +3,7 @@ export { multipartBody } from './multipart';
 export { realtimeDestinations } from './realtime-contract';
 export { sessionsApi } from './sessions';
 export { reviewApi } from './review';
+export { examsApi } from './exams';
 export type {
   SubjectResponse,
   SubmissionSessionSummary,
@@ -26,4 +27,20 @@ export type {
   EditQuestionResponse,
   CursorPaginationDto,
 } from './review';
+export type {
+  DifficultyDistribution,
+  GenerateExamRequest,
+  ExamDetailResponse,
+  ExamQuestionDto,
+  ExamOptionDto,
+  ExamStatistic,
+  ExamItem,
+  ExamListResponse,
+  ExportResponse,
+  CourseClassResponse,
+  GetMyExamsParams,
+  ExportExamParams,
+  ExportQuestionsParams,
+} from './exams';
 export type { paths, components, operations } from './generated/openapi';
+
