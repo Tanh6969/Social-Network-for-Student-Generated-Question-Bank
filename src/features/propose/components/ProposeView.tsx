@@ -6,6 +6,12 @@ import {
   SubmissionSessionSummary,
   ProposeSessionRequest,
 } from '../../../api';
+import {
+  getStoredSubmissions,
+  saveNewStoredSubmission,
+  deleteStoredSubmission,
+  StoredSubmissionSummary,
+} from '../mockSessions';
 import { SubmissionDetailModal } from './SubmissionDetailModal';
 import { EditSubmissionModal } from './EditSubmissionModal';
 import {
@@ -26,6 +32,8 @@ import {
   Heart,
   GraduationCap,
   ChevronRight,
+  Info,
+  Clock,
 } from 'lucide-react';
 
 export const ProposeView: React.FC = () => {
@@ -39,7 +47,7 @@ export const ProposeView: React.FC = () => {
   const [loadingSubjects, setLoadingSubjects] = useState(false);
 
   // My Submissions state
-  const [submissions, setSubmissions] = useState<SubmissionSessionSummary[]>([]);
+  const [submissions, setSubmissions] = useState<StoredSubmissionSummary[]>([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [filterSubjectId, setFilterSubjectId] = useState<number | undefined>(undefined);
   const [filterStatus, setFilterStatus] = useState<'PENDING' | 'REVIEWING' | 'RESOLVED' | undefined>(undefined);
@@ -126,36 +134,12 @@ export const ProposeView: React.FC = () => {
         setSubmissions(res.contents || []);
         setPaginationCursor(res.pagination || {});
       } catch {
-        // Fallback mock submissions
-        const mockList: SubmissionSessionSummary[] = [
-          {
-            session_id: 101,
-            session_code: 'IT3180_A7B2C1_1728200000000_101',
-            title: 'Ôn tập Design Patterns & Microservice Architectures',
-            content: '5 câu trắc nghiệm Saga & CQRS trong hệ thống phân tán',
-            subject_id: 10,
-            subject_name: 'Nhập môn Công nghệ phần mềm',
-            subject_code: 'IT3180',
-            question_counts: 5,
-            created_at: new Date(Date.now() - 3600000 * 24).toISOString(),
-            react_count: 14,
-            comment_count: 5,
-          },
-          {
-            session_id: 102,
-            session_code: 'IT3080_B8C3D2_1728300000000_102',
-            title: 'Trắc nghiệm Tầng Giao vận TCP/UDP & Bắt tay 3 bước',
-            content: '3 câu hỏi về cơ chế điều khiển luồng và tắc nghẽn TCP Tahoe/Reno',
-            subject_id: 11,
-            subject_name: 'Mạng máy tính & Truyền thông',
-            subject_code: 'IT3080',
-            question_counts: 3,
-            created_at: new Date(Date.now() - 3600000 * 48).toISOString(),
-            react_count: 9,
-            comment_count: 2,
-          },
-        ];
-        setSubmissions(mockList);
+        // Fallback stored mock submissions
+        let list = getStoredSubmissions();
+        if (filterSubjectId) {
+          list = list.filter((s) => s.subject_id === filterSubjectId);
+        }
+        setSubmissions(list);
         setPaginationCursor({ has_next: false, has_prev: false });
       } finally {
         setLoadingSubmissions(false);
@@ -253,6 +237,7 @@ export const ProposeView: React.FC = () => {
     }
 
     setIsSubmitting(true);
+    const selectedSubject = enrolledSubjects.find((s) => s.subject_id === selectedSubjectId);
     try {
       const payload: ProposeSessionRequest = {
         title: title.trim(),
@@ -274,7 +259,18 @@ export const ProposeView: React.FC = () => {
         })),
       };
 
-      await sessionsApi.proposeSession(payload);
+      try {
+        await sessionsApi.proposeSession(payload);
+      } catch {
+        // Fallback save in local stored sessions
+        const { summary } = saveNewStoredSubmission(
+          payload,
+          selectedSubject?.name,
+          selectedSubject?.code
+        );
+        setSubmissions((prev) => [summary, ...prev]);
+      }
+
       showToast(`Đã gửi phiên đề xuất "${title}" tới giảng viên duyệt!`, 'success');
 
       // Reset form
@@ -299,6 +295,7 @@ export const ProposeView: React.FC = () => {
       setActiveQIndex(0);
 
       // Switch to my-submissions tab to review
+      fetchMySubmissions();
       setActiveTab('my-submissions');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Lỗi gửi đề xuất câu hỏi';
@@ -319,7 +316,12 @@ export const ProposeView: React.FC = () => {
     }
 
     try {
-      await sessionsApi.deleteMySubmission(sessionId);
+      try {
+        await sessionsApi.deleteMySubmission(sessionId);
+      } catch {
+        // Fallback ignore API error for mock/offline session
+      }
+      deleteStoredSubmission(sessionId);
       showToast('Đã xóa phiên đề xuất thành công', 'success');
       setSubmissions((prev) => prev.filter((s) => s.session_id !== sessionId));
     } catch (err: unknown) {
@@ -574,13 +576,13 @@ export const ProposeView: React.FC = () => {
                       {/* 4 Options */}
                       <div className="space-y-2">
                         <label className="block text-xs font-bold text-gray-700 dark:text-gray-300">
-                          Các phương án trả lời (Bấm chữ A/B/C/D để đánh dấu đáp án đúng):
+                          Các phương án trả lời (Bấm chữ A/B/C/D để đánh dấu đáp án đúng, tự động xuống dòng khi nhập dài):
                         </label>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                           {currentQ.options.map((opt) => (
                             <div
                               key={opt.key}
-                              className={`p-2.5 rounded-xl border flex items-center gap-2.5 transition ${opt.is_correct
+                              className={`p-2.5 rounded-xl border flex items-start gap-2.5 transition ${opt.is_correct
                                   ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/20'
                                   : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-[#242526]'
                                 }`}
@@ -588,7 +590,7 @@ export const ProposeView: React.FC = () => {
                               <button
                                 type="button"
                                 onClick={() => handleSetCorrectOption(opt.key)}
-                                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 cursor-pointer transition ${opt.is_correct
+                                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 cursor-pointer transition mt-0.5 ${opt.is_correct
                                     ? 'bg-emerald-600 text-white shadow-xs scale-105'
                                     : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300'
                                   }`}
@@ -596,15 +598,15 @@ export const ProposeView: React.FC = () => {
                               >
                                 {opt.key}
                               </button>
-                              <input
-                                type="text"
+                              <textarea
+                                rows={2}
                                 value={opt.text}
                                 onChange={(e) => handleUpdateOption(opt.key, e.target.value)}
                                 placeholder={`Phương án ${opt.key}...`}
-                                className="flex-1 bg-transparent text-xs sm:text-sm text-gray-900 dark:text-gray-100 focus:outline-hidden"
+                                className="flex-1 bg-transparent text-xs sm:text-sm text-gray-900 dark:text-gray-100 focus:outline-hidden resize-y min-h-[44px] break-words leading-relaxed"
                               />
                               {opt.is_correct && (
-                                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-1" />
                               )}
                             </div>
                           ))}
@@ -718,24 +720,24 @@ export const ProposeView: React.FC = () => {
                       {currentQ?.options.map((opt) => (
                         <div
                           key={opt.key}
-                          className={`p-2.5 rounded-xl border text-xs sm:text-sm flex items-center gap-2.5 transition ${opt.is_correct
+                          className={`p-2.5 rounded-xl border text-xs sm:text-sm flex items-start gap-2.5 transition ${opt.is_correct
                               ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200 font-semibold'
                               : 'border-gray-200 dark:border-gray-700 bg-gray-50/40 dark:bg-[#1E1F20] text-gray-700 dark:text-gray-300'
                             }`}
                         >
                           <span
-                            className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${opt.is_correct
+                            className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5 ${opt.is_correct
                                 ? 'bg-emerald-600 text-white'
                                 : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                               }`}
                           >
                             {opt.key}
                           </span>
-                          <span className="flex-1">
+                          <span className="flex-1 break-words whitespace-pre-wrap leading-relaxed">
                             {opt.text || `Nội dung phương án ${opt.key}`}
                           </span>
                           {opt.is_correct && (
-                            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 rounded-full">
+                            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 rounded-full shrink-0">
                               Đáp án đúng
                             </span>
                           )}
@@ -802,13 +804,21 @@ export const ProposeView: React.FC = () => {
                   className="px-3 py-1.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#3A3B3C] text-xs font-medium text-gray-800 dark:text-gray-200 focus:outline-hidden"
                 >
                   <option value="">Tất cả trạng thái</option>
-                  <option value="PENDING">Chờ duyệt (PENDING)</option>
-                  <option value="REVIEWING">Đang duyệt (REVIEWING)</option>
-                  <option value="RESOLVED">Đã xử lý (RESOLVED)</option>
+                  <option value="PENDING">Chờ duyệt</option>
+                  <option value="REVIEWING">Đang thẩm định</option>
+                  <option value="RESOLVED">Đã duyệt</option>
                 </select>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('create')}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ Soạn phiên mới</span>
+                </button>
                 <button
                   onClick={() => fetchMySubmissions()}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-300 dark:border-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition cursor-pointer"
@@ -816,10 +826,26 @@ export const ProposeView: React.FC = () => {
                   <RefreshCw className={`w-3.5 h-3.5 ${loadingSubmissions ? 'animate-spin' : ''}`} />
                   <span>Làm mới</span>
                 </button>
-                <span className="text-xs text-gray-500 font-medium">
+                <span className="text-xs text-gray-500 font-medium ml-1">
                   Tổng <span className="font-bold text-blue-600">{submissions.length}</span> phiên
                 </span>
               </div>
+            </div>
+
+            {/* Dòng hướng dẫn sinh viên: Chỉ sửa & xóa khi Chờ duyệt */}
+            <div className="flex items-start sm:items-center gap-3 p-3.5 sm:px-4 sm:py-3 rounded-2xl bg-amber-50/90 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 text-xs text-amber-900 dark:text-amber-200 shadow-2xs">
+              <div className="w-6 h-6 rounded-lg bg-amber-200/60 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0 font-bold">
+                <Info className="w-4 h-4" />
+              </div>
+              <p className="leading-relaxed">
+                <span className="font-bold">Lưu ý sinh viên:</span> Bạn chỉ có thể{' '}
+                <span className="font-bold underline underline-offset-2">Chỉnh sửa</span> và{' '}
+                <span className="font-bold underline underline-offset-2">Xóa</span> phiên đề xuất khi đang ở trạng thái{' '}
+                <span className="inline-block px-1.5 py-0.5 rounded font-bold bg-amber-200/80 dark:bg-amber-900/70 text-amber-900 dark:text-amber-200 text-[11px]">
+                  Chờ duyệt
+                </span>
+                . Khi phiên ở trạng thái khác (đang thẩm định hoặc đã duyệt), các nút thao tác này sẽ tự động được làm mờ và khóa lại.
+              </p>
             </div>
 
             {/* Submissions Cards List */}
@@ -851,66 +877,98 @@ export const ProposeView: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {submissions.map((sub) => (
-                  <div
-                    key={sub.session_id}
-                    className="bg-white dark:bg-[#242526] rounded-2xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700 shadow-xs hover:border-blue-400 dark:hover:border-blue-600 transition space-y-3"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="space-y-1 max-w-2xl">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 font-semibold">
-                            {sub.session_code || `SESSION-${sub.session_id}`}
-                          </span>
-                          <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
-                            Chờ giảng viên duyệt (PENDING)
-                          </span>
+                {submissions.map((sub) => {
+                  const status = sub.status || 'PENDING';
+                  const isPending = status === 'PENDING';
+
+                  return (
+                    <div
+                      key={sub.session_id}
+                      className="bg-white dark:bg-[#242526] rounded-2xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700 shadow-xs hover:border-blue-400 dark:hover:border-blue-600 transition space-y-3"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="space-y-1 max-w-2xl">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {status === 'RESOLVED' ? (
+                              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3" />
+                                <span>Đã duyệt</span>
+                              </span>
+                            ) : status === 'REVIEWING' ? (
+                              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                <span>Đang thẩm định</span>
+                              </span>
+                            ) : (
+                              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                <span>Chờ duyệt</span>
+                              </span>
+                            )}
+                          </div>
+
+                          <h4
+                            className="font-bold text-base text-gray-900 dark:text-gray-100 hover:text-blue-600 cursor-pointer"
+                            onClick={() => setSelectedDetailId(sub.session_id || null)}
+                          >
+                            {sub.title}
+                          </h4>
+
+                          {sub.content && (
+                            <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+                              {sub.content}
+                            </p>
+                          )}
                         </div>
 
-                        <h4
-                          className="font-bold text-base text-gray-900 dark:text-gray-100 hover:text-blue-600 cursor-pointer"
-                          onClick={() => setSelectedDetailId(sub.session_id || null)}
-                        >
-                          {sub.title}
-                        </h4>
+                        {/* Actions */}
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            onClick={() => setSelectedDetailId(sub.session_id || null)}
+                            className="px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition cursor-pointer flex items-center gap-1.5"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Chi tiết</span>
+                          </button>
 
-                        {sub.content && (
-                          <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
-                            {sub.content}
-                          </p>
-                        )}
+                          <button
+                            disabled={!isPending}
+                            onClick={() => isPending && setSelectedEditId(sub.session_id || null)}
+                            className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition flex items-center gap-1.5 ${
+                              isPending
+                                ? 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 cursor-pointer shadow-2xs'
+                                : 'opacity-40 cursor-not-allowed border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-[#3A3B3C] text-gray-400 dark:text-gray-500'
+                            }`}
+                            title={
+                              isPending
+                                ? 'Chỉnh sửa phiên đề xuất'
+                                : 'Chỉ có thể chỉnh sửa khi ở trạng thái Chờ duyệt'
+                            }
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                            <span>Sửa</span>
+                          </button>
+
+                          <button
+                            disabled={!isPending}
+                            onClick={() =>
+                              isPending && handleDeleteSubmission(sub.session_id!, sub.title)
+                            }
+                            className={`p-1.5 rounded-xl border transition ${
+                              isPending
+                                ? 'border-red-200 dark:border-red-900/50 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer shadow-2xs'
+                                : 'opacity-40 cursor-not-allowed border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-[#3A3B3C] text-gray-400 dark:text-gray-500'
+                            }`}
+                            title={
+                              isPending
+                                ? 'Hủy & xóa phiên đề xuất'
+                                : 'Chỉ có thể xóa khi ở trạng thái Chờ duyệt'
+                            }
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
-
-                      {/* Actions */}
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          onClick={() => setSelectedDetailId(sub.session_id || null)}
-                          className="px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition cursor-pointer flex items-center gap-1.5"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>Chi tiết</span>
-                        </button>
-
-                        <button
-                          onClick={() => setSelectedEditId(sub.session_id || null)}
-                          className="px-3 py-1.5 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-100 transition cursor-pointer flex items-center gap-1.5"
-                          title="Chỉ áp dụng khi phiên ở trạng thái PENDING"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                          <span>Sửa</span>
-                        </button>
-
-                        <button
-                          onClick={() =>
-                            handleDeleteSubmission(sub.session_id!, sub.title)
-                          }
-                          className="p-1.5 rounded-xl border border-red-200 dark:border-red-900/50 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition cursor-pointer"
-                          title="Hủy & xóa phiên đề xuất (chỉ khi PENDING)"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
 
                     {/* Metadata footer */}
                     <div className="pt-2 border-t border-gray-100 dark:border-gray-800 flex flex-wrap items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-400">
@@ -943,7 +1001,8 @@ export const ProposeView: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                ))}
+                );
+              })}
               </div>
             )}
           </div>
