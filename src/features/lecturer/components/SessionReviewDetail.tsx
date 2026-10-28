@@ -15,6 +15,9 @@ import {
   ExternalLink,
   Layers,
   CheckCheck,
+  ChevronLeft,
+  ChevronRight,
+  Filter,
 } from 'lucide-react';
 import {
   PendingSessionItemDto,
@@ -55,6 +58,16 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
   const [rejectingIds, setRejectingIds] = useState<number[] | null>(null);
   const [editingQuestion, setEditingQuestion] = useState<SessionQuestionReviewDto | null>(null);
   const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
+
+  // Question filtering & pagination state
+  const [questionFilter, setQuestionFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
+  const [questionsPerPage, setQuestionsPerPage] = useState<number>(3);
+  const [currentQuestionPage, setCurrentQuestionPage] = useState<number>(1);
+
+  // Reset question page when filter or per-page changes
+  useEffect(() => {
+    setCurrentQuestionPage(1);
+  }, [questionFilter, questionsPerPage]);
 
   // Submitting state
   const [isApproving, setIsApproving] = useState(false);
@@ -201,6 +214,18 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
   const rejectedCount = questions.filter((q) => q.status === 'REJECTED').length;
   const pendingCount = questions.filter((q) => q.status === 'PENDING').length;
 
+  // Filtered and paginated questions
+  const filteredQuestions = questions.filter((q) => {
+    if (questionFilter === 'ALL') return true;
+    return q.status === questionFilter;
+  });
+
+  const totalQuestionPages = Math.max(1, Math.ceil(filteredQuestions.length / questionsPerPage));
+  const paginatedQuestions = filteredQuestions.slice(
+    (currentQuestionPage - 1) * questionsPerPage,
+    currentQuestionPage * questionsPerPage
+  );
+
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Top Bar: Back button & Complete Review */}
@@ -337,6 +362,77 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
       {/* Questions list & Bulk Actions */}
       {!loading && !error && (
         <div className="space-y-4">
+          {/* Question Filter & Per-Page Controls */}
+          {questions.length > 0 && (
+            <div className="bg-white dark:bg-[#242526] rounded-2xl p-3 border border-gray-200 dark:border-gray-700 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
+              {/* Filter Chips */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-gray-500 font-bold flex items-center gap-1 mr-1">
+                  <Filter className="w-3.5 h-3.5" /> Lọc câu hỏi:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setQuestionFilter('ALL')}
+                  className={`px-3 py-1.5 rounded-full font-bold transition text-xs cursor-pointer ${
+                    questionFilter === 'ALL'
+                      ? 'bg-purple-600 text-white shadow-2xs'
+                      : 'bg-gray-100 dark:bg-[#3A3B3C] text-gray-700 dark:text-gray-300 hover:bg-gray-200'
+                  }`}
+                >
+                  Tất cả ({questions.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQuestionFilter('PENDING')}
+                  className={`px-3 py-1.5 rounded-full font-bold transition text-xs cursor-pointer ${
+                    questionFilter === 'PENDING'
+                      ? 'bg-amber-600 text-white shadow-2xs'
+                      : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 hover:bg-amber-100'
+                  }`}
+                >
+                  Chờ duyệt ({pendingCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQuestionFilter('APPROVED')}
+                  className={`px-3 py-1.5 rounded-full font-bold transition text-xs cursor-pointer ${
+                    questionFilter === 'APPROVED'
+                      ? 'bg-emerald-600 text-white shadow-2xs'
+                      : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100'
+                  }`}
+                >
+                  Đã duyệt ({approvedCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQuestionFilter('REJECTED')}
+                  className={`px-3 py-1.5 rounded-full font-bold transition text-xs cursor-pointer ${
+                    questionFilter === 'REJECTED'
+                      ? 'bg-red-600 text-white shadow-2xs'
+                      : 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 hover:bg-red-100'
+                  }`}
+                >
+                  Từ chối ({rejectedCount})
+                </button>
+              </div>
+
+              {/* Questions per page selector */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-gray-500 text-[11px]">Mỗi trang:</span>
+                <select
+                  value={questionsPerPage}
+                  onChange={(e) => setQuestionsPerPage(Number(e.target.value))}
+                  className="py-1 px-2.5 rounded-lg bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200 text-xs font-semibold focus:outline-hidden cursor-pointer"
+                >
+                  <option value={2}>2 câu</option>
+                  <option value={3}>3 câu</option>
+                  <option value={5}>5 câu</option>
+                  <option value={100}>Tất cả ({questions.length})</option>
+                </select>
+              </div>
+            </div>
+          )}
+
           {/* Bulk Action Bar (only if not read-only and has pending questions) */}
           {!readOnly && pendingQuestions.length > 0 && (
             <div className="bg-blue-50/70 dark:bg-blue-950/30 rounded-2xl p-3.5 border border-blue-200 dark:border-blue-800/60 flex flex-wrap items-center justify-between gap-3 text-xs">
@@ -386,24 +482,26 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
           )}
 
           {/* Question Cards */}
-          {questions.length === 0 ? (
-            <div className="bg-white dark:bg-[#242526] rounded-2xl border border-gray-200 dark:border-gray-700 p-12 text-center text-gray-500">
-              Phiên chưa có câu hỏi nào.
+          {filteredQuestions.length === 0 ? (
+            <div className="bg-white dark:bg-[#242526] rounded-2xl border border-gray-200 dark:border-gray-700 p-12 text-center text-gray-500 text-xs">
+              Không tìm thấy câu hỏi nào phù hợp với bộ lọc đã chọn.
             </div>
           ) : (
-            <div className="space-y-4">
-              {questions.map((q, idx) => {
+            <>
+              <div className="space-y-4">
+              {paginatedQuestions.map((q, localIdx) => {
+                const globalIdx = (currentQuestionPage - 1) * questionsPerPage + localIdx;
                 const isSelected = !!q.question_id && selectedQuestionIds.includes(q.question_id);
                 const isPending = q.status === 'PENDING';
                 const isApproved = q.status === 'APPROVED';
                 const isRejected = q.status === 'REJECTED';
 
                 // Duplicate warning matching this question index
-                const duplicateWarning = duplicateWarnings.find((w) => w.question_index === idx);
+                const duplicateWarning = duplicateWarnings.find((w) => w.question_index === globalIdx);
 
                 return (
                   <div
-                    key={q.question_id || idx}
+                    key={q.question_id || globalIdx}
                     className={`bg-white dark:bg-[#242526] rounded-2xl border transition shadow-xs overflow-hidden ${
                       isSelected
                         ? 'border-blue-500 ring-2 ring-blue-500/20'
@@ -451,7 +549,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                             />
                           )}
                           <span className="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-[#3A3B3C] text-xs font-bold text-gray-700 dark:text-gray-300">
-                            Câu {idx + 1}
+                            Câu {globalIdx + 1}
                           </span>
                           {q.question_id && (
                             <span className="text-[11px] text-gray-400 font-mono">
@@ -499,7 +597,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                             >
                               <img
                                 src={imgUrl}
-                                alt={`Minh họa câu hỏi ${idx + 1}`}
+                                alt={`Minh họa câu hỏi ${globalIdx + 1}`}
                                 className="max-h-48 max-w-xs object-cover rounded-xl"
                               />
                             </a>
@@ -619,9 +717,68 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                 );
               })}
             </div>
-          )}
-        </div>
-      )}
+
+            {/* Question Pagination Bar */}
+            {totalQuestionPages > 1 && (
+              <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-white dark:bg-[#242526] rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xs">
+                <p className="text-xs text-gray-500">
+                  Hiển thị câu{' '}
+                  <span className="font-bold text-gray-800 dark:text-gray-200">
+                    {(currentQuestionPage - 1) * questionsPerPage + 1}
+                  </span>{' '}
+                  đến{' '}
+                  <span className="font-bold text-gray-800 dark:text-gray-200">
+                    {Math.min(currentQuestionPage * questionsPerPage, filteredQuestions.length)}
+                  </span>{' '}
+                  trên tổng số{' '}
+                  <span className="font-bold text-gray-800 dark:text-gray-200">
+                    {filteredQuestions.length}
+                  </span>{' '}
+                  câu hỏi
+                </p>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentQuestionPage((p) => Math.max(1, p - 1))}
+                    disabled={currentQuestionPage <= 1}
+                    className="px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#242526] text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#3A3B3C] disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1 cursor-pointer"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Trước</span>
+                  </button>
+
+                  {Array.from({ length: totalQuestionPages }, (_, i) => i + 1).map((pageNum) => (
+                    <button
+                      key={pageNum}
+                      type="button"
+                      onClick={() => setCurrentQuestionPage(pageNum)}
+                      className={`w-7 h-7 rounded-lg text-xs font-bold transition flex items-center justify-center cursor-pointer ${
+                        pageNum === currentQuestionPage
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'bg-white dark:bg-[#242526] border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C]'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={() => setCurrentQuestionPage((p) => Math.min(totalQuestionPages, p + 1))}
+                    disabled={currentQuestionPage >= totalQuestionPages}
+                    className="px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#242526] text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#3A3B3C] disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Sau</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    )}
 
       {/* Reject Reason Modal */}
       <RejectReasonModal

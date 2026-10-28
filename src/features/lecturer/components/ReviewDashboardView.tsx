@@ -61,7 +61,7 @@ export const ReviewDashboardView: React.FC = () => {
 
   // Client-side pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 6;
+  const [itemsPerPage, setItemsPerPage] = useState<number>(6);
 
   // Fetch pending sessions from GET /sessions/pending
   const fetchSessions = useCallback(async () => {
@@ -94,10 +94,10 @@ export const ReviewDashboardView: React.FC = () => {
     fetchSubjects();
   }, [fetchSessions, fetchSubjects]);
 
-  // Reset page when tab or filters change
+  // Reset page when tab, filters or itemsPerPage change
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab, searchQuery, selectedSubjectId, sortBy, historyResultFilter]);
+  }, [activeTab, searchQuery, selectedSubjectId, sortBy, historyResultFilter, itemsPerPage]);
 
   // Separate sessions strictly by status
   const pendingSessions = useMemo(
@@ -192,11 +192,11 @@ export const ReviewDashboardView: React.FC = () => {
 
   // Pagination calculation
   const totalItems = filteredSessions.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
   const paginatedSessions = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredSessions.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredSessions, currentPage]);
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredSessions.slice(start, start + itemsPerPage);
+  }, [filteredSessions, currentPage, itemsPerPage]);
 
   // Collect distinct subject topics from both subjects list and raw sessions
   const distinctTopics = useMemo(() => {
@@ -667,54 +667,76 @@ export const ReviewDashboardView: React.FC = () => {
               )}
 
               {/* Pagination Bar */}
-              {!loading && !error && totalPages > 1 && (
+              {!loading && !error && totalItems > 0 && (
                 <div className="bg-white dark:bg-[#242526] rounded-2xl p-4 shadow-xs border border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-                  <span className="text-gray-500 dark:text-gray-400">
-                    Hiển thị{' '}
-                    <span className="font-bold text-gray-900 dark:text-gray-100">
-                      {(currentPage - 1) * ITEMS_PER_PAGE + 1}
-                    </span>{' '}
-                    -{' '}
-                    <span className="font-bold text-gray-900 dark:text-gray-100">
-                      {Math.min(currentPage * ITEMS_PER_PAGE, totalItems)}
-                    </span>{' '}
-                    trên tổng số{' '}
-                    <span className="font-bold text-gray-900 dark:text-gray-100">
-                      {totalItems}
-                    </span>{' '}
-                    phiên
-                  </span>
+                  {/* Left: Info & items per page selector */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className="text-gray-500 dark:text-gray-400">
+                      Hiển thị{' '}
+                      <span className="font-bold text-gray-900 dark:text-gray-100">
+                        {totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}
+                      </span>{' '}
+                      -{' '}
+                      <span className="font-bold text-gray-900 dark:text-gray-100">
+                        {Math.min(currentPage * itemsPerPage, totalItems)}
+                      </span>{' '}
+                      trên tổng số{' '}
+                      <span className="font-bold text-gray-900 dark:text-gray-100">
+                        {totalItems}
+                      </span>{' '}
+                      phiên
+                    </span>
 
+                    <div className="flex items-center gap-1.5 border-l border-gray-200 dark:border-gray-700 pl-3">
+                      <span className="text-gray-500 text-[11px]">Mỗi trang:</span>
+                      <select
+                        value={itemsPerPage}
+                        onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                        className="py-1 px-2 rounded-lg bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200 text-xs font-semibold focus:outline-hidden cursor-pointer"
+                      >
+                        <option value={4}>4 phiên</option>
+                        <option value={6}>6 phiên</option>
+                        <option value={8}>8 phiên</option>
+                        <option value={12}>12 phiên</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Right: Page navigation */}
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                       disabled={currentPage === 1}
-                      className="p-2 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                      className="px-2.5 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1 font-semibold text-xs"
                       title="Trang trước"
                     >
                       <ChevronLeft className="w-4 h-4" />
+                      <span className="hidden sm:inline">Trước</span>
                     </button>
 
-                    {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((page) => (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`w-8 h-8 rounded-xl font-bold transition cursor-pointer text-xs ${
-                          currentPage === page
-                            ? 'bg-purple-600 text-white shadow-xs'
-                            : 'border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C]'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ))}
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((page) => (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`w-8 h-8 rounded-xl font-bold transition cursor-pointer text-xs ${
+                            currentPage === page
+                              ? 'bg-purple-600 text-white shadow-xs'
+                              : 'border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C]'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                    </div>
 
                     <button
                       onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                       disabled={currentPage === totalPages}
-                      className="p-2 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                      className="px-2.5 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1 font-semibold text-xs"
                       title="Trang sau"
                     >
+                      <span className="hidden sm:inline">Sau</span>
                       <ChevronRight className="w-4 h-4" />
                     </button>
                   </div>

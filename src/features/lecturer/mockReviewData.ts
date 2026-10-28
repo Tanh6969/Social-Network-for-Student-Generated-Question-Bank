@@ -10,7 +10,7 @@ import {
 
 // Initial Mock Pending / Reviewing / Resolved Sessions for Lecturer Review
 export const INITIAL_MOCK_REVIEW_SESSIONS: PendingSessionItemDto[] = [
-  // 1. PENDING SESSIONS (Chờ kiểm duyệt)
+  // 1. PENDING SESSIONS (Chờ kiểm duyệt - 12 phiên phong phú)
   {
     session_id: 101,
     topic: 'Hệ điều hành',
@@ -89,8 +89,86 @@ export const INITIAL_MOCK_REVIEW_SESSIONS: PendingSessionItemDto[] = [
     status: 'PENDING',
     created_at: new Date(Date.now() - 3600000 * 48).toISOString(),
   },
+  {
+    session_id: 113,
+    topic: 'Lập trình Hướng đối tượng',
+    title: 'Đề xuất 5 câu trắc nghiệm Nguyên lý SOLID & Mẫu thiết kế Singleton/Factory',
+    content: 'Đánh giá hiểu biết về Single Responsibility, Open/Closed, Dependency Inversion và triển khai mẫu thiết kế Gang of Four.',
+    author: {
+      user_id: 210,
+      full_name: 'Bùi Thế Anh',
+      avatar_url: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=300&q=80',
+    },
+    status: 'PENDING',
+    created_at: new Date(Date.now() - 3600000 * 54).toISOString(),
+  },
+  {
+    session_id: 114,
+    topic: 'An toàn thông tin',
+    title: 'Trắc nghiệm Mật mã học khóa công khai RSA & Hàm băm SHA-256',
+    content: 'Bộ câu hỏi về thuật toán mã hóa bất đối xứng RSA, sơ đồ chữ ký điện tử số và tấn công va chạm hàm băm (Collision).',
+    author: {
+      user_id: 211,
+      full_name: 'Ngô Thanh Hằng',
+      avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+    },
+    status: 'PENDING',
+    created_at: new Date(Date.now() - 3600000 * 60).toISOString(),
+  },
+  {
+    session_id: 115,
+    topic: 'Công nghệ phần mềm',
+    title: 'Bộ câu hỏi Quy trình phát triển phần mềm Agile Scrum & CI/CD Pipeline',
+    content: 'Kiểm tra kiến thức về Sprint Planning, Daily Scrum, Retrospective và quy trình tự động hóa kiểm thử mã nguồn.',
+    author: {
+      user_id: 212,
+      full_name: 'Đặng Tuấn Kiệt',
+      avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80',
+    },
+    status: 'PENDING',
+    created_at: new Date(Date.now() - 3600000 * 68).toISOString(),
+  },
+  {
+    session_id: 116,
+    topic: 'Cơ sở dữ liệu',
+    title: 'Giao dịch (Transaction), Khóa 2 pha 2PL & Chuẩn cách ly ACID',
+    content: 'Phân tích các hiện tượng Dirty Read, Non-repeatable Read, Phantom Read và giao thức khóa 2 pha nghiêm ngặt.',
+    author: {
+      user_id: 202,
+      full_name: 'Lê Thị Thuỳ Dung',
+      avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=300&q=80',
+    },
+    status: 'PENDING',
+    created_at: new Date(Date.now() - 3600000 * 76).toISOString(),
+  },
+  {
+    session_id: 117,
+    topic: 'Lập trình Web',
+    title: 'Cơ chế Render SSR vs CSR, Giao thức HTTP/2 và Bảo mật CORS/JWT',
+    content: 'So sánh hiệu năng tải trang FCP/LCP giữa SSR Next.js và CSR React SPA, cơ chế trao đổi Access Token và Refresh Token.',
+    author: {
+      user_id: 201,
+      full_name: 'Nguyễn Văn An',
+      avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+    },
+    status: 'PENDING',
+    created_at: new Date(Date.now() - 3600000 * 84).toISOString(),
+  },
+  {
+    session_id: 118,
+    topic: 'Học máy (Machine Learning)',
+    title: 'Thuật toán Hồi quy Tuyến tính, Gradient Descent & Hàm mất mát MSE/Cross-Entropy',
+    content: 'Câu hỏi tính toán đạo hàm riêng hàm mất mát theo trọng số weights và tốc độ học learning rate (alpha).',
+    author: {
+      user_id: 206,
+      full_name: 'Đỗ Quốc Bảo',
+      avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=300&q=80',
+    },
+    status: 'PENDING',
+    created_at: new Date(Date.now() - 3600000 * 92).toISOString(),
+  },
 
-  // 2. REVIEWING SESSIONS (Đang kiểm duyệt)
+  // 2. REVIEWING SESSIONS (Đang kiểm duyệt - 6 phiên)
   {
     session_id: 107,
     topic: 'Hệ điều hành',
@@ -130,8 +208,47 @@ export const INITIAL_MOCK_REVIEW_SESSIONS: PendingSessionItemDto[] = [
     status: 'REVIEWING',
     created_at: new Date(Date.now() - 3600000 * 40).toISOString(),
   },
+  {
+    session_id: 119,
+    topic: 'Hệ điều hành',
+    title: 'Quản lý Bộ nhớ Ảo, Bảng trang phân cấp & Bộ đệm chuyển đổi TLB',
+    content: 'Đang thẩm định: Xem xét công thức tính thời gian truy xuất bộ nhớ hiệu dụng (EAT) khi có TLB Hit và Miss.',
+    author: {
+      user_id: 203,
+      full_name: 'Phạm Quang Huy',
+      avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80',
+    },
+    status: 'REVIEWING',
+    created_at: new Date(Date.now() - 3600000 * 44).toISOString(),
+  },
+  {
+    session_id: 120,
+    topic: 'Mạng máy tính',
+    title: 'Giao thức DNS, DHCP và Phân tích gói tin giao thức mạng Wireshark',
+    content: 'Đang thẩm định: 3 câu hỏi trắc nghiệm thực hành bắt gói tin DHCP Discover - Offer - Request - Acknowledge.',
+    author: {
+      user_id: 201,
+      full_name: 'Nguyễn Văn An',
+      avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+    },
+    status: 'REVIEWING',
+    created_at: new Date(Date.now() - 3600000 * 50).toISOString(),
+  },
+  {
+    session_id: 121,
+    topic: 'An toàn thông tin',
+    title: 'Lỗ hổng bảo mật Web: SQL Injection, XSS Stored/Reflected & CSRF Token',
+    content: 'Đang thẩm định: Đánh giá phương thức phòng chống bằng Prepared Statement và Escape đầu vào người dùng.',
+    author: {
+      user_id: 211,
+      full_name: 'Ngô Thanh Hằng',
+      avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+    },
+    status: 'REVIEWING',
+    created_at: new Date(Date.now() - 3600000 * 62).toISOString(),
+  },
 
-  // 3. RESOLVED SESSIONS (Lịch sử kiểm duyệt)
+  // 3. RESOLVED SESSIONS (Lịch sử kiểm duyệt - 6 phiên)
   {
     session_id: 110,
     topic: 'Mạng máy tính',
@@ -170,6 +287,45 @@ export const INITIAL_MOCK_REVIEW_SESSIONS: PendingSessionItemDto[] = [
     },
     status: 'RESOLVED',
     created_at: new Date(Date.now() - 3600000 * 120).toISOString(),
+  },
+  {
+    session_id: 122,
+    topic: 'Trí tuệ nhân tạo',
+    title: 'Mạng nơ-ron nhân tạo MLP, Hàm kích hoạt Sigmoid/ReLU & Lan truyền ngược',
+    content: 'Đã hoàn tất kiểm duyệt: Các công thức toán học và giải thích bước cập nhật Backpropagation đạt chuẩn.',
+    author: {
+      user_id: 206,
+      full_name: 'Đỗ Quốc Bảo',
+      avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=300&q=80',
+    },
+    status: 'RESOLVED',
+    created_at: new Date(Date.now() - 3600000 * 135).toISOString(),
+  },
+  {
+    session_id: 123,
+    topic: 'Lập trình Web',
+    title: 'Kiến trúc RESTful API, Chuẩn HTTP Status Code & WebSocket Realtime',
+    content: 'Đã hoàn tất kiểm duyệt: Đã phê chuẩn 4 câu trắc nghiệm thực hành chuẩn RESTful.',
+    author: {
+      user_id: 210,
+      full_name: 'Bùi Thế Anh',
+      avatar_url: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=300&q=80',
+    },
+    status: 'RESOLVED',
+    created_at: new Date(Date.now() - 3600000 * 150).toISOString(),
+  },
+  {
+    session_id: 124,
+    topic: 'Công nghệ phần mềm',
+    title: 'Đặc tả yêu cầu phần mềm SRS, Biểu đồ Use Case và Lớp UML',
+    content: 'Đã hoàn tất kiểm duyệt ngày 12/10/2026. Tác giả được cộng 50 điểm thưởng cống hiến.',
+    author: {
+      user_id: 212,
+      full_name: 'Đặng Tuấn Kiệt',
+      avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80',
+    },
+    status: 'RESOLVED',
+    created_at: new Date(Date.now() - 3600000 * 168).toISOString(),
   },
 ];
 
@@ -357,11 +513,43 @@ export const INITIAL_MOCK_SESSION_DETAILS: Record<number, SessionDetailReviewRes
     ],
     duplicate_warnings: [],
   },
+
+  113: {
+    items: [
+      {
+        question_id: 1012,
+        content: 'Nguyên lý Đảo ngược Phụ thuộc (Dependency Inversion Principle - chữ D trong SOLID) phát biểu rằng:',
+        options: [
+          { key: 'A', text: 'Các module cấp cao không nên phụ thuộc vào các module cấp thấp; cả hai nên phụ thuộc vào Abstraction (Interface)', is_correct: true },
+          { key: 'B', text: 'Một class chỉ nên có duy nhất một lý do để thay đổi' },
+          { key: 'C', text: 'Các class con phải có thể thay thế hoàn toàn cho class cha mà không làm hỏng tính đúng đắn' },
+          { key: 'D', text: 'Nên chia nhỏ các interface lớn thành nhiều interface cụ thể hơn' },
+        ],
+        correct_answer: 'A',
+        explanation: 'DIP: High-level modules should not depend on low-level modules. Both should depend on abstractions. Abstractions should not depend on details. Details should depend on abstractions.',
+        status: 'PENDING',
+      },
+      {
+        question_id: 1013,
+        content: 'Mẫu thiết kế (Design Pattern) nào sau đây đảm bảo một lớp chỉ có duy nhất một thực thể (instance) và cung cấp một điểm truy cập toàn cục tới thực thể đó?',
+        options: [
+          { key: 'A', text: 'Factory Method' },
+          { key: 'B', text: 'Singleton Pattern', is_correct: true },
+          { key: 'C', text: 'Observer Pattern' },
+          { key: 'D', text: 'Decorator Pattern' },
+        ],
+        correct_answer: 'B',
+        explanation: 'Singleton Pattern giới hạn việc khởi tạo của một lớp thành một đối tượng duy nhất bằng cách đặt constructor ở phạm vi private và cung cấp phương thức static getInstance().',
+        status: 'PENDING',
+      },
+    ],
+    duplicate_warnings: [],
+  },
 };
 
-// Storage keys for local persistence in mock mode
-const MOCK_STORAGE_KEY_SESSIONS = 'sqb_mock_review_sessions_v1';
-const MOCK_STORAGE_KEY_DETAILS = 'sqb_mock_review_details_v1';
+// Storage keys for local persistence in mock mode (v2)
+const MOCK_STORAGE_KEY_SESSIONS = 'sqb_mock_review_sessions_v2';
+const MOCK_STORAGE_KEY_DETAILS = 'sqb_mock_review_details_v2';
 
 export function loadStoredMockSessions(): PendingSessionItemDto[] {
   try {
