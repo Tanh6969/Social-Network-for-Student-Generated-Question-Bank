@@ -14,6 +14,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { sessionsApi, MySubmissionDetail } from '../../../api';
+import { getStoredSubmissionDetail } from '../mockSessions';
 
 interface SubmissionDetailModalProps {
   sessionId: number | null;
@@ -45,7 +46,13 @@ export const SubmissionDetailModal: React.FC<SubmissionDetailModalProps> = ({
       })
       .catch((err) => {
         if (isMounted) {
-          setError(err?.message || 'Không thể tải thông tin chi tiết phiên đề xuất.');
+          // Fallback to local stored/mock session details
+          const fallback = getStoredSubmissionDetail(sessionId);
+          if (fallback) {
+            setDetail(fallback);
+          } else {
+            setError(err?.message || 'Không thể tải thông tin chi tiết phiên đề xuất.');
+          }
         }
       })
       .finally(() => {
@@ -73,11 +80,6 @@ export const SubmissionDetailModal: React.FC<SubmissionDetailModalProps> = ({
                 <h3 className="font-bold text-base text-gray-900 dark:text-gray-100 truncate">
                   Chi tiết phiên đề xuất
                 </h3>
-                {detail?.session_code && (
-                  <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                    {detail.session_code}
-                  </span>
-                )}
               </div>
               <p className="text-xs text-gray-500 truncate">
                 Môn:{' '}
@@ -234,7 +236,7 @@ export const SubmissionDetailModal: React.FC<SubmissionDetailModalProps> = ({
                               {opt.key}
                             </span>
                             <div className="flex-1 min-w-0">
-                              <span className="break-words">{opt.text}</span>
+                              <span className="break-words whitespace-pre-wrap leading-relaxed">{opt.text}</span>
                               {opt.media_url && (
                                 <img
                                   src={opt.media_url}

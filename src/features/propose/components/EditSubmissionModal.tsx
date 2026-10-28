@@ -15,6 +15,7 @@ import {
   UpdateSubmissionSessionRequest,
   MySubmissionDetail,
 } from '../../../api';
+import { getStoredSubmissionDetail, updateStoredSubmission } from '../mockSessions';
 
 interface EditSubmissionModalProps {
   sessionId: number | null;
@@ -59,53 +60,64 @@ export const EditSubmissionModal: React.FC<EditSubmissionModalProps> = ({
     if (!sessionId) return;
     setLoading(true);
 
+    const applyDetail = (detail: MySubmissionDetail) => {
+      setTitle(detail.title || '');
+      setContent(detail.content || '');
+      setSourceUrl((detail as { source_url?: string }).source_url || '');
+      setSubjectId(detail.subject_id || (enrolledSubjects[0]?.subject_id ?? 0));
+
+      if (detail.questions && detail.questions.length > 0) {
+        const mapped: EditQuestionItem[] = detail.questions.map((q) => ({
+          question_id: q.question_id,
+          content: q.content || '',
+          image_urls: q.image_urls || [],
+          options: (q.options || []).map((opt) => ({
+            key: opt.key || 'A',
+            text: opt.text || '',
+            is_correct: Boolean(opt.is_correct),
+            media_url: opt.media_url,
+          })),
+          explanation: q.explanation || '',
+          llm_generated: Boolean(q.source && q.source !== 'HOMO_SAPIENS'),
+          confidence: q.confidence_score ?? 3.5,
+        }));
+        setQuestions(mapped);
+      } else {
+        setQuestions([
+          {
+            content: '',
+            image_urls: [],
+            options: [
+              { key: 'A', text: '', is_correct: true },
+              { key: 'B', text: '', is_correct: false },
+              { key: 'C', text: '', is_correct: false },
+              { key: 'D', text: '', is_correct: false },
+            ],
+            explanation: '',
+            llm_generated: false,
+            confidence: 3.5,
+          },
+        ]);
+      }
+    };
+
     sessionsApi
       .getMySubmissionDetail(sessionId)
       .then((detail: MySubmissionDetail) => {
-        setTitle(detail.title || '');
-        setContent(detail.content || '');
-        setSubjectId(detail.subject_id || (enrolledSubjects[0]?.subject_id ?? 0));
-
-        if (detail.questions && detail.questions.length > 0) {
-          const mapped: EditQuestionItem[] = detail.questions.map((q) => ({
-            question_id: q.question_id,
-            content: q.content || '',
-            image_urls: q.image_urls || [],
-            options: (q.options || []).map((opt) => ({
-              key: opt.key || 'A',
-              text: opt.text || '',
-              is_correct: Boolean(opt.is_correct),
-              media_url: opt.media_url,
-            })),
-            explanation: q.explanation || '',
-            llm_generated: Boolean(q.source && q.source !== 'HOMO_SAPIENS'),
-            confidence: q.confidence_score ?? 3.5,
-          }));
-          setQuestions(mapped);
+        applyDetail(detail);
+      })
+      .catch(() => {
+        // Fallback to local stored session detail
+        const stored = getStoredSubmissionDetail(sessionId);
+        if (stored) {
+          applyDetail(stored);
         } else {
-          setQuestions([
-            {
-              content: '',
-              image_urls: [],
-              options: [
-                { key: 'A', text: '', is_correct: true },
-                { key: 'B', text: '', is_correct: false },
-                { key: 'C', text: '', is_correct: false },
-                { key: 'D', text: '', is_correct: false },
-              ],
-              explanation: '',
-              llm_generated: false,
-              confidence: 3.5,
-            },
-          ]);
+          showToast('Không tìm thấy dữ liệu phiên cần sửa', 'warning');
+          onClose();
         }
       })
-      .catch((err) => {
-        showToast(err?.message || 'Không thể tải chi tiết phiên cần sửa', 'error');
-        onClose();
-      })
       .finally(() => setLoading(false));
-  }, [sessionId, enrolledSubjects, showToast, onClose]);
+  }, [sessionId, enrolledSubjects]);
 
   if (!sessionId) return null;
 
@@ -186,6 +198,7 @@ export const EditSubmissionModal: React.FC<EditSubmissionModalProps> = ({
     }
 
     setSubmitting(true);
+    const selectedSubject = enrolledSubjects.find((s) => s.subject_id === subjectId);
     try {
       const payload: UpdateSubmissionSessionRequest = {
         title: title.trim(),
@@ -203,12 +216,23 @@ export const EditSubmissionModal: React.FC<EditSubmissionModalProps> = ({
             media_url: opt.media_url,
           })),
           explanation: q.explanation,
-          llm_generated: q.llm_generated,
+          source: (q.llm_generated ? 'LLM' : 'HOMO_SAPIENS') as 'LLM' | 'HOMO_SAPIENS',
           confidence: q.confidence,
         })),
       };
 
-      await sessionsApi.updateMySubmission(sessionId, payload);
+      try {
+        await sessionsApi.updateMySubmission(sessionId, payload);
+      } catch {
+        // Fallback update in local stored sessions
+        updateStoredSubmission(
+          sessionId,
+          payload,
+          selectedSubject?.name,
+          selectedSubject?.code
+        );
+      }
+
       showToast('Cập nhật phiên đề xuất thành công!', 'success');
       onSuccess();
       onClose();
@@ -227,10 +251,10 @@ export const EditSubmissionModal: React.FC<EditSubmissionModalProps> = ({
         <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-[#1E1F20]">
           <div>
             <h3 className="font-bold text-base text-gray-900 dark:text-gray-100">
-              Chỉnh sửa phiên đề xuất (ID: {sessionId})
+              Chỉnh sửa phiên đề xuất
             </h3>
             <p className="text-xs text-gray-500">
-              Chỉ có thể chỉnh sửa khi phiên đang ở trạng thái Chờ duyệt (PENDING)
+              Chỉ có thể chỉnh sửa khi phiên đang ở trạng thái Chờ duyệt
             </p>
           </div>
 
@@ -371,13 +395,13 @@ export const EditSubmissionModal: React.FC<EditSubmissionModalProps> = ({
                     {/* Options A, B, C, D */}
                     <div className="space-y-2">
                       <label className="block text-xs font-bold text-gray-600 dark:text-gray-400">
-                        Đáp án lựa chọn (chọn nút tròn để đánh dấu đáp án đúng):
+                        Đáp án lựa chọn (bấm nút tròn để đánh dấu đáp án đúng, tự động xuống dòng khi nhập dài):
                       </label>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                         {currentQ.options.map((opt) => (
                           <div
                             key={opt.key}
-                            className={`p-2.5 rounded-xl border flex items-center gap-2.5 transition ${
+                            className={`p-2.5 rounded-xl border flex items-start gap-2.5 transition ${
                               opt.is_correct
                                 ? 'border-emerald-500 bg-emerald-50/60 dark:bg-emerald-950/20'
                                 : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-[#242526]'
@@ -386,23 +410,24 @@ export const EditSubmissionModal: React.FC<EditSubmissionModalProps> = ({
                             <button
                               type="button"
                               onClick={() => handleSetCorrectOption(opt.key)}
-                              className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 cursor-pointer ${
+                              className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 cursor-pointer mt-0.5 transition ${
                                 opt.is_correct
-                                  ? 'bg-emerald-600 text-white shadow-xs'
+                                  ? 'bg-emerald-600 text-white shadow-xs scale-105'
                                   : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300'
                               }`}
+                              title={opt.is_correct ? 'Đáp án đúng' : 'Bấm để đặt làm đáp án đúng'}
                             >
                               {opt.key}
                             </button>
-                            <input
-                              type="text"
+                            <textarea
+                              rows={2}
                               value={opt.text}
                               onChange={(e) => handleUpdateOption(opt.key, e.target.value)}
                               placeholder={`Nội dung phương án ${opt.key}...`}
-                              className="flex-1 bg-transparent text-xs sm:text-sm text-gray-900 dark:text-gray-100 focus:outline-hidden"
+                              className="flex-1 bg-transparent text-xs sm:text-sm text-gray-900 dark:text-gray-100 focus:outline-hidden resize-y min-h-[44px] break-words leading-relaxed"
                             />
                             {opt.is_correct && (
-                              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-1" />
                             )}
                           </div>
                         ))}

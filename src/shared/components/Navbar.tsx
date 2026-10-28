@@ -25,6 +25,7 @@ import {
   Database
 } from 'lucide-react';
 import { MainTab } from '../../features/demo/types';
+import { loadStoredMockSessions } from '../../features/lecturer/mockReviewData';
 
 export const Navbar: React.FC = () => {
   const {
@@ -89,7 +90,8 @@ export const Navbar: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const pendingSessionsCount = sessions.filter((s) => s.status === 'PENDING').length;
+  const mockPendingCount = loadStoredMockSessions().filter((s) => s.status === 'PENDING').length;
+  const pendingSessionsCount = Math.max(sessions.filter((s) => s.status === 'PENDING').length, mockPendingCount);
   const needEditCount = questions.filter((q) => q.status === 'NEED_EDIT').length;
   const unreadMessagesCount = conversations.reduce((acc, c) => acc + c.unreadCount, 0);
 
@@ -293,34 +295,101 @@ export const Navbar: React.FC = () => {
           <Home className={`w-6 h-6 ${activeTab === 'feed' ? 'stroke-[2.5]' : ''}`} />
         </button>
 
-        {/* Đề xuất câu hỏi */}
-        <button
-          onClick={() => handleTabClick('propose')}
-          className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-none transition-colors ${
-            activeTab === 'propose'
-              ? 'text-blue-600 dark:text-blue-400 border-b-[3px] border-blue-600'
-              : 'text-gray-500 dark:text-gray-400'
-          }`}
-          title="Đề xuất phiên câu hỏi thi (Sessions)"
-        >
-          <FilePlus className={`w-6 h-6 ${activeTab === 'propose' ? 'stroke-[2.5]' : ''}`} />
-        </button>
+        {/* NẾU LÀ GIẢNG VIÊN: ĐƯA 2 TAB KIỂM DUYỆT CÂU HỎI & NGÂN HÀNG ĐỀ LÊN TRƯỚC */}
+        {role === 'LECTURER' ? (
+          <>
+            {/* Kiểm duyệt câu hỏi */}
+            <button
+              onClick={() => handleTabClick('review')}
+              className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-none transition-colors ${
+                activeTab === 'review'
+                  ? 'text-blue-600 dark:text-blue-400 border-b-[3px] border-blue-600 font-bold'
+                  : 'text-gray-500 dark:text-gray-400'
+              }`}
+              title="Kiểm duyệt câu hỏi"
+            >
+              <CheckSquare className={`w-6 h-6 ${activeTab === 'review' ? 'stroke-[2.5]' : ''}`} />
+              {pendingSessionsCount > 0 && (
+                <span className="absolute top-2 right-3 px-1.5 py-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full animate-pulse-subtle">
+                  {pendingSessionsCount}
+                </span>
+              )}
+            </button>
 
-        {/* Ngân hàng đề */}
-        <button
-          onClick={() => handleTabClick('bank')}
-          className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-none transition-colors ${
-            activeTab === 'bank'
-              ? 'text-blue-600 dark:text-blue-400 border-b-[3px] border-blue-600'
-              : 'text-gray-500 dark:text-gray-400'
-          }`}
-          title="Ngân hàng đề & Làm thử"
-        >
-          <BookOpen className={`w-6 h-6 ${activeTab === 'bank' ? 'stroke-[2.5]' : ''}`} />
-          <span className="absolute top-1 right-3 text-[10px] font-bold bg-blue-600 text-white px-1 rounded-full">
-            Đề
-          </span>
-        </button>
+            {/* Quản lý đề thi & Xuất file */}
+            <button
+              onClick={() => handleTabClick('exams')}
+              className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-none transition-colors ${
+                activeTab === 'exams'
+                  ? 'text-blue-600 dark:text-blue-400 border-b-[3px] border-blue-600 font-bold'
+                  : 'text-gray-500 dark:text-gray-400'
+              }`}
+              title="Quản lý đề thi & Xuất file"
+            >
+              <Database className={`w-6 h-6 ${activeTab === 'exams' ? 'stroke-[2.5]' : ''}`} />
+            </button>
+
+            {/* Đề xuất câu hỏi */}
+            <button
+              onClick={() => handleTabClick('propose')}
+              className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-none transition-colors ${
+                activeTab === 'propose'
+                  ? 'text-blue-600 dark:text-blue-400 border-b-[3px] border-blue-600'
+                  : 'text-gray-500 dark:text-gray-400'
+              }`}
+              title="Đề xuất phiên câu hỏi thi (Sessions)"
+            >
+              <FilePlus className={`w-6 h-6 ${activeTab === 'propose' ? 'stroke-[2.5]' : ''}`} />
+            </button>
+
+            {/* Ngân hàng đề chung & Làm thử */}
+            <button
+              onClick={() => handleTabClick('bank')}
+              className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-none transition-colors ${
+                activeTab === 'bank'
+                  ? 'text-blue-600 dark:text-blue-400 border-b-[3px] border-blue-600'
+                  : 'text-gray-500 dark:text-gray-400'
+              }`}
+              title="Ngân hàng đề chung & Làm thử"
+            >
+              <BookOpen className={`w-6 h-6 ${activeTab === 'bank' ? 'stroke-[2.5]' : ''}`} />
+              <span className="absolute top-1 right-3 text-[10px] font-bold bg-blue-600 text-white px-1 rounded-full">
+                Đề
+              </span>
+            </button>
+          </>
+        ) : (
+          <>
+            {/* Đề xuất câu hỏi */}
+            <button
+              onClick={() => handleTabClick('propose')}
+              className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-none transition-colors ${
+                activeTab === 'propose'
+                  ? 'text-blue-600 dark:text-blue-400 border-b-[3px] border-blue-600'
+                  : 'text-gray-500 dark:text-gray-400'
+              }`}
+              title="Đề xuất phiên câu hỏi thi (Sessions)"
+            >
+              <FilePlus className={`w-6 h-6 ${activeTab === 'propose' ? 'stroke-[2.5]' : ''}`} />
+            </button>
+
+            {/* Ngân hàng đề */}
+            <button
+              onClick={() => handleTabClick('bank')}
+              className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-none transition-colors ${
+                activeTab === 'bank'
+                  ? 'text-blue-600 dark:text-blue-400 border-b-[3px] border-blue-600'
+                  : 'text-gray-500 dark:text-gray-400'
+              }`}
+              title="Ngân hàng đề & Làm thử"
+            >
+              <BookOpen className={`w-6 h-6 ${activeTab === 'bank' ? 'stroke-[2.5]' : ''}`} />
+              <span className="absolute top-1 right-3 text-[10px] font-bold bg-blue-600 text-white px-1 rounded-full">
+                Đề
+              </span>
+            </button>
+          </>
+        )}
 
         {/* Video học tập */}
         <button
@@ -360,46 +429,6 @@ export const Navbar: React.FC = () => {
         >
           <Users className={`w-6 h-6 ${activeTab === 'friends' ? 'stroke-[2.5]' : ''}`} />
         </button>
-
-        {/* Tab Ngân hàng đề của Giảng viên (Kho riêng của GV) */}
-        {role === 'LECTURER' && (
-          <button
-            onClick={() => handleTabClick('lecturer-bank')}
-            className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-none transition-colors ${
-              activeTab === 'lecturer-bank'
-                ? 'text-purple-600 dark:text-purple-400 border-b-[3px] border-purple-600 font-bold'
-                : 'text-purple-600/80 dark:text-purple-400/80'
-            }`}
-            title="Ngân hàng đề riêng của Giảng viên (Biên tập, Chat AI & Sinh đề)"
-          >
-            <Database className={`w-6 h-6 ${activeTab === 'lecturer-bank' ? 'stroke-[2.5]' : ''}`} />
-            {needEditCount > 0 && (
-              <span className="absolute top-2 right-3 px-1.5 py-0.5 text-[10px] font-bold bg-amber-500 text-white rounded-full">
-                {needEditCount}
-              </span>
-            )}
-          </button>
-        )}
-
-        {/* Tab Kiểm duyệt cho Giảng viên (REVIEW.01 - 18. Question Review APIs) */}
-        {role === 'LECTURER' && (
-          <button
-            onClick={() => handleTabClick('review')}
-            className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-none transition-colors ${
-              activeTab === 'review'
-                ? 'text-purple-600 dark:text-purple-400 border-b-[3px] border-purple-600 font-bold'
-                : 'text-purple-600/80 dark:text-purple-400/80'
-            }`}
-            title="Giảng viên Duyệt câu hỏi (18. Question Review APIs)"
-          >
-            <CheckSquare className={`w-6 h-6 ${activeTab === 'review' ? 'stroke-[2.5]' : ''}`} />
-            {pendingSessionsCount > 0 && (
-              <span className="absolute top-2 right-3 px-1.5 py-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full animate-pulse-subtle">
-                {pendingSessionsCount}
-              </span>
-            )}
-          </button>
-        )}
       </nav>
 
       {/* RIGHT: Action Round Buttons */}
@@ -433,41 +462,95 @@ export const Navbar: React.FC = () => {
                 Tính năng hệ thống
               </h3>
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <button
-                  onClick={() => {
-                    handleTabClick('bank');
-                    setIsGridMenuOpen(false);
-                  }}
-                  className="p-2.5 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] hover:bg-blue-50 dark:hover:bg-blue-950/40 text-left transition"
-                >
-                  <BookOpen className="w-5 h-5 text-blue-600 mb-1" />
-                  <span className="font-semibold block text-gray-800 dark:text-gray-200">Ngân hàng đề</span>
-                  <span className="text-[10px] text-gray-500">Đóng góp & ôn tập</span>
-                </button>
+                {role === 'LECTURER' ? (
+                  <>
+                    <button
+                      onClick={() => {
+                        handleTabClick('review');
+                        setIsGridMenuOpen(false);
+                      }}
+                      className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-left transition"
+                    >
+                      <CheckSquare className="w-5 h-5 text-blue-600 mb-1" />
+                      <span className="font-semibold block text-blue-700 dark:text-blue-300">Kiểm duyệt</span>
+                      <span className="text-[10px] text-gray-500">Thẩm định phiên</span>
+                    </button>
 
-                <button
-                  onClick={() => {
-                    handleTabClick('propose');
-                    setIsGridMenuOpen(false);
-                  }}
-                  className="p-2.5 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-left transition"
-                >
-                  <FilePlus className="w-5 h-5 text-emerald-600 mb-1" />
-                  <span className="font-semibold block text-gray-800 dark:text-gray-200">Đề xuất câu hỏi</span>
-                  <span className="text-[10px] text-gray-500">Biên soạn & duyệt</span>
-                </button>
+                    <button
+                      onClick={() => {
+                        handleTabClick('exams');
+                        setIsGridMenuOpen(false);
+                      }}
+                      className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-left transition"
+                    >
+                      <Database className="w-5 h-5 text-blue-600 mb-1" />
+                      <span className="font-semibold block text-blue-700 dark:text-blue-300">Quản lý đề thi</span>
+                      <span className="text-[10px] text-gray-500">Tạo & xuất dữ liệu</span>
+                    </button>
 
-                <button
-                  onClick={() => {
-                    handleTabClick('exams');
-                    setIsGridMenuOpen(false);
-                  }}
-                  className="p-2.5 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] hover:bg-blue-50 dark:hover:bg-blue-950/40 text-left transition"
-                >
-                  <FileCode className="w-5 h-5 text-purple-600 mb-1" />
-                  <span className="font-semibold block text-gray-800 dark:text-gray-200">Sinh đề thi</span>
-                  <span className="text-[10px] text-gray-500">Ma trận ma mã đề</span>
-                </button>
+                    <button
+                      onClick={() => {
+                        handleTabClick('propose');
+                        setIsGridMenuOpen(false);
+                      }}
+                      className="p-2.5 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-left transition"
+                    >
+                      <FilePlus className="w-5 h-5 text-emerald-600 mb-1" />
+                      <span className="font-semibold block text-gray-800 dark:text-gray-200">Đề xuất câu hỏi</span>
+                      <span className="text-[10px] text-gray-500">Biên soạn & duyệt</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        handleTabClick('bank');
+                        setIsGridMenuOpen(false);
+                      }}
+                      className="p-2.5 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] hover:bg-blue-50 dark:hover:bg-blue-950/40 text-left transition"
+                    >
+                      <BookOpen className="w-5 h-5 text-blue-600 mb-1" />
+                      <span className="font-semibold block text-gray-800 dark:text-gray-200">Ngân hàng đề</span>
+                      <span className="text-[10px] text-gray-500">Đóng góp & ôn tập</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => {
+                        handleTabClick('bank');
+                        setIsGridMenuOpen(false);
+                      }}
+                      className="p-2.5 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] hover:bg-blue-50 dark:hover:bg-blue-950/40 text-left transition"
+                    >
+                      <BookOpen className="w-5 h-5 text-blue-600 mb-1" />
+                      <span className="font-semibold block text-gray-800 dark:text-gray-200">Ngân hàng đề</span>
+                      <span className="text-[10px] text-gray-500">Đóng góp & ôn tập</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        handleTabClick('propose');
+                        setIsGridMenuOpen(false);
+                      }}
+                      className="p-2.5 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-left transition"
+                    >
+                      <FilePlus className="w-5 h-5 text-emerald-600 mb-1" />
+                      <span className="font-semibold block text-gray-800 dark:text-gray-200">Đề xuất câu hỏi</span>
+                      <span className="text-[10px] text-gray-500">Biên soạn & duyệt</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        handleTabClick('exams');
+                        setIsGridMenuOpen(false);
+                      }}
+                      className="p-2.5 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] hover:bg-blue-50 dark:hover:bg-blue-950/40 text-left transition"
+                    >
+                      <Database className="w-5 h-5 text-blue-600 mb-1" />
+                      <span className="font-semibold block text-gray-800 dark:text-gray-200">Quản lý đề thi</span>
+                      <span className="text-[10px] text-gray-500">Tạo & xuất dữ liệu</span>
+                    </button>
+                  </>
+                )}
 
                 <button
                   onClick={() => {
@@ -722,20 +805,15 @@ export const Navbar: React.FC = () => {
                 {role === 'LECTURER' && (
                   <button
                     onClick={() => {
-                      handleTabClick('lecturer-bank');
+                      handleTabClick('exams');
                       setIsUserMenuOpen(false);
                     }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-950/40 text-purple-700 dark:text-purple-300 font-bold transition text-left"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-bold transition text-left cursor-pointer"
                   >
                     <div className="flex items-center gap-3">
-                      <Database className="w-4 h-4 text-purple-600" />
-                      <span>Ngân hàng đề của Giảng viên</span>
+                      <Database className="w-4 h-4 text-blue-600" />
+                      <span>Quản lý đề thi & Xuất file</span>
                     </div>
-                    {needEditCount > 0 && (
-                      <span className="text-[10px] bg-amber-500 text-white font-bold px-1.5 py-0.5 rounded-full">
-                        {needEditCount} Cần edit
-                      </span>
-                    )}
                   </button>
                 )}
 
