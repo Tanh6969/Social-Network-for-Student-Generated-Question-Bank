@@ -3,6 +3,9 @@ import { useApp } from '../../demo/context/AppContext';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
 import { PostContent } from '../../feed/components/PostContent';
 import { PostMediaGallery } from '../../feed/components/PostMediaGallery';
+import { PostDocuments } from '../../feed/components/PostDocuments';
+import { PostShareButton } from '../../feed/components/PostShareButton';
+import { PostComposerCard } from '../../feed/components/PostComposerCard';
 import {
   MediaLightbox,
   type LightboxItem,
@@ -15,18 +18,13 @@ import {
   Camera,
   Edit,
   Sparkles,
-  BookOpen,
-  Award,
-  Users,
-  Grid,
-  FileText,
   MessageCircle,
-  UserPlus,
   ShieldAlert,
-  CheckCircle2,
-  Share2,
+  MoreHorizontal,
+  Ban,
+  ThumbsUp,
 } from 'lucide-react';
-import { User, Post } from '../../demo/types';
+import { User } from '../../demo/types';
 
 export const ProfileView: React.FC = () => {
   const {
@@ -39,8 +37,9 @@ export const ProfileView: React.FC = () => {
     deletePost,
     setActivePostDetail,
     openPostMedia,
-    questions,
-    setActiveQuizQuestion,
+    toggleLikePost,
+    filterVisibleComments,
+    blockUser,
     setActiveTab,
     openChatDock,
     showToast,
@@ -51,8 +50,9 @@ export const ProfileView: React.FC = () => {
   } = useApp();
 
   const [activeTab, setActiveTabLocal] = useState<
-    'POSTS' | 'ABOUT' | 'PHOTOS' | 'QUESTIONS' | 'FRIENDS'
+    'POSTS' | 'ABOUT' | 'PHOTOS' | 'FRIENDS'
   >('POSTS');
+  const [activeMenuPostId, setActiveMenuPostId] = useState<string | null>(null);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileMedia, setProfileMedia] = useState<'avatar' | 'cover' | null>(
     null,
@@ -78,9 +78,6 @@ export const ProfileView: React.FC = () => {
             friendStatuses[targetUser.id] === 'FRIEND')),
     )
     .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
-  const userQuestions = questions.filter(
-    (q) => q.creatorId === targetUser.id && q.status === 'APPROVED',
-  );
   const photoHistory = profilePhotoHistory.filter(
     (photo) => photo.userId === targetUser.id,
   );
@@ -237,12 +234,6 @@ export const ProfileView: React.FC = () => {
               {isMe ? (
                 <>
                   <button
-                    onClick={() => openPostComposer()}
-                    className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700"
-                  >
-                    Tạo bài viết
-                  </button>
-                  <button
                     onClick={() => setActiveTab('cosmetics')}
                     className="px-4 py-2 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 rounded-xl text-xs font-bold hover:bg-purple-100 transition flex items-center gap-1.5"
                   >
@@ -296,10 +287,6 @@ export const ProfileView: React.FC = () => {
               { id: 'POSTS', label: 'Bài viết' },
               { id: 'ABOUT', label: 'Giới thiệu' },
               { id: 'PHOTOS', label: 'Ảnh' },
-              {
-                id: 'QUESTIONS',
-                label: `Câu hỏi đã đóng góp (${userQuestions.length})`,
-              },
               { id: 'FRIENDS', label: `Bạn bè (${targetUser.friendsCount})` },
             ].map((tab) => (
               <button
@@ -414,50 +401,111 @@ export const ProfileView: React.FC = () => {
           <div className="md:col-span-7 space-y-4">
             {activeTab === 'POSTS' && (
               <>
+                {isMe && <PostComposerCard />}
                 {userPosts.map((post) => (
-                  <div
+                  <article
                     key={post.id}
-                    className="bg-white dark:bg-[#242526] rounded-xl shadow-xs border border-gray-200 dark:border-gray-700 p-4 space-y-3"
+                    className="bg-white dark:bg-[#242526] rounded-xl shadow-xs border border-gray-200 dark:border-gray-700 overflow-hidden"
                   >
-                    <div className="flex items-center justify-between gap-3">
+                    <div className="p-4 flex items-start justify-between">
                       <div className="flex items-center gap-3">
                         <AvatarWithFrame user={post.author} size="md" />
                         <div>
-                          <h4 className="font-bold text-xs text-gray-900 dark:text-gray-100">
+                          <h4 className="font-bold text-sm text-gray-900 dark:text-gray-100">
                             {post.author.name}
                           </h4>
-                          <span className="text-[10px] text-gray-400">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
                             {formatPostTime(post.createdAt)}
                           </span>
                         </div>
                       </div>
-                      {isMe && (
-                        <div className="flex gap-3 text-xs font-semibold">
-                          <button
-                            onClick={() => openPostComposer(post.id)}
-                            className="text-blue-600 hover:underline"
-                          >
-                            Sửa
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (window.confirm('Xóa bài viết này?'))
-                                deletePost(post.id);
-                            }}
-                            className="text-red-600 hover:underline"
-                          >
-                            Xóa
-                          </button>
-                        </div>
-                      )}
+                      <div className="relative">
+                        <button
+                          type="button"
+                          aria-label="Tùy chọn bài viết"
+                          aria-expanded={activeMenuPostId === post.id}
+                          onClick={() =>
+                            setActiveMenuPostId(
+                              activeMenuPostId === post.id ? null : post.id,
+                            )
+                          }
+                          className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] text-gray-500"
+                        >
+                          <MoreHorizontal className="w-5 h-5" />
+                        </button>
+                        {activeMenuPostId === post.id && (
+                          <div className="absolute right-0 top-8 bg-white dark:bg-[#242526] shadow-xl border border-gray-200 dark:border-gray-700 rounded-xl py-1 w-48 z-30 text-xs">
+                            {isMe ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    openPostComposer(post.id);
+                                    setActiveMenuPostId(null);
+                                  }}
+                                  className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-[#3A3B3C]"
+                                >
+                                  Sửa bài viết
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (window.confirm('Xóa bài viết này?'))
+                                      deletePost(post.id);
+                                    setActiveMenuPostId(null);
+                                  }}
+                                  className="w-full px-3 py-2 text-left text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                >
+                                  Xóa bài viết
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    openReportModal(
+                                      'BÀI VIẾT',
+                                      post.id,
+                                      post.content.slice(0, 40),
+                                    );
+                                    setActiveMenuPostId(null);
+                                  }}
+                                  className="w-full px-3 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C]"
+                                >
+                                  Báo cáo bài viết
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    blockUser(
+                                      post.author.id,
+                                      'Chặn từ menu bài viết trên trang cá nhân',
+                                    );
+                                    setActiveMenuPostId(null);
+                                  }}
+                                  className="w-full px-3 py-2 text-left text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center gap-1.5 border-t border-gray-100 dark:border-gray-700"
+                                >
+                                  <Ban className="w-3.5 h-3.5" />
+                                  <span>
+                                    Chặn {post.author.name.split(' ').slice(-1)[0]}
+                                  </span>
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {post.content.trim() && (
-                      <PostContent
-                        key={post.id}
-                        content={post.content}
-                        compact
-                      />
+                      <div className="px-4 pb-3">
+                        <PostContent
+                          key={post.id}
+                          content={post.content}
+                          compact
+                        />
+                      </div>
                     )}
                     {post.mediaUrls?.length ? (
                       <PostMediaGallery
@@ -466,46 +514,78 @@ export const ProfileView: React.FC = () => {
                         onOpen={(index) => openPostMedia(post, index)}
                       />
                     ) : null}
-                    <button
-                      onClick={() => setActivePostDetail(post)}
-                      className="text-xs font-semibold text-blue-600 hover:underline"
-                    >
-                      {post.commentsCount} bình luận · Xem chi tiết
-                    </button>
-                  </div>
+                    {post.documents && post.documents.length > 0 && (
+                      <div className="px-4 pb-3">
+                        <PostDocuments documents={post.documents} />
+                      </div>
+                    )}
+                    {(() => {
+                      const visibleComments =
+                        filterVisibleComments(post.comments);
+                      const visibleCommentsCount = visibleComments.reduce(
+                        (sum, comment) =>
+                          sum + 1 + (comment.replies?.length ?? 0),
+                        0,
+                      );
+                      return (
+                        <>
+                          {(post.likesCount > 0 || visibleCommentsCount > 0) && (
+                            <div className="flex items-center justify-between border-b border-gray-100 px-4 py-2 text-xs text-gray-500 dark:border-gray-700">
+                              <div className="flex items-center gap-1.5">
+                                {post.likesCount > 0 && (
+                                  <>
+                                    <span className="rounded-full bg-blue-600 p-1 text-white">
+                                      <ThumbsUp className="h-2.5 w-2.5" />
+                                    </span>
+                                    <span>{post.likesCount} lượt thích</span>
+                                  </>
+                                )}
+                              </div>
+                              {visibleCommentsCount > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setActivePostDetail(post)}
+                                  className="hover:underline"
+                                >
+                                  {visibleCommentsCount} bình luận
+                                </button>
+                              )}
+                            </div>
+                          )}
+                          <div className="px-2 py-1 flex items-center justify-between text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-300">
+                            <button
+                              type="button"
+                              onClick={() => toggleLikePost(post.id)}
+                              className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition ${
+                                post.isLiked
+                                  ? 'text-blue-600 dark:text-blue-400 font-bold'
+                                  : ''
+                              }`}
+                            >
+                              <ThumbsUp
+                                className={`w-4 h-4 ${post.isLiked ? 'fill-blue-600 dark:fill-blue-400' : ''}`}
+                              />
+                              <span>Thích</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setActivePostDetail(post, true)}
+                              className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition"
+                            >
+                              <MessageCircle className="w-4 h-4" />
+                              <span>Bình luận</span>
+                            </button>
+                            <PostShareButton
+                              postId={post.id}
+                              showToast={showToast}
+                            />
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </article>
                 ))}
               </>
-            )}
-
-            {activeTab === 'QUESTIONS' && (
-              <div className="space-y-3">
-                {userQuestions.map((q) => (
-                  <div
-                    key={q.id}
-                    className="bg-white dark:bg-[#242526] rounded-xl shadow-xs border border-gray-200 dark:border-gray-700 p-4 space-y-2"
-                  >
-                    <div className="flex justify-between text-xs">
-                      <span className="font-bold text-blue-600">
-                        {q.subject}
-                      </span>
-                      <span className="text-emerald-600 font-bold">
-                        ✓ Đã phê duyệt
-                      </span>
-                    </div>
-                    <p className="text-xs font-semibold text-gray-900 dark:text-gray-100">
-                      {q.content}
-                    </p>
-                    <div className="pt-2 flex justify-end">
-                      <button
-                        onClick={() => setActiveQuizQuestion(q)}
-                        className="px-3 py-1 bg-blue-600 text-white rounded-lg text-xs font-bold"
-                      >
-                        Làm thử câu này
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
             )}
           </div>
         </div>
