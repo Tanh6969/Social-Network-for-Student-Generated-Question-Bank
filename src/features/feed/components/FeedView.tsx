@@ -17,6 +17,7 @@ import {
   Tv,
   FileCode,
   CheckSquare,
+  Database,
   Image,
   FileText,
   Video,
@@ -131,40 +132,80 @@ export const FeedView: React.FC = () => {
 
         {/* Shortcuts list - Tối giản & đồng bộ màu sắc */}
         <div className="space-y-0.5 text-sm font-medium text-gray-700 dark:text-gray-200">
-          {/* 1. Đề xuất câu hỏi mới */}
-          <button
-            onClick={() => setActiveTab('propose')}
-            className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-semibold transition text-left cursor-pointer"
-          >
-            <div className="w-9 h-9 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50 flex items-center justify-center transition-colors">
-              <PlusCircle className="w-5 h-5" />
-            </div>
-            <span>Đề xuất câu hỏi mới</span>
-          </button>
+          {/* NẾU LÀ GIẢNG VIÊN: ĐƯA KIỂM DUYỆT CÂU HỎI & QUẢN LÝ ĐỀ THI LÊN TRÊN ĐẦU */}
+          {role === 'LECTURER' ? (
+            <>
+              {/* 1. Kiểm duyệt câu hỏi */}
+              <button
+                onClick={() => setActiveTab('review')}
+                className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-semibold transition text-left cursor-pointer"
+              >
+                <div className="w-9 h-9 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50 flex items-center justify-center transition-colors">
+                  <CheckSquare className="w-5 h-5" />
+                </div>
+                <span>Kiểm duyệt câu hỏi</span>
+              </button>
 
-          {/* 2. Ngân hàng đề thi */}
-          <button
-            onClick={() => setActiveTab('bank')}
-            className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left"
-          >
-            <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/40 group-hover:text-blue-600 flex items-center justify-center transition-colors">
-              <BookOpen className="w-5 h-5" />
-            </div>
-            <span>Ngân hàng đề thi</span>
-          </button>
+              {/* 2. Quản lý đề thi */}
+              <button
+                onClick={() => setActiveTab('exams')}
+                className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-semibold transition text-left cursor-pointer"
+              >
+                <div className="w-9 h-9 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50 flex items-center justify-center transition-colors">
+                  <Database className="w-5 h-5" />
+                </div>
+                <span>Quản lý đề thi</span>
+              </button>
 
-          {/* 3. Sinh đề thi & Mã đề */}
-          <button
-            onClick={() => setActiveTab('exams')}
-            className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left"
-          >
-            <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/40 group-hover:text-blue-600 flex items-center justify-center transition-colors">
-              <FileCode className="w-5 h-5" />
-            </div>
-            <span>Sinh đề thi & Mã đề</span>
-          </button>
+              {/* 3. Đề xuất câu hỏi */}
+              <button
+                onClick={() => setActiveTab('propose')}
+                className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left cursor-pointer"
+              >
+                <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/40 group-hover:text-blue-600 flex items-center justify-center transition-colors">
+                  <PlusCircle className="w-5 h-5" />
+                </div>
+                <span>Đề xuất câu hỏi</span>
+              </button>
 
-          {/* 4. Minigame dự đoán */}
+              {/* 4. Ngân hàng đề thi */}
+              <button
+                onClick={() => setActiveTab('bank')}
+                className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left cursor-pointer"
+              >
+                <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/40 group-hover:text-blue-600 flex items-center justify-center transition-colors">
+                  <BookOpen className="w-5 h-5" />
+                </div>
+                <span>Ngân hàng đề thi</span>
+              </button>
+            </>
+          ) : (
+            <>
+              {/* 1. Đề xuất câu hỏi mới */}
+              <button
+                onClick={() => setActiveTab('propose')}
+                className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-semibold transition text-left cursor-pointer"
+              >
+                <div className="w-9 h-9 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50 flex items-center justify-center transition-colors">
+                  <PlusCircle className="w-5 h-5" />
+                </div>
+                <span>Đề xuất câu hỏi mới</span>
+              </button>
+
+              {/* 2. Ngân hàng đề thi */}
+              <button
+                onClick={() => setActiveTab('bank')}
+                className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left cursor-pointer"
+              >
+                <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/40 group-hover:text-blue-600 flex items-center justify-center transition-colors">
+                  <BookOpen className="w-5 h-5" />
+                </div>
+                <span>Ngân hàng đề thi</span>
+              </button>
+            </>
+          )}
+
+          {/* Minigame dự đoán */}
           <button
             onClick={() => setActiveTab('game')}
             className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left"
@@ -175,7 +216,7 @@ export const FeedView: React.FC = () => {
             <span>Minigame dự đoán</span>
           </button>
 
-          {/* 5. Video học tập */}
+          {/* Video học tập */}
           <button
             onClick={() => setActiveTab('watch')}
             className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left"
@@ -186,7 +227,7 @@ export const FeedView: React.FC = () => {
             <span>Video học tập</span>
           </button>
 
-          {/* 6. Bạn bè & Giảng viên */}
+          {/* Bạn bè & Giảng viên */}
           <button
             onClick={() => setActiveTab('friends')}
             className="w-full group flex items-center justify-between px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left"
@@ -201,18 +242,6 @@ export const FeedView: React.FC = () => {
               {currentUser.friendsCount}
             </span>
           </button>
-
-          {role === 'LECTURER' && (
-            <button
-              onClick={() => setActiveTab('review')}
-              className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl bg-gray-100 dark:bg-[#3A3B3C] text-gray-900 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:text-blue-600 dark:hover:text-blue-400 transition text-left mt-2"
-            >
-              <div className="w-9 h-9 rounded-full bg-white dark:bg-[#242526] text-blue-600 flex items-center justify-center shadow-xs">
-                <CheckSquare className="w-5 h-5" />
-              </div>
-              <span className="font-semibold">Kiểm duyệt câu hỏi (GV)</span>
-            </button>
-          )}
         </div>
 
         <div className="pt-4 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400 space-y-1">

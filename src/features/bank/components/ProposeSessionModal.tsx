@@ -255,22 +255,22 @@ export const ProposeSessionModal: React.FC = () => {
                   4 Phương án lựa chọn & Đánh dấu đáp án đúng:
                 </label>
                 {currentQ.options.map((opt) => (
-                  <div key={opt.id} className="flex items-center gap-2">
+                  <div key={opt.id} className="flex items-start gap-2">
                     <input
                       type="radio"
                       name={`correct_${activeQuestionIndex}`}
                       checked={currentQ.correctAnswer === opt.id}
                       onChange={() => handleUpdateQuestion({ correctAnswer: opt.id })}
-                      className="w-4 h-4 text-blue-600"
+                      className="w-4 h-4 text-blue-600 mt-2 shrink-0 cursor-pointer"
                       title="Chọn làm đáp án đúng"
                     />
-                    <span className="w-5 font-bold text-xs">{opt.id}.</span>
-                    <input
-                      type="text"
-                      placeholder={`Nội dung phương án ${opt.id}`}
+                    <span className="w-5 font-bold text-xs mt-2 shrink-0">{opt.id}.</span>
+                    <textarea
+                      rows={2}
+                      placeholder={`Nội dung phương án ${opt.id}...`}
                       value={opt.text}
                       onChange={(e) => handleUpdateOption(opt.id, e.target.value)}
-                      className="flex-1 px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#242526] text-gray-900 dark:text-gray-100"
+                      className="flex-1 px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#242526] text-gray-900 dark:text-gray-100 resize-y min-h-[38px] break-words leading-relaxed"
                     />
                   </div>
                 ))}
@@ -336,17 +336,17 @@ export const ProposeSessionModal: React.FC = () => {
                 {currentQ.options.map((opt) => (
                   <div
                     key={opt.id}
-                    className={`p-2 rounded-lg border text-xs flex items-center justify-between ${
+                    className={`p-2 rounded-lg border text-xs flex items-start justify-between gap-2 ${
                       opt.id === currentQ.correctAnswer
                         ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-400 text-emerald-800 dark:text-emerald-200 font-semibold'
                         : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300'
                     }`}
                   >
-                    <span>
+                    <span className="flex-1 break-words whitespace-pre-wrap leading-relaxed">
                       <strong>{opt.id}.</strong> {opt.text || '...'}
                     </span>
                     {opt.id === currentQ.correctAnswer && (
-                      <span className="text-[10px] bg-emerald-600 text-white px-1.5 py-0.2 rounded font-bold">
+                      <span className="text-[10px] bg-emerald-600 text-white px-1.5 py-0.2 rounded font-bold shrink-0 mt-0.5">
                         ĐÚNG
                       </span>
                     )}
