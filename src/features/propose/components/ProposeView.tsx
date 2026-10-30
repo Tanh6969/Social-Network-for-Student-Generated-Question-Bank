@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router';
 import { useApp } from '../../demo/context/AppContext';
 import {
   sessionsApi,
@@ -39,9 +40,14 @@ import {
 
 export const ProposeView: React.FC = () => {
   const { showToast } = useApp();
+  // Hỗ trợ mở thẳng từ sidebar: /propose?view=my-submissions&status=PENDING
+  const [searchParams] = useSearchParams();
+  const initialStatus = searchParams.get('status');
 
   // Active view tab: 'create' | 'my-submissions'
-  const [activeTab, setActiveTab] = useState<'create' | 'my-submissions'>('create');
+  const [activeTab, setActiveTab] = useState<'create' | 'my-submissions'>(
+    searchParams.get('view') === 'my-submissions' ? 'my-submissions' : 'create',
+  );
 
   // Enrolled subjects state
   const [enrolledSubjects, setEnrolledSubjects] = useState<SubjectResponse[]>([]);
@@ -51,7 +57,11 @@ export const ProposeView: React.FC = () => {
   const [submissions, setSubmissions] = useState<StoredSubmissionSummary[]>([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [filterSubjectId, setFilterSubjectId] = useState<number | undefined>(undefined);
-  const [filterStatus, setFilterStatus] = useState<'PENDING' | 'REVIEWING' | 'RESOLVED' | undefined>(undefined);
+  const [filterStatus, setFilterStatus] = useState<'PENDING' | 'REVIEWING' | 'RESOLVED' | undefined>(
+    initialStatus === 'PENDING' || initialStatus === 'REVIEWING' || initialStatus === 'RESOLVED'
+      ? initialStatus
+      : undefined,
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   const [paginationCursor, setPaginationCursor] = useState<{

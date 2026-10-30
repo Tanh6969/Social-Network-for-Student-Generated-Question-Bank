@@ -7,6 +7,7 @@ import { PostMediaGallery } from './PostMediaGallery';
 import { PostDocuments } from './PostDocuments';
 import { PostShareButton } from './PostShareButton';
 import { PostComposerCard } from './PostComposerCard';
+import { StudentSidebarSections } from './StudentSidebarSections';
 import {
   formatPostTime,
   isPostVisibleToViewer,
@@ -82,6 +83,7 @@ export const FeedView: React.FC = () => {
   );
   const orderedPosts = sortFeedPosts(visiblePosts, currentUser.id, friendIds);
   const feedPages = useFeedPages(orderedPosts, feedSentinelRef);
+  const myRank = leaderboard.find((l) => l.user.id === currentUser.id)?.rank;
 
   return (
     <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 flex justify-between items-start gap-4 lg:gap-8 xl:gap-12 2xl:gap-16">
@@ -103,6 +105,13 @@ export const FeedView: React.FC = () => {
             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
               {currentUser.classOrTitle}
             </p>
+            {role !== 'LECTURER' && (
+              <p className="flex items-center gap-1 text-xs font-semibold text-amber-600 dark:text-amber-400 truncate">
+                <Trophy className="w-3.5 h-3.5 shrink-0" />
+                {currentUser.points.toLocaleString('vi-VN')} điểm
+                {myRank && <> · Hạng #{myRank}</>}
+              </p>
+            )}
           </div>
         </div>
 
@@ -154,59 +163,38 @@ export const FeedView: React.FC = () => {
                 </div>
                 <span>Ngân hàng đề thi</span>
               </button>
-            </>
-          ) : (
-            <>
-              {/* 1. Đề xuất câu hỏi mới */}
-              <button
-                onClick={() => setActiveTab('propose')}
-                className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-semibold transition text-left cursor-pointer"
-              >
-                <div className="w-9 h-9 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50 flex items-center justify-center transition-colors">
-                  <PlusCircle className="w-5 h-5" />
-                </div>
-                <span>Đề xuất câu hỏi mới</span>
-              </button>
 
-              {/* 2. Ngân hàng đề thi */}
+              {/* Minigame dự đoán */}
               <button
-                onClick={() => setActiveTab('bank')}
-                className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left cursor-pointer"
+                onClick={() => setActiveTab('game')}
+                className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left"
               >
                 <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/40 group-hover:text-blue-600 flex items-center justify-center transition-colors">
-                  <BookOpen className="w-5 h-5" />
+                  <Gamepad2 className="w-5 h-5" />
                 </div>
-                <span>Ngân hàng đề thi</span>
+                <span>Minigame dự đoán</span>
+              </button>
+
+              {/* Bạn bè & Giảng viên */}
+              <button
+                onClick={() => setActiveTab('friends')}
+                className="w-full group flex items-center justify-between px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/40 group-hover:text-blue-600 flex items-center justify-center transition-colors">
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <span>Bạn bè & Giảng viên</span>
+                </div>
+                <span className="text-xs font-bold text-gray-500 bg-gray-100 dark:bg-[#3A3B3C] px-2 py-0.5 rounded-full">
+                  {currentUser.friendsCount}
+                </span>
               </button>
             </>
+          ) : (
+            // Sinh viên: chỉ hiện nội dung cá nhân, không lặp lại các trang đã có trên header
+            <StudentSidebarSections />
           )}
-
-          {/* Minigame dự đoán */}
-          <button
-            onClick={() => setActiveTab('game')}
-            className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left"
-          >
-            <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/40 group-hover:text-blue-600 flex items-center justify-center transition-colors">
-              <Gamepad2 className="w-5 h-5" />
-            </div>
-            <span>Minigame dự đoán</span>
-          </button>
-
-          {/* Bạn bè & Giảng viên */}
-          <button
-            onClick={() => setActiveTab('friends')}
-            className="w-full group flex items-center justify-between px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/40 group-hover:text-blue-600 flex items-center justify-center transition-colors">
-                <Users className="w-5 h-5" />
-              </div>
-              <span>Bạn bè & Giảng viên</span>
-            </div>
-            <span className="text-xs font-bold text-gray-500 bg-gray-100 dark:bg-[#3A3B3C] px-2 py-0.5 rounded-full">
-              {currentUser.friendsCount}
-            </span>
-          </button>
         </div>
 
         <div className="pt-4 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400 space-y-1">
