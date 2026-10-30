@@ -65,8 +65,6 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
   const [activeIdx, setActiveIdx] = useState(0);
 
   useEffect(() => {
-<<<<<<< HEAD
-=======
     if (!sessionId) return;
     setLoading(true);
 
@@ -111,7 +109,6 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
       }
     };
 
->>>>>>> 30d383ec3074a22ee69cb4d4cb408d37bb6fc7d7
     sessionsApi
       .getMySubmissionDetail(sessionId)
       .then((detail: MySubmissionDetail) => {
@@ -129,6 +126,8 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
       })
       .finally(() => setLoading(false));
   }, [sessionId, enrolledSubjects]);
+
+  if (!sessionId) return null;
 
   const currentQ = questions[activeIdx] || questions[0];
 

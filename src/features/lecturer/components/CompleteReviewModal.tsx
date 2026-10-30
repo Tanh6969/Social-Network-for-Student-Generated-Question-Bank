@@ -18,46 +18,7 @@ export const CompleteReviewModal: React.FC<CompleteReviewModalProps> = ({
   onConfirm,
   isSubmitting = false,
 }) => {
-<<<<<<< HEAD
-  if (!isOpen || !session) return null;
-  return (
-    <CompleteReviewContent
-      key={session.id}
-      session={session}
-      onClose={onClose}
-      onSuccess={onSuccess}
-    />
-  );
-};
-
-const CompleteReviewContent: React.FC<Omit<CompleteReviewModalProps, 'isOpen' | 'session'> & { session: ProposeSession }> = ({
-  session,
-  onClose,
-  onSuccess,
-}) => {
-  const { completeReviewSession } = useApp();
-
-  const total = session.questions.length;
-  const approvedCount = session.questions.filter((q) => q.status === 'APPROVED').length;
-  const rejectedCount = session.questions.filter((q) => q.status === 'REJECTED').length;
-  const pendingCount = session.questions.filter((q) => q.status === 'PENDING').length;
-  const editedCount = session.questions.filter((q) => q.isEditedByLecturer).length;
-  const totalPoints = approvedCount * 20;
-
-  const [finalRemarks, setFinalRemarks] = useState(
-    approvedCount > 0
-      ? `Đã thẩm định và chốt toàn bộ ${total} câu hỏi trong phiên. ${approvedCount} câu đạt chuẩn đã được lưu vào Ngân hàng câu hỏi chính thức của trường.`
-      : 'Đã hoàn tất đánh giá toàn bộ phiên đề xuất câu hỏi.'
-  );
-
-  const handleConfirm = () => {
-    completeReviewSession(session.id, finalRemarks);
-    onClose();
-    if (onSuccess) onSuccess();
-  };
-=======
   if (!isOpen || !sessionId) return null;
->>>>>>> 30d383ec3074a22ee69cb4d4cb408d37bb6fc7d7
 
   return (
     <div className="fixed inset-0 z-[230] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">

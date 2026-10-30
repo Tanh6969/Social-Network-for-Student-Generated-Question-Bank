@@ -18,8 +18,6 @@ export const EditQuestionModal: React.FC<EditQuestionModalProps> = ({
   onSaved,
   showToast,
 }) => {
-<<<<<<< HEAD
-=======
   const [content, setContent] = useState('');
   const [options, setOptions] = useState<{ key: string; text: string; is_correct: boolean }[]>([
     { key: 'A', text: '', is_correct: false },
@@ -65,24 +63,7 @@ export const EditQuestionModal: React.FC<EditQuestionModalProps> = ({
     }
   }, [question, isOpen]);
 
->>>>>>> 30d383ec3074a22ee69cb4d4cb408d37bb6fc7d7
   if (!isOpen || !question) return null;
-  return (
-    <EditQuestionContent
-      key={question.id}
-      question={question}
-      sessionId={sessionId}
-      onClose={onClose}
-    />
-  );
-};
-
-const EditQuestionContent: React.FC<Omit<EditQuestionModalProps, 'isOpen' | 'question'> & { question: Question }> = ({
-  question,
-  sessionId,
-  onClose,
-}) => {
-  const { editQuestionByLecturer } = useApp();
 
   const handleOptionTextChange = (key: string, text: string) => {
     setOptions((prev) =>
