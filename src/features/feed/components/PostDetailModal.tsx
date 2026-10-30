@@ -39,8 +39,6 @@ function PostDetail({
     setActivePostDetail,
     toggleLikePost,
     addComment,
-    deletePost,
-    openPostComposer,
     openReportModal,
     filterVisibleComments,
   } = useApp();
@@ -84,29 +82,7 @@ function PostDetail({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {post.author.id === currentUser.id ? (
-            <>
-              <button
-                type="button"
-                onClick={() => {
-                  close();
-                  openPostComposer(post.id);
-                }}
-                className="text-xs font-semibold text-blue-600 hover:underline"
-              >
-                Sửa
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (window.confirm('Xóa bài viết này?')) deletePost(post.id);
-                }}
-                className="text-xs font-semibold text-red-600 hover:underline"
-              >
-                Xóa
-              </button>
-            </>
-          ) : (
+          {post.author.id !== currentUser.id && (
             <button
               type="button"
               onClick={() =>
