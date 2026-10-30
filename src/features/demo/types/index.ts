@@ -84,7 +84,8 @@ export interface CommentItem {
 }
 
 export type QuestionDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
-export type QuestionStatus = 'DRAFT' | 'PENDING' | 'NEED_EDIT' | 'APPROVED' | 'REJECTED' | 'AI_MODIFIED';
+export type QuestionStatus =
+  'DRAFT' | 'PENDING' | 'NEED_EDIT' | 'APPROVED' | 'REJECTED' | 'AI_MODIFIED';
 
 export interface Question {
   id: string;
@@ -135,7 +136,14 @@ export interface ProposeSession {
   subject: string;
   chapter: string;
   creator: User;
-  status: 'DRAFT' | 'PENDING' | 'IN_REVIEW' | 'PARTIAL_APPROVED' | 'APPROVED' | 'REJECTED' | 'COMPLETED';
+  status:
+    | 'DRAFT'
+    | 'PENDING'
+    | 'IN_REVIEW'
+    | 'PARTIAL_APPROVED'
+    | 'APPROVED'
+    | 'REJECTED'
+    | 'COMPLETED';
   questions: Question[];
   submittedAt: string;
   reviewedAt?: string;
@@ -236,16 +244,19 @@ export interface MessageItem {
 
 export interface Conversation {
   id: string;
+  participantIds: string[];
   partner: User;
   lastMessage: string;
   lastMessageTime: string;
   unreadCount: number;
+  unreadCounts?: Record<string, number>;
   isTyping?: boolean;
   messages: MessageItem[];
 }
 
 export interface AppNotification {
   id: string;
+  recipientId: string;
   title: string;
   message: string;
   timestamp: string;

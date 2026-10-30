@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import { Navigate, useLocation } from 'react-router';
-import { postLoginDestination, tabFromPath } from './routes';
+import { canAccessTab, postLoginDestination, tabFromPath } from './routes';
 import { useApp } from '../features/demo/context/AppContext';
 import { Navbar } from '../shared/components/Navbar';
 import { ChatDock } from '../shared/components/ChatDock';
@@ -116,6 +116,8 @@ const MainContent: React.FC = () => {
 
   if (!tabFromPath(location.pathname))
     return <Navigate to={postLoginDestination(location.search)} replace />;
+
+  if (!canAccessTab(role, activeTab)) return <Navigate to="/feed" replace />;
 
   return (
     <div className="min-h-screen bg-[#F0F2F5] dark:bg-[#18191A] text-[#050505] dark:text-[#E4E6EB] transition-colors duration-200 flex flex-col pt-14">

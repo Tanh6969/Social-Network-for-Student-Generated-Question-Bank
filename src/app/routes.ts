@@ -1,4 +1,4 @@
-import type { MainTab } from '../features/demo/types';
+import type { MainTab, Role } from '../features/demo/types';
 
 export const tabPaths: Record<MainTab, string> = {
   feed: '/feed',
@@ -31,4 +31,9 @@ export function postLoginDestination(search: string): string {
     return tabPaths.feed;
   const pathname = next.split(/[?#]/u)[0];
   return tabFromPath(pathname) ? next : tabPaths.feed;
+}
+
+export function canAccessTab(role: Role, tab: MainTab): boolean {
+  const lecturerOnlyTabs: MainTab[] = ['review', 'lecturer-bank', 'exams'];
+  return role === 'LECTURER' || !lecturerOnlyTabs.includes(tab);
 }

@@ -14,6 +14,7 @@ import { ProfilePhotoEditor, type PhotoOption } from './ProfilePhotoEditor';
 import { ProfilePhotoLibrary } from './ProfilePhotoLibrary';
 import { EditProfileModal } from './EditProfileModal';
 import { formatPostTime } from '../../feed/postUtils';
+import { getProfileRelationAction } from '../profileRelations';
 import {
   Camera,
   Edit,
@@ -23,16 +24,29 @@ import {
   MoreHorizontal,
   Ban,
   ThumbsUp,
+  UserPlus,
+  UserCheck,
+  UserMinus,
+  Check,
+  X,
 } from 'lucide-react';
-import { User } from '../../demo/types';
+import type { User } from '../../demo/types';
 
 export const ProfileView: React.FC = () => {
   const {
     currentUser,
+    role,
     viewingUserId,
     getUserById,
+    getFriendsOfUser,
     posts,
     friendStatuses,
+    followingIds,
+    sendFriendRequest,
+    cancelFriendRequest,
+    acceptFriendRequest,
+    declineFriendRequest,
+    toggleFollowUser,
     openPostComposer,
     deletePost,
     setActivePostDetail,
@@ -67,6 +81,18 @@ export const ProfileView: React.FC = () => {
     ? getUserById(viewingUserId)
     : currentUser;
   const isMe = targetUser.id === currentUser.id;
+  const profileFriends = getFriendsOfUser(targetUser.id);
+  const relationAction = getProfileRelationAction(
+    role,
+    targetUser.role,
+    friendStatuses[targetUser.id] ?? 'NONE',
+  );
+  const isFollowing = followingIds.includes(targetUser.id);
+
+  const openFriendProfile = (userId: string) => {
+    setViewingUserId(userId);
+    setActiveTab('profile');
+  };
 
   const userPosts = posts
     .filter(
@@ -251,6 +277,74 @@ export const ProfileView: React.FC = () => {
                 </>
               ) : (
                 <>
+                  {relationAction === 'FOLLOW' && (
+                    <button
+                      type="button"
+                      onClick={() => toggleFollowUser(targetUser.id)}
+                      aria-pressed={isFollowing}
+                      className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                        isFollowing
+                          ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 hover:bg-purple-100'
+                          : 'bg-purple-600 hover:bg-purple-700 text-white'
+                      }`}
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      <span>
+                        {isFollowing ? 'Đang theo dõi' : 'Theo dõi giảng viên'}
+                      </span>
+                    </button>
+                  )}
+
+                  {relationAction === 'SEND_REQUEST' && (
+                    <button
+                      type="button"
+                      onClick={() => sendFriendRequest(targetUser.id)}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      <span>Thêm bạn bè</span>
+                    </button>
+                  )}
+
+                  {relationAction === 'CANCEL_REQUEST' && (
+                    <button
+                      type="button"
+                      onClick={() => cancelFriendRequest(targetUser.id)}
+                      className="px-4 py-2 bg-gray-100 dark:bg-[#3A3B3C] text-gray-700 dark:text-gray-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+                    >
+                      <UserMinus className="w-4 h-4" />
+                      <span>Hủy lời mời</span>
+                    </button>
+                  )}
+
+                  {relationAction === 'RESPOND_TO_REQUEST' && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => acceptFriendRequest(targetUser.id)}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+                      >
+                        <Check className="w-4 h-4" />
+                        <span>Xác nhận lời mời</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => declineFriendRequest(targetUser.id)}
+                        className="px-4 py-2 bg-gray-100 dark:bg-[#3A3B3C] text-gray-700 dark:text-gray-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+                      >
+                        <X className="w-4 h-4" />
+                        <span>Từ chối</span>
+                      </button>
+                    </>
+                  )}
+
+                  {relationAction === 'ALREADY_FRIENDS' && (
+                    <span className="px-4 py-2 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 rounded-xl text-xs font-bold flex items-center gap-1.5">
+                      <UserCheck className="w-4 h-4" />
+                      <span>Đã là bạn bè</span>
+                    </span>
+                  )}
+
                   <button
                     onClick={() => openChatDock(targetUser.id)}
                     className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center gap-1.5"
@@ -364,41 +458,83 @@ export const ProfileView: React.FC = () => {
                 </span>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 pt-2">
-                {[
-                  {
-                    name: 'Lê Thuỳ Dung',
-                    avatar:
-                      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80',
-                  },
-                  {
-                    name: 'Phạm Q. Huy',
-                    avatar:
-                      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80',
-                  },
-                  {
-                    name: 'Hoàng M. Anh',
-                    avatar:
-                      'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80',
-                  },
-                ].map((fr, idx) => (
-                  <div key={idx} className="cursor-pointer group">
-                    <img
-                      src={fr.avatar}
-                      alt={fr.name}
-                      className="w-full h-20 rounded-lg object-cover group-hover:opacity-90 transition"
-                    />
-                    <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300 block truncate mt-1">
-                      {fr.name}
-                    </span>
-                  </div>
-                ))}
-              </div>
+              {profileFriends.length > 0 ? (
+                <div className="grid grid-cols-3 gap-2 pt-2">
+                  {profileFriends.slice(0, 9).map((friend) => (
+                    <button
+                      key={friend.id}
+                      type="button"
+                      onClick={() => openFriendProfile(friend.id)}
+                      className="group min-w-0 text-left"
+                    >
+                      <img
+                        src={friend.avatar}
+                        alt={friend.name}
+                        className="h-20 w-full rounded-lg object-cover transition group-hover:opacity-90"
+                      />
+                      <span className="mt-1 block truncate text-[10px] font-bold text-gray-700 dark:text-gray-300">
+                        {friend.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="pt-2 text-xs text-gray-500">
+                  {isMe
+                    ? 'Bạn chưa có bạn bè nào.'
+                    : 'Người này chưa có bạn bè hiển thị.'}
+                </p>
+              )}
+              {profileFriends.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTabLocal('FRIENDS')}
+                  className="text-xs font-semibold text-blue-600 hover:underline"
+                >
+                  Xem tất cả bạn bè
+                </button>
+              )}
             </div>
           </div>
 
           {/* CỘT PHẢI: Dòng thời gian bài viết & câu hỏi (7 cols) */}
           <div className="md:col-span-7 space-y-4">
+            {activeTab === 'FRIENDS' && (
+              <section className="space-y-3">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  Bạn bè của {isMe ? 'bạn' : targetUser.name}
+                </h2>
+                {profileFriends.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {profileFriends.map((friend) => (
+                      <button
+                        key={friend.id}
+                        type="button"
+                        onClick={() => openFriendProfile(friend.id)}
+                        className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 text-left shadow-xs transition hover:bg-gray-50 dark:border-gray-700 dark:bg-[#242526] dark:hover:bg-[#3A3B3C]"
+                      >
+                        <AvatarWithFrame user={friend} size="md" />
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-bold text-gray-900 dark:text-gray-100">
+                            {friend.name}
+                          </span>
+                          <span className="block truncate text-xs text-gray-500">
+                            {friend.classOrTitle}
+                          </span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-gray-200 bg-white p-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-[#242526]">
+                    {isMe
+                      ? 'Bạn chưa có bạn bè nào.'
+                      : 'Người này chưa có bạn bè hiển thị.'}
+                  </div>
+                )}
+              </section>
+            )}
+
             {activeTab === 'POSTS' && (
               <>
                 {isMe && <PostComposerCard />}
@@ -488,7 +624,8 @@ export const ProfileView: React.FC = () => {
                                 >
                                   <Ban className="w-3.5 h-3.5" />
                                   <span>
-                                    Chặn {post.author.name.split(' ').slice(-1)[0]}
+                                    Chặn{' '}
+                                    {post.author.name.split(' ').slice(-1)[0]}
                                   </span>
                                 </button>
                               </>
@@ -520,8 +657,9 @@ export const ProfileView: React.FC = () => {
                       </div>
                     )}
                     {(() => {
-                      const visibleComments =
-                        filterVisibleComments(post.comments);
+                      const visibleComments = filterVisibleComments(
+                        post.comments,
+                      );
                       const visibleCommentsCount = visibleComments.reduce(
                         (sum, comment) =>
                           sum + 1 + (comment.replies?.length ?? 0),
@@ -529,7 +667,8 @@ export const ProfileView: React.FC = () => {
                       );
                       return (
                         <>
-                          {(post.likesCount > 0 || visibleCommentsCount > 0) && (
+                          {(post.likesCount > 0 ||
+                            visibleCommentsCount > 0) && (
                             <div className="flex items-center justify-between border-b border-gray-100 px-4 py-2 text-xs text-gray-500 dark:border-gray-700">
                               <div className="flex items-center gap-1.5">
                                 {post.likesCount > 0 && (

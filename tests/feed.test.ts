@@ -5,6 +5,7 @@ import {
   appendComment,
   countWords,
   getPostContentIssue,
+  isPostVisibleToViewer,
   limitPostContent,
   MAX_POST_CHARACTERS,
   MAX_POST_WORD_CHARACTERS,
@@ -74,6 +75,34 @@ describe('feed interactions', () => {
       sortFeedPosts(posts, 'me', new Set(['friend'])).map((item) => item.id),
     ).toEqual(['mine', 'friend-new', 'friend-old', 'stranger-new']);
     expect(posts[0].id).toBe('stranger-new');
+  });
+
+  it('shares public posts while honoring friends and only-me privacy', () => {
+    const publicPost = {
+      ...post('public', 'author', '2026-10-16T12:00:00Z'),
+      privacy: 'PUBLIC',
+    } as Post;
+    const friendsPost = {
+      ...post('friends', 'author', '2026-10-16T12:00:00Z'),
+      privacy: 'FRIENDS',
+    } as Post;
+    const privatePost = {
+      ...post('private', 'author', '2026-10-16T12:00:00Z'),
+      privacy: 'ONLY_ME',
+    } as Post;
+
+    expect(isPostVisibleToViewer(publicPost, 'viewer-a', new Set())).toBe(true);
+    expect(isPostVisibleToViewer(publicPost, 'viewer-b', new Set())).toBe(true);
+    expect(isPostVisibleToViewer(friendsPost, 'viewer-a', new Set())).toBe(
+      false,
+    );
+    expect(
+      isPostVisibleToViewer(friendsPost, 'viewer-a', new Set(['author'])),
+    ).toBe(true);
+    expect(isPostVisibleToViewer(privatePost, 'author', new Set())).toBe(true);
+    expect(
+      isPostVisibleToViewer(privatePost, 'viewer-a', new Set(['author'])),
+    ).toBe(false);
   });
 
   it('loads every ordered post once across feed pages', () => {

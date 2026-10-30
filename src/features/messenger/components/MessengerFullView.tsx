@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '../../demo/context/AppContext';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
 import {
@@ -19,6 +19,7 @@ export const MessengerFullView: React.FC = () => {
   const {
     conversations,
     currentUser,
+    markConversationRead,
     sendMessage,
     recallMessage,
     openReportModal,
@@ -53,6 +54,11 @@ export const MessengerFullView: React.FC = () => {
     conversations.find((c) => c.id === activeConvId) ||
     filteredConversations[0] ||
     conversations[0];
+  const activeConvIdToRead = activeConv?.id;
+
+  useEffect(() => {
+    if (activeConvIdToRead) markConversationRead(activeConvIdToRead);
+  }, [activeConvIdToRead, markConversationRead]);
 
   const isPartnerBlocked = activeConv
     ? isBlockedEitherWay(activeConv.partner.id)
