@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useApp } from '../../demo/context/AppContext';
 import {
   User,
@@ -13,8 +13,23 @@ import {
   Clock,
   Shield,
 } from 'lucide-react';
+import {
+  createDefaultPushPreferences,
+  deleteVoiceRecording,
+  loadPushPreferences,
+  loadVoiceRecording,
+  pushNotificationTypes,
+  savePushPreferences,
+  saveVoiceRecording,
+  type LocalPushPreferences,
+} from '../pushPreferences';
 
 export const SettingsView: React.FC = () => {
+  const { currentUser } = useApp();
+  return <SettingsContent key={currentUser.id} />;
+};
+
+const SettingsContent: React.FC = () => {
   const {
     currentUser,
     allUsers,
@@ -30,11 +45,255 @@ export const SettingsView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
     'ACCOUNT' | 'BLOCKING' | 'SECURITY' | 'PUSH' | 'DEVICES' | 'DELETE'
   >('ACCOUNT');
-  const [notifyMsg, setNotifyMsg] = useState(true);
-  const [notifyReview, setNotifyReview] = useState(true);
-  const [notifyMinigame, setNotifyMinigame] = useState(true);
+  const [initialPushSettings] = useState(() => {
+    try {
+      return {
+        preferences: loadPushPreferences(currentUser.id),
+        error: null,
+      };
+    } catch (error) {
+      return {
+        preferences: createDefaultPushPreferences(),
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Không thể đọc cài đặt thông báo đã lưu.',
+      };
+    }
+  });
+  const [pushPreferences, setPushPreferences] = useState(
+    initialPushSettings.preferences,
+  );
+  const [voicePreviewUrl, setVoicePreviewUrl] = useState<string | null>(null);
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const [isStartingVoiceRecording, setIsStartingVoiceRecording] =
+    useState(false);
+  const [isLoadingVoice, setIsLoadingVoice] = useState(true);
+  const [settingsError, setSettingsError] = useState<string | null>(
+    initialPushSettings.error,
+  );
   const [selectedBlockUserId, setSelectedBlockUserId] = useState('');
   const [blockReasonInput, setBlockReasonInput] = useState('');
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordingStreamRef = useRef<MediaStream | null>(null);
+  const recordingTimeoutRef = useRef<number | null>(null);
+  const voicePreviewUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    void loadVoiceRecording(currentUser.id)
+      .then((recording) => {
+        if (isMounted && recording) {
+          const previewUrl = URL.createObjectURL(recording);
+          voicePreviewUrlRef.current = previewUrl;
+          setVoicePreviewUrl(previewUrl);
+        }
+      })
+      .catch((error: unknown) => {
+        if (isMounted) {
+          setSettingsError(
+            error instanceof Error
+              ? error.message
+              : 'Không thể tải bản ghi giọng nói đã lưu.',
+          );
+        }
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingVoice(false);
+      });
+
+    return () => {
+      isMounted = false;
+      if (recordingTimeoutRef.current !== null) {
+        window.clearTimeout(recordingTimeoutRef.current);
+      }
+      if (mediaRecorderRef.current?.state === 'recording') {
+        mediaRecorderRef.current.onstop = null;
+        mediaRecorderRef.current.onerror = null;
+        mediaRecorderRef.current.stop();
+      }
+      recordingStreamRef.current?.getTracks().forEach((track) => track.stop());
+      if (voicePreviewUrlRef.current) {
+        URL.revokeObjectURL(voicePreviewUrlRef.current);
+        voicePreviewUrlRef.current = null;
+      }
+    };
+  }, [currentUser.id]);
+
+  const updatePushPreferences = (next: LocalPushPreferences) => {
+    try {
+      savePushPreferences(currentUser.id, next);
+      setPushPreferences(next);
+      setSettingsError(null);
+      showToast('Đã lưu cài đặt trên trình duyệt này', 'success');
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Không thể lưu cài đặt thông báo.';
+      setSettingsError(message);
+      showToast(message, 'error');
+    }
+  };
+
+  const setVoicePreview = (recording: Blob | null) => {
+    if (voicePreviewUrlRef.current) {
+      URL.revokeObjectURL(voicePreviewUrlRef.current);
+      voicePreviewUrlRef.current = null;
+    }
+
+    if (!recording) {
+      setVoicePreviewUrl(null);
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(recording);
+    voicePreviewUrlRef.current = previewUrl;
+    setVoicePreviewUrl(previewUrl);
+  };
+
+  const startVoiceRecording = async () => {
+    if (
+      !navigator.mediaDevices?.getUserMedia ||
+      typeof MediaRecorder === 'undefined'
+    ) {
+      showToast('Trình duyệt này không hỗ trợ ghi âm bằng micro.', 'error');
+      return;
+    }
+
+    let acquiredStream: MediaStream | null = null;
+    setIsStartingVoiceRecording(true);
+    try {
+      acquiredStream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+      });
+      const stream = acquiredStream;
+      const recorder = new MediaRecorder(stream);
+      const chunks: BlobPart[] = [];
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunks.push(event.data);
+      };
+      recorder.onerror = () => {
+        if (recordingTimeoutRef.current !== null) {
+          window.clearTimeout(recordingTimeoutRef.current);
+          recordingTimeoutRef.current = null;
+        }
+        showToast('Đã xảy ra lỗi khi ghi âm. Vui lòng thử lại.', 'error');
+        recorder.onstop = null;
+        stream.getTracks().forEach((track) => track.stop());
+        recordingStreamRef.current = null;
+        mediaRecorderRef.current = null;
+        setIsRecordingVoice(false);
+        setIsStartingVoiceRecording(false);
+      };
+      recorder.onstop = () => {
+        if (recordingTimeoutRef.current !== null) {
+          window.clearTimeout(recordingTimeoutRef.current);
+          recordingTimeoutRef.current = null;
+        }
+        stream.getTracks().forEach((track) => track.stop());
+        recordingStreamRef.current = null;
+        mediaRecorderRef.current = null;
+        setIsRecordingVoice(false);
+        setIsStartingVoiceRecording(false);
+
+        if (chunks.length === 0) {
+          showToast('Không có âm thanh được ghi. Hãy thử ghi lại.', 'warning');
+          return;
+        }
+
+        const recording = new Blob(chunks, {
+          type: recorder.mimeType || 'audio/webm',
+        });
+        void saveVoiceRecording(currentUser.id, recording)
+          .then(() => {
+            setVoicePreview(recording);
+            setSettingsError(null);
+            showToast(
+              'Đã lưu bản ghi giọng nói trên trình duyệt này',
+              'success',
+            );
+          })
+          .catch((error: unknown) => {
+            const message =
+              error instanceof Error
+                ? error.message
+                : 'Không thể lưu bản ghi giọng nói.';
+            setSettingsError(message);
+            showToast(message, 'error');
+          });
+      };
+
+      recordingStreamRef.current = stream;
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setIsRecordingVoice(true);
+      setIsStartingVoiceRecording(false);
+      recordingTimeoutRef.current = window.setTimeout(() => {
+        if (recorder.state === 'recording') recorder.stop();
+      }, 30_000);
+    } catch (error) {
+      const message =
+        error instanceof DOMException && error.name === 'NotAllowedError'
+          ? 'Bạn cần cấp quyền dùng micro để ghi âm.'
+          : 'Không thể bắt đầu ghi âm. Hãy kiểm tra micro và thử lại.';
+      acquiredStream?.getTracks().forEach((track) => track.stop());
+      recordingStreamRef.current = null;
+      mediaRecorderRef.current = null;
+      setIsStartingVoiceRecording(false);
+      showToast(message, 'error');
+    }
+  };
+
+  const stopVoiceRecording = () => {
+    if (recordingTimeoutRef.current !== null) {
+      window.clearTimeout(recordingTimeoutRef.current);
+      recordingTimeoutRef.current = null;
+    }
+    if (mediaRecorderRef.current?.state === 'recording') {
+      mediaRecorderRef.current.stop();
+    }
+  };
+
+  const removeVoiceRecording = async () => {
+    try {
+      await deleteVoiceRecording(currentUser.id);
+      setVoicePreview(null);
+      setSettingsError(null);
+      showToast('Đã xóa bản ghi giọng nói', 'success');
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Không thể xóa bản ghi giọng nói.';
+      setSettingsError(message);
+      showToast(message, 'error');
+    }
+  };
+
+  const previewDefaultSound = () => {
+    try {
+      const audioContext = new AudioContext();
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      oscillator.type = 'sine';
+      oscillator.frequency.value = 880;
+      gain.gain.setValueAtTime(0.12, audioContext.currentTime);
+      gain.gain.exponentialRampToValueAtTime(
+        0.001,
+        audioContext.currentTime + 0.35,
+      );
+      oscillator.connect(gain);
+      gain.connect(audioContext.destination);
+      oscillator.onended = () => void audioContext.close();
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + 0.35);
+    } catch {
+      showToast('Không thể phát âm thanh thử trên trình duyệt này.', 'error');
+    }
+  };
 
   return (
     <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 flex flex-col md:flex-row gap-6 lg:gap-8 xl:gap-10 items-start">
@@ -251,9 +510,7 @@ export const SettingsView: React.FC = () => {
               ) : (
                 <div className="divide-y divide-gray-100 dark:divide-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4">
                   {blockedUsers.map((entry) => {
-                    const u = allUsers.find(
-                      (item) => item.id === entry.userId,
-                    );
+                    const u = allUsers.find((item) => item.id === entry.userId);
                     if (!u) return null;
                     return (
                       <div
@@ -311,67 +568,173 @@ export const SettingsView: React.FC = () => {
               Cài đặt thông báo đẩy (Push Notifications)
             </h3>
 
-            <div className="space-y-3">
-              <label className="flex items-center justify-between p-3 bg-gray-50 dark:bg-[#1E1F20] rounded-xl cursor-pointer">
-                <div>
-                  <span className="font-bold text-gray-800 dark:text-gray-200 block">
-                    Tin nhắn mới
-                  </span>
-                  <span className="text-[11px] text-gray-400">
-                    Nhận thông báo khi có bạn bè hoặc GV gửi tin nhắn
-                  </span>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={notifyMsg}
-                  onChange={(e) => {
-                    setNotifyMsg(e.target.checked);
-                    showToast('Đã lưu cấu hình thông báo', 'info');
-                  }}
-                  className="w-4 h-4 text-blue-600 rounded"
-                />
-              </label>
+            <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+              Các lựa chọn và bản ghi được lưu riêng trên trình duyệt này.
+              Backend chưa kết nối nhận thông báo đẩy, nên thay đổi tại đây chưa
+              bật/tắt thông báo thật trên thiết bị.
+            </p>
 
-              <label className="flex items-center justify-between p-3 bg-gray-50 dark:bg-[#1E1F20] rounded-xl cursor-pointer">
-                <div>
-                  <span className="font-bold text-gray-800 dark:text-gray-200 block">
-                    Kết quả duyệt câu hỏi
-                  </span>
-                  <span className="text-[11px] text-gray-400">
-                    Thông báo ngay khi Giảng viên phê duyệt hoặc từ chối phiên
-                  </span>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={notifyReview}
-                  onChange={(e) => {
-                    setNotifyReview(e.target.checked);
-                    showToast('Đã lưu cấu hình thông báo', 'info');
-                  }}
-                  className="w-4 h-4 text-blue-600 rounded"
-                />
-              </label>
+            {settingsError && (
+              <p
+                role="alert"
+                className="rounded-lg border border-red-200 bg-red-50 p-3 text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-200"
+              >
+                {settingsError}
+              </p>
+            )}
 
-              <label className="flex items-center justify-between p-3 bg-gray-50 dark:bg-[#1E1F20] rounded-xl cursor-pointer">
-                <div>
-                  <span className="font-bold text-gray-800 dark:text-gray-200 block">
-                    Minigame & Bảng xếp hạng
+            <label className="flex items-center justify-between gap-4 rounded-xl bg-gray-50 p-3 dark:bg-[#1E1F20]">
+              <span>
+                <span className="block font-bold text-gray-800 dark:text-gray-200">
+                  Bật thông báo đẩy
+                </span>
+                <span className="text-[11px] text-gray-500">
+                  Tắt để lưu lựa chọn nhưng không muốn nhận thông báo.
+                </span>
+              </span>
+              <input
+                type="checkbox"
+                checked={pushPreferences.enabled}
+                onChange={(event) =>
+                  updatePushPreferences({
+                    ...pushPreferences,
+                    enabled: event.target.checked,
+                  })
+                }
+                className="h-4 w-4 rounded text-blue-600"
+              />
+            </label>
+
+            <fieldset
+              disabled={!pushPreferences.enabled}
+              className="space-y-3 disabled:opacity-50"
+            >
+              <legend className="mb-2 font-bold text-gray-800 dark:text-gray-200">
+                Loại thông báo
+              </legend>
+              {pushNotificationTypes.map(({ id, label }) => (
+                <label
+                  key={id}
+                  className="flex items-center justify-between gap-4 rounded-xl bg-gray-50 p-3 dark:bg-[#1E1F20]"
+                >
+                  <span className="font-semibold text-gray-700 dark:text-gray-300">
+                    {label}
                   </span>
-                  <span className="text-[11px] text-gray-400">
-                    Nhắc nhở đóng cổng dự đoán vào Chủ nhật
-                  </span>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={notifyMinigame}
-                  onChange={(e) => {
-                    setNotifyMinigame(e.target.checked);
-                    showToast('Đã lưu cấu hình thông báo', 'info');
-                  }}
-                  className="w-4 h-4 text-blue-600 rounded"
-                />
-              </label>
-            </div>
+                  <input
+                    type="checkbox"
+                    checked={pushPreferences.notifications[id]}
+                    onChange={(event) =>
+                      updatePushPreferences({
+                        ...pushPreferences,
+                        notifications: {
+                          ...pushPreferences.notifications,
+                          [id]: event.target.checked,
+                        },
+                      })
+                    }
+                    className="h-4 w-4 rounded text-blue-600"
+                  />
+                </label>
+              ))}
+
+              <fieldset className="space-y-3 rounded-xl border border-gray-200 p-3 dark:border-gray-700">
+                <legend className="px-1 font-bold text-gray-800 dark:text-gray-200">
+                  Âm thanh thông báo
+                </legend>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="push-sound-mode"
+                    checked={pushPreferences.soundMode === 'DEFAULT'}
+                    onChange={() =>
+                      updatePushPreferences({
+                        ...pushPreferences,
+                        soundMode: 'DEFAULT',
+                      })
+                    }
+                  />
+                  <span>Âm thanh mặc định</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={previewDefaultSound}
+                  disabled={!pushPreferences.enabled}
+                  className="rounded-lg border border-gray-300 px-3 py-1.5 font-semibold hover:bg-gray-100 disabled:cursor-not-allowed dark:border-gray-600 dark:hover:bg-[#3A3B3C]"
+                >
+                  Nghe thử âm mặc định
+                </button>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="push-sound-mode"
+                    checked={pushPreferences.soundMode === 'VOICE'}
+                    onChange={() =>
+                      updatePushPreferences({
+                        ...pushPreferences,
+                        soundMode: 'VOICE',
+                      })
+                    }
+                  />
+                  <span>Âm thanh bằng giọng nói của bạn</span>
+                </label>
+                {pushPreferences.soundMode === 'VOICE' && (
+                  <div className="space-y-3 rounded-lg bg-gray-50 p-3 dark:bg-[#1E1F20]">
+                    <p className="text-gray-500">
+                      Ghi âm tối đa 30 giây. Bản ghi được lưu riêng trên trình
+                      duyệt này và chưa được phát cùng thông báo đẩy.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={
+                          isRecordingVoice
+                            ? stopVoiceRecording
+                            : () => void startVoiceRecording()
+                        }
+                        disabled={isStartingVoiceRecording}
+                        className={`rounded-lg px-3 py-2 font-bold text-white ${
+                          isRecordingVoice
+                            ? 'bg-red-600 hover:bg-red-700'
+                            : 'bg-blue-600 hover:bg-blue-700'
+                        } disabled:cursor-not-allowed disabled:opacity-60`}
+                      >
+                        {isStartingVoiceRecording
+                          ? 'Đang xin quyền micro…'
+                          : isRecordingVoice
+                            ? 'Dừng ghi âm'
+                            : 'Ghi âm giọng nói'}
+                      </button>
+                      {voicePreviewUrl && (
+                        <button
+                          type="button"
+                          onClick={() => void removeVoiceRecording()}
+                          className="rounded-lg border border-gray-300 px-3 py-2 font-semibold hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-[#3A3B3C]"
+                        >
+                          Xóa bản ghi
+                        </button>
+                      )}
+                    </div>
+                    {isLoadingVoice ? (
+                      <p role="status" className="text-gray-500">
+                        Đang tải bản ghi đã lưu…
+                      </p>
+                    ) : voicePreviewUrl ? (
+                      <audio
+                        controls
+                        src={voicePreviewUrl}
+                        className="w-full"
+                        aria-label="Nghe thử bản ghi giọng nói"
+                      />
+                    ) : (
+                      <p className="text-gray-500">
+                        Bạn chưa có bản ghi. Cho phép sử dụng micro khi trình
+                        duyệt yêu cầu.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </fieldset>
+            </fieldset>
           </div>
         )}
 

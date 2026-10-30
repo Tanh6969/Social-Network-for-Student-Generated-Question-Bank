@@ -7,7 +7,11 @@ import { PostMediaGallery } from './PostMediaGallery';
 import { PostDocuments } from './PostDocuments';
 import { PostShareButton } from './PostShareButton';
 import { PostComposerCard } from './PostComposerCard';
-import { formatPostTime, sortFeedPosts } from '../postUtils';
+import {
+  formatPostTime,
+  isPostVisibleToViewer,
+  sortFeedPosts,
+} from '../postUtils';
 import { useFeedPages } from '../useFeedPages';
 import {
   Users,
@@ -75,9 +79,7 @@ export const FeedView: React.FC = () => {
   const visiblePosts = posts.filter(
     (post) =>
       !isBlockedEitherWay(post.author.id) &&
-      (post.author.id === currentUser.id ||
-        post.privacy === 'PUBLIC' ||
-        (post.privacy === 'FRIENDS' && friendIds.has(post.author.id))),
+      isPostVisibleToViewer(post, currentUser.id, friendIds),
   );
   const orderedPosts = sortFeedPosts(visiblePosts, currentUser.id, friendIds);
   const feedPages = useFeedPages(orderedPosts, feedSentinelRef);

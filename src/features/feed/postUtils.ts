@@ -70,6 +70,16 @@ export function sortFeedPosts(
   });
 }
 
+export function isPostVisibleToViewer(
+  post: Post,
+  viewerId: string,
+  friendIds: ReadonlySet<string>,
+): boolean {
+  if (post.author.id === viewerId) return true;
+  if (post.privacy === 'PUBLIC') return true;
+  return post.privacy === 'FRIENDS' && friendIds.has(post.author.id);
+}
+
 export function appendComment(
   posts: Post[],
   postId: string,

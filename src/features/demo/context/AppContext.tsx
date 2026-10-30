@@ -3,6 +3,7 @@ import React, {
   useContext,
   useState,
   useEffect,
+  useRef,
   ReactNode,
 } from 'react';
 import { useAuthSession } from '../../auth/useAuthSession';
@@ -52,6 +53,25 @@ import {
   mockNotifications,
   mockExams,
 } from '../../../mocks/mockData';
+import {
+  getFriendStatusesForAccount,
+  getNotificationsForAccount,
+  initialFriendStatusesByAccount,
+  mockPeerFriendsMap,
+  type FriendStatusesByAccount,
+} from '../../friends/friendAccountData';
+import {
+  getConversationPartnerId,
+  getConversationsForAccount,
+} from '../../messenger/conversationAccess';
+import {
+  areConversationSnapshotsEqual,
+  isSharedChatMessage,
+} from '../../messenger/sharedChatSync';
+import {
+  arePostSnapshotsEqual,
+  isSharedFeedMessage,
+} from '../../feed/sharedFeedSync';
 
 export interface Toast {
   id: string;
@@ -229,6 +249,7 @@ interface AppContextType {
   // Messenger & Chat Dock
   conversations: Conversation[];
   openChatDock: (partnerUserId: string) => void;
+  markConversationRead: (conversationId: string) => void;
   closeChatDock: (conversationId: string) => void;
   minimizeChatDock: (conversationId: string) => void;
   restoreChatDock: (conversationId: string) => void;
@@ -326,25 +347,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   // Data states
   const [posts, setPosts] = useState<Post[]>(mockPosts);
+  const postsRef = useRef<Post[]>(mockPosts);
+  const feedChannelRef = useRef<BroadcastChannel | null>(null);
+  const initializedFeedSyncRef = useRef(false);
   const [profilePhotoHistory, setProfilePhotoHistory] = useState<
     ProfilePhotoHistoryItem[]
   >([]);
-  const [friendStatuses, setFriendStatuses] = useState<
-    Record<string, FriendStatus>
+  const [friendStatusesByAccount, setFriendStatusesByAccount] =
+    useState<FriendStatusesByAccount>(initialFriendStatusesByAccount);
+  const [followingIdsByAccount, setFollowingIdsByAccount] = useState<
+    Record<string, string[]>
   >({
-    user_sv_02: 'REQUEST_RECEIVED',
-    user_sv_03: 'FRIEND',
-    user_sv_04: 'NONE',
-    user_sv_05: 'FRIEND',
-    user_sv_06: 'FRIEND',
-    user_sv_07: 'FRIEND',
-    user_sv_08: 'REQUEST_RECEIVED',
-    user_sv_09: 'NONE',
+    [mockCurrentUserStudent.id]: ['user_gv_01', 'user_gv_02'],
   });
-  const [followingIds, setFollowingIds] = useState<string[]>([
-    'user_gv_01',
-    'user_gv_02',
-  ]);
   const [dismissedSuggestionIds, setDismissedSuggestionIds] = useState<
     string[]
   >([]);
@@ -358,14 +373,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   const [leaderboard, setLeaderboard] =
     useState<LeaderboardUser[]>(mockLeaderboard);
   const [cosmetics, setCosmetics] = useState<CosmeticItem[]>(mockCosmetics);
-  const [conversations, setConversations] =
+  const [conversationRecords, setConversationRecords] =
     useState<Conversation[]>(mockConversations);
-  const [notifications, setNotifications] =
-    useState<AppNotification[]>(mockNotifications);
+  const conversationRecordsRef = useRef<Conversation[]>(mockConversations);
+  const chatChannelRef = useRef<BroadcastChannel | null>(null);
+  const initializedChatSyncRef = useRef(false);
+  const [notificationsByAccount, setNotificationsByAccount] = useState<
+    Record<string, AppNotification[]>
+  >({ [mockCurrentUserStudent.id]: mockNotifications });
 
   // Chat dock
-  const [activeDockIds, setActiveDockIds] = useState<string[]>(['conv_01']);
-  const [minimizedDockIds, setMinimizedDockIds] = useState<string[]>([]);
+  const [activeDockIdsByAccount, setActiveDockIdsByAccount] = useState<
+    Record<string, string[]>
+  >({ [mockCurrentUserStudent.id]: ['conv_01'] });
+  const [minimizedDockIdsByAccount, setMinimizedDockIdsByAccount] = useState<
+    Record<string, string[]>
+  >({});
 
   // Modals
   const [activeQuizQuestion, setActiveQuizQuestion] = useState<Question | null>(
@@ -450,6 +473,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const {
     isAuthenticated,
+    sessionKind,
     currentUser: rawCurrentUser,
     setCurrentUser,
     role,
@@ -458,6 +482,145 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     switchRole,
     updateCurrentUser: updateAuthCurrentUser,
   } = useAuthSession(showToast);
+
+  useEffect(() => {
+    postsRef.current = posts;
+  }, [posts]);
+
+  useEffect(() => {
+    conversationRecordsRef.current = conversationRecords;
+  }, [conversationRecords]);
+
+  useEffect(() => {
+    if (sessionKind !== 'demo' || typeof BroadcastChannel === 'undefined')
+      return;
+
+    const channel = new BroadcastChannel('sqb:shared-feed');
+    feedChannelRef.current = channel;
+    channel.onmessage = (event: MessageEvent<unknown>) => {
+      if (!isSharedFeedMessage(event.data)) {
+        console.error('Received an invalid shared-feed message.');
+        return;
+      }
+      if (event.data.type === 'REQUEST_SNAPSHOT') {
+        channel.postMessage({
+          type: 'UPDATE_SNAPSHOT',
+          posts: postsRef.current,
+        });
+        return;
+      }
+      setPosts((previous) =>
+        arePostSnapshotsEqual(previous, event.data.posts)
+          ? previous
+          : event.data.posts,
+      );
+    };
+    channel.postMessage({ type: 'REQUEST_SNAPSHOT' });
+
+    return () => {
+      channel.close();
+      feedChannelRef.current = null;
+    };
+  }, [sessionKind]);
+
+  useEffect(() => {
+    if (!initializedFeedSyncRef.current) {
+      initializedFeedSyncRef.current = true;
+      return;
+    }
+    feedChannelRef.current?.postMessage({
+      type: 'UPDATE_SNAPSHOT',
+      posts,
+    });
+  }, [posts]);
+
+  useEffect(() => {
+    if (sessionKind !== 'demo' || typeof BroadcastChannel === 'undefined')
+      return;
+
+    const channel = new BroadcastChannel('sqb:shared-chat');
+    chatChannelRef.current = channel;
+    channel.onmessage = (event: MessageEvent<unknown>) => {
+      if (!isSharedChatMessage(event.data)) {
+        console.error('Received an invalid shared-chat message.');
+        return;
+      }
+      if (event.data.type === 'REQUEST_SNAPSHOT') {
+        channel.postMessage({
+          type: 'UPDATE_SNAPSHOT',
+          conversations: conversationRecordsRef.current,
+        });
+        return;
+      }
+      setConversationRecords((previous) =>
+        areConversationSnapshotsEqual(previous, event.data.conversations)
+          ? previous
+          : event.data.conversations,
+      );
+    };
+    channel.postMessage({ type: 'REQUEST_SNAPSHOT' });
+
+    return () => {
+      channel.close();
+      chatChannelRef.current = null;
+    };
+  }, [sessionKind]);
+
+  useEffect(() => {
+    if (!initializedChatSyncRef.current) {
+      initializedChatSyncRef.current = true;
+      return;
+    }
+    chatChannelRef.current?.postMessage({
+      type: 'UPDATE_SNAPSHOT',
+      conversations: conversationRecords,
+    });
+  }, [conversationRecords]);
+
+  const friendStatuses = getFriendStatusesForAccount(
+    friendStatusesByAccount,
+    rawCurrentUser.id,
+  );
+  const setFriendStatuses: React.Dispatch<
+    React.SetStateAction<Record<string, FriendStatus>>
+  > = (update) => {
+    setFriendStatusesByAccount((previous) => {
+      const current = getFriendStatusesForAccount(previous, rawCurrentUser.id);
+      const next = typeof update === 'function' ? update(current) : update;
+      return { ...previous, [rawCurrentUser.id]: next };
+    });
+  };
+  const notifications = getNotificationsForAccount(
+    notificationsByAccount[rawCurrentUser.id] ?? [],
+    rawCurrentUser.id,
+  );
+  const setNotifications: React.Dispatch<
+    React.SetStateAction<AppNotification[]>
+  > = (update) => {
+    updateNotificationsForAccount(rawCurrentUser.id, update);
+  };
+  const updateNotificationsForAccount = (
+    accountId: string,
+    update: React.SetStateAction<AppNotification[]>,
+  ) => {
+    setNotificationsByAccount((previous) => {
+      const current = previous[accountId] ?? [];
+      const next = typeof update === 'function' ? update(current) : update;
+      return { ...previous, [accountId]: next };
+    });
+  };
+  const removeFriendRequestNotification = (
+    accountId: string,
+    actorId: string,
+  ) => {
+    updateNotificationsForAccount(accountId, (previous) =>
+      previous.filter(
+        (notification) =>
+          notification.type !== 'FRIEND_REQUEST' ||
+          notification.actor?.id !== actorId,
+      ),
+    );
+  };
 
   const blockedByMeSet = new Set(blockedUsers.map((b) => b.userId));
   const blockedByOtherSet = new Set(blockedByOtherIds);
@@ -483,21 +646,56 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     ...rawCurrentUser,
     friendsCount: friendsList.length,
   };
-
-  // Mạng lưới bạn bè mặc định của các sinh viên khác trong hệ thống
-  const basePeerFriendsMap: Record<string, string[]> = {
-    user_sv_02: ['user_sv_03', 'user_sv_04', 'user_sv_07'],
-    user_sv_03: ['user_sv_02', 'user_sv_05', 'user_sv_06'],
-    user_sv_04: ['user_sv_02', 'user_sv_08', 'user_sv_09'],
-    user_sv_05: ['user_sv_03', 'user_sv_06', 'user_sv_08'],
-    user_sv_06: ['user_sv_03', 'user_sv_05', 'user_sv_07'],
-    user_sv_07: ['user_sv_02', 'user_sv_06', 'user_sv_09'],
-    user_sv_08: ['user_sv_04', 'user_sv_05'],
-    user_sv_09: ['user_sv_04', 'user_sv_07'],
-    user_gv_01: ['user_gv_02'],
-    user_gv_02: ['user_gv_01'],
+  const followingIds = followingIdsByAccount[rawCurrentUser.id] ?? [];
+  const setFollowingIds: React.Dispatch<React.SetStateAction<string[]>> = (
+    update,
+  ) => {
+    setFollowingIdsByAccount((previous) => {
+      const current = previous[rawCurrentUser.id] ?? [];
+      const next = typeof update === 'function' ? update(current) : update;
+      return { ...previous, [rawCurrentUser.id]: next };
+    });
+  };
+  const activeDockIds = activeDockIdsByAccount[rawCurrentUser.id] ?? [];
+  const setActiveDockIds: React.Dispatch<React.SetStateAction<string[]>> = (
+    update,
+  ) => {
+    setActiveDockIdsByAccount((previous) => {
+      const current = previous[rawCurrentUser.id] ?? [];
+      const next = typeof update === 'function' ? update(current) : update;
+      return { ...previous, [rawCurrentUser.id]: next };
+    });
+  };
+  const minimizedDockIds = minimizedDockIdsByAccount[rawCurrentUser.id] ?? [];
+  const setMinimizedDockIds: React.Dispatch<React.SetStateAction<string[]>> = (
+    update,
+  ) => {
+    setMinimizedDockIdsByAccount((previous) => {
+      const current = previous[rawCurrentUser.id] ?? [];
+      const next = typeof update === 'function' ? update(current) : update;
+      return { ...previous, [rawCurrentUser.id]: next };
+    });
   };
 
+  const updateFriendStatusesForBothAccounts = (
+    userId: string,
+    currentStatus: FriendStatus,
+    otherStatus: FriendStatus,
+  ) => {
+    setFriendStatusesByAccount((previous) => ({
+      ...previous,
+      [currentUser.id]: {
+        ...getFriendStatusesForAccount(previous, currentUser.id),
+        [userId]: currentStatus,
+      },
+      [userId]: {
+        ...getFriendStatusesForAccount(previous, userId),
+        [currentUser.id]: otherStatus,
+      },
+    }));
+  };
+
+  // Mạng lưới bạn bè mặc định của các sinh viên khác trong hệ thống
   const findRawUserById = (id: string): User => {
     if (id === rawCurrentUser.id) return rawCurrentUser;
     if (id === mockCurrentUserStudent.id) return mockCurrentUserStudent;
@@ -506,9 +704,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     return found || mockCurrentUserStudent;
   };
 
+  const conversations = getConversationsForAccount(
+    conversationRecords,
+    rawCurrentUser.id,
+  ).map((conversation) => {
+    const partnerId = getConversationPartnerId(conversation, rawCurrentUser.id);
+    return {
+      ...conversation,
+      unreadCount:
+        conversation.unreadCounts?.[rawCurrentUser.id] ??
+        conversation.unreadCount,
+      partner: partnerId ? findRawUserById(partnerId) : conversation.partner,
+    };
+  });
+
   const getFriendsOfUser = (userId: string): User[] => {
     if (userId === currentUser.id) return friendsList;
-    const peerIds = basePeerFriendsMap[userId] || [];
+    const peerIds = mockPeerFriendsMap[userId] || [];
     const peerUsers = peerIds
       .filter((pid) => pid !== userId)
       .map((pid) => findRawUserById(pid));
@@ -524,7 +736,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   const getMutualFriendsCount = (userId: string): number => {
     if (userId === currentUser.id) return 0;
     const myFriendIds = new Set(friendsList.map((f) => f.id));
-    const theirFriendIds = (basePeerFriendsMap[userId] || []).filter(
+    const theirFriendIds = (mockPeerFriendsMap[userId] || []).filter(
       (id) => id !== currentUser.id,
     );
     return theirFriendIds.filter((id) => myFriendIds.has(id)).length;
@@ -542,6 +754,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   // Actions quản lý bạn bè như thật
   const sendFriendRequest = (userId: string) => {
+    if (userId === currentUser.id) return;
     if (isBlockedEitherWay(userId)) {
       showToast(
         'Không thể gửi lời mời kết bạn cho người đang trong danh sách chặn.',
@@ -550,13 +763,36 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
     const target = findRawUserById(userId);
-    setFriendStatuses((prev) => ({ ...prev, [userId]: 'REQUEST_SENT' }));
+    updateFriendStatusesForBothAccounts(
+      userId,
+      'REQUEST_SENT',
+      'REQUEST_RECEIVED',
+    );
+    const notification: AppNotification = {
+      id: `friend_request_${currentUser.id}_${Date.now()}`,
+      recipientId: userId,
+      title: 'Lời mời kết bạn mới',
+      message: `${currentUser.name} đã gửi cho bạn một lời mời kết bạn.`,
+      timestamp: 'Vừa xong',
+      isRead: false,
+      type: 'FRIEND_REQUEST',
+      actor: currentUser,
+    };
+    updateNotificationsForAccount(userId, (previous) => [
+      notification,
+      ...previous.filter(
+        (existing) =>
+          existing.type !== 'FRIEND_REQUEST' ||
+          existing.actor?.id !== currentUser.id,
+      ),
+    ]);
     showToast(`Đã gửi lời mời kết bạn tới ${target.name}!`, 'success');
   };
 
   const cancelFriendRequest = (userId: string) => {
     const target = findRawUserById(userId);
-    setFriendStatuses((prev) => ({ ...prev, [userId]: 'NONE' }));
+    updateFriendStatusesForBothAccounts(userId, 'NONE', 'NONE');
+    removeFriendRequestNotification(userId, currentUser.id);
     showToast(`Đã hủy lời mời kết bạn với ${target.name}.`, 'info');
   };
 
@@ -566,19 +802,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
     const target = findRawUserById(userId);
-    setFriendStatuses((prev) => ({ ...prev, [userId]: 'FRIEND' }));
+    updateFriendStatusesForBothAccounts(userId, 'FRIEND', 'FRIEND');
+    removeFriendRequestNotification(currentUser.id, userId);
     showToast(`Bạn và ${target.name} đã trở thành bạn bè!`, 'success');
   };
 
   const declineFriendRequest = (userId: string) => {
     const target = findRawUserById(userId);
-    setFriendStatuses((prev) => ({ ...prev, [userId]: 'NONE' }));
+    updateFriendStatusesForBothAccounts(userId, 'NONE', 'NONE');
+    removeFriendRequestNotification(currentUser.id, userId);
     showToast(`Đã xóa lời mời kết bạn từ ${target.name}.`, 'info');
   };
 
   const unfriendUser = (userId: string) => {
     const target = findRawUserById(userId);
-    setFriendStatuses((prev) => ({ ...prev, [userId]: 'NONE' }));
+    updateFriendStatusesForBothAccounts(userId, 'NONE', 'NONE');
     showToast(`Đã hủy kết bạn với ${target.name}.`, 'info');
   };
 
@@ -618,7 +856,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     const wasFriend = friendStatuses[userId] === 'FRIEND';
 
     // 1. Hủy kết bạn / hủy lời mời kết bạn ngay lập tức
-    setFriendStatuses((prev) => ({ ...prev, [userId]: 'NONE' }));
+    updateFriendStatusesForBothAccounts(userId, 'NONE', 'NONE');
     setFollowingIds((prev) => prev.filter((id) => id !== userId));
 
     // 2. Thêm vào danh sách chặn (không giới hạn thời gian kể cả vừa bỏ chặn xong)
@@ -666,7 +904,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         return prev.filter((id) => id !== userId);
       } else {
         // Khi người kia chặn mình, quan hệ bạn bè cũng tự động bị hủy
-        setFriendStatuses((fs) => ({ ...fs, [userId]: 'NONE' }));
+        updateFriendStatusesForBothAccounts(userId, 'NONE', 'NONE');
         showToast(
           `[Mô phỏng] ${target.name} vừa chặn bạn. Bạn không thể xem trang cá nhân hay nhắn tin cho người này.`,
           'warning',
@@ -1336,6 +1574,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       const pointsEarned = selectedQuestionIds.length * 20;
       const newNotif: AppNotification = {
         id: 'notif_' + Date.now(),
+        recipientId: targetSession.creator.id,
         title: 'Câu hỏi được phê duyệt vào ngân hàng đề!',
         message: `Thầy/Cô đã phê duyệt ${selectedQuestionIds.length} câu hỏi trong phiên "${targetSession.title}". Bạn nhận được +${pointsEarned} điểm cống hiến!`,
         timestamp: 'Vừa xong',
@@ -1419,6 +1658,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     if (targetSession) {
       const newNotif: AppNotification = {
         id: 'notif_' + Date.now(),
+        recipientId: targetSession.creator.id,
         title: 'Phản hồi phiên câu hỏi đề xuất',
         message: `Thầy/Cô đã từ chối ${selectedQuestionIds.length} câu hỏi trong phiên "${targetSession.title}". Lý do: "${reason}". Bạn có thể chỉnh sửa lại để nộp duyệt.`,
         timestamp: 'Vừa xong',
@@ -1659,19 +1899,30 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   // Chat dock
   const openChatDock = (partnerUserId: string) => {
+    if (sessionKind !== 'demo') {
+      showToast(
+        'Trò chuyện bằng tài khoản API chưa được kết nối với máy chủ.',
+        'warning',
+      );
+      return;
+    }
+    if (partnerUserId === currentUser.id) return;
     let conv = conversations.find((c) => c.partner.id === partnerUserId);
     if (!conv) {
       const partner = getUserById(partnerUserId);
       const newConv: Conversation = {
         id: 'conv_' + Date.now(),
+        participantIds: [currentUser.id, partnerUserId],
         partner,
         lastMessage: 'Bắt đầu cuộc trò chuyện',
         lastMessageTime: 'Vừa xong',
         unreadCount: 0,
         messages: [],
       };
-      setConversations([newConv, ...conversations]);
+      setConversationRecords((previous) => [newConv, ...previous]);
       conv = newConv;
+    } else {
+      markConversationRead(conv.id);
     }
 
     if (!activeDockIds.includes(conv.id)) {
@@ -1699,10 +1950,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
+  const markConversationRead = (conversationId: string) => {
+    const conversation = conversations.find(
+      (item) => item.id === conversationId,
+    );
+    if (!conversation || conversation.unreadCount === 0) return;
+    setConversationRecords((previous) =>
+      previous.map((item) =>
+        item.id === conversationId
+          ? {
+              ...item,
+              unreadCounts: {
+                ...item.unreadCounts,
+                [currentUser.id]: 0,
+              },
+            }
+          : item,
+      ),
+    );
+  };
+
   const sendMessage = (conversationId: string, text: string) => {
     if (!text.trim()) return;
     const targetConv = conversations.find((c) => c.id === conversationId);
-    if (targetConv && isBlockedEitherWay(targetConv.partner.id)) {
+    if (!targetConv) return;
+    if (isBlockedEitherWay(targetConv.partner.id)) {
       showToast(
         'Không thể gửi tin nhắn vì hai người đang trong trạng thái chặn.',
         'error',
@@ -1722,13 +1994,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       effect: currentUser.equippedChatEffectId,
     };
 
-    setConversations((prev) =>
+    setConversationRecords((prev) =>
       prev.map((c) => {
         if (c.id === conversationId) {
           return {
             ...c,
             lastMessage: text,
             lastMessageTime: newMessage.timestamp,
+            unreadCounts: {
+              ...c.unreadCounts,
+              [targetConv.partner.id]:
+                (c.unreadCounts?.[targetConv.partner.id] ?? 0) + 1,
+            },
             messages: [...c.messages, newMessage],
           };
         }
@@ -1738,7 +2015,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const recallMessage = (conversationId: string, messageId: string) => {
-    setConversations((prev) =>
+    const conversation = conversations.find(
+      (item) => item.id === conversationId,
+    );
+    if (
+      !conversation ||
+      !conversation.messages.some(
+        (message) =>
+          message.id === messageId && message.senderId === currentUser.id,
+      )
+    )
+      return;
+    setConversationRecords((prev) =>
       prev.map((c) => {
         if (c.id === conversationId) {
           return {
@@ -1887,6 +2175,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         unequipCosmetic,
         conversations,
         openChatDock,
+        markConversationRead,
         closeChatDock,
         minimizeChatDock,
         restoreChatDock,
