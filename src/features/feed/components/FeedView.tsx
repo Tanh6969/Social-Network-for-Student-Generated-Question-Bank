@@ -19,7 +19,6 @@ import {
   PlusCircle,
   Gamepad2,
   Trophy,
-  Tv,
   FileCode,
   CheckSquare,
   Database,
@@ -191,17 +190,6 @@ export const FeedView: React.FC = () => {
               <Gamepad2 className="w-5 h-5" />
             </div>
             <span>Minigame dự đoán</span>
-          </button>
-
-          {/* Video học tập */}
-          <button
-            onClick={() => setActiveTab('watch')}
-            className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left"
-          >
-            <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/40 group-hover:text-blue-600 flex items-center justify-center transition-colors">
-              <Tv className="w-5 h-5" />
-            </div>
-            <span>Video học tập</span>
           </button>
 
           {/* Bạn bè & Giảng viên */}

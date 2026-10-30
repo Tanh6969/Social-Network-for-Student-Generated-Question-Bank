@@ -5,7 +5,6 @@ import {
   Search,
   Home,
   BookOpen,
-  Tv,
   Gamepad2,
   Users,
   CheckSquare,
@@ -390,19 +389,6 @@ export const Navbar: React.FC = () => {
             </button>
           </>
         )}
-
-        {/* Video học tập */}
-        <button
-          onClick={() => handleTabClick('watch')}
-          className={`relative flex items-center justify-center flex-1 h-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-none transition-colors ${
-            activeTab === 'watch'
-              ? 'text-blue-600 dark:text-blue-400 border-b-[3px] border-blue-600'
-              : 'text-gray-500 dark:text-gray-400'
-          }`}
-          title="Video học tập (Watch)"
-        >
-          <Tv className={`w-6 h-6 ${activeTab === 'watch' ? 'stroke-[2.5]' : ''}`} />
-        </button>
 
         {/* Minigame */}
         <button

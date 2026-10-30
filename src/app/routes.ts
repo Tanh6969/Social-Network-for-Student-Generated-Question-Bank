@@ -5,7 +5,6 @@ export const tabPaths: Record<MainTab, string> = {
   bank: '/bank',
   'lecturer-bank': '/lecturer-bank',
   propose: '/propose',
-  watch: '/watch',
   game: '/games',
   friends: '/friends',
   review: '/review',

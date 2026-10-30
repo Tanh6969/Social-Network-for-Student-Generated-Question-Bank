@@ -25,11 +25,6 @@ const ProposeView = React.lazy(() =>
     default: module.ProposeView,
   })),
 );
-const VideoWatchView = React.lazy(() =>
-  import('../features/watch/components/VideoWatchView').then((module) => ({
-    default: module.VideoWatchView,
-  })),
-);
 const MinigameView = React.lazy(() =>
   import('../features/games/components/MinigameView').then((module) => ({
     default: module.MinigameView,
@@ -146,7 +141,6 @@ const MainContent: React.FC = () => {
           {activeTab === 'feed' && <FeedView />}
           {activeTab === 'bank' && <BankView />}
           {activeTab === 'propose' && <ProposeView />}
-          {activeTab === 'watch' && <VideoWatchView />}
           {activeTab === 'game' && <MinigameView />}
           {activeTab === 'friends' && <FriendsView />}
           {activeTab === 'review' &&

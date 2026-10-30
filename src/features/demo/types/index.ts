@@ -278,7 +278,6 @@ export type MainTab =
   | 'bank'
   | 'lecturer-bank'
   | 'propose'
-  | 'watch'
   | 'game'
   | 'friends'
   | 'review'

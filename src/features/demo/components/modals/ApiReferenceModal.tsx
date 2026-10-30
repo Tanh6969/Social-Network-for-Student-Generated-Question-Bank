@@ -59,7 +59,6 @@ export const ApiReferenceModal: React.FC = () => {
     { api: '(38) POST /posts', screen: 'SOC.02 Tạo bài viết mới', tab: 'feed' },
     { api: '(39) GET /posts/{id}', screen: 'SOC.04 Chi tiết bài viết Theater', tab: 'feed' },
     { api: '(41) PUT /posts/{id}/lecturer-notes', screen: 'SOC.06 Ghi chú của giảng viên', tab: 'feed' },
-    { api: '(43) GET /video-posts', screen: 'SOC.08 Video học tập (Watch)', tab: 'watch' },
     { api: '(44)(45) comments', screen: 'SOC.09–SOC.12 Bình luận lồng cấp', tab: 'feed' },
     { api: '(48) POST /react', screen: 'SOC.13 Thích bài viết', tab: 'feed' },
     { api: '(49)(50) activity-feeds', screen: 'SOC.01 Bảng tin 3 cột Facebook', tab: 'feed' },
