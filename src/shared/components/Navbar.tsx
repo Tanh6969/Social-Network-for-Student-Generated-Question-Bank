@@ -178,11 +178,11 @@ export const Navbar: React.FC = () => {
           onClick={() => handleTabClick('feed')}
           className="flex items-center gap-2 cursor-pointer group"
         >
-          <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-xs transition-transform group-hover:scale-105">
+          <div className="w-10 h-10 rounded-xl bg-linear-to-tr from-blue-700 to-blue-500 flex items-center justify-center text-white shadow-xs transition-transform group-hover:scale-105">
             <span className="font-black text-xl tracking-tighter">U</span>
           </div>
-          <span className="hidden sm:inline font-bold text-lg text-gray-900 dark:text-gray-100 tracking-tight">
-            Uni<span className="text-blue-600">Social</span>
+          <span className="hidden sm:inline font-black text-lg text-blue-600 dark:text-blue-400 tracking-tight">
+            UniSocial
           </span>
         </div>
 

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="unisocial-bg" x1="0" y1="64" x2="64" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1D4ED8" />
+      <stop offset="100%" stop-color="#3B82F6" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="18" fill="url(#unisocial-bg)" />
+  <path
+    d="M19 16H27.2V34.6C27.2 38.8 29.1 41.2 32 41.2C34.9 41.2 36.8 38.8 36.8 34.6V16H45V35C45 43.7 39.9 48.5 32 48.5C24.1 48.5 19 43.7 19 35V16Z"
+    fill="#FFFFFF"
+  />
+</svg>
