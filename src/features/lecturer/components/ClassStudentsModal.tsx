@@ -49,24 +49,24 @@ export const ClassStudentsModal: React.FC<ClassStudentsModalProps> = ({ courseCl
   return createPortal(
     <div
       onClick={onClose}
-      className="fixed inset-0 z-[220] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+      className="fixed inset-0 z-[220] flex items-center justify-center p-3 sm:p-4 bg-black/60 animate-in fade-in duration-200"
     >
       <div
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-label={`Danh sách sinh viên lớp ${courseClass.class_code}`}
-        className="bg-white dark:bg-[#242526] rounded-2xl shadow-2xl max-w-xl w-full h-[80vh] overflow-hidden flex flex-col border border-gray-200 dark:border-gray-700 animate-in zoom-in-95 duration-150"
+        className="bg-fb-card rounded-lg shadow-2xl max-w-xl w-full h-[80vh] overflow-hidden flex flex-col border border-fb-divider animate-in zoom-in-95 duration-150"
       >
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-start justify-between gap-3">
+        <div className="p-4 border-b border-fb-divider flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs font-mono font-semibold text-blue-600 dark:text-blue-400">
+            <p className="text-xs tabular-nums font-semibold text-fb-blue">
               {courseClass.subject_code} · Lớp {courseClass.class_code}
             </p>
-            <h3 className="font-bold text-base text-gray-900 dark:text-gray-100 truncate">
+            <h3 className="font-bold text-base text-fb-text truncate">
               {courseClass.subject_name}
             </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-fb-text-2">
               {courseClass.semester_name && <>{courseClass.semester_name} · </>}
               {students ? students.length : courseClass.total_students ?? 0} sinh viên
             </p>
@@ -74,14 +74,14 @@ export const ClassStudentsModal: React.FC<ClassStudentsModalProps> = ({ courseCl
           <button
             onClick={onClose}
             aria-label="Đóng"
-            className="w-8 h-8 shrink-0 rounded-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] flex items-center justify-center text-gray-500 cursor-pointer"
+            className="w-8 h-8 shrink-0 rounded-full hover:bg-fb-hover flex items-center justify-center text-gray-500 cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Search */}
-        <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+        <div className="px-4 py-3 border-b border-fb-divider">
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
@@ -89,7 +89,7 @@ export const ClassStudentsModal: React.FC<ClassStudentsModalProps> = ({ courseCl
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Tìm theo họ tên, MSSV, lớp sinh hoạt..."
-              className="w-full pl-9 pr-3 py-2 rounded-xl bg-gray-100 dark:bg-[#3A3B3C] text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-blue-500/40"
+              className="w-full pl-9 pr-3 py-2 rounded-lg bg-fb-input text-sm text-fb-text placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-blue-500/40"
             />
           </div>
         </div>
@@ -108,17 +108,17 @@ export const ClassStudentsModal: React.FC<ClassStudentsModalProps> = ({ courseCl
           {filtered?.map((student) => (
             <div
               key={student.user_id ?? student.student_code}
-              className="group flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition"
+              className="group flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-fb-hover transition"
             >
-              <div className="w-9 h-9 shrink-0 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 text-white text-sm font-bold flex items-center justify-center">
+              <div className="w-9 h-9 shrink-0 rounded-full bg-fb-blue text-white text-sm font-bold flex items-center justify-center">
                 {getInitials(student.full_name)}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                <p className="text-sm font-semibold text-fb-text truncate">
                   {student.full_name}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                  <span className="font-mono">{student.student_code}</span>
+                <p className="text-xs text-fb-text-2 truncate">
+                  <span className="tabular-nums">{student.student_code}</span>
                   {student.class_name && <> · {student.class_name}</>}
                 </p>
               </div>

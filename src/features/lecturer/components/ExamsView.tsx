@@ -36,7 +36,7 @@ export const ExamsView: React.FC = () => {
         <div className="w-16 h-16 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto shadow-xs">
           <ShieldAlert className="w-8 h-8" />
         </div>
-        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+        <h2 className="text-xl font-bold text-fb-text">
           Khu vực dành riêng cho Giảng viên
         </h2>
         <p className="text-xs text-gray-500 max-w-md mx-auto leading-relaxed">
@@ -46,7 +46,7 @@ export const ExamsView: React.FC = () => {
           <button
             type="button"
             onClick={() => switchRole('LECTURER')}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
+            className="px-4 py-2 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg text-xs font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
           >
             <Sparkles className="w-4 h-4" />
             <span>Chuyển sang vai trò Giảng viên</span>
@@ -54,7 +54,7 @@ export const ExamsView: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveTab('feed')}
-            className="px-4 py-2 bg-gray-100 dark:bg-[#3A3B3C] text-gray-700 dark:text-gray-300 rounded-xl text-xs font-semibold hover:bg-gray-200 transition cursor-pointer"
+            className="px-4 py-2 bg-fb-input text-fb-text rounded-lg text-xs font-semibold hover:bg-gray-200 transition cursor-pointer"
           >
             Quay về Trang chủ
           </button>
@@ -76,21 +76,21 @@ export const ExamsView: React.FC = () => {
   return (
     <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 space-y-4">
       {/* Top Banner Header */}
-      <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-5">
+      <div className="bg-fb-card rounded-lg shadow-fb-card p-5">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="p-2.5 rounded-xl bg-blue-600 text-white shadow-xs">
+              <span className="p-2.5 rounded-lg bg-blue-600 text-white shadow-xs">
                 <FileCode className="w-5 h-5" />
               </span>
-              <h1 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-gray-100 tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-black text-fb-text tracking-tight">
                 Quản lý Đề thi & Xuất dữ liệu
               </h1>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
                 Dành cho Giảng viên
               </span>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-fb-text-2">
               Sinh đề thi tự động từ câu hỏi đã duyệt, quản lý danh sách đề thi đã tạo và xuất dữ liệu ra định dạng PDF / Excel.
             </p>
           </div>
@@ -105,7 +105,7 @@ export const ExamsView: React.FC = () => {
                     setViewingExamId(null);
                     setActiveSubTab('GENERATE');
                   }}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                  className="px-4 py-2 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Tạo đề thi mới</span>
@@ -117,14 +117,14 @@ export const ExamsView: React.FC = () => {
 
         {/* 3 Main Area Navigation Tabs (Only when not in exam detail view) */}
         {!viewingExamId && (
-          <div className="flex items-center gap-2 border-t border-gray-100 dark:border-gray-700 pt-4 mt-4 overflow-x-auto">
+          <div className="flex items-center gap-2 border-t border-fb-divider pt-4 mt-4 overflow-x-auto">
             <button
               type="button"
               onClick={() => setActiveSubTab('LIST')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shrink-0 ${
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer shrink-0 ${
                 activeSubTab === 'LIST'
                   ? 'bg-blue-600 text-white shadow-xs'
-                  : 'bg-gray-100 dark:bg-[#3A3B3C] text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#4E4F50]'
+                  : 'bg-fb-input text-fb-text hover:bg-fb-btn-hover'
               }`}
             >
               <FileCode className="w-4 h-4" />
@@ -134,10 +134,10 @@ export const ExamsView: React.FC = () => {
             <button
               type="button"
               onClick={() => setActiveSubTab('GENERATE')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shrink-0 ${
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer shrink-0 ${
                 activeSubTab === 'GENERATE'
                   ? 'bg-blue-600 text-white shadow-xs'
-                  : 'bg-gray-100 dark:bg-[#3A3B3C] text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#4E4F50]'
+                  : 'bg-fb-input text-fb-text hover:bg-fb-btn-hover'
               }`}
             >
               <Sparkles className="w-4 h-4" />
@@ -147,10 +147,10 @@ export const ExamsView: React.FC = () => {
             <button
               type="button"
               onClick={() => setActiveSubTab('EXPORT_BANK')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shrink-0 ${
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer shrink-0 ${
                 activeSubTab === 'EXPORT_BANK'
                   ? 'bg-blue-600 text-white shadow-xs'
-                  : 'bg-gray-100 dark:bg-[#3A3B3C] text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#4E4F50]'
+                  : 'bg-fb-input text-fb-text hover:bg-fb-btn-hover'
               }`}
             >
               <Download className="w-4 h-4" />

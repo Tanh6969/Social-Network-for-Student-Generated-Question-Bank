@@ -68,12 +68,12 @@ function PostDetail({
   const close = () => setActivePostDetail(null);
   const mediaUrls = post.mediaUrls ?? [];
   const sidebar = (
-    <div className="flex h-full min-h-0 w-full flex-col bg-white dark:bg-[#242526]">
+    <div className="flex h-full min-h-0 w-full flex-col bg-fb-card">
       <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
         <div className="flex min-w-0 items-center gap-3">
           <AvatarWithFrame user={post.author} size="md" />
           <div className="min-w-0">
-            <h3 className="truncate text-sm font-bold text-gray-900 dark:text-gray-100">
+            <h3 className="truncate text-sm font-bold text-fb-text">
               {post.author.name}
             </h3>
             <span className="text-xs text-gray-500">
@@ -205,7 +205,7 @@ function PostDetail({
         role="dialog"
         aria-modal="true"
         aria-label="Chi tiết bài viết"
-        className="flex max-h-[90vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-[#242526]"
+        className="flex max-h-[90vh] w-full max-w-xl flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-[#242526]"
       >
         {sidebar}
       </div>

@@ -69,28 +69,28 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
   return (
     <div className="space-y-4">
       {/* Top Navigation & Action Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-fb-card rounded-lg shadow-fb-card p-4">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onBack}
-            className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-[#3A3B3C] text-gray-600 dark:text-gray-300 transition cursor-pointer"
+            className="p-2 rounded-lg hover:bg-fb-hover text-fb-text-2 transition cursor-pointer"
             title="Quay lại danh sách đề thi"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+              <span className="text-xs font-bold text-fb-blue">
                 Chi tiết đề thi
               </span>
               {exam?.exam_id && (
-                <span className="text-[11px] font-mono text-gray-400 bg-gray-100 dark:bg-[#3A3B3C] px-2 py-0.5 rounded-md">
+                <span className="text-[11px] tabular-nums text-gray-400 bg-fb-input px-2 py-0.5 rounded-md">
                   Mã đề: #{exam.exam_id}
                 </span>
               )}
             </div>
-            <h2 className="text-base sm:text-lg font-black text-gray-900 dark:text-gray-100 leading-tight">
+            <h2 className="text-base sm:text-lg font-black text-fb-text leading-tight">
               {exam?.title || `Đề thi #${examId}`}
             </h2>
           </div>
@@ -101,10 +101,10 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
           <button
             type="button"
             onClick={() => setShowAnswers(!showAnswers)}
-            className={`px-3 py-2 rounded-xl text-xs font-semibold border transition flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-2 rounded-lg text-xs font-semibold border transition flex items-center gap-1.5 cursor-pointer ${
               showAnswers
                 ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-800'
-                : 'bg-white dark:bg-[#242526] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#3A3B3C]'
+                : 'bg-fb-card text-fb-text border-fb-divider hover:bg-fb-hover'
             }`}
           >
             {showAnswers ? (
@@ -123,7 +123,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
           <button
             type="button"
             onClick={() => setIsExportModalOpen(true)}
-            className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+            className="px-4 py-2 rounded-lg bg-fb-blue hover:bg-fb-blue-hover text-white font-bold text-xs transition shadow-xs flex items-center gap-1.5 cursor-pointer"
           >
             <Download className="w-4 h-4" />
             <span>Xuất file (PDF / Excel)</span>
@@ -133,7 +133,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
 
       {/* Loading State */}
       {loading && (
-        <div className="bg-white dark:bg-[#242526] rounded-2xl border border-gray-200 dark:border-gray-700 p-12 text-center text-xs text-gray-500 space-y-3">
+        <div className="bg-fb-card rounded-lg border border-fb-divider p-12 text-center text-xs text-gray-500 space-y-3">
           <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
           <p>Đang tải chi tiết đề thi và danh sách câu hỏi...</p>
         </div>
@@ -141,7 +141,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
 
       {/* Error State */}
       {error && !loading && (
-        <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 text-xs flex items-center justify-between">
+        <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 text-xs flex items-center justify-between">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-5 h-5 shrink-0" />
             <span>{error}</span>
@@ -160,19 +160,19 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
       {!loading && !error && exam && (
         <div className="space-y-4">
           {/* Metadata & Difficulty Matrix Summary Card */}
-          <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-5 space-y-4 text-xs">
+          <div className="bg-fb-card rounded-lg shadow-fb-card p-5 space-y-4 text-xs">
             {/* Metadata Pills */}
-            <div className="flex flex-wrap items-center gap-4 text-gray-600 dark:text-gray-300">
+            <div className="flex flex-wrap items-center gap-4 text-fb-text-2">
               {exam.subject_name && (
                 <div className="flex items-center gap-1.5 font-semibold">
                   <BookOpen className="w-4 h-4 text-blue-600" />
-                  <span>Môn học: <strong className="text-gray-900 dark:text-gray-100">{exam.subject_name}</strong></span>
+                  <span>Môn học: <strong className="text-fb-text">{exam.subject_name}</strong></span>
                 </div>
               )}
               {exam.question_count !== undefined && (
                 <div className="flex items-center gap-1.5 font-semibold">
                   <Layers className="w-4 h-4 text-blue-600" />
-                  <span>Tổng số câu hỏi: <strong className="text-gray-900 dark:text-gray-100">{exam.question_count} câu</strong></span>
+                  <span>Tổng số câu hỏi: <strong className="text-fb-text">{exam.question_count} câu</strong></span>
                 </div>
               )}
               {exam.created_at && (
@@ -185,12 +185,12 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
 
             {/* Difficulty Matrix Statistic */}
             {exam.statistic && (
-              <div className="pt-3 border-t border-gray-100 dark:border-gray-700">
-                <span className="font-bold text-gray-500 block mb-2 text-[11px] uppercase tracking-wider">
+              <div className="pt-3 border-t border-fb-divider">
+                <span className="font-bold text-gray-500 block mb-2 text-[11px]">
                   Phân bố ma trận độ khó:
                 </span>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-                  <div className="p-2.5 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40">
+                  <div className="p-2.5 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40">
                     <span className="text-[11px] font-semibold text-emerald-800 dark:text-emerald-300 block">
                       Dễ
                     </span>
@@ -198,7 +198,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                       {exam.statistic.easy_count ?? 0} câu
                     </strong>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40">
+                  <div className="p-2.5 rounded-lg bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40">
                     <span className="text-[11px] font-semibold text-amber-800 dark:text-amber-300 block">
                       Trung bình
                     </span>
@@ -206,7 +206,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                       {exam.statistic.medium_count ?? 0} câu
                     </strong>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-red-50/70 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40">
+                  <div className="p-2.5 rounded-lg bg-red-50/70 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40">
                     <span className="text-[11px] font-semibold text-red-800 dark:text-red-300 block">
                       Khó
                     </span>
@@ -214,11 +214,11 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                       {exam.statistic.hard_count ?? 0} câu
                     </strong>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-gray-50 dark:bg-[#1E1F20] border border-gray-200 dark:border-gray-700">
-                    <span className="text-[11px] font-semibold text-gray-600 dark:text-gray-400 block">
+                  <div className="p-2.5 rounded-lg bg-fb-input border border-fb-divider">
+                    <span className="text-[11px] font-semibold text-fb-text-2 block">
                       Chưa phân loại
                     </span>
-                    <strong className="text-base text-gray-700 dark:text-gray-300">
+                    <strong className="text-base text-fb-text">
                       {exam.statistic.unclassified_count ?? 0} câu
                     </strong>
                   </div>
@@ -230,14 +230,14 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
           {/* Question List */}
           <div className="space-y-4">
             <div className="flex items-center justify-between text-xs text-gray-500 px-1">
-              <span className="font-bold text-gray-700 dark:text-gray-300">
+              <span className="font-bold text-fb-text">
                 Danh sách câu hỏi trong đề ({exam.questions?.length || 0} câu)
               </span>
               <span>Theo đúng thứ tự trích xuất từ đề thi</span>
             </div>
 
             {(!exam.questions || exam.questions.length === 0) ? (
-              <div className="bg-white dark:bg-[#242526] rounded-2xl border border-gray-200 dark:border-gray-700 p-12 text-center text-xs text-gray-500">
+              <div className="bg-fb-card rounded-lg border border-fb-divider p-12 text-center text-xs text-gray-500">
                 Chưa có câu hỏi nào trong đề thi này.
               </div>
             ) : (
@@ -248,7 +248,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                   return (
                     <div
                       key={q.question_id || idx}
-                      className="bg-white dark:bg-[#242526] rounded-2xl border border-gray-200 dark:border-gray-700 shadow-xs p-5 space-y-4 transition"
+                      className="bg-fb-card rounded-lg shadow-fb-card p-5 space-y-4 transition"
                     >
                       {/* Header of Question */}
                       <div className="flex flex-wrap items-center justify-between gap-2.5">
@@ -257,7 +257,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                             Câu {orderNumber}
                           </span>
                           {q.question_id && (
-                            <span className="text-[11px] text-gray-400 font-mono">
+                            <span className="text-[11px] text-gray-400 tabular-nums">
                               ID: #{q.question_id}
                             </span>
                           )}
@@ -280,7 +280,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                                   ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800'
                                   : q.difficulty === 'HARD'
                                   ? 'bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800'
-                                  : 'bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700'
+                                  : 'bg-fb-input text-fb-text-2 border-fb-divider'
                               }`}
                             >
                               {q.difficulty === 'EASY'
@@ -296,7 +296,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                       </div>
 
                       {/* Content */}
-                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100 whitespace-pre-wrap break-words leading-relaxed">
+                      <div className="text-sm font-medium text-fb-text whitespace-pre-wrap break-words leading-relaxed">
                         {q.content}
                       </div>
 
@@ -309,12 +309,12 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                               href={imgUrl}
                               target="_blank"
                               rel="noreferrer"
-                              className="block relative rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 hover:opacity-90"
+                              className="block relative rounded-lg overflow-hidden border border-fb-divider hover:opacity-90"
                             >
                               <img
                                 src={imgUrl}
                                 alt={`Minh họa câu hỏi ${orderNumber}`}
-                                className="max-h-48 max-w-xs object-cover rounded-xl"
+                                className="max-h-48 max-w-xs object-cover rounded-lg"
                               />
                             </a>
                           ))}
@@ -332,17 +332,17 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                             return (
                               <div
                                 key={optionKey}
-                                className={`p-3 rounded-xl border text-xs flex items-start gap-2.5 transition ${
+                                className={`p-3 rounded-lg border text-xs flex items-start gap-2.5 transition ${
                                   highlightCorrect
                                     ? 'border-emerald-500 bg-emerald-50/80 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 font-semibold ring-1 ring-emerald-500'
-                                    : 'border-gray-200 dark:border-gray-700/80 bg-gray-50/70 dark:bg-[#1E1F20] text-gray-700 dark:text-gray-300'
+                                    : 'border-fb-divider/80 bg-gray-50/70 dark:bg-[#1E1F20] text-fb-text'
                                 }`}
                               >
                                 <span
                                   className={`w-6 h-6 rounded-lg flex items-center justify-center font-bold shrink-0 text-xs ${
                                     highlightCorrect
                                       ? 'bg-emerald-600 text-white'
-                                      : 'bg-white dark:bg-[#3A3B3C] border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300'
+                                      : 'bg-white dark:bg-[#3A3B3C] border border-gray-300 dark:border-gray-600 text-fb-text'
                                   }`}
                                 >
                                   {optionKey}
@@ -355,7 +355,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                                     <img
                                       src={opt.media_url}
                                       alt={`Hình ảnh phương án ${optionKey}`}
-                                      className="max-h-28 rounded-lg border border-gray-200 dark:border-gray-700 mt-1 object-cover"
+                                      className="max-h-28 rounded-lg border border-fb-divider mt-1 object-cover"
                                     />
                                   )}
                                   {highlightCorrect && (

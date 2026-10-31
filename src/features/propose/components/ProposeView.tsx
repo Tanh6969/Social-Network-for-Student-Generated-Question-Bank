@@ -358,12 +358,12 @@ export const ProposeView: React.FC = () => {
   };
 
   return (
-    <div className="w-full min-h-[calc(100vh-3.5rem)] flex flex-col md:flex-row items-start bg-[#F0F2F5] dark:bg-[#18191A]">
+    <div className="w-full min-h-[calc(100vh-3.5rem)] flex flex-col md:flex-row items-start bg-fb-canvas">
       {/* ================= CỘT TRÁI (LEFT SIDEBAR): CỐ ĐỊNH KHI CUỘN TRANG ================= */}
-      <aside className="w-full md:w-80 lg:w-84 xl:w-88 shrink-0 bg-white dark:bg-[#242526] border-r border-gray-200 dark:border-gray-700 md:sticky md:top-14 md:h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-5 flex flex-col select-none z-20">
+      <aside className="w-full md:w-80 lg:w-84 xl:w-88 shrink-0 bg-fb-card border-r border-fb-divider md:sticky md:top-14 md:h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-5 flex flex-col select-none z-20">
         <div className="space-y-4">
-          <div className="px-1 pt-1 pb-3 border-b border-gray-100 dark:border-gray-800">
-            <h2 className="text-xl font-black text-gray-900 dark:text-gray-100 flex items-center gap-2.5">
+          <div className="px-1 pt-1 pb-3 border-b border-fb-divider">
+            <h2 className="text-xl font-black text-fb-text flex items-center gap-2.5">
               <GraduationCap className="w-6 h-6 text-blue-600" />
               <span>Đề xuất câu hỏi</span>
             </h2>
@@ -377,16 +377,16 @@ export const ProposeView: React.FC = () => {
             {/* Tab 1: Soạn phiên đề xuất mới */}
             <button
               onClick={() => setActiveTab('create')}
-              className={`w-full flex items-center justify-between p-3.5 rounded-xl transition cursor-pointer text-left ${activeTab === 'create'
-                  ? 'bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 font-bold shadow-xs'
-                  : 'hover:bg-gray-100 dark:hover:bg-[#3A3B3C] text-gray-700 dark:text-gray-300 font-semibold'
+              className={`w-full flex items-center justify-between p-3.5 rounded-lg transition cursor-pointer text-left ${activeTab === 'create'
+                  ? 'bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-fb-blue font-bold shadow-xs'
+                  : 'hover:bg-fb-hover text-fb-text font-semibold'
                 }`}
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${activeTab === 'create'
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${activeTab === 'create'
                       ? 'bg-blue-600 text-white shadow-xs'
-                      : 'bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-400'
+                      : 'bg-fb-input text-fb-text-2'
                     }`}
                 >
                   <FilePlus className="w-5 h-5" />
@@ -407,16 +407,16 @@ export const ProposeView: React.FC = () => {
             {/* Tab 2: Phiên đề xuất của tôi */}
             <button
               onClick={() => setActiveTab('my-submissions')}
-              className={`w-full flex items-center justify-between p-3.5 rounded-xl transition cursor-pointer text-left ${activeTab === 'my-submissions'
-                  ? 'bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 font-bold shadow-xs'
-                  : 'hover:bg-gray-100 dark:hover:bg-[#3A3B3C] text-gray-700 dark:text-gray-300 font-semibold'
+              className={`w-full flex items-center justify-between p-3.5 rounded-lg transition cursor-pointer text-left ${activeTab === 'my-submissions'
+                  ? 'bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-fb-blue font-bold shadow-xs'
+                  : 'hover:bg-fb-hover text-fb-text font-semibold'
                 }`}
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${activeTab === 'my-submissions'
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${activeTab === 'my-submissions'
                       ? 'bg-blue-600 text-white shadow-xs'
-                      : 'bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-400'
+                      : 'bg-fb-input text-fb-text-2'
                     }`}
                 >
                   <ListOrdered className="w-5 h-5" />
@@ -433,7 +433,7 @@ export const ProposeView: React.FC = () => {
                   <span
                     className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'my-submissions'
                         ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                        : 'bg-gray-200 dark:bg-gray-700 text-fb-text'
                       }`}
                   >
                     {submissions.length}
@@ -456,9 +456,9 @@ export const ProposeView: React.FC = () => {
           <form onSubmit={handleSubmitProposal} className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               {/* Form soạn thảo (7 cols) */}
-              <div className="lg:col-span-7 bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-4 sm:p-5 space-y-4">
-                <div className="border-b border-gray-100 dark:border-gray-700 pb-2.5">
-                  <h3 className="font-bold text-sm sm:text-base text-gray-900 dark:text-gray-100">
+              <div className="lg:col-span-7 bg-fb-card rounded-lg shadow-fb-card p-4 sm:p-5 space-y-4">
+                <div className="border-b border-fb-divider pb-2.5">
+                  <h3 className="font-bold text-sm sm:text-base text-fb-text">
                     Thông tin phiên nộp
                   </h3>
                   <p className="text-xs text-gray-500">
@@ -469,7 +469,7 @@ export const ProposeView: React.FC = () => {
                 {/* Tiêu đề & Môn học */}
                 <div className="space-y-3.5">
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-xs font-bold text-fb-text mb-1">
                       Tiêu đề phiên đề xuất *
                     </label>
                     <input
@@ -478,19 +478,19 @@ export const ProposeView: React.FC = () => {
                       onChange={(e) => setTitle(e.target.value)}
                       placeholder="Ví dụ: Bộ câu hỏi ôn tập Chương 3 - Giao thức Tầng Mạng & Định tuyến OSPF"
                       required
-                      className="w-full px-3 py-2 text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50/50 dark:bg-[#3A3B3C] text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition"
+                      className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50/50 dark:bg-[#3A3B3C] text-fb-text focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div>
-                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                      <label className="block text-xs font-bold text-fb-text mb-1">
                         Môn học tham gia *
                       </label>
                       <select
                         value={selectedSubjectId}
                         onChange={(e) => setSelectedSubjectId(Number(e.target.value))}
-                        className="w-full px-3 py-2 text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50/50 dark:bg-[#3A3B3C] text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition font-medium"
+                        className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50/50 dark:bg-[#3A3B3C] text-fb-text focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition font-medium"
                       >
                         {enrolledSubjects.map((sub) => (
                           <option key={sub.subject_id} value={sub.subject_id}>
@@ -501,7 +501,7 @@ export const ProposeView: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                      <label className="block text-xs font-bold text-fb-text mb-1">
                         URL tài liệu tham khảo (source_url)
                       </label>
                       <input
@@ -509,13 +509,13 @@ export const ProposeView: React.FC = () => {
                         value={sourceUrl}
                         onChange={(e) => setSourceUrl(e.target.value)}
                         placeholder="https://tailieu.hust.edu.vn/..."
-                        className="w-full px-3 py-2 text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50/50 dark:bg-[#3A3B3C] text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition"
+                        className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50/50 dark:bg-[#3A3B3C] text-fb-text focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-xs font-bold text-fb-text mb-1">
                       Mô tả tổng quan / Ghi chú cho Giảng viên
                     </label>
                     <textarea
@@ -523,16 +523,16 @@ export const ProposeView: React.FC = () => {
                       value={content}
                       onChange={(e) => setContent(e.target.value)}
                       placeholder="Tóm tắt nội dung bộ câu hỏi hoặc mục đích ôn tập..."
-                      className="w-full px-3 py-2 text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50/50 dark:bg-[#3A3B3C] text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition"
+                      className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50/50 dark:bg-[#3A3B3C] text-fb-text focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition"
                     />
                   </div>
                 </div>
 
                 {/* Danh sách câu hỏi */}
-                <div className="pt-3 border-t border-gray-100 dark:border-gray-700 space-y-3.5">
+                <div className="pt-3 border-t border-fb-divider space-y-3.5">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-sm text-gray-900 dark:text-gray-100">
+                      <span className="font-bold text-sm text-fb-text">
                         Danh sách câu hỏi
                       </span>
                       <span className="text-xs text-gray-500">
@@ -543,7 +543,7 @@ export const ProposeView: React.FC = () => {
                     <button
                       type="button"
                       onClick={handleAddQuestion}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 text-xs font-bold hover:bg-blue-100 transition cursor-pointer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-fb-blue border border-blue-200 dark:border-blue-800 text-xs font-bold hover:bg-blue-100 transition cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Thêm câu mới</span>
@@ -559,7 +559,7 @@ export const ProposeView: React.FC = () => {
                         onClick={() => setActiveQIndex(idx)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${idx === activeQIndex
                             ? 'bg-blue-600 text-white shadow-xs'
-                            : 'bg-gray-100 dark:bg-[#3A3B3C] text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                            : 'bg-fb-input text-fb-text hover:bg-gray-200 dark:hover:bg-gray-700'
                           }`}
                       >
                         Câu {idx + 1}
@@ -569,9 +569,9 @@ export const ProposeView: React.FC = () => {
 
                   {/* Question Editor */}
                   {currentQ && (
-                    <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-[#1E1F20] space-y-3.5">
+                    <div className="p-4 rounded-lg border border-fb-divider bg-gray-50/70 dark:bg-[#1E1F20] space-y-3.5">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                        <span className="text-xs font-bold text-fb-blue">
                           Nội dung Câu {activeQIndex + 1}
                         </span>
                         {questions.length > 1 && (
@@ -587,7 +587,7 @@ export const ProposeView: React.FC = () => {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-xs font-bold text-fb-text mb-1">
                           Nội dung câu hỏi *
                         </label>
                         <textarea
@@ -596,22 +596,22 @@ export const ProposeView: React.FC = () => {
                           onChange={(e) => handleUpdateCurrentQ({ content: e.target.value })}
                           placeholder="Nhập đề bài câu hỏi trắc nghiệm..."
                           required
-                          className="w-full p-2.5 text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#242526] text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                          className="w-full p-2.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-fb-card text-fb-text focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
 
                       {/* 4 Options */}
                       <div className="space-y-2">
-                        <label className="block text-xs font-bold text-gray-700 dark:text-gray-300">
+                        <label className="block text-xs font-bold text-fb-text">
                           Các phương án trả lời (Bấm chữ A/B/C/D để đánh dấu đáp án đúng, tự động xuống dòng khi nhập dài):
                         </label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                           {currentQ.options.map((opt) => (
                             <div
                               key={opt.key}
-                              className={`p-2.5 rounded-xl border flex items-start gap-2.5 transition ${opt.is_correct
+                              className={`p-2.5 rounded-lg border flex items-start gap-2.5 transition ${opt.is_correct
                                   ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/20'
-                                  : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-[#242526]'
+                                  : 'border-gray-300 dark:border-gray-600 bg-fb-card'
                                 }`}
                             >
                               <button
@@ -619,7 +619,7 @@ export const ProposeView: React.FC = () => {
                                 onClick={() => handleSetCorrectOption(opt.key)}
                                 className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 cursor-pointer transition mt-0.5 ${opt.is_correct
                                     ? 'bg-emerald-600 text-white shadow-xs scale-105'
-                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300'
+                                    : 'bg-gray-200 dark:bg-gray-700 text-fb-text hover:bg-gray-300'
                                   }`}
                                 title={opt.is_correct ? 'Đáp án đúng' : 'Bấm để đặt làm đáp án đúng'}
                               >
@@ -630,7 +630,7 @@ export const ProposeView: React.FC = () => {
                                 value={opt.text}
                                 onChange={(e) => handleUpdateOption(opt.key, e.target.value)}
                                 placeholder={`Phương án ${opt.key}...`}
-                                className="flex-1 bg-transparent text-xs sm:text-sm text-gray-900 dark:text-gray-100 focus:outline-hidden resize-y min-h-[44px] break-words leading-relaxed"
+                                className="flex-1 bg-transparent text-xs sm:text-sm text-fb-text focus:outline-hidden resize-y min-h-[44px] break-words leading-relaxed"
                               />
                               {opt.is_correct && (
                                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-1" />
@@ -642,7 +642,7 @@ export const ProposeView: React.FC = () => {
 
                       {/* Explanation */}
                       <div>
-                        <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-xs font-bold text-fb-text mb-1">
                           Lời giải thích chi tiết cho đáp án đúng
                         </label>
                         <textarea
@@ -652,12 +652,12 @@ export const ProposeView: React.FC = () => {
                             handleUpdateCurrentQ({ explanation: e.target.value })
                           }
                           placeholder="Giải thích nguyên lý hoặc tài liệu tham khảo..."
-                          className="w-full p-2.5 text-xs sm:text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#242526] text-gray-900 dark:text-gray-100 focus:outline-hidden"
+                          className="w-full p-2.5 text-xs sm:text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-fb-card text-fb-text focus:outline-hidden"
                         />
                       </div>
 
                       {/* Additional settings */}
-                      <div className="flex flex-wrap items-center justify-between gap-3 pt-2 text-xs border-t border-gray-200 dark:border-gray-700">
+                      <div className="flex flex-wrap items-center justify-between gap-3 pt-2 text-xs border-t border-fb-divider">
                         <label className="flex items-center gap-2 cursor-pointer select-none">
                           <input
                             type="checkbox"
@@ -667,7 +667,7 @@ export const ProposeView: React.FC = () => {
                             }
                             className="w-4 h-4 text-blue-600 rounded"
                           />
-                          <span className="text-gray-700 dark:text-gray-300 font-medium">
+                          <span className="text-fb-text font-medium">
                             Đánh dấu do AI/LLM hỗ trợ sinh
                           </span>
                         </label>
@@ -679,7 +679,7 @@ export const ProposeView: React.FC = () => {
                             onChange={(e) =>
                               handleUpdateCurrentQ({ confidence: Number(e.target.value) })
                             }
-                            className="px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#242526] text-xs font-semibold text-gray-800 dark:text-gray-200"
+                            className="px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-fb-card text-xs font-semibold text-fb-text"
                           >
                             <option value={4}>4.0 - Tự tin / Câu hỏi hay</option>
                             <option value={3.5}>3.5 - Cơ bản / Tốt</option>
@@ -693,11 +693,11 @@ export const ProposeView: React.FC = () => {
                 </div>
 
                 {/* Submit button bar */}
-                <div className="pt-2 border-t border-gray-100 dark:border-gray-700 flex justify-end">
+                <div className="pt-2 border-t border-fb-divider flex justify-end">
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    className="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-fb-blue hover:bg-fb-blue-hover text-white font-semibold text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                   >
                     {isSubmitting ? (
                       <>
@@ -716,11 +716,11 @@ export const ProposeView: React.FC = () => {
 
               {/* Live Preview (5 cols) */}
               <div className="lg:col-span-5 space-y-4 sticky top-20">
-                <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
-                  <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700 mb-3.5">
+                <div className="bg-fb-card rounded-lg shadow-fb-card p-4 sm:p-5">
+                  <div className="flex items-center justify-between pb-3 border-b border-fb-divider mb-3.5">
                     <div className="flex items-center gap-2">
                       <Eye className="w-4 h-4 text-blue-600" />
-                      <h4 className="font-bold text-sm text-gray-900 dark:text-gray-100">
+                      <h4 className="font-bold text-sm text-fb-text">
                         Xem trước trực tiếp (Live Preview)
                       </h4>
                     </div>
@@ -731,13 +731,13 @@ export const ProposeView: React.FC = () => {
 
                   {/* Preview Box */}
                   <div className="space-y-3.5">
-                    <div className="p-3.5 rounded-xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-1">
+                    <div className="p-3.5 rounded-lg bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40">
+                      <span className="text-[10px] font-bold text-fb-blue block mb-1">
                         {enrolledSubjects.find((s) => s.subject_id === selectedSubjectId)?.name ||
                           'Môn học chưa chọn'}{' '}
                         - {title || 'Chưa nhập tiêu đề'}
                       </span>
-                      <p className="font-semibold text-sm text-gray-900 dark:text-gray-100 leading-relaxed">
+                      <p className="font-semibold text-sm text-fb-text leading-relaxed">
                         {currentQ?.content || 'Nội dung câu hỏi sẽ hiển thị ở đây...'}
                       </p>
                     </div>
@@ -747,15 +747,15 @@ export const ProposeView: React.FC = () => {
                       {currentQ?.options.map((opt) => (
                         <div
                           key={opt.key}
-                          className={`p-2.5 rounded-xl border text-xs sm:text-sm flex items-start gap-2.5 transition ${opt.is_correct
+                          className={`p-2.5 rounded-lg border text-xs sm:text-sm flex items-start gap-2.5 transition ${opt.is_correct
                               ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200 font-semibold'
-                              : 'border-gray-200 dark:border-gray-700 bg-gray-50/40 dark:bg-[#1E1F20] text-gray-700 dark:text-gray-300'
+                              : 'border-fb-divider bg-gray-50/40 dark:bg-[#1E1F20] text-fb-text'
                             }`}
                         >
                           <span
                             className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5 ${opt.is_correct
                                 ? 'bg-emerald-600 text-white'
-                                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                                : 'bg-gray-200 dark:bg-gray-700 text-fb-text'
                               }`}
                           >
                             {opt.key}
@@ -774,12 +774,12 @@ export const ProposeView: React.FC = () => {
 
                     {/* Explanation preview */}
                     {currentQ?.explanation && (
-                      <div className="p-3 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200 space-y-1">
+                      <div className="p-3 rounded-lg bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200 space-y-1">
                         <div className="flex items-center gap-1.5 font-bold">
                           <Sparkles className="w-3.5 h-3.5 text-amber-600" />
                           <span>Giải thích chi tiết:</span>
                         </div>
-                        <p className="text-gray-700 dark:text-gray-300">
+                        <p className="text-fb-text">
                           {currentQ.explanation}
                         </p>
                       </div>
@@ -795,7 +795,7 @@ export const ProposeView: React.FC = () => {
         {activeTab === 'my-submissions' && (
           <div className="space-y-4">
             {/* Filter Bar */}
-            <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="bg-fb-card rounded-lg shadow-fb-card p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-2.5 flex-1">
                 <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-500">
                   <Filter className="w-4 h-4" />
@@ -808,7 +808,7 @@ export const ProposeView: React.FC = () => {
                   onChange={(e) =>
                     setFilterSubjectId(e.target.value ? Number(e.target.value) : undefined)
                   }
-                  className="px-3 py-1.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#3A3B3C] text-xs font-medium text-gray-800 dark:text-gray-200 focus:outline-hidden"
+                  className="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-fb-input text-xs font-medium text-fb-text focus:outline-hidden"
                 >
                   <option value="">Tất cả môn học</option>
                   {enrolledSubjects.map((sub) => (
@@ -828,7 +828,7 @@ export const ProposeView: React.FC = () => {
                         : undefined
                     )
                   }
-                  className="px-3 py-1.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#3A3B3C] text-xs font-medium text-gray-800 dark:text-gray-200 focus:outline-hidden"
+                  className="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-fb-input text-xs font-medium text-fb-text focus:outline-hidden"
                 >
                   <option value="">Tất cả trạng thái</option>
                   <option value="PENDING">Chờ duyệt</option>
@@ -840,7 +840,7 @@ export const ProposeView: React.FC = () => {
               <div className="flex items-center gap-2.5 flex-wrap">
                 <button
                   onClick={() => fetchMySubmissions()}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-300 dark:border-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 text-xs font-semibold text-fb-text hover:bg-fb-hover transition cursor-pointer"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${loadingSubmissions ? 'animate-spin' : ''}`} />
                   <span>Làm mới</span>
@@ -852,7 +852,7 @@ export const ProposeView: React.FC = () => {
             </div>
 
             {/* Dòng hướng dẫn sinh viên: Chỉ sửa & xóa khi Chờ duyệt */}
-            <div className="flex items-start sm:items-center gap-3 p-3.5 sm:px-4 sm:py-3 rounded-2xl bg-amber-50/90 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 text-xs text-amber-900 dark:text-amber-200 shadow-2xs">
+            <div className="flex items-start sm:items-center gap-3 p-3.5 sm:px-4 sm:py-3 rounded-lg bg-amber-50/90 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 text-xs text-amber-900 dark:text-amber-200 shadow-2xs">
               <div className="w-6 h-6 rounded-lg bg-amber-200/60 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0 font-bold">
                 <Info className="w-4 h-4" />
               </div>
@@ -874,12 +874,12 @@ export const ProposeView: React.FC = () => {
                 <p className="text-sm">Đang tải danh sách phiên đề xuất...</p>
               </div>
             ) : submissions.length === 0 ? (
-              <div className="bg-white dark:bg-[#242526] rounded-2xl border border-gray-200 dark:border-gray-700 p-12 text-center space-y-3">
+              <div className="bg-fb-card rounded-lg border border-fb-divider p-12 text-center space-y-3">
                 <div className="w-14 h-14 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center mx-auto">
                   <FilePlus className="w-7 h-7" />
                 </div>
                 <div className="max-w-md mx-auto space-y-1">
-                  <h4 className="font-bold text-base text-gray-900 dark:text-gray-100">
+                  <h4 className="font-bold text-base text-fb-text">
                     Chưa có phiên đề xuất nào
                   </h4>
                   <p className="text-xs text-gray-500">
@@ -889,7 +889,7 @@ export const ProposeView: React.FC = () => {
                 </div>
                 <button
                   onClick={() => setActiveTab('create')}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition cursor-pointer"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition cursor-pointer"
                 >
                   + Soạn phiên đề xuất ngay
                 </button>
@@ -904,7 +904,7 @@ export const ProposeView: React.FC = () => {
                     return (
                       <div
                         key={sub.session_id}
-                        className="bg-white dark:bg-[#242526] rounded-2xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700 shadow-xs hover:border-blue-400 dark:hover:border-blue-600 transition space-y-3"
+                        className="bg-fb-card rounded-lg p-4 sm:p-5 shadow-fb-card hover:border-blue-400 dark:hover:border-blue-600 transition space-y-3"
                       >
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div className="space-y-1 max-w-2xl">
@@ -928,14 +928,14 @@ export const ProposeView: React.FC = () => {
                             </div>
 
                             <h4
-                              className="font-bold text-base text-gray-900 dark:text-gray-100 hover:text-blue-600 cursor-pointer"
+                              className="font-bold text-base text-fb-text hover:text-blue-600 cursor-pointer"
                               onClick={() => setSelectedDetailId(sub.session_id || null)}
                             >
                               {sub.title}
                             </h4>
 
                             {sub.content && (
-                              <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+                              <p className="text-xs text-fb-text-2 line-clamp-2">
                                 {sub.content}
                               </p>
                             )}
@@ -945,7 +945,7 @@ export const ProposeView: React.FC = () => {
                           <div className="flex items-center gap-2 shrink-0">
                             <button
                               onClick={() => setSelectedDetailId(sub.session_id || null)}
-                              className="px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition cursor-pointer flex items-center gap-1.5"
+                              className="px-3 py-1.5 rounded-lg border border-fb-divider text-xs font-semibold text-fb-text hover:bg-fb-hover transition cursor-pointer flex items-center gap-1.5"
                             >
                               <Eye className="w-3.5 h-3.5" />
                               <span>Chi tiết</span>
@@ -954,10 +954,10 @@ export const ProposeView: React.FC = () => {
                             <button
                               disabled={!isPending}
                               onClick={() => isPending && setSelectedEditId(sub.session_id || null)}
-                              className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition flex items-center gap-1.5 ${
+                              className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition flex items-center gap-1.5 ${
                                 isPending
-                                  ? 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 cursor-pointer shadow-2xs'
-                                  : 'opacity-40 cursor-not-allowed border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-[#3A3B3C] text-gray-400 dark:text-gray-500'
+                                  ? 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 text-fb-blue hover:bg-blue-100 cursor-pointer shadow-2xs'
+                                  : 'opacity-40 cursor-not-allowed border-fb-divider bg-fb-input text-gray-400 dark:text-gray-500'
                               }`}
                               title={
                                 isPending
@@ -974,10 +974,10 @@ export const ProposeView: React.FC = () => {
                               onClick={() =>
                                 isPending && handleDeleteSubmission(sub.session_id!, sub.title)
                               }
-                              className={`p-1.5 rounded-xl border transition ${
+                              className={`p-1.5 rounded-lg border transition ${
                                 isPending
                                   ? 'border-red-200 dark:border-red-900/50 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer shadow-2xs'
-                                  : 'opacity-40 cursor-not-allowed border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-[#3A3B3C] text-gray-400 dark:text-gray-500'
+                                  : 'opacity-40 cursor-not-allowed border-fb-divider bg-fb-input text-gray-400 dark:text-gray-500'
                               }`}
                               title={
                                 isPending
@@ -991,9 +991,9 @@ export const ProposeView: React.FC = () => {
                         </div>
 
                       {/* Metadata footer */}
-                      <div className="pt-2 border-t border-gray-100 dark:border-gray-800 flex flex-wrap items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-400">
+                      <div className="pt-2 border-t border-fb-divider flex flex-wrap items-center justify-between gap-3 text-xs text-fb-text-2">
                         <div className="flex items-center gap-3 flex-wrap">
-                          <span className="font-semibold text-gray-700 dark:text-gray-300">
+                          <span className="font-semibold text-fb-text">
                             Môn: {sub.subject_name || sub.subject_code} ({sub.subject_code})
                           </span>
                           <span>•</span>
@@ -1027,15 +1027,15 @@ export const ProposeView: React.FC = () => {
 
                 {/* Phân trang (Pagination) */}
                 {submissions.length > 0 && (
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 pb-1 px-1 text-xs text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700/60 mt-4">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 pb-1 px-1 text-xs text-fb-text-2 border-t border-fb-divider/60 mt-4">
                     <div className="flex items-center gap-3 flex-wrap">
                       <span>
                         Hiển thị{' '}
-                        <span className="font-semibold text-gray-900 dark:text-gray-100">
+                        <span className="font-semibold text-fb-text">
                           {(safeCurrentPage - 1) * pageSize + 1}
                         </span>
                         -
-                        <span className="font-semibold text-gray-900 dark:text-gray-100">
+                        <span className="font-semibold text-fb-text">
                           {Math.min(safeCurrentPage * pageSize, submissions.length)}
                         </span>{' '}
                         trong tổng số{' '}
@@ -1051,7 +1051,7 @@ export const ProposeView: React.FC = () => {
                             setPageSize(Number(e.target.value));
                             setCurrentPage(1);
                           }}
-                          className="px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#3A3B3C] text-xs font-semibold text-gray-700 dark:text-gray-300 focus:outline-hidden cursor-pointer"
+                          className="px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#3A3B3C] text-xs font-semibold text-fb-text focus:outline-hidden cursor-pointer"
                         >
                           <option value={3}>3 phiên</option>
                           <option value={5}>5 phiên</option>
@@ -1067,7 +1067,7 @@ export const ProposeView: React.FC = () => {
                           type="button"
                           onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                           disabled={safeCurrentPage === 1}
-                          className="px-2.5 py-1.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#242526] text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-100 dark:hover:bg-[#3A3B3C] disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer flex items-center gap-1"
+                          className="px-2.5 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-fb-card text-fb-text font-semibold hover:bg-fb-hover disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer flex items-center gap-1"
                         >
                           <ChevronLeft className="w-3.5 h-3.5" />
                           <span className="hidden sm:inline">Trước</span>
@@ -1094,10 +1094,10 @@ export const ProposeView: React.FC = () => {
                                   <button
                                     type="button"
                                     onClick={() => setCurrentPage(page)}
-                                    className={`w-8 h-8 rounded-xl text-xs font-bold transition cursor-pointer ${
+                                    className={`w-8 h-8 rounded-lg text-xs font-bold transition cursor-pointer ${
                                       page === safeCurrentPage
                                         ? 'bg-blue-600 text-white shadow-xs'
-                                        : 'border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#242526] text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C]'
+                                        : 'border border-gray-300 dark:border-gray-700 bg-fb-card text-fb-text hover:bg-fb-hover'
                                     }`}
                                   >
                                     {page}
@@ -1111,7 +1111,7 @@ export const ProposeView: React.FC = () => {
                           type="button"
                           onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                           disabled={safeCurrentPage === totalPages}
-                          className="px-2.5 py-1.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#242526] text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-100 dark:hover:bg-[#3A3B3C] disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer flex items-center gap-1"
+                          className="px-2.5 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-fb-card text-fb-text font-semibold hover:bg-fb-hover disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer flex items-center gap-1"
                         >
                           <span className="hidden sm:inline">Sau</span>
                           <ChevronRight className="w-3.5 h-3.5" />

@@ -243,7 +243,7 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-6 text-xs">
       {/* Intro Banner */}
-      <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/60 text-xs text-blue-900 dark:text-blue-200 flex items-start gap-3">
+      <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/60 text-xs text-blue-900 dark:text-blue-200 flex items-start gap-3">
         <Sparkles className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
         <div className="space-y-1">
           <p className="font-bold text-sm">
@@ -260,15 +260,15 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
         {/* Left Column (7 cols): Basic info & Difficulty & Topic Weights */}
         <div className="lg:col-span-7 space-y-6">
           {/* Section 1: Thông tin đề thi */}
-          <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-5 sm:p-6 space-y-4">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2 border-b border-gray-100 dark:border-gray-700 pb-2.5">
+          <div className="bg-fb-card rounded-lg shadow-fb-card p-5 sm:p-6 space-y-4">
+            <h3 className="text-sm font-bold text-fb-text flex items-center gap-2 border-b border-fb-divider pb-2.5">
               <BookOpen className="w-4 h-4 text-blue-600" />
               <span>1. Thông tin chung của đề thi</span>
             </h3>
 
             {/* Subject Selector */}
             <div className="space-y-1.5">
-              <label className="block font-bold text-gray-800 dark:text-gray-200">
+              <label className="block font-bold text-fb-text">
                 Môn học <span className="text-red-500">*</span>:
               </label>
               <select
@@ -278,7 +278,7 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
                   setSelectedClassIds([]); // Reset class selection on subject change
                 }}
                 disabled={loadingData || isSubmitting}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-hidden cursor-pointer"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-fb-input border border-gray-200 dark:border-gray-600 text-fb-text font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-hidden cursor-pointer"
               >
                 {subjects.length === 0 ? (
                   <option value="">{loadingData ? 'Đang tải môn học...' : 'Chưa có môn học'}</option>
@@ -295,7 +295,7 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
             {/* Exam Title */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="block font-bold text-gray-800 dark:text-gray-200">
+                <label className="block font-bold text-fb-text">
                   Tiêu đề đề thi:
                 </label>
                 <span className="text-gray-400 text-[11px]">(Tùy chọn)</span>
@@ -306,7 +306,7 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
                 onChange={(e) => setTitle(e.target.value)}
                 disabled={isSubmitting}
                 placeholder={`Ví dụ: Đề thi Giữa kỳ ${selectedSubjectObj?.name || 'môn học'} - Kỳ 2026.1`}
-                className="w-full px-3.5 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                className="w-full px-3.5 py-2 rounded-lg bg-fb-input border border-gray-200 dark:border-gray-600 text-fb-text placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
               />
               <p className="text-[11px] text-gray-400">
                 Nếu để trống, hệ thống sẽ tự động đặt tiêu đề theo chuẩn tên môn và thời gian sinh.
@@ -315,7 +315,7 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
 
             {/* Question Count */}
             <div className="space-y-1.5">
-              <label className="block font-bold text-gray-800 dark:text-gray-200">
+              <label className="block font-bold text-fb-text">
                 Số lượng câu hỏi trong đề <span className="text-red-500">*</span>:
               </label>
               <div className="flex items-center gap-3">
@@ -326,7 +326,7 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
                   value={questionCount}
                   onChange={(e) => setQuestionCount(Number(e.target.value))}
                   disabled={isSubmitting}
-                  className="w-32 px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 font-bold focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                  className="w-32 px-3 py-2 rounded-lg bg-fb-input border border-gray-200 dark:border-gray-600 text-fb-text font-bold focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
                 />
                 <div className="flex items-center gap-1.5">
                   {[20, 30, 40, 50].map((num) => (
@@ -337,7 +337,7 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
                       className={`px-2.5 py-1 rounded-lg border text-xs font-semibold transition cursor-pointer ${
                         questionCount === num
                           ? 'bg-blue-600 text-white border-blue-600'
-                          : 'bg-gray-100 dark:bg-[#3A3B3C] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-200'
+                          : 'bg-fb-input text-fb-text border-fb-divider hover:bg-gray-200'
                       }`}
                     >
                       {num} câu
@@ -349,9 +349,9 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
           </div>
 
           {/* Section 2: Ma trận phân bố độ khó */}
-          <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-5 sm:p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-2.5">
-              <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+          <div className="bg-fb-card rounded-lg shadow-fb-card p-5 sm:p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-fb-divider pb-2.5">
+              <h3 className="text-sm font-bold text-fb-text flex items-center gap-2">
                 <Sliders className="w-4 h-4 text-blue-600" />
                 <span>2. Phân bố ma trận độ khó câu hỏi</span>
               </h3>
@@ -369,7 +369,7 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
                   <button
                     type="button"
                     onClick={handleNormalizeDifficulty}
-                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline cursor-pointer font-semibold"
+                    className="text-xs text-fb-blue hover:underline cursor-pointer font-semibold"
                   >
                     Chuẩn hóa (30-50-20)
                   </button>
@@ -379,7 +379,7 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Easy */}
-              <div className="p-3.5 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40 space-y-2">
+              <div className="p-3.5 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40 space-y-2">
                 <div className="flex justify-between items-center font-bold text-emerald-800 dark:text-emerald-300">
                   <span>Mức độ Dễ (Easy):</span>
                   <span>{easyPercent}% (~{Math.round((questionCount * easyPercent) / 100)} câu)</span>
@@ -397,7 +397,7 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
               </div>
 
               {/* Medium */}
-              <div className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 space-y-2">
+              <div className="p-3.5 rounded-lg bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 space-y-2">
                 <div className="flex justify-between items-center font-bold text-amber-800 dark:text-amber-300">
                   <span>Mức độ Trung bình (Medium):</span>
                   <span>{mediumPercent}% (~{Math.round((questionCount * mediumPercent) / 100)} câu)</span>
@@ -415,7 +415,7 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
               </div>
 
               {/* Hard */}
-              <div className="p-3.5 rounded-xl bg-red-50/70 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40 space-y-2">
+              <div className="p-3.5 rounded-lg bg-red-50/70 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40 space-y-2">
                 <div className="flex justify-between items-center font-bold text-red-800 dark:text-red-300">
                   <span>Mức độ Khó (Hard):</span>
                   <span>{hardPercent}% (~{Math.round((questionCount * hardPercent) / 100)} câu)</span>
@@ -433,8 +433,8 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
               </div>
 
               {/* Unclassified */}
-              <div className="p-3.5 rounded-xl bg-gray-50 dark:bg-[#1E1F20] border border-gray-200 dark:border-gray-700 space-y-2">
-                <div className="flex justify-between items-center font-bold text-gray-700 dark:text-gray-300">
+              <div className="p-3.5 rounded-lg bg-fb-input border border-fb-divider space-y-2">
+                <div className="flex justify-between items-center font-bold text-fb-text">
                   <span>Chưa phân loại (Unclassified):</span>
                   <span>{unclassifiedPercent}% (~{Math.round((questionCount * unclassifiedPercent) / 100)} câu)</span>
                 </div>
@@ -453,9 +453,9 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
           </div>
 
           {/* Section 3: Trọng số chủ đề (tùy chọn) */}
-          <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-5 sm:p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-2.5">
-              <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+          <div className="bg-fb-card rounded-lg shadow-fb-card p-5 sm:p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-fb-divider pb-2.5">
+              <h3 className="text-sm font-bold text-fb-text flex items-center gap-2">
                 <Layers className="w-4 h-4 text-blue-600" />
                 <span>3. Trọng số chủ đề / chương (Tùy chọn)</span>
               </h3>
@@ -472,13 +472,13 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
                 {topicWeights.map((tw) => (
                   <div
                     key={tw.id}
-                    className="p-2.5 rounded-xl bg-gray-50 dark:bg-[#1E1F20] border border-gray-200 dark:border-gray-700 flex items-center justify-between gap-3"
+                    className="p-2.5 rounded-lg bg-fb-input border border-fb-divider flex items-center justify-between gap-3"
                   >
-                    <span className="font-semibold text-gray-800 dark:text-gray-200 truncate">
+                    <span className="font-semibold text-fb-text truncate">
                       {tw.topic}
                     </span>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-mono font-bold text-xs">
+                      <span className="px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 tabular-nums font-bold text-xs">
                         Trọng số: {tw.weight}
                       </span>
                       <button
@@ -503,7 +503,7 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
                 value={newTopicName}
                 onChange={(e) => setNewTopicName(e.target.value)}
                 disabled={isSubmitting}
-                className="flex-1 px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-hidden"
+                className="flex-1 px-3 py-2 rounded-lg bg-fb-input border border-gray-200 dark:border-gray-600 text-fb-text placeholder-gray-400 focus:outline-hidden"
               />
               <div className="flex items-center gap-2">
                 <input
@@ -514,14 +514,14 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
                   value={newTopicWeight}
                   onChange={(e) => setNewTopicWeight(Number(e.target.value))}
                   disabled={isSubmitting}
-                  className="w-24 px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 font-mono text-center focus:outline-hidden"
+                  className="w-24 px-3 py-2 rounded-lg bg-fb-input border border-gray-200 dark:border-gray-600 text-fb-text tabular-nums text-center focus:outline-hidden"
                   placeholder="0.2"
                 />
                 <button
                   type="button"
                   onClick={handleAddTopicWeight}
                   disabled={isSubmitting}
-                  className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition flex items-center gap-1 cursor-pointer shrink-0"
+                  className="px-3.5 py-2 rounded-lg bg-fb-blue hover:bg-fb-blue-hover text-white font-bold transition flex items-center gap-1 cursor-pointer shrink-0"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Thêm</span>
@@ -534,9 +534,9 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
         {/* Right Column (5 cols): Classes & Options & Submit */}
         <div className="lg:col-span-5 space-y-6">
           {/* Section 4: Lớp học phần áp dụng (Bắt buộc) */}
-          <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-5 sm:p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-2.5">
-              <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+          <div className="bg-fb-card rounded-lg shadow-fb-card p-5 sm:p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-fb-divider pb-2.5">
+              <h3 className="text-sm font-bold text-fb-text flex items-center gap-2">
                 <GraduationCap className="w-4 h-4 text-blue-600" />
                 <span>4. Lớp học phần áp dụng <span className="text-red-500">*</span></span>
               </h3>
@@ -544,7 +544,7 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
                 <button
                   type="button"
                   onClick={handleSelectAllClasses}
-                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-semibold cursor-pointer"
+                  className="text-xs text-fb-blue hover:underline font-semibold cursor-pointer"
                 >
                   {selectedClassIds.length === availableClasses.length
                     ? 'Bỏ chọn tất cả'
@@ -558,7 +558,7 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
             </p>
 
             {availableClasses.length === 0 ? (
-              <div className="p-4 rounded-xl bg-gray-50 dark:bg-[#1E1F20] text-center text-gray-500 space-y-2">
+              <div className="p-4 rounded-lg bg-fb-input text-center text-gray-500 space-y-2">
                 <Users className="w-6 h-6 mx-auto text-gray-400" />
                 <p>Không tìm thấy lớp học phần phù hợp môn học này.</p>
                 <div className="pt-2">
@@ -593,10 +593,10 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
                   return (
                     <label
                       key={id}
-                      className={`p-3 rounded-xl border flex items-center justify-between gap-3 cursor-pointer transition ${
+                      className={`p-3 rounded-lg border flex items-center justify-between gap-3 cursor-pointer transition ${
                         isChecked
                           ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/30'
-                          : 'border-gray-200 dark:border-gray-700/80 hover:bg-gray-50 dark:hover:bg-[#3A3B3C]'
+                          : 'border-fb-divider/80 hover:bg-fb-hover'
                       }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
@@ -607,7 +607,7 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
                           className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
                         />
                         <div className="truncate">
-                          <span className="font-bold text-gray-900 dark:text-gray-100 block truncate">
+                          <span className="font-bold text-fb-text block truncate">
                             {cls.class_code ? `Lớp ${cls.class_code}` : `Lớp #${id}`}
                           </span>
                           <span className="text-[10px] text-gray-500 block truncate">
@@ -615,7 +615,7 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
                           </span>
                         </div>
                       </div>
-                      <span className="text-[10px] font-mono text-gray-400 bg-gray-100 dark:bg-[#3A3B3C] px-2 py-0.5 rounded-md shrink-0">
+                      <span className="text-[10px] tabular-nums text-gray-400 bg-fb-input px-2 py-0.5 rounded-md shrink-0">
                         ID: {id}
                       </span>
                     </label>
@@ -630,13 +630,13 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
           </div>
 
           {/* Section 5: Tùy chọn xáo trộn & đáp án */}
-          <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-5 sm:p-6 space-y-3">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2 border-b border-gray-100 dark:border-gray-700 pb-2.5">
+          <div className="bg-fb-card rounded-lg shadow-fb-card p-5 sm:p-6 space-y-3">
+            <h3 className="text-sm font-bold text-fb-text flex items-center gap-2 border-b border-fb-divider pb-2.5">
               <Shuffle className="w-4 h-4 text-blue-600" />
               <span>5. Thiết lập đề thi</span>
             </h3>
 
-            <label className="flex items-start gap-3 cursor-pointer p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-[#3A3B3C] transition">
+            <label className="flex items-start gap-3 cursor-pointer p-2 rounded-lg hover:bg-fb-hover transition">
               <input
                 type="checkbox"
                 checked={shuffleOptions}
@@ -644,7 +644,7 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
                 className="w-4 h-4 mt-0.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
               />
               <div className="space-y-0.5">
-                <span className="font-bold text-gray-800 dark:text-gray-200 block">
+                <span className="font-bold text-fb-text block">
                   Xáo trộn thứ tự các phương án lựa chọn A, B, C, D
                 </span>
                 <span className="text-[11px] text-gray-500">
@@ -653,7 +653,7 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
               </div>
             </label>
 
-            <label className="flex items-start gap-3 cursor-pointer p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-[#3A3B3C] transition">
+            <label className="flex items-start gap-3 cursor-pointer p-2 rounded-lg hover:bg-fb-hover transition">
               <input
                 type="checkbox"
                 checked={includeAnswerKey}
@@ -661,7 +661,7 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
                 className="w-4 h-4 mt-0.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
               />
               <div className="space-y-0.5">
-                <span className="font-bold text-gray-800 dark:text-gray-200 block">
+                <span className="font-bold text-fb-text block">
                   Có kèm bảng đáp án đúng
                 </span>
                 <span className="text-[11px] text-gray-500">
@@ -673,7 +673,7 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
 
           {/* Form Error Banner */}
           {formError && (
-            <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 text-xs flex items-start gap-2.5">
+            <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 text-xs flex items-start gap-2.5">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{formError}</span>
             </div>
@@ -683,7 +683,7 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3.5 px-6 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm transition shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            className="w-full py-3.5 px-6 rounded-lg bg-fb-blue hover:bg-fb-blue-hover text-white font-black text-sm transition shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
           >
             {isSubmitting ? (
               <>

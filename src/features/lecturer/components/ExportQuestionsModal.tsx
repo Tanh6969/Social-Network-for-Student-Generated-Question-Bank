@@ -18,15 +18,15 @@ export const ExportQuestionsModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-      <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-2xl max-w-lg w-full p-5 border border-gray-200 dark:border-gray-700 space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60">
+      <div className="bg-fb-card rounded-lg shadow-2xl max-w-lg w-full p-5 border border-fb-divider space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-fb-divider">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center">
               <FileSpreadsheet className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100">
+              <h3 className="font-bold text-sm text-fb-text">
                 Xuất Dữ Liệu Ngân Hàng Câu Hỏi (EXPORT.01)
               </h3>
               <p className="text-[11px] text-gray-500">
@@ -45,7 +45,7 @@ export const ExportQuestionsModal: React.FC = () => {
 
         {/* Format Selector */}
         <div>
-          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-xs font-bold text-fb-text mb-2">
             Định dạng xuất file:
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
@@ -58,10 +58,10 @@ export const ExportQuestionsModal: React.FC = () => {
               <button
                 key={f.id}
                 onClick={() => setFormat(f.id as any)}
-                className={`p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition ${
+                className={`p-2.5 rounded-lg border flex flex-col items-center justify-center gap-1.5 transition ${
                   format === f.id
                     ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 font-bold ring-1 ring-emerald-600'
-                    : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#3A3B3C]'
+                    : 'border-fb-divider hover:bg-fb-hover'
                 }`}
               >
                 <f.icon className="w-5 h-5" />
@@ -72,13 +72,13 @@ export const ExportQuestionsModal: React.FC = () => {
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-xs font-bold text-fb-text mb-1">
             Môn học cần xuất:
           </label>
           <select
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
-            className="w-full p-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-[#3A3B3C]"
+            className="w-full p-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-fb-input"
           >
             <option value="Tất cả môn học">Tất cả môn học</option>
             <option value="Mạng máy tính">Mạng máy tính</option>
@@ -88,7 +88,7 @@ export const ExportQuestionsModal: React.FC = () => {
           </select>
         </div>
 
-        <div className="space-y-2 text-xs text-gray-700 dark:text-gray-300 pt-1">
+        <div className="space-y-2 text-xs text-fb-text pt-1">
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
@@ -110,16 +110,16 @@ export const ExportQuestionsModal: React.FC = () => {
           </label>
         </div>
 
-        <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100 dark:border-gray-700">
+        <div className="flex items-center justify-end gap-2 pt-3 border-t border-fb-divider">
           <button
             onClick={() => setIsExportQuestionsOpen(false)}
-            className="px-4 py-2 border rounded-xl text-xs font-semibold"
+            className="px-4 py-2 border rounded-lg text-xs font-semibold"
           >
             Đóng
           </button>
           <button
             onClick={handleExport}
-            className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center gap-1.5"
+            className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-md transition flex items-center gap-1.5"
           >
             <Download className="w-4 h-4" />
             <span>Tải file về máy</span>

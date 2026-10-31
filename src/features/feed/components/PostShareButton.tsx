@@ -60,7 +60,7 @@ export function PostShareButton({
         onClick={() => setMenuOpen((open) => !open)}
         aria-expanded={menuOpen}
         aria-haspopup="menu"
-        className="flex w-full items-center justify-center gap-2 rounded-lg py-2 transition hover:bg-gray-100 dark:hover:bg-[#3A3B3C]"
+        className="flex w-full items-center justify-center gap-2 rounded-lg py-2 transition hover:bg-fb-hover"
       >
         <Share2 className="h-4 w-4" />
         <span>Chia sẻ</span>
@@ -74,7 +74,7 @@ export function PostShareButton({
             type="button"
             role="menuitem"
             onClick={() => void copyLink()}
-            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-[#3A3B3C]"
+            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left hover:bg-fb-hover"
           >
             <Link2 className="h-4 w-4" />
             Sao chép liên kết

@@ -188,38 +188,38 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
   };
 
   return (
-    <div className="fixed inset-0 z-[230] flex justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="w-full max-w-2xl bg-white dark:bg-[#1E1F20] h-full shadow-2xl flex flex-col border-l border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div className="fixed inset-0 z-[230] flex justify-end bg-black/60 animate-in fade-in duration-200">
+      <div className="w-full max-w-2xl bg-fb-card h-full shadow-2xl flex flex-col border-l border-fb-divider overflow-hidden">
         {/* Drawer Header */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-[#242526]">
+        <div className="p-4 border-b border-fb-divider flex items-center justify-between bg-gray-50 dark:bg-[#242526]">
           <div className="flex items-center gap-2.5">
-            <span className="p-2 rounded-xl bg-blue-600 text-white shadow-xs">
+            <span className="p-2 rounded-lg bg-blue-600 text-white shadow-xs">
               <Server className="w-5 h-5" />
             </span>
             <div>
-              <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 flex items-center gap-2">
+              <h3 className="font-bold text-sm text-fb-text flex items-center gap-2">
                 18. Giảng viên Duyệt Câu hỏi (Question Review)
               </h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-fb-text-2">
                 Tài liệu & Nhật ký tương tác 6 API chuẩn theo hình ảnh nghiệp vụ
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition"
+            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-fb-hover transition"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab switch: SWAGGER vs LIVE LOGS */}
-        <div className="flex border-b border-gray-200 dark:border-gray-700 text-xs font-bold bg-white dark:bg-[#1E1F20]">
+        <div className="flex border-b border-fb-divider text-xs font-bold bg-fb-card">
           <button
             onClick={() => setActiveTab('SWAGGER')}
             className={`flex-1 py-3 border-b-2 text-center transition flex items-center justify-center gap-1.5 ${
               activeTab === 'SWAGGER'
-                ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-950/20'
+                ? 'border-blue-600 text-fb-blue bg-blue-50/30 dark:bg-blue-950/20'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -230,7 +230,7 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
             onClick={() => setActiveTab('LIVE_LOGS')}
             className={`flex-1 py-3 border-b-2 text-center transition flex items-center justify-center gap-1.5 ${
               activeTab === 'LIVE_LOGS'
-                ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-950/20'
+                ? 'border-blue-600 text-fb-blue bg-blue-50/30 dark:bg-blue-950/20'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -245,17 +245,17 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
             <div className="space-y-4">
               {/* 6 API Buttons List */}
               <div className="space-y-1.5">
-                <span className="text-gray-500 font-bold block text-[11px] uppercase tracking-wider mb-2">
+                <span className="text-gray-500 font-bold block text-[11px] mb-2">
                   Danh mục 6 API Giảng viên Duyệt (Click chọn để xem chi tiết Payload):
                 </span>
                 {apiSpecs.map((spec, idx) => (
                   <div
                     key={idx}
                     onClick={() => setSelectedApiIndex(idx)}
-                    className={`p-2.5 rounded-xl border cursor-pointer transition flex items-center justify-between ${
+                    className={`p-2.5 rounded-lg border cursor-pointer transition flex items-center justify-between ${
                       selectedApiIndex === idx
                         ? 'border-blue-600 bg-blue-50/60 dark:bg-blue-950/40 ring-1 ring-blue-600'
-                        : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-[#242526] hover:bg-gray-50 dark:hover:bg-[#2A2B2D]'
+                        : 'border-fb-divider bg-fb-card hover:bg-gray-50 dark:hover:bg-[#2A2B2D]'
                     }`}
                   >
                     <div className="flex items-center gap-2 truncate">
@@ -264,7 +264,7 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
                       >
                         {spec.method}
                       </span>
-                      <span className="font-mono font-bold text-gray-800 dark:text-gray-200 text-xs">
+                      <span className="font-mono font-bold text-fb-text text-xs">
                         {spec.path}
                       </span>
                       <span className="text-gray-500 truncate text-[11px] hidden sm:inline">
@@ -278,38 +278,38 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
 
               {/* Selected API Documentation Card */}
               {currentApi && (
-                <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-[#242526] space-y-3">
-                  <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-2">
+                <div className="p-4 rounded-lg border border-fb-divider bg-gray-50/70 dark:bg-[#242526] space-y-3">
+                  <div className="flex items-center justify-between border-b border-fb-divider pb-2">
                     <div className="flex items-center gap-2">
                       <span
                         className={`px-2.5 py-0.5 rounded font-black text-white text-xs ${currentApi.color}`}
                       >
                         {currentApi.method}
                       </span>
-                      <span className="font-mono font-bold text-sm text-gray-900 dark:text-gray-100">
+                      <span className="font-mono font-bold text-sm text-fb-text">
                         {currentApi.path}
                       </span>
                     </div>
                   </div>
 
-                  <p className="text-gray-700 dark:text-gray-300 text-xs leading-relaxed font-medium">
+                  <p className="text-fb-text text-xs leading-relaxed font-medium">
                     {currentApi.description}
                   </p>
 
                   {/* Path / Query Parameters */}
                   {currentApi.params.length > 0 && (
                     <div>
-                      <span className="font-bold text-gray-700 dark:text-gray-300 block mb-1">
+                      <span className="font-bold text-fb-text block mb-1">
                         Parameters:
                       </span>
                       <div className="space-y-1">
                         {currentApi.params.map((p, i) => (
                           <div
                             key={i}
-                            className="p-2 rounded bg-white dark:bg-[#1E1F20] border border-gray-200 dark:border-gray-700 flex items-center justify-between"
+                            className="p-2 rounded bg-fb-card border border-fb-divider flex items-center justify-between"
                           >
                             <div>
-                              <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
+                              <span className="font-mono font-bold text-fb-blue">
                                 {p.name}
                               </span>{' '}
                               <span className="text-[10px] text-gray-400">({p.type})</span>
@@ -328,7 +328,7 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
                   {currentApi.requestBody && (
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="font-bold text-gray-700 dark:text-gray-300">
+                        <span className="font-bold text-fb-text">
                           Request Body (JSON):
                         </span>
                         <button
@@ -341,7 +341,7 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
                           <span>{copiedLogId === 'req_spec' ? 'Đã sao chép' : 'Sao chép'}</span>
                         </button>
                       </div>
-                      <pre className="p-3 rounded-xl bg-gray-900 text-emerald-400 font-mono text-[11px] overflow-x-auto">
+                      <pre className="p-3 rounded-lg bg-gray-900 text-emerald-400 font-mono text-[11px] overflow-x-auto">
                         {JSON.stringify(currentApi.requestBody, null, 2)}
                       </pre>
                     </div>
@@ -350,7 +350,7 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
                   {/* Response Body JSON */}
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-gray-700 dark:text-gray-300">
+                      <span className="font-bold text-fb-text">
                         Response Body 200 OK (JSON):
                       </span>
                       <button
@@ -363,7 +363,7 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
                         <span>{copiedLogId === 'res_spec' ? 'Đã sao chép' : 'Sao chép'}</span>
                       </button>
                     </div>
-                    <pre className="p-3 rounded-xl bg-gray-900 text-blue-300 font-mono text-[11px] overflow-x-auto">
+                    <pre className="p-3 rounded-lg bg-gray-900 text-blue-300 font-mono text-[11px] overflow-x-auto">
                       {JSON.stringify(currentApi.responseBody, null, 2)}
                     </pre>
                   </div>
@@ -374,7 +374,7 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
             /* Live Logs Tab */
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-gray-500 font-bold text-[11px] uppercase tracking-wider">
+                <span className="text-gray-500 font-bold text-[11px]">
                   Các lệnh API vừa được thực hiện trong phiên ({apiLogs.length})
                 </span>
                 {apiLogs.length > 0 && (
@@ -389,7 +389,7 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
               </div>
 
               {apiLogs.length === 0 ? (
-                <div className="p-8 text-center text-gray-400 bg-gray-50 dark:bg-[#242526] rounded-xl border border-gray-200 dark:border-gray-700">
+                <div className="p-8 text-center text-gray-400 bg-gray-50 dark:bg-[#242526] rounded-lg border border-fb-divider">
                   <Server className="w-8 h-8 mx-auto mb-2 opacity-50" />
                   <p className="font-semibold">Chưa có lệnh gọi API nào được ghi nhận</p>
                   <p className="text-[11px] mt-1">
@@ -401,7 +401,7 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
                   {apiLogs.map((log) => (
                     <div
                       key={log.id}
-                      className="p-3 bg-white dark:bg-[#242526] rounded-xl border border-gray-200 dark:border-gray-700 space-y-2"
+                      className="p-3 bg-fb-card rounded-lg border border-fb-divider space-y-2"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -418,7 +418,7 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
                           >
                             {log.method}
                           </span>
-                          <span className="font-mono font-bold text-xs text-gray-900 dark:text-gray-100">
+                          <span className="font-mono font-bold text-xs text-fb-text">
                             {log.endpoint}
                           </span>
                         </div>
@@ -430,7 +430,7 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
                         </div>
                       </div>
 
-                      <p className="text-[11px] font-medium text-gray-600 dark:text-gray-300">
+                      <p className="text-[11px] font-medium text-fb-text-2">
                         {log.title}
                       </p>
 
@@ -464,7 +464,7 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
         </div>
 
         {/* Drawer Footer */}
-        <div className="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#242526] flex items-center justify-between text-xs text-gray-500">
+        <div className="p-3 border-t border-fb-divider bg-gray-50 dark:bg-[#242526] flex items-center justify-between text-xs text-gray-500">
           <span>Chuẩn đặc tả OpenAPI 3.0 / RESTful</span>
           <button
             onClick={onClose}

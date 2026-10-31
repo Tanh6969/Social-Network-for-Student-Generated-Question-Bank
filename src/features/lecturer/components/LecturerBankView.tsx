@@ -206,21 +206,21 @@ export const LecturerBankView: React.FC = () => {
   return (
     <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 space-y-4">
       {/* Top Banner Card */}
-      <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-5">
+      <div className="bg-fb-card rounded-lg shadow-fb-card p-5">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="p-2 rounded-xl bg-blue-600 text-white shadow-xs">
+              <span className="p-2 rounded-lg bg-blue-600 text-white shadow-xs">
                 <Database className="w-5 h-5" />
               </span>
-              <h1 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-gray-100 tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-black text-fb-text tracking-tight">
                 Ngân Hàng Đề Thi Riêng Của Giảng Viên
               </h1>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
                 TS. Trần Minh Đức
               </span>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 max-w-4xl leading-relaxed">
+            <p className="text-xs text-fb-text-2 max-w-4xl leading-relaxed">
               <strong>Quy trình duyệt theo chuẩn:</strong> Câu hỏi tiềm năng sau khi được duyệt từ sinh viên sẽ nạp vào kho này ở trạng thái <strong>"Cần edit"</strong> (điểm cộng của SV đã được chốt bảo lưu). Tại đây, Giảng viên có toàn quyền <strong>chỉnh sửa câu hỏi (PUT)</strong>, <strong>chat với AI (LLM)</strong> để cải thiện văn phong, quyết định <strong>Giữ / Loại</strong> và <strong>bốc tách sinh đề thi</strong>.
             </p>
           </div>
@@ -229,7 +229,7 @@ export const LecturerBankView: React.FC = () => {
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => setActiveTab('exams')}
-              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-xs cursor-pointer"
+              className="px-4 py-2 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg text-xs font-bold transition flex items-center gap-2 shadow-xs cursor-pointer"
             >
               <Layers className="w-4 h-4" />
               <span>Sinh đề thi (Bốc tách ngẫu nhiên / Có chủ đích)</span>
@@ -237,7 +237,7 @@ export const LecturerBankView: React.FC = () => {
 
             <button
               onClick={() => setActiveTab('review')}
-              className="px-3.5 py-2 bg-gray-100 dark:bg-[#3A3B3C] hover:bg-gray-200 text-gray-800 dark:text-gray-200 rounded-xl text-xs font-semibold transition flex items-center gap-1.5"
+              className="px-3.5 py-2 bg-fb-input hover:bg-gray-200 text-fb-text rounded-lg text-xs font-semibold transition flex items-center gap-1.5"
             >
               <RotateCcw className="w-4 h-4 text-gray-500" />
               <span>Mở Hàng chờ duyệt từ SV</span>
@@ -246,13 +246,13 @@ export const LecturerBankView: React.FC = () => {
         </div>
 
         {/* 4 Status Metrics Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 text-xs">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 pt-4 border-t border-fb-divider text-xs">
           <div
             onClick={() => setActiveFilterTab('NEED_EDIT')}
-            className={`p-3 rounded-xl border cursor-pointer transition ${
+            className={`p-3 rounded-lg border cursor-pointer transition ${
               activeFilterTab === 'NEED_EDIT'
                 ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 ring-1 ring-amber-500'
-                : 'bg-gray-50 dark:bg-[#1E1F20] border-gray-100 dark:border-gray-800 hover:border-gray-300'
+                : 'bg-fb-input border-fb-divider hover:border-gray-300'
             }`}
           >
             <span className="text-amber-700 dark:text-amber-300 font-bold block flex items-center gap-1">
@@ -268,10 +268,10 @@ export const LecturerBankView: React.FC = () => {
 
           <div
             onClick={() => setActiveFilterTab('APPROVED')}
-            className={`p-3 rounded-xl border cursor-pointer transition ${
+            className={`p-3 rounded-lg border cursor-pointer transition ${
               activeFilterTab === 'APPROVED'
                 ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 ring-1 ring-emerald-500'
-                : 'bg-gray-50 dark:bg-[#1E1F20] border-gray-100 dark:border-gray-800 hover:border-gray-300'
+                : 'bg-fb-input border-fb-divider hover:border-gray-300'
             }`}
           >
             <span className="text-emerald-700 dark:text-emerald-300 font-bold block flex items-center gap-1">
@@ -287,10 +287,10 @@ export const LecturerBankView: React.FC = () => {
 
           <div
             onClick={() => setActiveFilterTab('REJECTED')}
-            className={`p-3 rounded-xl border cursor-pointer transition ${
+            className={`p-3 rounded-lg border cursor-pointer transition ${
               activeFilterTab === 'REJECTED'
                 ? 'bg-red-50 dark:bg-red-950/40 border-red-300 dark:border-red-800 ring-1 ring-red-500'
-                : 'bg-gray-50 dark:bg-[#1E1F20] border-gray-100 dark:border-gray-800 hover:border-gray-300'
+                : 'bg-fb-input border-fb-divider hover:border-gray-300'
             }`}
           >
             <span className="text-red-700 dark:text-red-300 font-bold block flex items-center gap-1">
@@ -306,16 +306,16 @@ export const LecturerBankView: React.FC = () => {
 
           <div
             onClick={() => setActiveFilterTab('ALL')}
-            className={`p-3 rounded-xl border cursor-pointer transition ${
+            className={`p-3 rounded-lg border cursor-pointer transition ${
               activeFilterTab === 'ALL'
                 ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-300 dark:border-blue-800 ring-1 ring-blue-500'
-                : 'bg-gray-50 dark:bg-[#1E1F20] border-gray-100 dark:border-gray-800 hover:border-gray-300'
+                : 'bg-fb-input border-fb-divider hover:border-gray-300'
             }`}
           >
             <span className="text-gray-500 font-bold block flex items-center gap-1">
               <Database className="w-3.5 h-3.5 text-blue-600" /> Tổng ngân hàng GV
             </span>
-            <span className="text-xl font-black text-gray-900 dark:text-gray-100">
+            <span className="text-xl font-black text-fb-text">
               {questions.length} câu
             </span>
             <span className="text-[10px] text-gray-400 block mt-0.5">
@@ -326,7 +326,7 @@ export const LecturerBankView: React.FC = () => {
       </div>
 
       {/* Filter and Tab Bar */}
-      <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-3 flex flex-col md:flex-row items-center justify-between gap-3 text-xs">
+      <div className="bg-fb-card rounded-lg shadow-fb-card p-3 flex flex-col md:flex-row items-center justify-between gap-3 text-xs">
         {/* Search */}
         <div className="relative w-full md:w-80">
           <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
@@ -335,7 +335,7 @@ export const LecturerBankView: React.FC = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Tìm theo nội dung câu hỏi, chương, tác giả..."
-            className="w-full pl-9 pr-3 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+            className="w-full pl-9 pr-3 py-2 rounded-lg bg-fb-input border border-gray-200 dark:border-gray-600 text-fb-text focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
           />
         </div>
 
@@ -345,7 +345,7 @@ export const LecturerBankView: React.FC = () => {
           <select
             value={selectedSubject}
             onChange={(e) => setSelectedSubject(e.target.value)}
-            className="px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 rounded-lg bg-fb-input border border-gray-200 dark:border-gray-600 text-fb-text font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-500"
           >
             <option value="ALL">Tất cả môn học</option>
             {subjectsList.map((subj) => (
@@ -359,7 +359,7 @@ export const LecturerBankView: React.FC = () => {
           <select
             value={selectedDifficulty}
             onChange={(e) => setSelectedDifficulty(e.target.value)}
-            className="px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 rounded-lg bg-fb-input border border-gray-200 dark:border-gray-600 text-fb-text font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-500"
           >
             <option value="ALL">Mọi độ khó</option>
             <option value="EASY">Dễ (Nhận biết)</option>
@@ -374,9 +374,9 @@ export const LecturerBankView: React.FC = () => {
         {/* =========================================================================
             PANEL 1 (3 cols): Question Selector List
             ========================================================================= */}
-        <div className="lg:col-span-3 bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-3.5 space-y-3 flex flex-col max-h-[820px]">
-          <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-gray-700">
-            <span className="font-bold text-xs text-gray-700 dark:text-gray-300">
+        <div className="lg:col-span-3 bg-fb-card rounded-lg shadow-fb-card p-3.5 space-y-3 flex flex-col max-h-[820px]">
+          <div className="flex items-center justify-between pb-2 border-b border-fb-divider">
+            <span className="font-bold text-xs text-fb-text">
               Danh sách câu hỏi ({lecturerQuestions.length})
             </span>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
@@ -398,14 +398,14 @@ export const LecturerBankView: React.FC = () => {
                 <div
                   key={q.id}
                   onClick={() => setSelectedQuestionId(q.id)}
-                  className={`p-3 rounded-xl border cursor-pointer text-xs transition relative ${
+                  className={`p-3 rounded-lg border cursor-pointer text-xs transition relative ${
                     isSelected
                       ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 ring-1 ring-blue-600'
-                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-[#242526] hover:bg-gray-50 dark:hover:bg-[#3A3B3C]'
+                      : 'border-fb-divider bg-fb-card hover:bg-fb-hover'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-bold text-gray-900 dark:text-gray-100">
+                    <span className="font-bold text-fb-text">
                       #{idx + 1} • {q.subject}
                     </span>
 
@@ -427,7 +427,7 @@ export const LecturerBankView: React.FC = () => {
                     </span>
                   </div>
 
-                  <p className="line-clamp-2 text-gray-600 dark:text-gray-300 text-[11px] font-medium leading-relaxed">
+                  <p className="line-clamp-2 text-fb-text-2 text-[11px] font-medium leading-relaxed">
                     {q.content}
                   </p>
 
@@ -456,14 +456,14 @@ export const LecturerBankView: React.FC = () => {
         {/* =========================================================================
             PANEL 2 (5 cols): Active Question Detail & Teacher Editing (PUT) & Decision
             ========================================================================= */}
-        <div className="lg:col-span-5 bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-5 space-y-4 flex flex-col justify-between">
+        <div className="lg:col-span-5 bg-fb-card rounded-lg shadow-fb-card p-5 space-y-4 flex flex-col justify-between">
           {activeQuestion ? (
             <div className="space-y-4">
               {/* Top Question Header */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-gray-100 dark:border-gray-700 pb-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-fb-divider pb-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                    <span className="text-xs font-black text-fb-blue">
                       Biên Tập Câu Hỏi ({activeQuestion.id})
                     </span>
                     {activeQuestion.status === 'NEED_EDIT' && (
@@ -478,14 +478,14 @@ export const LecturerBankView: React.FC = () => {
                     )}
                   </div>
                   <p className="text-[11px] text-gray-500 mt-0.5">
-                    Môn: <strong className="text-gray-800 dark:text-gray-200">{activeQuestion.subject}</strong> • {activeQuestion.chapter}
+                    Môn: <strong className="text-fb-text">{activeQuestion.subject}</strong> • {activeQuestion.chapter}
                   </p>
                 </div>
 
                 {/* Question Edit Button: PUT /questions/{id} */}
                 <button
                   onClick={() => setIsEditModalOpen(true)}
-                  className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+                  className="px-3.5 py-1.5 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
                 >
                   <Edit3 className="w-3.5 h-3.5" />
                   <span>Chỉnh sửa câu hỏi (PUT)</span>
@@ -493,7 +493,7 @@ export const LecturerBankView: React.FC = () => {
               </div>
 
               {/* Student Points Reserved Notice (Slide requirement) */}
-              <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center justify-between text-xs text-amber-900 dark:text-amber-200">
+              <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg flex items-center justify-between text-xs text-amber-900 dark:text-amber-200">
                 <div className="flex items-center gap-2">
                   <Award className="w-4 h-4 text-amber-600 shrink-0" />
                   <div>
@@ -511,10 +511,10 @@ export const LecturerBankView: React.FC = () => {
               </div>
 
               {/* Question Content Box */}
-              <div className="bg-gray-50 dark:bg-[#1E1F20] p-4 rounded-xl border border-gray-200 dark:border-gray-700 space-y-2">
+              <div className="bg-fb-input p-4 rounded-lg border border-fb-divider space-y-2">
                 <div className="flex items-center justify-between text-[11px] text-gray-500 font-bold">
-                  <span>NỘI DUNG ĐỀ BÀI (SINGLE-CHOICE)</span>
-                  <span className="px-2 py-0.5 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                  <span>Nội dung đề bài (một đáp án)</span>
+                  <span className="px-2 py-0.5 rounded bg-gray-200 dark:bg-gray-700 text-fb-text">
                     {activeQuestion.difficulty === 'EASY'
                       ? 'Dễ (Nhận biết)'
                       : activeQuestion.difficulty === 'MEDIUM'
@@ -522,23 +522,23 @@ export const LecturerBankView: React.FC = () => {
                       : 'Khó (Vận dụng cao)'}
                   </span>
                 </div>
-                <p className="font-bold text-sm text-gray-900 dark:text-gray-100 leading-relaxed">
+                <p className="font-bold text-sm text-fb-text leading-relaxed">
                   {activeQuestion.content}
                 </p>
               </div>
 
               {/* 4 Options */}
               <div className="space-y-2 text-xs">
-                <span className="font-bold text-gray-600 dark:text-gray-400 text-[11px] block uppercase">
+                <span className="font-bold text-fb-text-2 text-[11px] block">
                   4 Phương án trắc nghiệm:
                 </span>
                 {activeQuestion.options.map((opt) => (
                   <div
                     key={opt.id}
-                    className={`p-3 rounded-xl border flex items-center justify-between transition ${
+                    className={`p-3 rounded-lg border flex items-center justify-between transition ${
                       opt.id === activeQuestion.correctAnswer
                         ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-400 text-emerald-900 dark:text-emerald-200 font-semibold ring-1 ring-emerald-400'
-                        : 'bg-white dark:bg-[#242526] border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300'
+                        : 'bg-fb-card border-fb-divider text-fb-text'
                     }`}
                   >
                     <div className="flex items-center gap-2">
@@ -546,7 +546,7 @@ export const LecturerBankView: React.FC = () => {
                         className={`w-6 h-6 rounded-full flex items-center justify-center font-black text-xs ${
                           opt.id === activeQuestion.correctAnswer
                             ? 'bg-emerald-600 text-white'
-                            : 'bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-300'
+                            : 'bg-fb-input text-fb-text-2'
                         }`}
                       >
                         {opt.id}
@@ -563,20 +563,20 @@ export const LecturerBankView: React.FC = () => {
               </div>
 
               {/* Explanation */}
-              <div className="p-3.5 bg-blue-50/70 dark:bg-blue-950/30 rounded-xl text-xs text-blue-900 dark:text-blue-200 border border-blue-200 dark:border-blue-900/50 space-y-1">
+              <div className="p-3.5 bg-blue-50/70 dark:bg-blue-950/30 rounded-lg text-xs text-blue-900 dark:text-blue-200 border border-blue-200 dark:border-blue-900/50 space-y-1">
                 <strong className="block font-bold">Giải thích chuẩn khoa học:</strong>
                 <p className="leading-relaxed">{activeQuestion.explanation}</p>
               </div>
 
               {/* DECISION ACTION BUTTONS: GIỮ / LOẠI (Yêu cầu chức năng 1) */}
-              <div className="pt-3 border-t border-gray-100 dark:border-gray-700 space-y-2">
-                <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">
+              <div className="pt-3 border-t border-fb-divider space-y-2">
+                <span className="text-[11px] font-bold text-gray-500 block">
                   Quyết định của Giảng viên (Giữ / Loại):
                 </span>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => decideKeepQuestion(activeQuestion.id)}
-                    className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-xs"
+                    className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-xs"
                   >
                     <CheckCircle2 className="w-4 h-4" />
                     <span>Giữ & Chuẩn hóa vào kho thi</span>
@@ -584,7 +584,7 @@ export const LecturerBankView: React.FC = () => {
 
                   <button
                     onClick={() => setDiscardReasonModalOpen(true)}
-                    className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-xs"
+                    className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-xs"
                   >
                     <XCircle className="w-4 h-4" />
                     <span>Quyết định loại khỏi kho</span>
@@ -603,15 +603,15 @@ export const LecturerBankView: React.FC = () => {
         {/* =========================================================================
             PANEL 3 (4 cols): AI LLM Chatbot Studio (Tương tác AI - Yêu cầu chức năng 2)
             ========================================================================= */}
-        <div className="lg:col-span-4 bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-4 space-y-3 flex flex-col max-h-[820px]">
+        <div className="lg:col-span-4 bg-fb-card rounded-lg shadow-fb-card p-4 space-y-3 flex flex-col max-h-[820px]">
           {/* AI Header */}
-          <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-gray-700">
+          <div className="flex items-center justify-between pb-2 border-b border-fb-divider">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-xs">
+              <div className="w-7 h-7 rounded-lg bg-fb-blue text-white flex items-center justify-center shadow-xs">
                 <Sparkles className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="font-bold text-xs text-gray-900 dark:text-gray-100">
+                <h3 className="font-bold text-xs text-fb-text">
                   Tương tác AI (LLM) Trực Tiếp
                 </h3>
                 <p className="text-[10px] text-gray-400">Tự động cải thiện văn phong & câu hỏi</p>
@@ -624,7 +624,7 @@ export const LecturerBankView: React.FC = () => {
 
           {/* Quick AI Prompts */}
           <div className="space-y-1.5">
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
+            <span className="text-[10px] font-bold text-gray-400 block">
               Gợi ý prompt 1 chạm:
             </span>
             <div className="grid grid-cols-2 gap-1.5 text-[11px]">
@@ -665,18 +665,18 @@ export const LecturerBankView: React.FC = () => {
                 }`}
               >
                 <div
-                  className={`p-3 rounded-2xl max-w-[90%] space-y-2 leading-relaxed ${
+                  className={`p-3 rounded-lg max-w-[90%] space-y-2 leading-relaxed ${
                     msg.sender === 'LECTURER'
                       ? 'bg-blue-600 text-white rounded-tr-xs shadow-xs'
-                      : 'bg-gray-100 dark:bg-[#1E1F20] text-gray-800 dark:text-gray-200 rounded-tl-xs border border-gray-200 dark:border-gray-700'
+                      : 'bg-fb-input text-fb-text rounded-tl-xs border border-fb-divider'
                   }`}
                 >
                   <p className="text-xs">{msg.text}</p>
 
                   {/* AI Suggested Content & Apply Button */}
                   {msg.suggestedContent && (
-                    <div className="mt-2 pt-2 border-t border-blue-400/40 dark:border-gray-700 space-y-1.5 bg-white/10 dark:bg-black/20 p-2 rounded-xl">
-                      <span className="font-bold text-[10px] uppercase tracking-wider block text-blue-700 dark:text-blue-300">
+                    <div className="mt-2 pt-2 border-t border-blue-400/40 dark:border-gray-700 space-y-1.5 bg-white/10 dark:bg-black/20 p-2 rounded-lg">
+                      <span className="font-bold text-[10px] block text-blue-700 dark:text-blue-300">
                         Bản đề xuất sửa đổi của AI:
                       </span>
                       <p className="text-[11px] italic font-medium">{msg.suggestedContent}</p>
@@ -695,7 +695,7 @@ export const LecturerBankView: React.FC = () => {
             ))}
 
             {isAiThinking && (
-              <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-[#1E1F20] rounded-xl text-gray-500 text-xs">
+              <div className="flex items-center gap-2 p-3 bg-fb-input rounded-lg text-gray-500 text-xs">
                 <Sparkles className="w-4 h-4 text-blue-600 animate-spin" />
                 <span>Trợ lý AI đang phân tích và cải thiện văn phong...</span>
               </div>
@@ -708,21 +708,21 @@ export const LecturerBankView: React.FC = () => {
               e.preventDefault();
               handleSendAiPrompt();
             }}
-            className="pt-2 border-t border-gray-100 dark:border-gray-700 flex items-center gap-2"
+            className="pt-2 border-t border-fb-divider flex items-center gap-2"
           >
             <input
               type="text"
               value={aiInputPrompt}
               onChange={(e) => setAiInputPrompt(e.target.value)}
               placeholder="Gõ yêu cầu sửa câu hỏi (VD: làm rõ câu hỏi hơn)..."
-              className="flex-1 px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-xs text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-2 rounded-lg bg-fb-input border border-gray-200 dark:border-gray-600 text-xs text-fb-text focus:outline-hidden focus:ring-2 focus:ring-blue-500"
             />
             <button
               type="submit"
               disabled={!aiInputPrompt.trim() || isAiThinking}
-              className={`p-2 rounded-xl text-white transition ${
+              className={`p-2 rounded-lg text-white transition ${
                 aiInputPrompt.trim() && !isAiThinking
-                  ? 'bg-blue-600 hover:bg-blue-700 shadow-xs'
+                  ? 'bg-fb-blue hover:bg-fb-blue-hover shadow-xs'
                   : 'bg-gray-300 dark:bg-gray-700 cursor-not-allowed'
               }`}
             >
@@ -745,40 +745,40 @@ export const LecturerBankView: React.FC = () => {
 
       {/* 2. Modal Xác nhận Loại câu hỏi (Bảo lưu điểm SV) */}
       {discardReasonModalOpen && (
-        <div className="fixed inset-0 z-[220] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-2xl max-w-md w-full p-5 border border-gray-200 dark:border-gray-700 space-y-4">
-            <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 flex items-center gap-2">
+        <div className="fixed inset-0 z-[220] flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-150">
+          <div className="bg-fb-card rounded-lg shadow-2xl max-w-md w-full p-5 border border-fb-divider space-y-4">
+            <h3 className="font-bold text-sm text-fb-text flex items-center gap-2">
               <XCircle className="w-5 h-5 text-red-600" />
               Quyết định loại câu hỏi khỏi kho đề
             </h3>
 
-            <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl text-xs text-amber-800 dark:text-amber-200">
+            <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg text-xs text-amber-800 dark:text-amber-200">
               <strong>Lưu ý quan trọng theo quy chế:</strong> Điểm cộng của sinh viên (
               {activeQuestion?.studentPointsReserved || 20} điểm) vẫn được chốt bảo lưu trọn vẹn, không bị thu hồi khi loại bỏ câu hỏi khỏi kho đề thi.
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-xs font-bold text-fb-text mb-1">
                 Lý do loại câu hỏi:
               </label>
               <textarea
                 rows={2}
                 value={discardReason}
                 onChange={(e) => setDiscardReason(e.target.value)}
-                className="w-full p-2.5 text-xs border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] text-gray-900 dark:text-gray-100"
+                className="w-full p-2.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-fb-input text-fb-text"
               />
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-2">
               <button
                 onClick={() => setDiscardReasonModalOpen(false)}
-                className="px-4 py-2 border rounded-xl text-xs font-semibold"
+                className="px-4 py-2 border rounded-lg text-xs font-semibold"
               >
                 Hủy bỏ
               </button>
               <button
                 onClick={handleConfirmDiscard}
-                className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-md"
+                className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold shadow-md"
               >
                 Xác nhận loại câu
               </button>

@@ -61,10 +61,10 @@ export const TourGuideModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-      <div className="bg-white dark:bg-[#242526] rounded-3xl shadow-2xl max-w-lg w-full p-6 border border-gray-200 dark:border-gray-700 space-y-5 text-center animate-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60">
+      <div className="bg-fb-card rounded-lg shadow-2xl max-w-lg w-full p-6 border border-fb-divider space-y-5 text-center animate-in zoom-in-95 duration-150">
         <div className="flex justify-between items-center">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+          <span className="text-[10px] font-bold text-gray-400">
             Hướng dẫn sử dụng · Bước {currentStep + 1}/{steps.length}
           </span>
           <button
@@ -75,15 +75,15 @@ export const TourGuideModal: React.FC = () => {
           </button>
         </div>
 
-        <div className={`w-16 h-16 rounded-2xl mx-auto flex items-center justify-center ${step.color} shadow-sm`}>
+        <div className={`w-16 h-16 rounded-lg mx-auto flex items-center justify-center ${step.color} shadow-sm`}>
           <step.icon className="w-8 h-8" />
         </div>
 
         <div className="space-y-2">
-          <h3 className="text-lg font-black text-gray-900 dark:text-gray-100">
+          <h3 className="text-lg font-black text-fb-text">
             {step.title}
           </h3>
-          <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed px-4">
+          <p className="text-xs text-fb-text-2 leading-relaxed px-4">
             {step.desc}
           </p>
         </div>
@@ -101,7 +101,7 @@ export const TourGuideModal: React.FC = () => {
         </div>
 
         {/* Buttons */}
-        <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700">
+        <div className="flex items-center justify-between pt-3 border-t border-fb-divider">
           <button
             onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
             disabled={currentStep === 0}
@@ -112,7 +112,7 @@ export const TourGuideModal: React.FC = () => {
 
           <button
             onClick={handleNext}
-            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center gap-1.5"
+            className="px-6 py-2.5 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg text-xs font-bold shadow-md transition flex items-center gap-1.5"
           >
             <span>{step.actionText}</span>
             <ArrowRight className="w-4 h-4" />

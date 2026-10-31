@@ -213,47 +213,47 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
       {/* Navigation Bar */}
-      <div className="flex items-center justify-between bg-white dark:bg-[#242526] rounded-xl p-3 border border-gray-200 dark:border-gray-700 shadow-xs">
+      <div className="flex items-center justify-between bg-fb-card rounded-lg p-3 shadow-fb-card">
         <button
           type="button"
           onClick={onBack}
-          className="flex items-center gap-2 text-xs font-bold text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer"
+          className="flex items-center gap-2 text-xs font-bold text-fb-text hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Quay lại danh sách đề</span>
         </button>
 
-        <div className="flex items-center gap-2 text-xs text-gray-500 font-mono">
-          <span className="font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded">
+        <div className="flex items-center gap-2 text-xs text-gray-500 tabular-nums">
+          <span className="font-bold text-fb-blue bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded">
             {exam.courseCode}
           </span>
-          <span className="hidden sm:inline font-sans text-gray-600 dark:text-gray-300">
+          <span className="hidden sm:inline font-sans text-fb-text-2">
             {exam.subject}
           </span>
         </div>
       </div>
 
       {/* Exam Header Hero Card */}
-      <div className="bg-white dark:bg-[#242526] rounded-2xl p-5 border border-gray-200 dark:border-gray-700 shadow-xs space-y-4">
+      <div className="bg-fb-card rounded-lg p-5 shadow-fb-card space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="space-y-2 flex-1">
             <div className="flex items-center gap-2 text-xs">
-              <span className="font-mono font-bold px-2.5 py-0.5 rounded-md bg-blue-600 text-white">
+              <span className="tabular-nums font-bold px-2.5 py-0.5 rounded-md bg-blue-600 text-white">
                 {exam.courseCode}
               </span>
-              <span className="font-semibold text-gray-700 dark:text-gray-300">
+              <span className="font-semibold text-fb-text">
                 {exam.subject}
               </span>
               <span className="text-gray-400">·</span>
               <span className="text-gray-500">{exam.chapter}</span>
             </div>
 
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 leading-tight">
+            <h1 className="text-xl sm:text-2xl font-bold text-fb-text leading-tight">
               {exam.title}
             </h1>
 
             {exam.description && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+              <p className="text-xs text-fb-text-2 leading-relaxed">
                 {exam.description}
               </p>
             )}
@@ -269,7 +269,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
               <div className="text-xs">
                 <span
                   onClick={() => onViewAuthorProfile(exam.creator.id)}
-                  className="font-bold text-gray-900 dark:text-gray-100 hover:underline cursor-pointer"
+                  className="font-bold text-fb-text hover:underline cursor-pointer"
                 >
                   {exam.creator.name}
                 </span>
@@ -282,7 +282,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
 
           {/* Action & Rating */}
           <div className="flex sm:flex-col items-center sm:items-end justify-between gap-3 shrink-0">
-            <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 px-3 py-1.5 rounded-xl">
+            <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 px-3 py-1.5 rounded-lg">
               <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
               <span className="font-bold text-base text-amber-900 dark:text-amber-200">
                 {calculatedExamAvg > 0 ? calculatedExamAvg.toFixed(1) : '—'}
@@ -295,7 +295,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
             <button
               type="button"
               onClick={onStartPracticeExam}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer"
+              className="px-4 py-2 bg-fb-blue hover:bg-fb-blue-hover text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center justify-center gap-2 cursor-pointer"
             >
               <PlayCircle className="w-4 h-4" />
               <span>Làm bài thi thử</span>
@@ -304,12 +304,12 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
         </div>
 
         {/* Dải thống kê tổng quan ngay trong Card */}
-        <div className="pt-3 border-t border-gray-100 dark:border-gray-700/80 flex items-center justify-between flex-wrap gap-2.5 text-xs">
-          <div className="flex items-center gap-3.5 text-gray-500 dark:text-gray-400 flex-wrap">
+        <div className="pt-3 border-t border-fb-divider flex items-center justify-between flex-wrap gap-2.5 text-xs">
+          <div className="flex items-center gap-3.5 text-fb-text-2 flex-wrap">
             <span className="flex items-center gap-1.5 font-medium">
-              <Users className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              <Users className="w-3.5 h-3.5 text-fb-blue" />
               <span>
-                <strong className="text-gray-900 dark:text-gray-100 font-bold">
+                <strong className="text-fb-text font-bold">
                   {exam.totalAttempts || 195}
                 </strong>{' '}
                 lượt làm
@@ -323,7 +323,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
             <span className="flex items-center gap-1.5 font-medium">
               <BookOpen className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               <span>
-                <strong className="text-gray-900 dark:text-gray-100 font-bold">
+                <strong className="text-fb-text font-bold">
                   {resolvedQuestions.length}
                 </strong>{' '}
                 câu hỏi
@@ -366,17 +366,17 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
           return (
             <div
               key={q.id}
-              className="bg-white dark:bg-[#242526] rounded-2xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700 shadow-xs space-y-3.5"
+              className="bg-fb-card rounded-lg p-4 sm:p-5 shadow-fb-card space-y-3.5"
             >
               {/* Question Header */}
-              <div className="flex items-center justify-between text-xs pb-2 border-b border-gray-100 dark:border-gray-700/80">
+              <div className="flex items-center justify-between text-xs pb-2 border-b border-fb-divider">
                 <span className="font-bold text-xs px-2.5 py-0.5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                   Câu {index + 1}
                 </span>
               </div>
 
               {/* Question Content */}
-              <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-relaxed">
+              <div className="text-sm font-semibold text-fb-text leading-relaxed">
                 {q.content}
               </div>
 
@@ -388,8 +388,8 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                   const showResult = isExplanationOpen;
 
                   let optionBorder =
-                    'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#3A3B3C]/50';
-                  const optionBg = 'bg-white dark:bg-[#1E1F20]/50';
+                    'border-fb-divider hover:bg-fb-hover/50';
+                  const optionBg = 'bg-fb-card/50';
 
                   if (showResult && isCorrect) {
                     optionBorder =
@@ -406,14 +406,14 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                     <div
                       key={opt.id}
                       onClick={() => handleSelectOption(q.id, opt.id)}
-                      className={`p-2.5 rounded-xl border text-xs font-medium transition cursor-pointer flex items-start gap-2 ${optionBorder} ${optionBg}`}
+                      className={`p-2.5 rounded-lg border text-xs font-medium transition cursor-pointer flex items-start gap-2 ${optionBorder} ${optionBg}`}
                     >
                       <span
                         className={`font-bold w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${showResult && isCorrect
                             ? 'bg-emerald-600 text-white'
                             : isChosen
                               ? 'bg-blue-600 text-white'
-                              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                              : 'bg-gray-100 dark:bg-gray-700 text-fb-text'
                           }`}
                       >
                         {opt.id}
@@ -430,7 +430,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                   <button
                     type="button"
                     onClick={() => toggleExplanation(q.id)}
-                    className="flex items-center gap-1 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                    className="flex items-center gap-1 text-xs font-bold text-fb-blue hover:underline cursor-pointer"
                   >
                     <span>
                       {isExplanationOpen
@@ -446,7 +446,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                 </div>
 
                 {isExplanationOpen && (
-                  <div className="p-3 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-800/60 text-xs space-y-1 animate-in fade-in duration-150">
+                  <div className="p-3 rounded-lg bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-800/60 text-xs space-y-1 animate-in fade-in duration-150">
                     <div className="flex items-center gap-1.5 font-bold text-emerald-800 dark:text-emerald-300">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                       <span>Đáp án đúng: {q.correctAnswer}</span>
@@ -459,7 +459,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
               </div>
 
               {/* Star Rating Bar (0 - 4 sao) */}
-              <div className="pt-2 border-t border-gray-100 dark:border-gray-700/80">
+              <div className="pt-2 border-t border-fb-divider">
                 <StarRating
                   ratingAverage={q.ratingAverage || 0}
                   ratingCount={q.ratingCount || 0}
@@ -477,16 +477,16 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
       </div>
       {/* Modal Thống kê tổng quan bộ đề thi */}
       {showExamStatsModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-2xl max-w-xl w-full max-h-[88vh] overflow-hidden flex flex-col border border-gray-200 dark:border-gray-700 animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/60 animate-in fade-in duration-200">
+          <div className="bg-fb-card rounded-lg shadow-2xl max-w-xl w-full max-h-[88vh] overflow-hidden flex flex-col border border-fb-divider animate-in zoom-in-95 duration-150">
             {/* Header */}
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-[#1E1F20]">
+            <div className="p-4 border-b border-fb-divider flex items-center justify-between bg-fb-input">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/60 text-fb-blue flex items-center justify-center shrink-0">
                   <BarChart2 className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100">
+                  <h3 className="font-bold text-sm text-fb-text">
                     Thống kê & Đánh giá bộ đề thi
                   </h3>
                   <p className="text-[11px] text-gray-500 truncate max-w-xs sm:max-w-md">
@@ -504,12 +504,12 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
             </div>
 
             {/* Tab điều hướng: Tỷ lệ đúng VS Nhận xét các câu */}
-            <div className="flex border-b border-gray-200 dark:border-gray-700 px-4 bg-white dark:bg-[#242526] text-xs font-semibold">
+            <div className="flex border-b border-fb-divider px-4 bg-fb-card text-xs font-semibold">
               <button
                 type="button"
                 onClick={() => setStatsModalTab('ACCURACY')}
                 className={`py-2.5 px-3 border-b-2 transition flex items-center gap-1.5 cursor-pointer ${statsModalTab === 'ACCURACY'
-                    ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                    ? 'border-blue-600 text-fb-blue'
                     : 'border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
                   }`}
               >
@@ -521,7 +521,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                 type="button"
                 onClick={() => setStatsModalTab('COMMENTS')}
                 className={`py-2.5 px-3 border-b-2 transition flex items-center gap-1.5 cursor-pointer ${statsModalTab === 'COMMENTS'
-                    ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                    ? 'border-blue-600 text-fb-blue'
                     : 'border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
                   }`}
               >
@@ -539,8 +539,8 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                 <div className="space-y-4">
                   {/* 3 cards overview */}
                   <div className="grid grid-cols-3 gap-2.5">
-                    <div className="p-3 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-800/60 text-center">
-                      <span className="text-lg font-black text-blue-600 dark:text-blue-400 block">
+                    <div className="p-3 rounded-lg bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-800/60 text-center">
+                      <span className="text-lg font-black text-fb-blue block">
                         {exam.totalAttempts || 195}
                       </span>
                       <span className="text-[11px] text-gray-500">
@@ -548,7 +548,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                       </span>
                     </div>
 
-                    <div className="p-3 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-800/60 text-center">
+                    <div className="p-3 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-800/60 text-center">
                       <span className="text-lg font-black text-emerald-600 dark:text-emerald-400 block">
                         {calculatedCorrectRate}%
                       </span>
@@ -557,7 +557,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                       </span>
                     </div>
 
-                    <div className="p-3 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/60 text-center">
+                    <div className="p-3 rounded-lg bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/60 text-center">
                       <span className="text-lg font-black text-amber-600 dark:text-amber-400 block">
                         {calculatedExamAvg > 0
                           ? calculatedExamAvg.toFixed(1)
@@ -571,7 +571,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
 
                   {/* Tỷ lệ trả lời đúng từng câu hỏi trong đề */}
                   <div className="space-y-2 pt-1">
-                    <h4 className="font-bold text-xs uppercase tracking-wide text-gray-700 dark:text-gray-300">
+                    <h4 className="font-bold text-xs text-fb-text">
                       Tỷ lệ làm đúng theo từng câu hỏi trong đề
                     </h4>
                     <div className="space-y-2">
@@ -584,9 +584,9 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                         return (
                           <div
                             key={q.id}
-                            className="p-2.5 rounded-xl bg-gray-50 dark:bg-[#1E1F20] border border-gray-100 dark:border-gray-800 flex items-center gap-3"
+                            className="p-2.5 rounded-lg bg-fb-input border border-fb-divider flex items-center gap-3"
                           >
-                            <span className="w-14 font-bold text-gray-800 dark:text-gray-200 shrink-0">
+                            <span className="w-14 font-bold text-fb-text shrink-0">
                               Câu {idx + 1}
                             </span>
                             <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
@@ -607,10 +607,10 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
               ) : (
                 <div className="space-y-3.5">
                   {/* THANH LỌC & ĐIỀU HƯỚNG NHANH CÂU HỎI */}
-                  <div className="space-y-2 bg-gray-50/80 dark:bg-[#1E1F20]/80 p-3 rounded-xl border border-gray-100 dark:border-gray-800">
+                  <div className="space-y-2 bg-gray-50/80 dark:bg-[#1E1F20]/80 p-3 rounded-lg border border-fb-divider">
                     <div className="flex items-center justify-between flex-wrap gap-2 text-xs">
-                      <span className="font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
-                        <MessageSquare className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                      <span className="font-bold text-fb-text flex items-center gap-1.5">
+                        <MessageSquare className="w-3.5 h-3.5 text-fb-blue" />
                         <span>Nhận xét đề thi ({allExamComments.length})</span>
                       </span>
 
@@ -626,7 +626,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                           }
                           className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition cursor-pointer flex items-center gap-1.5 border ${onlyShowQuestionsWithComments
                               ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-                              : 'bg-white dark:bg-[#2A2B2D] text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-100'
+                              : 'bg-white dark:bg-[#2A2B2D] text-fb-text-2 border-fb-divider hover:bg-gray-100'
                             }`}
                         >
                           <Filter className="w-3 h-3" />
@@ -645,7 +645,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                                 : Number(e.target.value),
                             )
                           }
-                          className="px-2.5 py-1 text-[11px] font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2A2B2D] text-gray-700 dark:text-gray-200 cursor-pointer focus:ring-1 focus:ring-blue-500"
+                          className="px-2.5 py-1 text-[11px] font-semibold rounded-lg border border-fb-divider bg-white dark:bg-[#2A2B2D] text-fb-text cursor-pointer focus:ring-1 focus:ring-blue-500"
                         >
                           <option value="ALL">
                             Toàn bộ đề ({allExamComments.length} nhận xét)
@@ -672,7 +672,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                         onClick={() => setFilterQuestionIndex('ALL')}
                         className={`px-3 py-1.5 rounded-full font-bold whitespace-nowrap transition cursor-pointer shrink-0 ${filterQuestionIndex === 'ALL'
                             ? 'bg-blue-600 text-white shadow-xs'
-                            : 'bg-white dark:bg-[#2A2B2D] text-gray-600 dark:text-gray-300 hover:bg-gray-100 border border-gray-200 dark:border-gray-700'
+                            : 'bg-white dark:bg-[#2A2B2D] text-fb-text-2 hover:bg-gray-100 border border-fb-divider'
                           }`}
                       >
                         Tất cả ({allExamComments.length})
@@ -693,7 +693,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                                 ? 'bg-blue-600 text-white font-bold shadow-xs'
                                 : count > 0
                                   ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
-                                  : 'bg-white dark:bg-[#2A2B2D] text-gray-500 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] border border-gray-200 dark:border-gray-700'
+                                  : 'bg-white dark:bg-[#2A2B2D] text-gray-500 hover:bg-fb-hover border border-fb-divider'
                               }`}
                           >
                             <span>Câu {idx + 1}</span>
@@ -719,7 +719,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                       filteredComments.map((item) => (
                         <div
                           key={item.id}
-                          className="p-3.5 bg-gray-50 dark:bg-[#1E1F20] rounded-xl border border-gray-100 dark:border-gray-800 text-xs space-y-2 hover:border-gray-200 dark:hover:border-gray-700 transition"
+                          className="p-3.5 bg-fb-input rounded-lg border border-fb-divider text-xs space-y-2 hover:border-gray-200 dark:hover:border-gray-700 transition"
                         >
                           {/* Header: User avatar, name, "đã nhận xét ở", Câu X badge, Rating, Time */}
                           <div className="flex items-center justify-between flex-wrap gap-2">
@@ -731,7 +731,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                               />
                               <div>
                                 <div className="flex items-center gap-1.5 flex-wrap">
-                                  <span className="font-bold text-gray-900 dark:text-gray-100">
+                                  <span className="font-bold text-fb-text">
                                     {item.userName}
                                   </span>
                                   <span className="text-gray-400 font-normal text-[11px]">
@@ -762,18 +762,18 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                           </div>
 
                           {/* Nội dung nhận xét */}
-                          <p className="text-gray-800 dark:text-gray-200 pl-9.5 leading-relaxed font-medium">
+                          <p className="text-fb-text pl-9.5 leading-relaxed font-medium">
                             "{item.comment}"
                           </p>
 
                           {/* Trích đoạn câu hỏi và nút mở rộng xem toàn bộ đề bài */}
                           <div className="pl-9.5 pt-0.5">
-                            <div className="p-2 rounded-lg bg-white dark:bg-[#242526] border border-gray-200/80 dark:border-gray-700/80 flex items-start justify-between gap-2">
+                            <div className="p-2 rounded-lg bg-fb-card border border-gray-200/80 dark:border-gray-700/80 flex items-start justify-between gap-2">
                               <div className="flex-1 min-w-0">
-                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
+                                <span className="text-[10px] font-bold text-gray-400 block">
                                   Nội dung câu {item.questionIdx + 1}
                                 </span>
-                                <p className="text-[11px] text-gray-600 dark:text-gray-300 line-clamp-1 italic">
+                                <p className="text-[11px] text-fb-text-2 line-clamp-1 italic">
                                   {item.questionContent}
                                 </p>
                               </div>
@@ -786,7 +786,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                                       : item.questionIdx,
                                   )
                                 }
-                                className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline shrink-0 flex items-center gap-0.5 cursor-pointer pt-0.5"
+                                className="text-[11px] font-semibold text-fb-blue hover:underline shrink-0 flex items-center gap-0.5 cursor-pointer pt-0.5"
                               >
                                 <span>
                                   {expandedQuestionPreview === item.questionIdx
@@ -805,7 +805,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                             {/* Khi bấm "Xem đề" -> mở rộng preview toàn bộ câu hỏi (options, đáp án đúng) */}
                             {expandedQuestionPreview === item.questionIdx && (
                               <div className="mt-2 p-3 rounded-lg bg-blue-50/50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/60 text-xs space-y-2 animate-in fade-in duration-150">
-                                <p className="font-medium text-gray-800 dark:text-gray-200">
+                                <p className="font-medium text-fb-text">
                                   {
                                     resolvedQuestions[item.questionIdx]?.content
                                   }
@@ -823,7 +823,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                                         key={opt.id}
                                         className={`p-1.5 rounded text-[11px] border ${isCorrect
                                             ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-200 font-semibold'
-                                            : 'bg-white dark:bg-[#1E1F20] border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400'
+                                            : 'bg-fb-card border-fb-divider text-fb-text-2'
                                           }`}
                                       >
                                         <span className="font-bold mr-1">
@@ -841,7 +841,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                         </div>
                       ))
                     ) : (
-                      <div className="p-8 text-center bg-gray-50 dark:bg-[#1E1F20] rounded-xl border border-dashed border-gray-200 dark:border-gray-800 space-y-2">
+                      <div className="p-8 text-center bg-fb-input rounded-lg border border-dashed border-gray-200 dark:border-gray-800 space-y-2">
                         <MessageSquare className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto" />
                         <p className="text-xs text-gray-500 font-medium">
                           {filterQuestionIndex === 'ALL'
@@ -855,7 +855,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
                           <button
                             type="button"
                             onClick={() => setFilterQuestionIndex('ALL')}
-                            className="text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline cursor-pointer"
+                            className="text-xs text-fb-blue font-bold hover:underline cursor-pointer"
                           >
                             ← Quay lại xem tất cả nhận xét
                           </button>
@@ -868,11 +868,11 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#1E1F20] flex justify-end">
+            <div className="p-3 border-t border-fb-divider bg-fb-input flex justify-end">
               <button
                 type="button"
                 onClick={() => setShowExamStatsModal(false)}
-                className="px-4 py-1.5 rounded-xl bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 text-xs font-semibold transition cursor-pointer"
+                className="px-4 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-fb-text text-xs font-semibold transition cursor-pointer"
               >
                 Đóng
               </button>

@@ -48,18 +48,18 @@ export const CosmeticsView: React.FC = () => {
     <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 flex flex-col lg:flex-row gap-6 lg:gap-8 xl:gap-12 items-start justify-between">
       {/* ================= CỘT TRÁI (sticky sát lề trái): XEM TRƯỚC TRỰC TIẾP ================= */}
       <aside className="w-full lg:w-[340px] xl:w-[360px] shrink-0 space-y-4 select-none lg:sticky lg:top-18">
-        <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-5 space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-700">
-            <Eye className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-            <h3 className="font-semibold text-xs uppercase tracking-wider text-gray-500">
+        <div className="bg-fb-card rounded-lg shadow-fb-card p-5 space-y-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-fb-divider">
+            <Eye className="w-4 h-4 text-fb-blue" />
+            <h3 className="font-semibold text-xs text-gray-500">
               Xem trước hiển thị trực tiếp
             </h3>
           </div>
 
           {/* Avatar Preview Box */}
-          <div className="flex flex-col items-center justify-center p-6 bg-linear-to-b from-gray-50 to-gray-100 dark:from-[#18191A] dark:to-[#1E1F20] rounded-2xl border border-gray-200 dark:border-gray-700">
+          <div className="flex flex-col items-center justify-center p-6 bg-fb-input rounded-lg border border-fb-divider">
             <AvatarWithFrame user={currentUser} size="2xl" />
-            <h4 className="font-bold text-sm text-gray-900 dark:text-gray-100 mt-3">
+            <h4 className="font-bold text-sm text-fb-text mt-3">
               {currentUser.name}
             </h4>
             <p className="text-xs text-gray-500">{currentUser.classOrTitle}</p>
@@ -69,13 +69,13 @@ export const CosmeticsView: React.FC = () => {
           </div>
 
           {/* Sample Chat Bubble Preview */}
-          <div className="space-y-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+          <div className="space-y-2 pt-2 border-t border-fb-divider">
             <span className="text-xs font-bold text-gray-500 block">
               Bong bóng chat mẫu trong Messenger:
             </span>
             <div className="flex justify-end">
               <div
-                className={`p-3 rounded-2xl text-xs max-w-[85%] bg-blue-600 text-white rounded-br-xs shadow-xs ${
+                className={`p-3 rounded-lg text-xs max-w-[85%] bg-blue-600 text-white rounded-br-xs shadow-xs ${
                   currentUser.equippedChatEffectId === 'effect_glow'
                     ? 'ring-2 ring-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.6)]'
                     : ''
@@ -89,9 +89,9 @@ export const CosmeticsView: React.FC = () => {
 
         {/* Selected Item Details */}
         {selectedPreviewItem && (
-          <div className="bg-white dark:bg-[#242526] rounded-xl shadow-xs border border-gray-200 dark:border-gray-700 p-4 space-y-2 text-xs">
+          <div className="bg-fb-card rounded-lg shadow-fb-card p-4 space-y-2 text-xs">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-gray-900 dark:text-gray-100">
+              <span className="font-bold text-fb-text">
                 {selectedPreviewItem.name}
               </span>
               <span
@@ -102,10 +102,10 @@ export const CosmeticsView: React.FC = () => {
                 {selectedPreviewItem.rarity}
               </span>
             </div>
-            <p className="text-gray-600 dark:text-gray-300">{selectedPreviewItem.description}</p>
-            <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
+            <p className="text-fb-text-2">{selectedPreviewItem.description}</p>
+            <div className="pt-2 border-t border-fb-divider">
               <span className="text-[11px] text-gray-500 block">Điều kiện mở khóa:</span>
-              <strong className="text-blue-600 dark:text-blue-400">
+              <strong className="text-fb-blue">
                 {selectedPreviewItem.unlockCondition}
               </strong>
             </div>
@@ -116,18 +116,18 @@ export const CosmeticsView: React.FC = () => {
       {/* ================= CỘT PHẢI: Lưới vật phẩm (có khoảng trống 2 bên) ================= */}
       <main className="flex-1 max-w-[980px] mx-auto space-y-4">
         {/* Header banner - Tối giản, thanh lịch */}
-        <div className="bg-white dark:bg-[#242526] rounded-xl shadow-xs border border-gray-200 dark:border-gray-700 p-5">
+        <div className="bg-fb-card rounded-lg shadow-fb-card p-5">
           <div className="flex items-center gap-2 mb-1">
-            <Sparkles className="w-4.5 h-4.5 text-blue-600 dark:text-blue-400" />
-            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Kho Vật Phẩm Học Thuật & Khung Avatar</h2>
+            <Sparkles className="w-4.5 h-4.5 text-fb-blue" />
+            <h2 className="text-lg font-bold text-fb-text">Kho Vật Phẩm Học Thuật & Khung Avatar</h2>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-fb-text-2">
             Mở khóa khung avatar và hiệu ứng đoạn chat thông qua việc đóng góp câu hỏi đạt chuẩn và bảng xếp hạng học tập.
           </p>
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700 pb-2 text-xs font-bold">
+        <div className="flex gap-2 border-b border-fb-divider pb-2 text-xs font-bold">
           {[
             { id: 'ALL', label: 'Tất cả vật phẩm' },
             { id: 'AVATAR_FRAME', label: 'Khung Avatar' },
@@ -139,7 +139,7 @@ export const CosmeticsView: React.FC = () => {
               className={`px-3 py-1.5 rounded-lg transition ${
                 activeTab === tab.id
                   ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 dark:bg-[#3A3B3C] text-gray-700 dark:text-gray-300 hover:bg-gray-200'
+                  : 'bg-fb-input text-fb-text hover:bg-gray-200'
               }`}
             >
               {tab.label}
@@ -153,10 +153,10 @@ export const CosmeticsView: React.FC = () => {
             <div
               key={item.id}
               onClick={() => setSelectedPreviewItem(item)}
-              className={`bg-white dark:bg-[#242526] rounded-2xl shadow-xs border p-4 space-y-3 cursor-pointer transition ${
+              className={`bg-fb-card rounded-lg shadow-xs border p-4 space-y-3 cursor-pointer transition ${
                 selectedPreviewItem.id === item.id
                   ? 'border-purple-600 ring-2 ring-purple-600/30'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                  : 'border-fb-divider hover:border-gray-300'
               }`}
             >
               <div className="flex items-start justify-between">
@@ -168,7 +168,7 @@ export const CosmeticsView: React.FC = () => {
                   >
                     {item.rarity}
                   </span>
-                  <h4 className="font-bold text-sm text-gray-900 dark:text-gray-100 mt-1">
+                  <h4 className="font-bold text-sm text-fb-text mt-1">
                     {item.name}
                   </h4>
                 </div>
@@ -183,10 +183,10 @@ export const CosmeticsView: React.FC = () => {
               <p className="text-xs text-gray-500 line-clamp-2">{item.description}</p>
 
               {/* Progress or Unlock Status */}
-              <div className="p-2.5 bg-gray-50 dark:bg-[#1E1F20] rounded-xl text-xs space-y-1">
+              <div className="p-2.5 bg-fb-input rounded-lg text-xs space-y-1">
                 <div className="flex justify-between text-[11px] text-gray-500">
                   <span>Điều kiện: {item.unlockCondition}</span>
-                  <span className="font-semibold text-gray-700 dark:text-gray-300">
+                  <span className="font-semibold text-fb-text">
                     {item.progressCurrent} / {item.progressRequired}
                   </span>
                 </div>
@@ -212,7 +212,7 @@ export const CosmeticsView: React.FC = () => {
                         e.stopPropagation();
                         unequipCosmetic(item.id);
                       }}
-                      className="px-4 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-semibold hover:bg-gray-100 dark:hover:bg-gray-800"
+                      className="px-4 py-1.5 border border-gray-300 dark:border-gray-600 text-fb-text rounded-lg text-xs font-semibold hover:bg-gray-100 dark:hover:bg-gray-800"
                     >
                       Gỡ bỏ
                     </button>
@@ -222,7 +222,7 @@ export const CosmeticsView: React.FC = () => {
                         e.stopPropagation();
                         equipCosmetic(item.id);
                       }}
-                      className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-xs transition"
+                      className="px-4 py-1.5 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg text-xs font-semibold shadow-xs transition"
                     >
                       Trang bị ngay
                     </button>
@@ -230,7 +230,7 @@ export const CosmeticsView: React.FC = () => {
                 ) : (
                   <button
                     disabled
-                    className="px-4 py-1.5 bg-gray-100 dark:bg-gray-800 text-gray-400 rounded-xl text-xs font-semibold flex items-center gap-1 cursor-not-allowed"
+                    className="px-4 py-1.5 bg-gray-100 dark:bg-gray-800 text-gray-400 rounded-lg text-xs font-semibold flex items-center gap-1 cursor-not-allowed"
                   >
                     <Lock className="w-3.5 h-3.5" />
                     <span>Chưa đủ điều kiện</span>

@@ -226,21 +226,21 @@ export const ReviewDashboardView: React.FC = () => {
   return (
     <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 space-y-4">
       {/* Top Page Header */}
-      <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-5">
+      <div className="bg-fb-card rounded-lg shadow-fb-card p-5">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="p-2.5 rounded-xl bg-blue-600 text-white shadow-xs">
+              <span className="p-2.5 rounded-lg bg-blue-600 text-white shadow-xs">
                 <CheckSquare className="w-5 h-5" />
               </span>
-              <h1 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-gray-100 tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-black text-fb-text tracking-tight">
                 Kiểm duyệt câu hỏi
               </h1>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
                 Dành cho Giảng viên
               </span>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-fb-text-2">
               Thẩm định các phiên đề xuất câu hỏi từ sinh viên, phê chuẩn vào ngân hàng đề thi hoặc gửi phản hồi từ chối.
             </p>
           </div>
@@ -250,7 +250,7 @@ export const ReviewDashboardView: React.FC = () => {
             <button
               onClick={fetchSessions}
               disabled={loading}
-              className="px-3.5 py-2 bg-gray-100 dark:bg-[#3A3B3C] hover:bg-gray-200 text-gray-800 dark:text-gray-200 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="px-3.5 py-2 bg-fb-input hover:bg-gray-200 text-fb-text rounded-lg text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               title="Làm mới danh sách phiên"
             >
               <RefreshCw className={`w-4 h-4 text-gray-500 ${loading ? 'animate-spin' : ''}`} />
@@ -259,9 +259,9 @@ export const ReviewDashboardView: React.FC = () => {
 
             <button
               onClick={() => setActiveTab('exams')}
-              className="px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:hover:bg-blue-900 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+              className="px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:hover:bg-blue-900 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
             >
-              <Database className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <Database className="w-4 h-4 text-fb-blue" />
               <span>Quản lý đề thi & Xuất file</span>
             </button>
           </div>
@@ -273,9 +273,9 @@ export const ReviewDashboardView: React.FC = () => {
         {/* =========================================================================
             LEFT SIDEBAR (EXACTLY 3 ITEMS: Chờ kiểm duyệt, Đang kiểm duyệt, Lịch sử kiểm duyệt)
             ========================================================================= */}
-        <aside className="w-full lg:w-64 xl:w-72 shrink-0 bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-3 sm:p-4 space-y-2">
-          <div className="hidden lg:block pb-2 mb-2 border-b border-gray-100 dark:border-gray-700">
-            <span className="text-xs font-black uppercase tracking-wider text-gray-400">
+        <aside className="w-full lg:w-64 xl:w-72 shrink-0 bg-fb-card rounded-lg shadow-fb-card p-3 sm:p-4 space-y-2">
+          <div className="hidden lg:block pb-2 mb-2 border-b border-fb-divider">
+            <span className="text-xs font-black text-gray-400">
               Trạng thái kiểm duyệt
             </span>
           </div>
@@ -288,10 +288,10 @@ export const ReviewDashboardView: React.FC = () => {
                 setActiveTabSidebar('PENDING');
                 setSelectedSession(null);
               }}
-              className={`flex-1 lg:flex-initial flex items-center justify-between gap-2.5 px-3.5 py-3 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap ${
+              className={`flex-1 lg:flex-initial flex items-center justify-between gap-2.5 px-3.5 py-3 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap ${
                 activeTab === 'PENDING'
                   ? 'bg-blue-600 text-white shadow-xs'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C]'
+                  : 'text-fb-text hover:bg-fb-hover'
               }`}
             >
               <div className="flex items-center gap-2.5">
@@ -315,10 +315,10 @@ export const ReviewDashboardView: React.FC = () => {
                 setActiveTabSidebar('REVIEWING');
                 setSelectedSession(null);
               }}
-              className={`flex-1 lg:flex-initial flex items-center justify-between gap-2.5 px-3.5 py-3 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap ${
+              className={`flex-1 lg:flex-initial flex items-center justify-between gap-2.5 px-3.5 py-3 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap ${
                 activeTab === 'REVIEWING'
                   ? 'bg-blue-600 text-white shadow-xs'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C]'
+                  : 'text-fb-text hover:bg-fb-hover'
               }`}
             >
               <div className="flex items-center gap-2.5">
@@ -342,10 +342,10 @@ export const ReviewDashboardView: React.FC = () => {
                 setActiveTabSidebar('HISTORY');
                 setSelectedSession(null);
               }}
-              className={`flex-1 lg:flex-initial flex items-center justify-between gap-2.5 px-3.5 py-3 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap ${
+              className={`flex-1 lg:flex-initial flex items-center justify-between gap-2.5 px-3.5 py-3 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap ${
                 activeTab === 'HISTORY'
                   ? 'bg-blue-600 text-white shadow-xs'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C]'
+                  : 'text-fb-text hover:bg-fb-hover'
               }`}
             >
               <div className="flex items-center gap-2.5">
@@ -365,8 +365,8 @@ export const ReviewDashboardView: React.FC = () => {
           </div>
 
           {/* Helpful Note Box for Lecturer */}
-          <div className="hidden lg:block mt-4 p-3 bg-gray-50 dark:bg-[#1E1F20] rounded-xl border border-gray-100 dark:border-gray-800 text-[11px] text-gray-500 dark:text-gray-400 space-y-1">
-            <p className="font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1">
+          <div className="hidden lg:block mt-4 p-3 bg-fb-input rounded-lg border border-fb-divider text-[11px] text-fb-text-2 space-y-1">
+            <p className="font-semibold text-fb-text flex items-center gap-1">
               <Info className="w-3.5 h-3.5 text-blue-600 shrink-0" />
               Quy trình kiểm duyệt:
             </p>
@@ -396,14 +396,14 @@ export const ReviewDashboardView: React.FC = () => {
             <>
               {/* Notice Banner for HISTORY tab regarding Swagger endpoint limitation */}
               {activeTab === 'HISTORY' && (
-                <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 text-xs text-blue-900 dark:text-blue-200 flex items-start gap-3">
+                <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 text-xs text-blue-900 dark:text-blue-200 flex items-start gap-3">
                   <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
                   <div className="space-y-1">
                     <p className="font-bold">
                       Thông tin tra cứu lịch sử kiểm duyệt
                     </p>
                     <p className="leading-relaxed">
-                      Hiện tại đặc tả OpenAPI/Swagger của hệ thống chưa cung cấp endpoint chuyên biệt để tra cứu toàn bộ lịch sử các phiên đã hoàn tất (Đề xuất backend bổ sung endpoint <code className="font-mono bg-blue-100 dark:bg-blue-900 px-1 py-0.5 rounded">GET /sessions/history</code> hoặc tham số lọc <code className="font-mono bg-blue-100 dark:bg-blue-900 px-1 py-0.5 rounded">status=RESOLVED</code> trong API <code className="font-mono bg-blue-100 dark:bg-blue-900 px-1 py-0.5 rounded">GET /sessions/pending</code>).
+                      Hiện tại đặc tả OpenAPI/Swagger của hệ thống chưa cung cấp endpoint chuyên biệt để tra cứu toàn bộ lịch sử các phiên đã hoàn tất (Đề xuất backend bổ sung endpoint <code className="tabular-nums bg-blue-100 dark:bg-blue-900 px-1 py-0.5 rounded">GET /sessions/history</code> hoặc tham số lọc <code className="tabular-nums bg-blue-100 dark:bg-blue-900 px-1 py-0.5 rounded">status=RESOLVED</code> trong API <code className="tabular-nums bg-blue-100 dark:bg-blue-900 px-1 py-0.5 rounded">GET /sessions/pending</code>).
                     </p>
                     <p className="leading-relaxed text-blue-800 dark:text-blue-300">
                       Dưới đây hiển thị các phiên đã được chốt duyệt thành công trong phiên làm việc hiện tại ở chế độ chỉ xem.
@@ -413,7 +413,7 @@ export const ReviewDashboardView: React.FC = () => {
               )}
 
               {/* Filter & Search Toolbar */}
-              <div className="bg-white dark:bg-[#242526] rounded-2xl p-4 shadow-xs border border-gray-200 dark:border-gray-700 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 text-xs">
+              <div className="bg-fb-card rounded-lg p-4 shadow-fb-card flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 text-xs">
                 {/* Search Input */}
                 <div className="relative flex-1">
                   <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
@@ -422,7 +422,7 @@ export const ReviewDashboardView: React.FC = () => {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Tìm theo tiêu đề phiên, môn học, sinh viên..."
-                    className="w-full pl-9 pr-3 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                    className="w-full pl-9 pr-3 py-2 rounded-lg bg-fb-input border border-gray-200 dark:border-gray-600 text-fb-text focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
                   />
                 </div>
 
@@ -432,7 +432,7 @@ export const ReviewDashboardView: React.FC = () => {
                     <select
                       value={selectedSubjectId}
                       onChange={(e) => setSelectedSubjectId(e.target.value)}
-                      className="appearance-none pl-3 pr-8 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-hidden cursor-pointer"
+                      className="appearance-none pl-3 pr-8 py-2 rounded-lg bg-fb-input border border-gray-200 dark:border-gray-600 text-fb-text font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-hidden cursor-pointer"
                     >
                       <option value="ALL">Tất cả môn học ({distinctTopics.length})</option>
                       {distinctTopics.map((topic) => (
@@ -449,7 +449,7 @@ export const ReviewDashboardView: React.FC = () => {
                     <select
                       value={historyResultFilter}
                       onChange={(e) => setHistoryResultFilter(e.target.value as 'ALL' | 'RESOLVED' | 'REJECTED')}
-                      className="pl-3 pr-8 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-hidden cursor-pointer"
+                      className="pl-3 pr-8 py-2 rounded-lg bg-fb-input border border-gray-200 dark:border-gray-600 text-fb-text font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-hidden cursor-pointer"
                     >
                       <option value="ALL">Tất cả trạng thái</option>
                       <option value="RESOLVED">Đã phê chuẩn (RESOLVED)</option>
@@ -462,7 +462,7 @@ export const ReviewDashboardView: React.FC = () => {
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value as 'NEWEST' | 'OLDEST')}
-                      className="appearance-none pl-3 pr-8 py-2 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-hidden cursor-pointer"
+                      className="appearance-none pl-3 pr-8 py-2 rounded-lg bg-fb-input border border-gray-200 dark:border-gray-600 text-fb-text font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-hidden cursor-pointer"
                     >
                       <option value="NEWEST">Mới nhất trước</option>
                       <option value="OLDEST">Cũ nhất trước</option>
@@ -478,15 +478,15 @@ export const ReviewDashboardView: React.FC = () => {
                   {[1, 2, 3, 4, 5, 6].map((i) => (
                     <div
                       key={i}
-                      className="bg-white dark:bg-[#242526] rounded-2xl p-5 border border-gray-200 dark:border-gray-700 animate-pulse space-y-3"
+                      className="bg-fb-card rounded-lg p-5 border border-fb-divider animate-pulse space-y-3"
                     >
                       <div className="flex justify-between items-center">
                         <div className="h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded-full" />
                         <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded-md" />
                       </div>
                       <div className="h-6 w-3/4 bg-gray-200 dark:bg-gray-700 rounded-md" />
-                      <div className="h-12 w-full bg-gray-100 dark:bg-gray-800 rounded-xl" />
-                      <div className="h-8 w-full bg-gray-200 dark:bg-gray-700 rounded-xl" />
+                      <div className="h-12 w-full bg-gray-100 dark:bg-gray-800 rounded-lg" />
+                      <div className="h-8 w-full bg-gray-200 dark:bg-gray-700 rounded-lg" />
                     </div>
                   ))}
                 </div>
@@ -494,9 +494,9 @@ export const ReviewDashboardView: React.FC = () => {
 
               {/* Error State */}
               {!loading && error && (
-                <div className="bg-white dark:bg-[#242526] rounded-2xl p-8 border border-red-200 dark:border-red-900/50 text-center space-y-3">
+                <div className="bg-fb-card rounded-lg p-8 border border-red-200 dark:border-red-900/50 text-center space-y-3">
                   <AlertCircle className="w-10 h-10 text-red-500 mx-auto" />
-                  <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100">
+                  <h3 className="font-bold text-sm text-fb-text">
                     Không thể tải dữ liệu phiên kiểm duyệt
                   </h3>
                   <p className="text-xs text-red-600 dark:text-red-400 max-w-md mx-auto">
@@ -504,7 +504,7 @@ export const ReviewDashboardView: React.FC = () => {
                   </p>
                   <button
                     onClick={fetchSessions}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    className="px-4 py-2 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg text-xs font-bold transition inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
                     <span>Thử lại</span>
@@ -514,22 +514,22 @@ export const ReviewDashboardView: React.FC = () => {
 
               {/* Empty State */}
               {!loading && !error && filteredSessions.length === 0 && (
-                <div className="bg-white dark:bg-[#242526] rounded-2xl p-12 border border-gray-200 dark:border-gray-700 text-center space-y-3">
-                  <div className="w-14 h-14 rounded-full bg-gray-100 dark:bg-[#3A3B3C] flex items-center justify-center mx-auto text-gray-400">
+                <div className="bg-fb-card rounded-lg p-12 border border-fb-divider text-center space-y-3">
+                  <div className="w-14 h-14 rounded-full bg-fb-input flex items-center justify-center mx-auto text-gray-400">
                     {activeTab === 'PENDING' ? (
                       <CheckCircle2 className="w-7 h-7 text-emerald-500" />
                     ) : (
                       <FileQuestion className="w-7 h-7 text-gray-400" />
                     )}
                   </div>
-                  <h3 className="font-bold text-sm text-gray-800 dark:text-gray-200">
+                  <h3 className="font-bold text-sm text-fb-text">
                     {activeTab === 'PENDING'
                       ? 'Không có phiên nào đang chờ kiểm duyệt'
                       : activeTab === 'REVIEWING'
                       ? 'Không có phiên nào đang trong quá trình kiểm duyệt'
                       : 'Chưa có lịch sử phiên kiểm duyệt nào'}
                   </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
+                  <p className="text-xs text-fb-text-2 max-w-sm mx-auto">
                     {activeTab === 'PENDING'
                       ? 'Tất cả các đề xuất câu hỏi từ sinh viên đã được tiếp nhận và xử lý đầy đủ.'
                       : activeTab === 'REVIEWING'
@@ -550,7 +550,7 @@ export const ReviewDashboardView: React.FC = () => {
                     return (
                       <div
                         key={session.session_id}
-                        className="bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-4 flex flex-col justify-between hover:shadow-md transition group"
+                        className="bg-fb-card rounded-lg shadow-fb-card p-4 flex flex-col justify-between hover:shadow-md transition group"
                       >
                         <div className="space-y-3">
                           {/* Card Header: Subject Topic + Status Badge */}
@@ -578,18 +578,18 @@ export const ReviewDashboardView: React.FC = () => {
 
                           {/* Session Title */}
                           <div>
-                            <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 group-hover:text-blue-600 transition line-clamp-2">
+                            <h3 className="font-bold text-sm text-fb-text group-hover:text-blue-600 transition line-clamp-2">
                               {session.title || 'Phiên đề xuất không có tiêu đề'}
                             </h3>
                             {session.content && (
-                              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 line-clamp-2 leading-relaxed">
+                              <p className="text-[11px] text-fb-text-2 mt-1 line-clamp-2 leading-relaxed">
                                 {session.content}
                               </p>
                             )}
                           </div>
 
                           {/* Author Info */}
-                          <div className="flex items-center gap-2.5 p-2 bg-gray-50 dark:bg-[#1E1F20] rounded-xl border border-gray-100 dark:border-gray-800">
+                          <div className="flex items-center gap-2.5 p-2 bg-fb-input rounded-lg border border-fb-divider">
                             {session.author?.avatar_url ? (
                               <img
                                 src={session.author.avatar_url}
@@ -603,7 +603,7 @@ export const ReviewDashboardView: React.FC = () => {
                             )}
 
                             <div className="min-w-0 flex-1">
-                              <span className="font-bold text-xs text-gray-800 dark:text-gray-200 block truncate">
+                              <span className="font-bold text-xs text-fb-text block truncate">
                                 {session.author?.full_name || 'Sinh viên đề xuất'}
                               </span>
                               <span className="text-[10px] text-gray-400 block truncate">
@@ -613,7 +613,7 @@ export const ReviewDashboardView: React.FC = () => {
                           </div>
 
                           {/* Creation Time */}
-                          <div className="flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400 pt-1">
+                          <div className="flex items-center gap-1.5 text-[11px] text-fb-text-2 pt-1">
                             <Calendar className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                             <span>
                               Tạo lúc:{' '}
@@ -625,15 +625,15 @@ export const ReviewDashboardView: React.FC = () => {
                         </div>
 
                         {/* Card Footer: Action Button */}
-                        <div className="pt-3 mt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between gap-2">
-                          <span className="text-[10px] font-mono text-gray-400">
+                        <div className="pt-3 mt-3 border-t border-fb-divider flex items-center justify-between gap-2">
+                          <span className="text-[10px] tabular-nums text-gray-400">
                             ID: {session.session_id}
                           </span>
 
                           {activeTab === 'PENDING' && (
                             <button
                               onClick={() => handleStartReview(session)}
-                              className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-xs"
+                              className="px-3.5 py-2 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-xs"
                             >
                               <span>Bắt đầu kiểm duyệt</span>
                               <ChevronRight className="w-3.5 h-3.5" />
@@ -643,7 +643,7 @@ export const ReviewDashboardView: React.FC = () => {
                           {activeTab === 'REVIEWING' && (
                             <button
                               onClick={() => handleStartReview(session)}
-                              className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-xs"
+                              className="px-3.5 py-2 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-xs"
                             >
                               <span>Tiếp tục kiểm duyệt</span>
                               <ChevronRight className="w-3.5 h-3.5" />
@@ -653,7 +653,7 @@ export const ReviewDashboardView: React.FC = () => {
                           {activeTab === 'HISTORY' && (
                             <button
                               onClick={() => handleStartReview(session)}
-                              className="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-[#3A3B3C] dark:hover:bg-[#4E4F50] text-gray-800 dark:text-gray-200 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                              className="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-[#3A3B3C] dark:hover:bg-[#4E4F50] text-fb-text rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer"
                             >
                               <span>Xem chi tiết</span>
                               <ChevronRight className="w-3.5 h-3.5" />
@@ -668,31 +668,31 @@ export const ReviewDashboardView: React.FC = () => {
 
               {/* Pagination Bar */}
               {!loading && !error && totalItems > 0 && (
-                <div className="bg-white dark:bg-[#242526] rounded-2xl p-4 shadow-xs border border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                <div className="bg-fb-card rounded-lg p-4 shadow-fb-card flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
                   {/* Left: Info & items per page selector */}
                   <div className="flex items-center gap-3 flex-wrap">
-                    <span className="text-gray-500 dark:text-gray-400">
+                    <span className="text-fb-text-2">
                       Hiển thị{' '}
-                      <span className="font-bold text-gray-900 dark:text-gray-100">
+                      <span className="font-bold text-fb-text">
                         {totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}
                       </span>{' '}
                       -{' '}
-                      <span className="font-bold text-gray-900 dark:text-gray-100">
+                      <span className="font-bold text-fb-text">
                         {Math.min(currentPage * itemsPerPage, totalItems)}
                       </span>{' '}
                       trên tổng số{' '}
-                      <span className="font-bold text-gray-900 dark:text-gray-100">
+                      <span className="font-bold text-fb-text">
                         {totalItems}
                       </span>{' '}
                       phiên
                     </span>
 
-                    <div className="flex items-center gap-1.5 border-l border-gray-200 dark:border-gray-700 pl-3">
+                    <div className="flex items-center gap-1.5 border-l border-fb-divider pl-3">
                       <span className="text-gray-500 text-[11px]">Mỗi trang:</span>
                       <select
                         value={itemsPerPage}
                         onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                        className="py-1 px-2 rounded-lg bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200 text-xs font-semibold focus:outline-hidden cursor-pointer"
+                        className="py-1 px-2 rounded-lg bg-fb-input border border-gray-200 dark:border-gray-600 text-fb-text text-xs font-semibold focus:outline-hidden cursor-pointer"
                       >
                         <option value={4}>4 phiên</option>
                         <option value={6}>6 phiên</option>
@@ -707,7 +707,7 @@ export const ReviewDashboardView: React.FC = () => {
                     <button
                       onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                       disabled={currentPage === 1}
-                      className="px-2.5 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1 font-semibold text-xs"
+                      className="px-2.5 py-1.5 rounded-lg border border-fb-divider text-fb-text-2 hover:bg-fb-hover transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1 font-semibold text-xs"
                       title="Trang trước"
                     >
                       <ChevronLeft className="w-4 h-4" />
@@ -719,10 +719,10 @@ export const ReviewDashboardView: React.FC = () => {
                         <button
                           key={page}
                           onClick={() => setCurrentPage(page)}
-                          className={`w-8 h-8 rounded-xl font-bold transition cursor-pointer text-xs ${
+                          className={`w-8 h-8 rounded-lg font-bold transition cursor-pointer text-xs ${
                             currentPage === page
                               ? 'bg-blue-600 text-white shadow-xs'
-                              : 'border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C]'
+                              : 'border border-fb-divider text-fb-text hover:bg-fb-hover'
                           }`}
                         >
                           {page}
@@ -733,7 +733,7 @@ export const ReviewDashboardView: React.FC = () => {
                     <button
                       onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                       disabled={currentPage === totalPages}
-                      className="px-2.5 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1 font-semibold text-xs"
+                      className="px-2.5 py-1.5 rounded-lg border border-fb-divider text-fb-text-2 hover:bg-fb-hover transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1 font-semibold text-xs"
                       title="Trang sau"
                     >
                       <span className="hidden sm:inline">Sau</span>

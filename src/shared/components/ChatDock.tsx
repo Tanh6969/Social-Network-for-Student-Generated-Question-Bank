@@ -91,10 +91,10 @@ export const ChatDock: React.FC = () => {
         return (
           <div
             key={convId}
-            className="w-80 sm:w-84 h-96 bg-white dark:bg-[#242526] rounded-t-2xl shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col pointer-events-auto overflow-hidden animate-in slide-in-from-bottom-5 duration-200"
+            className="w-80 sm:w-84 h-96 bg-fb-card rounded-t-2xl shadow-2xl border border-fb-divider flex flex-col pointer-events-auto overflow-hidden animate-in slide-in-from-bottom-5 duration-200"
           >
             {/* Header */}
-            <div className="px-3 py-2.5 bg-white dark:bg-[#242526] border-b border-gray-200 dark:border-gray-700 flex items-center justify-between shadow-2xs">
+            <div className="px-3 py-2.5 bg-fb-card border-b border-fb-divider flex items-center justify-between shadow-2xs">
               <div
                 onClick={() => {
                   setViewingUserId(conv.partner.id);
@@ -104,7 +104,7 @@ export const ChatDock: React.FC = () => {
               >
                 <AvatarWithFrame user={conv.partner} size="sm" />
                 <div className="truncate">
-                  <h4 className="font-bold text-xs text-gray-900 dark:text-gray-100 hover:underline truncate">
+                  <h4 className="font-bold text-xs text-fb-text hover:underline truncate">
                     {conv.partner.name}
                   </h4>
                   {isBlocked ? (
@@ -135,14 +135,14 @@ export const ChatDock: React.FC = () => {
                 )}
                 <button
                   onClick={() => minimizeChatDock(convId)}
-                  className="p-1 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-full transition"
+                  className="p-1 hover:bg-fb-hover rounded-full transition"
                   title="Thu nhỏ"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => closeChatDock(convId)}
-                  className="p-1 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] rounded-full transition"
+                  className="p-1 hover:bg-fb-hover rounded-full transition"
                   title="Đóng chat"
                 >
                   <X className="w-4 h-4" />
@@ -175,7 +175,7 @@ export const ChatDock: React.FC = () => {
                             <MoreVertical className="w-3 h-3" />
                           </button>
                           {activeMessageMenu?.msgId === msg.id && (
-                            <div className="absolute right-0 bottom-6 bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700 py-1 z-10 w-28">
+                            <div className="absolute right-0 bottom-6 bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-fb-divider py-1 z-10 w-28">
                               <button
                                 onClick={() => {
                                   recallMessage(convId, msg.id);
@@ -191,12 +191,12 @@ export const ChatDock: React.FC = () => {
                       )}
 
                       <div
-                        className={`p-2.5 rounded-2xl ${
+                        className={`p-2.5 rounded-lg ${
                           msg.isRecalled
                             ? 'bg-gray-200 dark:bg-gray-800 text-gray-500 italic'
                             : isMine
-                              ? 'bg-blue-600 text-white rounded-br-xs shadow-xs'
-                              : 'bg-white dark:bg-[#242526] text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-bl-xs shadow-xs'
+                              ? 'bg-blue-600 text-white rounded-br-xs shadow-fb-card'
+                              : 'bg-fb-card text-fb-text rounded-bl-xs shadow-xs'
                         } ${
                           msg.effect === 'effect_glow' && isMine
                             ? 'ring-1 ring-cyan-300 shadow-[0_0_10px_rgba(6,182,212,0.5)]'
@@ -226,14 +226,14 @@ export const ChatDock: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => unblockUser(conv.partner.id)}
-                    className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold shrink-0 flex items-center gap-1"
+                    className="px-2.5 py-1 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg text-[10px] font-bold shrink-0 flex items-center gap-1"
                   >
                     <Unlock className="w-3 h-3" /> Bỏ chặn
                   </button>
                 )}
               </div>
             ) : (
-              <div className="p-2 bg-white dark:bg-[#242526] border-t border-gray-200 dark:border-gray-700 flex items-center gap-1.5">
+              <div className="p-2 bg-fb-card border-t border-fb-divider flex items-center gap-1.5">
                 <input
                   type="text"
                   placeholder="Aa (Gửi tin nhắn...)"
@@ -245,7 +245,7 @@ export const ChatDock: React.FC = () => {
                     }))
                   }
                   onKeyDown={(e) => handleKeyDown(e, convId)}
-                  className="flex-1 bg-gray-100 dark:bg-[#3A3B3C] text-xs px-3 py-2 rounded-full focus:outline-hidden focus:ring-1 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
+                  className="flex-1 bg-fb-input text-xs px-3 py-2 rounded-full focus:outline-hidden focus:ring-1 focus:ring-blue-500 text-fb-text"
                 />
                 <button
                   onClick={() => handleSend(convId)}

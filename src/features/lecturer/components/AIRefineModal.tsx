@@ -68,10 +68,10 @@ export const AIRefineModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-blue-200 dark:border-blue-900">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/60 animate-in fade-in duration-200">
+      <div className="bg-fb-card rounded-lg shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-blue-200 dark:border-blue-900">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-blue-50 dark:bg-blue-950/40">
+        <div className="p-4 border-b border-fb-divider flex items-center justify-between bg-blue-50 dark:bg-blue-950/40">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-xs">
               <Sparkles className="w-4 h-4" />
@@ -98,7 +98,7 @@ export const AIRefineModal: React.FC = () => {
         <div className="p-5 overflow-y-auto space-y-4 flex-1">
           {/* Goal Selector */}
           <div>
-            <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-xs font-bold text-fb-text mb-2">
               Chọn mục tiêu tinh chỉnh của AI:
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
@@ -111,10 +111,10 @@ export const AIRefineModal: React.FC = () => {
                 <button
                   key={goal.id}
                   onClick={() => setRefineGoal(goal.id as any)}
-                  className={`p-2.5 rounded-xl border text-left transition ${
+                  className={`p-2.5 rounded-lg border text-left transition ${
                     refineGoal === goal.id
                       ? 'border-blue-600 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 ring-1 ring-blue-600'
-                      : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#3A3B3C]'
+                      : 'border-fb-divider hover:bg-fb-hover'
                   }`}
                 >
                   <span className="font-bold block">{goal.label}</span>
@@ -130,7 +130,7 @@ export const AIRefineModal: React.FC = () => {
               <button
                 onClick={handleStartRefine}
                 disabled={isProcessing}
-                className="px-6 py-3 bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-2 mx-auto disabled:opacity-60"
+                className="px-6 py-3 bg-fb-blue hover:bg-fb-blue-hover text-white font-bold text-xs rounded-lg shadow-md transition flex items-center gap-2 mx-auto disabled:opacity-60"
               >
                 <Sparkles className={`w-4 h-4 ${isProcessing ? 'animate-spin' : ''}`} />
                 <span>{isProcessing ? 'AI đang phân tích câu hỏi...' : 'Bắt đầu nhờ AI tối ưu'}</span>
@@ -150,18 +150,18 @@ export const AIRefineModal: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                 {/* Bản gốc */}
-                <div className="p-3.5 bg-gray-50 dark:bg-[#1E1F20] rounded-xl border border-gray-200 dark:border-gray-700">
-                  <span className="font-bold text-gray-500 block mb-1">BẢN GỐC TỪ SINH VIÊN</span>
-                  <p className="text-gray-700 dark:text-gray-300 mb-2">
+                <div className="p-3.5 bg-fb-input rounded-lg border border-fb-divider">
+                  <span className="font-bold text-gray-500 block mb-1">Bản gốc từ sinh viên</span>
+                  <p className="text-fb-text mb-2">
                     {activeAIRefineQuestion.content}
                   </p>
-                  <div className="pt-2 border-t border-gray-200 dark:border-gray-700 text-[11px] text-gray-500">
+                  <div className="pt-2 border-t border-fb-divider text-[11px] text-gray-500">
                     <strong>Giải thích:</strong> {activeAIRefineQuestion.explanation}
                   </div>
                 </div>
 
                 {/* Bản đề xuất AI */}
-                <div className="p-3.5 bg-blue-50/70 dark:bg-blue-950/30 rounded-xl border border-blue-300 dark:border-blue-800">
+                <div className="p-3.5 bg-blue-50/70 dark:bg-blue-950/30 rounded-lg border border-blue-300 dark:border-blue-800">
                   <span className="font-bold text-blue-700 dark:text-blue-300 block mb-1">
                     BẢN ĐỀ XUẤT TỪ AI (ĐÃ TINH CHỈNH)
                   </span>
@@ -178,10 +178,10 @@ export const AIRefineModal: React.FC = () => {
         </div>
 
         {/* Footer actions */}
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#1E1F20] flex items-center justify-between">
+        <div className="p-4 border-t border-fb-divider bg-fb-input flex items-center justify-between">
           <button
             onClick={() => setActiveAIRefineQuestion(null)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-xs font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition"
           >
             Đóng
           </button>
@@ -190,13 +190,13 @@ export const AIRefineModal: React.FC = () => {
             <div className="flex items-center gap-2">
               <button
                 onClick={handleStartRefine}
-                className="px-3 py-2 border border-blue-300 text-blue-700 rounded-xl text-xs font-semibold hover:bg-blue-50 transition flex items-center gap-1"
+                className="px-3 py-2 border border-blue-300 text-blue-700 rounded-lg text-xs font-semibold hover:bg-blue-50 transition flex items-center gap-1"
               >
                 <RefreshCw className="w-3.5 h-3.5" /> Thử mục tiêu khác
               </button>
               <button
                 onClick={handleApply}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center gap-1.5"
+                className="px-6 py-2 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg text-xs font-bold shadow-md transition flex items-center gap-1.5"
               >
                 <Check className="w-4 h-4" />
                 <span>Áp dụng bản sửa đổi của AI</span>

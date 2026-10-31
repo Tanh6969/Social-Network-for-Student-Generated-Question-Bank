@@ -56,10 +56,10 @@ export const QuestionQuizModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-gray-200 dark:border-gray-700 animate-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/60 animate-in fade-in duration-200">
+      <div className="bg-fb-card rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-fb-divider animate-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-[#1E1F20]">
+        <div className="p-4 border-b border-fb-divider flex items-center justify-between bg-fb-input">
           <div>
             <div className="flex items-center gap-2">
               <span className="font-bold text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300 px-2.5 py-0.5 rounded-full">
@@ -67,7 +67,7 @@ export const QuestionQuizModal: React.FC = () => {
               </span>
               <span className="text-xs text-gray-500">{activeQuizQuestion.chapter}</span>
             </div>
-            <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 mt-1">
+            <h3 className="font-bold text-sm text-fb-text mt-1">
               Kiểm tra trực tuyến & Làm thử câu hỏi
             </h3>
           </div>
@@ -84,12 +84,12 @@ export const QuestionQuizModal: React.FC = () => {
         </div>
 
         {/* Tab switch: Làm bài / Thống kê */}
-        <div className="flex border-b border-gray-200 dark:border-gray-700 px-4 bg-white dark:bg-[#242526] text-xs font-semibold">
+        <div className="flex border-b border-fb-divider px-4 bg-fb-card text-xs font-semibold">
           <button
             onClick={() => setActiveTab('QUIZ')}
             className={`py-2.5 px-3 border-b-2 transition ${
               activeTab === 'QUIZ'
-                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                ? 'border-blue-600 text-fb-blue'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -99,7 +99,7 @@ export const QuestionQuizModal: React.FC = () => {
             onClick={() => setActiveTab('STATS')}
             className={`py-2.5 px-3 border-b-2 transition flex items-center gap-1.5 ${
               activeTab === 'STATS'
-                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                ? 'border-blue-600 text-fb-blue'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -113,8 +113,8 @@ export const QuestionQuizModal: React.FC = () => {
           {activeTab === 'QUIZ' ? (
             <>
               {/* Question text */}
-              <div className="bg-gray-50 dark:bg-[#1E1F20] p-4 rounded-xl border border-gray-100 dark:border-gray-800">
-                <p className="font-semibold text-sm sm:text-base text-gray-900 dark:text-gray-100 leading-relaxed">
+              <div className="bg-fb-input p-4 rounded-lg border border-fb-divider">
+                <p className="font-semibold text-sm sm:text-base text-fb-text leading-relaxed">
                   {activeQuizQuestion.content}
                 </p>
               </div>
@@ -126,7 +126,7 @@ export const QuestionQuizModal: React.FC = () => {
                   const isAnswer = activeQuizQuestion.correctAnswer === opt.id;
 
                   let optionStyle =
-                    'border-gray-200 dark:border-gray-700 bg-white dark:bg-[#242526] hover:border-blue-400';
+                    'border-fb-divider bg-fb-card hover:border-blue-400';
                   if (isSelected && !hasSubmitted) {
                     optionStyle =
                       'border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 ring-1 ring-blue-600';
@@ -144,14 +144,14 @@ export const QuestionQuizModal: React.FC = () => {
                     <div
                       key={opt.id}
                       onClick={() => !hasSubmitted && setSelectedOption(opt.id)}
-                      className={`p-3.5 rounded-xl border cursor-pointer transition flex items-center justify-between text-xs sm:text-sm font-medium ${optionStyle}`}
+                      className={`p-3.5 rounded-lg border cursor-pointer transition flex items-center justify-between text-xs sm:text-sm font-medium ${optionStyle}`}
                     >
                       <div className="flex items-center gap-3">
                         <span
                           className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
                             isSelected || (hasSubmitted && isAnswer)
                               ? 'bg-blue-600 text-white'
-                              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
+                              : 'bg-gray-100 dark:bg-gray-700 text-fb-text'
                           }`}
                         >
                           {opt.id}
@@ -173,7 +173,7 @@ export const QuestionQuizModal: React.FC = () => {
               {/* Result & Explanation */}
               {hasSubmitted && (
                 <div
-                  className={`p-4 rounded-xl border animate-in fade-in duration-200 ${
+                  className={`p-4 rounded-lg border animate-in fade-in duration-200 ${
                     isCorrect
                       ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800'
                       : 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800'
@@ -197,7 +197,7 @@ export const QuestionQuizModal: React.FC = () => {
                     )}
                   </div>
 
-                  <p className="text-xs text-gray-800 dark:text-gray-200 leading-relaxed font-normal bg-white/70 dark:bg-black/30 p-3 rounded-lg border border-black/5">
+                  <p className="text-xs text-fb-text leading-relaxed font-normal bg-white/70 dark:bg-black/30 p-3 rounded-lg border border-black/5">
                     <strong>Lời giải chi tiết: </strong>
                     {activeQuizQuestion.explanation}
                   </p>
@@ -207,7 +207,7 @@ export const QuestionQuizModal: React.FC = () => {
           ) : (
             /* STATS TAB (BANK.08, BANK.10) */
             <div className="space-y-4">
-              <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-xl border border-blue-200 dark:border-blue-800 flex items-center justify-between">
+              <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800 flex items-center justify-between">
                 <div>
                   <span className="text-xs text-gray-500">Tỉ lệ trả lời đúng</span>
                   <p className="text-2xl font-black text-blue-700 dark:text-blue-400">
@@ -222,7 +222,7 @@ export const QuestionQuizModal: React.FC = () => {
                 </div>
                 <div className="text-right">
                   <span className="text-xs text-gray-500">Tổng số lượt làm</span>
-                  <p className="text-2xl font-black text-gray-800 dark:text-gray-200">
+                  <p className="text-2xl font-black text-fb-text">
                     {activeQuizQuestion.totalAttempts || 145}
                   </p>
                 </div>
@@ -230,7 +230,7 @@ export const QuestionQuizModal: React.FC = () => {
 
               {/* Bar chart of distribution */}
               <div>
-                <h4 className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-2">
+                <h4 className="font-bold text-xs text-gray-500 mb-2">
                   Phân bố lựa chọn phương án của sinh viên:
                 </h4>
                 <div className="space-y-2 text-xs">
@@ -266,9 +266,9 @@ export const QuestionQuizModal: React.FC = () => {
               </div>
 
               {/* Phân bố đánh giá 0 - 4 sao (GET /questions/{id}/statistics) */}
-              <div className="pt-3 border-t border-gray-100 dark:border-gray-700">
+              <div className="pt-3 border-t border-fb-divider">
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-bold text-xs uppercase tracking-wider text-gray-500">
+                  <h4 className="font-bold text-xs text-gray-500">
                     Phân bố đánh giá (thang 0 – 4 sao):
                   </h4>
                   <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
@@ -291,7 +291,7 @@ export const QuestionQuizModal: React.FC = () => {
 
                     return (
                       <div key={level} className="flex items-center gap-2">
-                        <span className="w-12 font-medium text-gray-600 dark:text-gray-300">
+                        <span className="w-12 font-medium text-fb-text-2">
                           {level} sao
                         </span>
                         <div className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
@@ -310,8 +310,8 @@ export const QuestionQuizModal: React.FC = () => {
               </div>
 
               {/* Rating 0 to 4 stars (POST /questions/{id}/rate) */}
-              <div className="p-4 bg-gray-50 dark:bg-[#1E1F20] rounded-xl border border-gray-200 dark:border-gray-700 text-center">
-                <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-2">
+              <div className="p-4 bg-fb-input rounded-lg border border-fb-divider text-center">
+                <span className="text-xs font-semibold text-fb-text-2 block mb-2">
                   Đánh giá câu hỏi này (thang 0 – 4 sao)
                 </span>
                 <div className="flex items-center justify-center gap-2 mb-2">
@@ -342,11 +342,11 @@ export const QuestionQuizModal: React.FC = () => {
         </div>
 
         {/* Footer actions */}
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#1E1F20] flex items-center justify-between">
+        <div className="p-4 border-t border-fb-divider bg-fb-input flex items-center justify-between">
           {hasSubmitted ? (
             <button
               onClick={handleReset}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-xs font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition flex items-center gap-1.5"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition flex items-center gap-1.5"
             >
               <RotateCcw className="w-4 h-4" />
               <span>Làm lại câu này</span>
@@ -359,7 +359,7 @@ export const QuestionQuizModal: React.FC = () => {
             <button
               onClick={handleSubmit}
               disabled={!selectedOption}
-              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white rounded-xl text-xs font-bold shadow-md transition"
+              className="px-6 py-2 bg-fb-blue hover:bg-fb-blue-hover disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white rounded-lg text-xs font-bold shadow-md transition"
             >
               Nộp bài kiểm tra
             </button>
@@ -369,7 +369,7 @@ export const QuestionQuizModal: React.FC = () => {
                 setActiveQuizQuestion(null);
                 handleReset();
               }}
-              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition"
+              className="px-6 py-2 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg text-xs font-bold transition"
             >
               Hoàn thành
             </button>

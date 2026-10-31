@@ -59,11 +59,11 @@ export const SearchResultsView: React.FC = () => {
     <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 flex flex-col md:flex-row gap-6 lg:gap-8 xl:gap-10 items-start">
       {/* CỘT TRÁI: Bộ lọc tìm kiếm (sticky sát lề trái) */}
       <aside className="w-full md:w-72 shrink-0 space-y-2 select-none md:sticky md:top-18">
-        <h2 className="text-xl font-black text-gray-900 dark:text-gray-100 px-2 mb-3">
+        <h2 className="text-xl font-black text-fb-text px-2 mb-3">
           Kết quả tìm kiếm
         </h2>
 
-        <div className="bg-white dark:bg-[#242526] rounded-xl shadow-xs border border-gray-200 dark:border-gray-700 p-2 space-y-1 text-xs font-semibold text-gray-700 dark:text-gray-300">
+        <div className="bg-fb-card rounded-lg shadow-fb-card p-2 space-y-1 text-xs font-semibold text-fb-text">
           {[
             { id: 'ALL', label: 'Tất cả kết quả', icon: Filter },
             {
@@ -88,7 +88,7 @@ export const SearchResultsView: React.FC = () => {
               className={`w-full flex items-center gap-3 p-2.5 rounded-lg transition text-left ${
                 filterType === item.id
                   ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 font-bold'
-                  : 'hover:bg-gray-100 dark:hover:bg-[#3A3B3C]'
+                  : 'hover:bg-fb-hover'
               }`}
             >
               <item.icon className="w-4 h-4" />
@@ -100,7 +100,7 @@ export const SearchResultsView: React.FC = () => {
 
       {/* CỘT PHẢI: Kết quả tìm kiếm */}
       <main className="flex-1 space-y-4">
-        <div className="bg-white dark:bg-[#242526] rounded-xl shadow-xs border border-gray-200 dark:border-gray-700 p-4">
+        <div className="bg-fb-card rounded-lg shadow-fb-card p-4">
           <p className="text-xs text-gray-500">
             Kết quả tìm kiếm cho từ khóa:{' '}
             <strong className="text-blue-600 font-bold">"{searchQuery}"</strong>
@@ -111,7 +111,7 @@ export const SearchResultsView: React.FC = () => {
         {(filterType === 'ALL' || filterType === 'USERS') &&
           uMatch.length > 0 && (
             <div className="space-y-3">
-              <h3 className="font-bold text-xs uppercase tracking-wider text-gray-500 px-2">
+              <h3 className="font-bold text-xs text-gray-500 px-2">
                 Mọi người ({uMatch.length})
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -122,12 +122,12 @@ export const SearchResultsView: React.FC = () => {
                       setViewingUserId(u.id);
                       setActiveTab('profile');
                     }}
-                    className="bg-white dark:bg-[#242526] rounded-xl p-3 border border-gray-200 dark:border-gray-700 flex items-center justify-between gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#3A3B3C]"
+                    className="bg-fb-card rounded-lg p-3 border border-fb-divider flex items-center justify-between gap-3 cursor-pointer hover:bg-fb-hover"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <AvatarWithFrame user={u} size="md" />
                       <div className="min-w-0">
-                        <p className="font-bold text-xs text-gray-900 dark:text-gray-100 truncate">
+                        <p className="font-bold text-xs text-fb-text truncate">
                           {u.name}
                         </p>
                         <p className="text-[11px] text-gray-500 truncate">
@@ -148,19 +148,19 @@ export const SearchResultsView: React.FC = () => {
         {(filterType === 'ALL' || filterType === 'QUESTIONS') &&
           qMatch.length > 0 && (
             <div className="space-y-3">
-              <h3 className="font-bold text-xs uppercase tracking-wider text-gray-500 px-2">
+              <h3 className="font-bold text-xs text-gray-500 px-2">
                 Câu hỏi trong ngân hàng ({qMatch.length})
               </h3>
               {qMatch.map((q) => (
                 <div
                   key={q.id}
-                  className="bg-white dark:bg-[#242526] rounded-xl p-4 border border-gray-200 dark:border-gray-700 space-y-2 shadow-xs"
+                  className="bg-fb-card rounded-lg p-4 space-y-2 shadow-fb-card"
                 >
                   <div className="flex justify-between text-xs">
                     <span className="font-bold text-blue-600">{q.subject}</span>
                     <span className="text-gray-500">{q.chapter}</span>
                   </div>
-                  <p className="font-semibold text-xs text-gray-900 dark:text-gray-100">
+                  <p className="font-semibold text-xs text-fb-text">
                     {q.content}
                   </p>
                   <div className="pt-2 flex justify-end">
@@ -180,17 +180,17 @@ export const SearchResultsView: React.FC = () => {
         {(filterType === 'ALL' || filterType === 'POSTS') &&
           pMatch.length > 0 && (
             <div className="space-y-3">
-              <h3 className="font-bold text-xs uppercase tracking-wider text-gray-500 px-2">
+              <h3 className="font-bold text-xs text-gray-500 px-2">
                 Bài viết trên Bảng tin ({pMatch.length})
               </h3>
               {pMatch.map((post) => (
                 <div
                   key={post.id}
-                  className="bg-white dark:bg-[#242526] rounded-xl p-4 border border-gray-200 dark:border-gray-700 space-y-2 shadow-xs"
+                  className="bg-fb-card rounded-lg p-4 space-y-2 shadow-fb-card"
                 >
                   <div className="flex items-center gap-2">
                     <AvatarWithFrame user={post.author} size="sm" />
-                    <span className="font-bold text-xs text-gray-900 dark:text-gray-100">
+                    <span className="font-bold text-xs text-fb-text">
                       {post.author.name}
                     </span>
                   </div>
@@ -207,9 +207,9 @@ export const SearchResultsView: React.FC = () => {
           )}
 
         {uMatch.length === 0 && qMatch.length === 0 && pMatch.length === 0 && (
-          <div className="bg-white dark:bg-[#242526] rounded-xl p-12 text-center text-gray-400 border border-gray-200 dark:border-gray-700">
+          <div className="bg-fb-card rounded-lg p-12 text-center text-gray-400 border border-fb-divider">
             <Search className="w-12 h-12 mx-auto mb-2 opacity-50" />
-            <p className="font-bold text-sm text-gray-700 dark:text-gray-300">
+            <p className="font-bold text-sm text-fb-text">
               Không tìm thấy kết quả phù hợp cho "{searchQuery}"
             </p>
             <p className="text-xs text-gray-500 mt-1">

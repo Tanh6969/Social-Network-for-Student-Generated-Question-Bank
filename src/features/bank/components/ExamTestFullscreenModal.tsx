@@ -144,16 +144,16 @@ export const ExamTestFullscreenModal: React.FC<
       : 0;
 
   return (
-    <div className="fixed inset-0 z-[1000] bg-gray-100 dark:bg-[#18191A] flex flex-col text-[#050505] dark:text-[#E4E6EB] select-none overflow-hidden animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[1000] bg-gray-100 dark:bg-[#18191A] flex flex-col text-fb-text select-none overflow-hidden animate-in fade-in duration-200">
       {/* ================= TOP BAR (CỐ ĐỊNH, KHÔNG CHO OUT RA) ================= */}
-      <header className="h-16 px-4 sm:px-6 bg-white dark:bg-[#242526] border-b border-gray-200 dark:border-gray-700 flex items-center justify-between shrink-0 shadow-xs">
+      <header className="h-16 px-4 sm:px-6 bg-fb-card border-b border-fb-divider flex items-center justify-between shrink-0 shadow-xs">
         {/* Left: Info */}
         <div className="flex items-center gap-3">
-          <span className="font-mono text-xs font-bold px-2.5 py-1 rounded bg-blue-50 text-blue-700 dark:bg-blue-950/70 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+          <span className="tabular-nums text-xs font-bold px-2.5 py-1 rounded bg-blue-50 text-blue-700 dark:bg-blue-950/70 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
             {exam.courseCode}
           </span>
           <div className="truncate max-w-[200px] sm:max-w-md">
-            <h2 className="font-bold text-sm text-gray-900 dark:text-gray-100 truncate">
+            <h2 className="font-bold text-sm text-fb-text truncate">
               {exam.title}
             </h2>
             <p className="text-[11px] text-gray-400 truncate">
@@ -167,8 +167,8 @@ export const ExamTestFullscreenModal: React.FC<
           {!isSubmitted ? (
             <>
               {/* Timer đếm tăng dần từ 0:00 đặt cạnh Đã làm */}
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-mono font-bold text-xs sm:text-sm bg-gray-100 text-gray-800 dark:bg-[#3A3B3C] dark:text-gray-100 shadow-xs">
-                <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg tabular-nums font-bold text-xs sm:text-sm bg-gray-100 text-gray-800 dark:bg-[#3A3B3C] dark:text-gray-100 shadow-xs">
+                <Clock className="w-4 h-4 text-fb-blue" />
                 <span>{formatTime(elapsedSeconds)}</span>
               </div>
 
@@ -193,7 +193,7 @@ export const ExamTestFullscreenModal: React.FC<
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer"
+              className="px-4 py-2 bg-fb-blue hover:bg-fb-blue-hover text-white font-bold text-xs rounded-lg shadow-xs transition cursor-pointer"
             >
               Thoát phòng thi
             </button>
@@ -208,14 +208,14 @@ export const ExamTestFullscreenModal: React.FC<
           <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto flex flex-col justify-between">
             <div className="max-w-3xl mx-auto w-full space-y-4">
               {/* Question header */}
-              <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between pb-3 border-b border-fb-divider">
                 <span className="font-bold text-sm px-3 py-1 rounded-lg bg-blue-600 text-white shadow-xs">
                   Câu {currentQuestionIndex + 1} / {exam.questions.length}
                 </span>
               </div>
 
               {/* Question text */}
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 leading-relaxed py-2">
+              <h3 className="text-base sm:text-lg font-semibold text-fb-text leading-relaxed py-2">
                 {currentQuestion.content}
               </h3>
 
@@ -230,17 +230,17 @@ export const ExamTestFullscreenModal: React.FC<
                       onClick={() =>
                         handleSelectOption(currentQuestion.id, opt.id)
                       }
-                      className={`p-4 rounded-xl border text-sm font-medium transition cursor-pointer flex items-center gap-3.5 ${
+                      className={`p-4 rounded-lg border text-sm font-medium transition cursor-pointer flex items-center gap-3.5 ${
                         isSelected
                           ? 'border-blue-600 bg-blue-50/80 dark:bg-blue-950/40 text-blue-950 dark:text-blue-100 shadow-xs'
-                          : 'border-gray-200 dark:border-gray-700 hover:bg-white dark:hover:bg-[#242526] text-gray-700 dark:text-gray-200'
+                          : 'border-fb-divider hover:bg-white dark:hover:bg-[#242526] text-fb-text'
                       }`}
                     >
                       <span
                         className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${
                           isSelected
                             ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                            : 'bg-gray-100 dark:bg-gray-700 text-fb-text'
                         }`}
                       >
                         {opt.id}
@@ -253,20 +253,20 @@ export const ExamTestFullscreenModal: React.FC<
             </div>
 
             {/* Bottom Nav: Câu trước / Câu tiếp theo */}
-            <div className="max-w-3xl mx-auto w-full pt-6 mt-6 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <div className="max-w-3xl mx-auto w-full pt-6 mt-6 border-t border-fb-divider flex items-center justify-between">
               <button
                 type="button"
                 disabled={currentQuestionIndex === 0}
                 onClick={() =>
                   setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))
                 }
-                className="px-4 py-2 rounded-xl text-xs font-bold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#3A3B3C] disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2 rounded-lg text-xs font-bold border border-gray-300 dark:border-gray-600 text-fb-text hover:bg-gray-200 dark:hover:bg-[#3A3B3C] disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1.5 cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4" />
                 <span>Câu trước</span>
               </button>
 
-              <span className="text-xs text-gray-400 font-mono">
+              <span className="text-xs text-gray-400 tabular-nums">
                 {currentQuestionIndex + 1} of {exam.questions.length}
               </span>
 
@@ -278,7 +278,7 @@ export const ExamTestFullscreenModal: React.FC<
                     Math.min(exam.questions.length - 1, prev + 1),
                   )
                 }
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 disabled:opacity-30 disabled:cursor-not-allowed text-white transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                className="px-4 py-2 rounded-lg text-xs font-bold bg-fb-blue hover:bg-fb-blue-hover disabled:opacity-30 disabled:cursor-not-allowed text-white transition flex items-center gap-1.5 cursor-pointer shadow-xs"
               >
                 <span>Câu tiếp theo</span>
                 <ChevronRight className="w-4 h-4" />
@@ -287,13 +287,13 @@ export const ExamTestFullscreenModal: React.FC<
           </main>
 
           {/* Right Area: Bảng danh sách câu hỏi điều hướng */}
-          <aside className="w-full lg:w-72 bg-white dark:bg-[#242526] border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-gray-700 p-4 flex flex-col justify-between shrink-0">
+          <aside className="w-full lg:w-72 bg-fb-card border-t lg:border-t-0 lg:border-l border-fb-divider p-4 flex flex-col justify-between shrink-0">
             <div>
-              <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100 dark:border-gray-700">
-                <h4 className="font-bold text-xs uppercase tracking-wider text-gray-500">
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-fb-divider">
+                <h4 className="font-bold text-xs text-gray-500">
                   Danh sách câu hỏi
                 </h4>
-                <span className="text-xs font-mono font-bold text-blue-600">
+                <span className="text-xs tabular-nums font-bold text-blue-600">
                   {answeredCount}/{exam.questions.length}
                 </span>
               </div>
@@ -314,7 +314,7 @@ export const ExamTestFullscreenModal: React.FC<
                           ? 'ring-2 ring-blue-600 bg-blue-600 text-white shadow-xs'
                           : isAnswered
                           ? 'bg-blue-100 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 font-bold'
-                          : 'bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-300 hover:bg-gray-200'
+                          : 'bg-fb-input text-fb-text-2 hover:bg-gray-200'
                       }`}
                     >
                       {idx + 1}
@@ -324,23 +324,23 @@ export const ExamTestFullscreenModal: React.FC<
               </div>
 
               {/* Chú thích màu */}
-              <div className="flex items-center gap-4 mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 text-[11px] text-gray-500">
+              <div className="flex items-center gap-4 mt-4 pt-3 border-t border-fb-divider text-[11px] text-gray-500">
                 <div className="flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded-sm bg-blue-100 text-blue-700 border border-blue-300" />
                   <span>Đã làm</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-sm bg-gray-100 dark:bg-[#3A3B3C] border border-gray-300" />
+                  <span className="w-3 h-3 rounded-sm bg-fb-input border border-gray-300" />
                   <span>Chưa làm</span>
                 </div>
               </div>
             </div>
 
-            <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
+            <div className="pt-4 border-t border-fb-divider">
               <button
                 type="button"
                 onClick={() => setShowConfirmSubmit(true)}
-                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer"
+                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow-xs transition cursor-pointer"
               >
                 Nộp bài thi
               </button>
@@ -354,12 +354,12 @@ export const ExamTestFullscreenModal: React.FC<
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-4xl mx-auto space-y-5">
             {/* Thống kê kết quả bài thi */}
-            <div className="bg-white dark:bg-[#242526] rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm space-y-4">
+            <div className="bg-fb-card rounded-lg p-6 shadow-fb-card space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
                     <Award className="w-6 h-6 text-amber-500" />
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                    <h2 className="text-xl font-bold text-fb-text">
                       Kết quả bài thi thử
                     </h2>
                   </div>
@@ -372,7 +372,7 @@ export const ExamTestFullscreenModal: React.FC<
                   <button
                     type="button"
                     onClick={handleRestartExam}
-                    className="px-4 py-2 rounded-xl text-xs font-bold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition flex items-center gap-1.5 cursor-pointer"
+                    className="px-4 py-2 rounded-lg text-xs font-bold border border-gray-300 dark:border-gray-600 text-fb-text hover:bg-fb-hover transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                     <span>Làm lại đề</span>
@@ -382,14 +382,14 @@ export const ExamTestFullscreenModal: React.FC<
 
               {/* 3 Thẻ thống kê điểm & thời gian */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-800/60 text-center">
-                  <span className="text-2xl font-black text-blue-600 dark:text-blue-400 block">
+                <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-800/60 text-center">
+                  <span className="text-2xl font-black text-fb-blue block">
                     {scoreOutOf10} / 10
                   </span>
                   <span className="text-xs text-gray-500">Điểm số đạt được</span>
                 </div>
 
-                <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/60 text-center">
+                <div className="p-4 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/60 text-center">
                   <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 block">
                     {correctCount} / {exam.questions.length}
                   </span>
@@ -400,7 +400,7 @@ export const ExamTestFullscreenModal: React.FC<
                   </span>
                 </div>
 
-                <div className="p-4 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200/60 dark:border-purple-800/60 text-center">
+                <div className="p-4 rounded-lg bg-purple-50 dark:bg-purple-950/40 border border-purple-200/60 dark:border-purple-800/60 text-center">
                   <span className="text-2xl font-black text-purple-600 dark:text-purple-400 block">
                     {formatTime(elapsedSeconds)}
                   </span>
@@ -411,7 +411,7 @@ export const ExamTestFullscreenModal: React.FC<
 
             {/* Chi tiết từng câu hỏi & Đáp án & Chấm sao */}
             <div className="space-y-4">
-              <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 flex items-center justify-between">
+              <h3 className="font-bold text-sm text-fb-text flex items-center justify-between">
                 <span>Chi tiết đáp án & Giải thích từng câu</span>
                 <span className="text-xs text-gray-400 font-normal">
                   Bạn có thể đánh giá từ 0 đến 4 sao cho từng câu hỏi bên dưới
@@ -426,12 +426,12 @@ export const ExamTestFullscreenModal: React.FC<
                 return (
                   <div
                     key={q.id}
-                    className="bg-white dark:bg-[#242526] rounded-2xl p-5 border border-gray-200 dark:border-gray-700 shadow-xs space-y-3.5"
+                    className="bg-fb-card rounded-lg p-5 shadow-fb-card space-y-3.5"
                   >
                     {/* Header câu */}
-                    <div className="flex items-center justify-between text-xs pb-2 border-b border-gray-100 dark:border-gray-700">
+                    <div className="flex items-center justify-between text-xs pb-2 border-b border-fb-divider">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-xs px-2.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                        <span className="font-bold text-xs px-2.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 text-fb-text">
                           Câu {idx + 1}
                         </span>
                       </div>
@@ -454,7 +454,7 @@ export const ExamTestFullscreenModal: React.FC<
                     </div>
 
                     {/* Question text */}
-                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-relaxed">
+                    <div className="text-sm font-semibold text-fb-text leading-relaxed">
                       {q.content}
                     </div>
 
@@ -465,7 +465,7 @@ export const ExamTestFullscreenModal: React.FC<
                         const isUserChoice = userAns === opt.id;
 
                         let borderStyle =
-                          'border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1E1F20]/50';
+                          'border-fb-divider bg-fb-card/50';
                         if (isThisCorrect) {
                           borderStyle =
                             'border-emerald-500 bg-emerald-50/80 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-100 font-semibold';
@@ -477,7 +477,7 @@ export const ExamTestFullscreenModal: React.FC<
                         return (
                           <div
                             key={opt.id}
-                            className={`p-3 rounded-xl border text-xs font-medium flex items-start gap-2.5 ${borderStyle}`}
+                            className={`p-3 rounded-lg border text-xs font-medium flex items-start gap-2.5 ${borderStyle}`}
                           >
                             <span
                               className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
@@ -485,7 +485,7 @@ export const ExamTestFullscreenModal: React.FC<
                                   ? 'bg-emerald-600 text-white'
                                   : isUserChoice
                                   ? 'bg-rose-600 text-white'
-                                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                                  : 'bg-gray-100 dark:bg-gray-700 text-fb-text'
                               }`}
                             >
                               {opt.id}
@@ -497,7 +497,7 @@ export const ExamTestFullscreenModal: React.FC<
                     </div>
 
                     {/* Giải thích chi tiết */}
-                    <div className="p-3.5 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-800/60 text-xs space-y-1">
+                    <div className="p-3.5 rounded-lg bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-800/60 text-xs space-y-1">
                       <div className="font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                         <span>Đáp án chính xác: Phương án {q.correctAnswer}</span>
@@ -508,7 +508,7 @@ export const ExamTestFullscreenModal: React.FC<
                     </div>
 
                     {/* Đánh giá sao câu hỏi (0 - 4 sao) */}
-                    <div className="pt-2 border-t border-gray-100 dark:border-gray-700/80">
+                    <div className="pt-2 border-t border-fb-divider">
                       <StarRating
                         ratingAverage={q.ratingAverage || 0}
                         ratingCount={q.ratingCount || 0}
@@ -532,16 +532,16 @@ export const ExamTestFullscreenModal: React.FC<
 
       {/* ================= MODAL XÁC NHẬN NỘP BÀI ================= */}
       {showConfirmSubmit && (
-        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-[#242526] rounded-2xl max-w-sm w-full p-5 border border-gray-200 dark:border-gray-700 shadow-2xl space-y-4 animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/60">
+          <div className="bg-fb-card rounded-lg max-w-sm w-full p-5 border border-fb-divider shadow-2xl space-y-4 animate-in zoom-in-95 duration-150">
             <div className="flex items-center gap-3 text-amber-600">
               <AlertCircle className="w-6 h-6" />
-              <h3 className="font-bold text-base text-gray-900 dark:text-gray-100">
+              <h3 className="font-bold text-base text-fb-text">
                 Xác nhận nộp bài?
               </h3>
             </div>
 
-            <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+            <p className="text-xs text-fb-text-2 leading-relaxed">
               Bạn đã hoàn thành{' '}
               <strong className="text-blue-600 font-bold">
                 {answeredCount} / {exam.questions.length}
@@ -555,14 +555,14 @@ export const ExamTestFullscreenModal: React.FC<
               <button
                 type="button"
                 onClick={() => setShowConfirmSubmit(false)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition cursor-pointer"
+                className="px-4 py-2 rounded-lg text-xs font-semibold text-fb-text hover:bg-fb-hover transition cursor-pointer"
               >
                 Làm tiếp
               </button>
               <button
                 type="button"
                 onClick={handleSubmitExam}
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition cursor-pointer shadow-xs"
+                className="px-4 py-2 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition cursor-pointer shadow-xs"
               >
                 Xác nhận nộp bài
               </button>
@@ -573,16 +573,16 @@ export const ExamTestFullscreenModal: React.FC<
 
       {/* ================= MODAL CẢNH BÁO KHÔNG CHO OUT RA ================= */}
       {showConfirmExit && (
-        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-[#242526] rounded-2xl max-w-sm w-full p-5 border border-gray-200 dark:border-gray-700 shadow-2xl space-y-4 animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/60">
+          <div className="bg-fb-card rounded-lg max-w-sm w-full p-5 border border-fb-divider shadow-2xl space-y-4 animate-in zoom-in-95 duration-150">
             <div className="flex items-center gap-3 text-rose-600">
               <AlertCircle className="w-6 h-6" />
-              <h3 className="font-bold text-base text-gray-900 dark:text-gray-100">
+              <h3 className="font-bold text-base text-fb-text">
                 Cảnh báo rời phòng thi
               </h3>
             </div>
 
-            <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+            <p className="text-xs text-fb-text-2 leading-relaxed">
               Bạn đang trong quá trình làm bài thi thử. Nếu rời đi bây giờ, toàn bộ câu trả lời sẽ <strong>không được lưu lại</strong>!
             </p>
 
@@ -590,7 +590,7 @@ export const ExamTestFullscreenModal: React.FC<
               <button
                 type="button"
                 onClick={() => setShowConfirmExit(false)}
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition cursor-pointer"
+                className="px-4 py-2 rounded-lg text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition cursor-pointer"
               >
                 Tiếp tục làm bài
               </button>
@@ -600,7 +600,7 @@ export const ExamTestFullscreenModal: React.FC<
                   setShowConfirmExit(false);
                   onClose();
                 }}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
+                className="px-4 py-2 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
               >
                 Thoát bài thi
               </button>

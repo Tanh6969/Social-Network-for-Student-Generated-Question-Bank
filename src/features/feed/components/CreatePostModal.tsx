@@ -245,17 +245,17 @@ function PostComposer({
   };
 
   return (
-    <div className="fixed inset-0 z-[220] flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+    <div className="fixed inset-0 z-[220] flex items-center justify-center bg-black/60 p-4">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="post-composer-title"
-        className="flex w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-[#242526]"
+        className="flex w-full max-w-lg flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-[#242526]"
       >
         <div className="relative flex items-center border-b border-gray-200 p-4 dark:border-gray-700">
           <h2
             id="post-composer-title"
-            className="flex-1 text-center text-base font-bold text-gray-900 dark:text-gray-100"
+            className="flex-1 text-center text-base font-bold text-fb-text"
           >
             {editingPost ? 'Chỉnh sửa bài viết' : 'Tạo bài viết'}
           </h2>
@@ -271,7 +271,7 @@ function PostComposer({
         <div className="max-h-[75vh] space-y-4 overflow-y-auto p-4">
           <div className="flex items-center gap-3">
             <AvatarWithFrame user={currentUser} size="md" />
-            <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
+            <p className="text-sm font-bold text-fb-text">
               {currentUser.name}
             </p>
           </div>
@@ -294,7 +294,7 @@ function PostComposer({
             />
             <span
               aria-label={`${wordCount} trên ${MAX_POST_WORDS} từ`}
-              className={`pointer-events-none absolute bottom-2 right-2 text-xs tabular-nums ${countIsRed ? 'font-semibold text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}
+              className={`pointer-events-none absolute bottom-2 right-2 text-xs tabular-nums ${countIsRed ? 'font-semibold text-red-600 dark:text-red-400' : 'text-fb-text-2'}`}
             >
               {wordCount}/{MAX_POST_WORDS}
             </span>
@@ -376,7 +376,7 @@ function PostComposer({
                 <button
                   type="button"
                   onClick={() => imageInput.current?.click()}
-                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-[#3A3B3C] ${mediaType === 'image' && initialMediaKind === 'image' ? 'border-blue-500 text-blue-600' : 'border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-200'}`}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-fb-hover ${mediaType === 'image' && initialMediaKind === 'image' ? 'border-blue-500 text-blue-600' : 'border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-200'}`}
                 >
                   <ImagePlus className="h-4 w-4 text-emerald-600" />
                   Thêm ảnh
@@ -387,7 +387,7 @@ function PostComposer({
                 <button
                   type="button"
                   onClick={() => videoInput.current?.click()}
-                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-[#3A3B3C] ${mediaType === 'video' && initialMediaKind === 'video' ? 'border-blue-500 text-blue-600' : 'border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-200'}`}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-fb-hover ${mediaType === 'video' && initialMediaKind === 'video' ? 'border-blue-500 text-blue-600' : 'border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-200'}`}
                 >
                   <Video className="h-4 w-4 text-blue-600" />
                   Thêm video
@@ -397,7 +397,7 @@ function PostComposer({
               <button
                 type="button"
                 onClick={() => documentInput.current?.click()}
-                className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-[#3A3B3C] ${initialMediaKind === 'document' ? 'border-blue-500 text-blue-600' : 'border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-200'}`}
+                className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-fb-hover ${initialMediaKind === 'document' ? 'border-blue-500 text-blue-600' : 'border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-200'}`}
               >
                 <FileText className="h-4 w-4 text-blue-600" />
                 Thêm tài liệu
@@ -422,7 +422,7 @@ function PostComposer({
               Boolean(contentIssue) ||
               isReadingFiles
             }
-            className="w-full rounded-xl bg-blue-600 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 dark:disabled:bg-gray-700"
+            className="w-full rounded-lg bg-blue-600 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 dark:disabled:bg-gray-700"
           >
             {editingPost ? 'Lưu thay đổi' : 'Đăng bài viết'}
           </button>

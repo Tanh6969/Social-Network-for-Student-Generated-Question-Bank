@@ -65,23 +65,23 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
   }, [sessionId]);
 
   return (
-    <div className="fixed inset-0 z-[250] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-gray-200 dark:border-gray-700">
+    <div className="fixed inset-0 z-[250] flex items-center justify-center p-3 sm:p-4 bg-black/60 animate-in fade-in duration-200">
+      <div className="bg-fb-card rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-fb-divider">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-[#1E1F20]">
+        <div className="p-4 border-b border-fb-divider flex items-center justify-between bg-fb-input">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 flex items-center justify-center shrink-0">
               <BookOpen className="w-5 h-5" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-bold text-base text-gray-900 dark:text-gray-100 truncate">
+                <h3 className="font-bold text-base text-fb-text truncate">
                   Chi tiết phiên đề xuất
                 </h3>
               </div>
               <p className="text-xs text-gray-500 truncate">
                 Môn:{' '}
-                <span className="font-semibold text-gray-700 dark:text-gray-300">
+                <span className="font-semibold text-fb-text">
                   {detail?.subject_name || 'Đang tải...'} ({detail?.subject_code || ''})
                 </span>
               </p>
@@ -106,7 +106,7 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
           )}
 
           {error && (
-            <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 flex items-start gap-3">
+            <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 flex items-start gap-3">
               <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
               <div>
                 <p className="font-semibold text-sm">Lỗi tải dữ liệu</p>
@@ -118,17 +118,17 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
           {!loading && detail && (
             <>
               {/* Meta information card */}
-              <div className="bg-gray-50 dark:bg-[#1E1F20] rounded-xl p-4 border border-gray-200 dark:border-gray-700 space-y-3">
-                <h4 className="font-bold text-lg text-gray-900 dark:text-gray-100">
+              <div className="bg-fb-input rounded-lg p-4 border border-fb-divider space-y-3">
+                <h4 className="font-bold text-lg text-fb-text">
                   {detail.title}
                 </h4>
                 {detail.content && (
-                  <p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">
+                  <p className="text-sm text-fb-text-2 whitespace-pre-line">
                     {detail.content}
                   </p>
                 )}
 
-                <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex flex-wrap items-center gap-4 text-xs text-fb-text-2 pt-2 border-t border-fb-divider">
                   <div className="flex items-center gap-1.5">
                     <Calendar className="w-4 h-4 text-gray-400" />
                     <span>
@@ -165,7 +165,7 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
               {/* Questions list */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-sm uppercase tracking-wide text-gray-700 dark:text-gray-300">
+                  <h4 className="font-bold text-sm text-fb-text">
                     Danh sách câu hỏi ({detail.questions?.length || 0})
                   </h4>
                 </div>
@@ -174,14 +174,14 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
                   detail.questions.map((q, qIndex) => (
                     <div
                       key={q.question_id || qIndex}
-                      className="p-4 sm:p-5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#242526] space-y-3 shadow-xs"
+                      className="p-4 sm:p-5 rounded-lg bg-fb-card space-y-3 shadow-fb-card"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-2">
                           <span className="w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
                             {qIndex + 1}
                           </span>
-                          <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+                          <span className="font-semibold text-sm text-fb-text">
                             Câu hỏi {qIndex + 1}
                           </span>
                         </div>
@@ -195,7 +195,7 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
                       </div>
 
                       {/* Question content */}
-                      <p className="text-sm sm:text-base text-gray-900 dark:text-gray-100 leading-relaxed font-medium">
+                      <p className="text-sm sm:text-base text-fb-text leading-relaxed font-medium">
                         {q.content}
                       </p>
 
@@ -207,7 +207,7 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
                               key={imgIdx}
                               src={url}
                               alt={`Minh họa câu hỏi ${qIndex + 1}`}
-                              className="max-h-48 rounded-lg border border-gray-200 dark:border-gray-700 object-cover"
+                              className="max-h-48 rounded-lg border border-fb-divider object-cover"
                             />
                           ))}
                         </div>
@@ -221,14 +221,14 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
                             className={`p-3 rounded-lg border text-xs sm:text-sm flex items-start gap-2.5 transition ${
                               opt.is_correct
                                 ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200 font-semibold'
-                                : 'border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-[#1E1F20] text-gray-800 dark:text-gray-300'
+                                : 'border-fb-divider bg-gray-50/60 dark:bg-[#1E1F20] text-gray-800 dark:text-gray-300'
                             }`}
                           >
                             <span
                               className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
                                 opt.is_correct
                                   ? 'bg-emerald-600 text-white'
-                                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                                  : 'bg-gray-200 dark:bg-gray-700 text-fb-text'
                               }`}
                             >
                               {opt.key}
@@ -239,7 +239,7 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
                                 <img
                                   src={opt.media_url}
                                   alt={`Đáp án ${opt.key}`}
-                                  className="mt-2 max-h-24 rounded border border-gray-200 dark:border-gray-700 object-cover"
+                                  className="mt-2 max-h-24 rounded border border-fb-divider object-cover"
                                 />
                               )}
                             </div>
@@ -273,10 +273,10 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end bg-gray-50 dark:bg-[#1E1F20]">
+        <div className="p-4 border-t border-fb-divider flex justify-end bg-fb-input">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-semibold rounded-xl bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition cursor-pointer"
+            className="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-200 dark:bg-gray-700 text-fb-text hover:bg-gray-300 dark:hover:bg-gray-600 transition cursor-pointer"
           >
             Đóng
           </button>

@@ -115,7 +115,7 @@ const MainContent: React.FC = () => {
   if (!canAccessTab(role, activeTab)) return <Navigate to="/feed" replace />;
 
   return (
-    <div className="min-h-screen bg-[#F0F2F5] dark:bg-[#18191A] text-[#050505] dark:text-[#E4E6EB] transition-colors duration-200 flex flex-col pt-14">
+    <div className="min-h-screen bg-fb-canvas text-fb-text transition-colors duration-200 flex flex-col pt-14">
       {/* Top Fixed Navbar */}
       <Navbar />
 

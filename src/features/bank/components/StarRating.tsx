@@ -62,7 +62,7 @@ export const StarRating: React.FC<StarRatingProps> = ({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between gap-2 py-2 px-3 rounded-xl bg-gray-50/80 dark:bg-[#1E1F20]/60 border border-gray-200/60 dark:border-gray-700/60">
+      <div className="flex items-center justify-between gap-2 py-2 px-3 rounded-lg bg-gray-50/80 dark:bg-[#1E1F20]/60 border border-gray-200/60 dark:border-gray-700/60">
         {/* Cột trái: Điểm trung bình (thang điểm 4) & số lượt đánh giá */}
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400">
@@ -132,7 +132,7 @@ export const StarRating: React.FC<StarRatingProps> = ({
                   title="Viết nhận xét cho câu hỏi"
                   className={`p-1 transition cursor-pointer ${
                     showCommentBox || userComment
-                      ? 'text-blue-600 dark:text-blue-400 font-bold'
+                      ? 'text-fb-blue font-bold'
                       : 'text-gray-400 hover:text-blue-500'
                   }`}
                 >
@@ -153,13 +153,13 @@ export const StarRating: React.FC<StarRatingProps> = ({
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSendComment()}
-            className="flex-1 px-3 py-1.5 bg-gray-100 dark:bg-[#2A2B2D] rounded-lg text-xs text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+            className="flex-1 px-3 py-1.5 bg-gray-100 dark:bg-[#2A2B2D] rounded-lg text-xs text-fb-text focus:outline-hidden focus:ring-1 focus:ring-blue-500"
           />
           <button
             type="button"
             onClick={handleSendComment}
             disabled={!commentText.trim()}
-            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 flex items-center gap-1"
+            className="px-3 py-1.5 bg-fb-blue hover:bg-fb-blue-hover disabled:opacity-40 text-white rounded-lg text-xs font-semibold transition cursor-pointer shrink-0 flex items-center gap-1"
           >
             <Send className="w-3 h-3" />
             <span>Gửi</span>
@@ -171,8 +171,8 @@ export const StarRating: React.FC<StarRatingProps> = ({
       {userComment && !showCommentBox && (
         <div className="flex items-center justify-between text-xs bg-blue-50/80 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200 px-3 py-1.5 rounded-lg border border-blue-200/60 dark:border-blue-800/60 animate-in fade-in duration-150">
           <div className="flex items-center gap-1.5 truncate">
-            <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
-            <span className="font-semibold text-gray-700 dark:text-gray-300">
+            <Check className="w-3.5 h-3.5 text-fb-blue shrink-0" />
+            <span className="font-semibold text-fb-text">
               Nhận xét của bạn:
             </span>
             <span className="italic truncate text-blue-700 dark:text-blue-300">
