@@ -3,9 +3,36 @@ import {
   ExamDetailResponse,
   SubjectResponse,
   CourseClassResponse,
+  ClassStudentResponse,
   GenerateExamRequest,
   ExportResponse,
 } from '../../api';
+
+const MOCK_FAMILY_NAMES = ['Nguyễn', 'Trần', 'Lê', 'Phạm', 'Hoàng', 'Vũ', 'Đặng', 'Bùi', 'Đỗ', 'Ngô'];
+const MOCK_MIDDLE_NAMES = ['Văn', 'Thị', 'Minh', 'Quang', 'Thu', 'Đức', 'Ngọc', 'Hải'];
+const MOCK_GIVEN_NAMES = ['An', 'Bình', 'Dung', 'Hà', 'Huy', 'Khánh', 'Linh', 'Nam', 'Phúc', 'Quân', 'Trang', 'Tú', 'Vy', 'Long'];
+const MOCK_HOME_CLASSES = ['Khoa học máy tính 01-K68', 'Khoa học máy tính 02-K68', 'Kỹ thuật máy tính 01-K68', 'Khoa học dữ liệu 01-K68'];
+
+/**
+ * Sinh danh sách sinh viên giả lập (ổn định theo mã lớp) cho một lớp học phần
+ */
+export function buildMockClassStudents(courseClass: CourseClassResponse): ClassStudentResponse[] {
+  const seed = Number(courseClass.class_code) || courseClass.course_class_id || 1;
+  return Array.from({ length: courseClass.total_students ?? 30 }, (_, i) => {
+    const n = seed + i * 7;
+    const studentCode = `2023${String((seed * 13 + i * 37) % 10000).padStart(4, '0')}`;
+    return {
+      user_id: seed * 1000 + i,
+      student_code: studentCode,
+      full_name: `${MOCK_FAMILY_NAMES[n % MOCK_FAMILY_NAMES.length]} ${MOCK_MIDDLE_NAMES[(n >> 1) % MOCK_MIDDLE_NAMES.length]} ${MOCK_GIVEN_NAMES[(n >> 2) % MOCK_GIVEN_NAMES.length]}`,
+      email: `sv.${studentCode}@sis.hust.edu.vn`,
+      class_name: MOCK_HOME_CLASSES[i % MOCK_HOME_CLASSES.length],
+      school_faculty: 'Trường Công nghệ Thông tin và Truyền thông',
+      major: 'Khoa học máy tính',
+      enrolled_at: '2026-09-01T08:00:00Z',
+    };
+  }).sort((a, b) => (a.student_code ?? '').localeCompare(b.student_code ?? ''));
+}
 
 export const MOCK_SUBJECTS: SubjectResponse[] = [
   { subject_id: 1, name: 'Hệ điều hành', code: 'IT3080' },

@@ -8,6 +8,7 @@ import {
   generateMockExportLocally,
   MOCK_SUBJECTS,
   MOCK_COURSE_CLASSES,
+  buildMockClassStudents,
 } from '../features/lecturer/mockExamData';
 
 // ============================================================================
@@ -25,6 +26,7 @@ export type ExamListResponse = components['schemas']['ExamListResponse'];
 export type CursorPaginationDto = components['schemas']['CursorPaginationDto'];
 export type ExportResponse = components['schemas']['ExportResponse'];
 export type CourseClassResponse = components['schemas']['CourseClassResponse'];
+export type ClassStudentResponse = components['schemas']['ClassStudentResponse'];
 export type SubjectResponse = components['schemas']['SubjectResponse'];
 
 export interface GetMyExamsParams {
@@ -311,6 +313,32 @@ export const examsApi = {
       return MOCK_COURSE_CLASSES;
     } catch {
       return MOCK_COURSE_CLASSES;
+    }
+  },
+
+  /**
+   * Lấy danh sách sinh viên trong lớp học phần
+   * GET /lecturer/course-classes/{courseClassId}/students
+   */
+  async getClassStudents(courseClass: CourseClassResponse): Promise<ClassStudentResponse[]> {
+    const token = tokenStore.get();
+    const courseClassId = courseClass.course_class_id;
+    if (!token || courseClassId === undefined) return buildMockClassStudents(courseClass);
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+
+      const result = await api.GET('/lecturer/course-classes/{courseClassId}/students', {
+        params: { path: { courseClassId } },
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      const envelope = expectEnvelope(result);
+      return envelope.data ?? [];
+    } catch {
+      return buildMockClassStudents(courseClass);
     }
   },
 
