@@ -8,6 +8,7 @@ import { PostDocuments } from './PostDocuments';
 import { PostShareButton } from './PostShareButton';
 import { PostComposerCard } from './PostComposerCard';
 import { StudentSidebarSections } from './StudentSidebarSections';
+import { LecturerSidebarSections } from './LecturerSidebarSections';
 import {
   formatPostTime,
   isPostVisibleToViewer,
@@ -15,14 +16,9 @@ import {
 } from '../postUtils';
 import { useFeedPages } from '../useFeedPages';
 import {
-  Users,
-  BookOpen,
-  PlusCircle,
   Gamepad2,
   Trophy,
   FileCode,
-  CheckSquare,
-  Database,
   ThumbsUp,
   MessageCircle,
   MoreHorizontal,
@@ -117,80 +113,9 @@ export const FeedView: React.FC = () => {
 
         {/* Shortcuts list - Tối giản & đồng bộ màu sắc */}
         <div className="space-y-0.5 text-sm font-medium text-gray-700 dark:text-gray-200">
-          {/* NẾU LÀ GIẢNG VIÊN: ĐƯA KIỂM DUYỆT CÂU HỎI & QUẢN LÝ ĐỀ THI LÊN TRÊN ĐẦU */}
           {role === 'LECTURER' ? (
-            <>
-              {/* 1. Kiểm duyệt câu hỏi */}
-              <button
-                onClick={() => setActiveTab('review')}
-                className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-semibold transition text-left cursor-pointer"
-              >
-                <div className="w-9 h-9 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50 flex items-center justify-center transition-colors">
-                  <CheckSquare className="w-5 h-5" />
-                </div>
-                <span>Kiểm duyệt câu hỏi</span>
-              </button>
-
-              {/* 2. Quản lý đề thi */}
-              <button
-                onClick={() => setActiveTab('exams')}
-                className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-semibold transition text-left cursor-pointer"
-              >
-                <div className="w-9 h-9 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50 flex items-center justify-center transition-colors">
-                  <Database className="w-5 h-5" />
-                </div>
-                <span>Quản lý đề thi</span>
-              </button>
-
-              {/* 3. Đề xuất câu hỏi */}
-              <button
-                onClick={() => setActiveTab('propose')}
-                className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left cursor-pointer"
-              >
-                <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/40 group-hover:text-blue-600 flex items-center justify-center transition-colors">
-                  <PlusCircle className="w-5 h-5" />
-                </div>
-                <span>Đề xuất câu hỏi</span>
-              </button>
-
-              {/* 4. Ngân hàng đề thi */}
-              <button
-                onClick={() => setActiveTab('bank')}
-                className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left cursor-pointer"
-              >
-                <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/40 group-hover:text-blue-600 flex items-center justify-center transition-colors">
-                  <BookOpen className="w-5 h-5" />
-                </div>
-                <span>Ngân hàng đề thi</span>
-              </button>
-
-              {/* Minigame dự đoán */}
-              <button
-                onClick={() => setActiveTab('game')}
-                className="w-full group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left"
-              >
-                <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/40 group-hover:text-blue-600 flex items-center justify-center transition-colors">
-                  <Gamepad2 className="w-5 h-5" />
-                </div>
-                <span>Minigame dự đoán</span>
-              </button>
-
-              {/* Bạn bè & Giảng viên */}
-              <button
-                onClick={() => setActiveTab('friends')}
-                className="w-full group flex items-center justify-between px-3 py-2 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-300 group-hover:bg-blue-50 dark:group-hover:bg-blue-950/40 group-hover:text-blue-600 flex items-center justify-center transition-colors">
-                    <Users className="w-5 h-5" />
-                  </div>
-                  <span>Bạn bè & Giảng viên</span>
-                </div>
-                <span className="text-xs font-bold text-gray-500 bg-gray-100 dark:bg-[#3A3B3C] px-2 py-0.5 rounded-full">
-                  {currentUser.friendsCount}
-                </span>
-              </button>
-            </>
+            // Giảng viên: các trang chức năng đã có trên header, sidebar chỉ hiện dữ liệu cá nhân
+            <LecturerSidebarSections />
           ) : (
             // Sinh viên: chỉ hiện nội dung cá nhân, không lặp lại các trang đã có trên header
             <StudentSidebarSections />

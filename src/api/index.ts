@@ -38,6 +38,7 @@ export type {
   ExamListResponse,
   ExportResponse,
   CourseClassResponse,
+  ClassStudentResponse,
   GetMyExamsParams,
   ExportExamParams,
   ExportQuestionsParams,
