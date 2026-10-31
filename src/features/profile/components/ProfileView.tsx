@@ -170,7 +170,7 @@ export const ProfileView: React.FC = () => {
   return (
     <div className="max-w-[1000px] mx-auto pb-10">
       {/* ================= HEADER BÌA + AVATAR (Facebook Style) ================= */}
-      <div className="bg-white dark:bg-[#242526] rounded-b-2xl shadow-xs border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-fb-card rounded-b-2xl shadow-xs border-b border-fb-divider">
         {/* Cover Photo */}
         <div className="relative h-64 sm:h-80 w-full bg-gray-200 dark:bg-gray-800 rounded-b-2xl overflow-hidden">
           <button
@@ -193,7 +193,7 @@ export const ProfileView: React.FC = () => {
             <button
               type="button"
               onClick={() => setEditorKind('cover')}
-              className="absolute bottom-4 right-4 bg-white/90 dark:bg-black/60 hover:bg-white text-gray-800 dark:text-gray-100 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-md flex items-center gap-1.5 transition"
+              className="absolute bottom-4 right-4 bg-white/90 dark:bg-black/60 hover:bg-white text-fb-text px-3 py-1.5 rounded-lg text-xs font-semibold shadow-md flex items-center gap-1.5 transition"
             >
               <Camera className="w-4 h-4" />
               <span>Chỉnh sửa ảnh bìa</span>
@@ -220,7 +220,7 @@ export const ProfileView: React.FC = () => {
                 type="button"
                 onClick={() => setEditorKind('avatar')}
                 aria-label="Đổi ảnh đại diện"
-                className="absolute bottom-0 right-0 rounded-full bg-white p-2 text-gray-800 shadow-md hover:bg-gray-100 dark:bg-[#3A3B3C] dark:text-white"
+                className="absolute bottom-0 right-0 rounded-full bg-white p-2 text-gray-800 shadow-md hover:bg-fb-input dark:text-white"
               >
                 <Camera className="h-4 w-4" />
               </button>
@@ -230,7 +230,7 @@ export const ProfileView: React.FC = () => {
           <div className="flex flex-col items-center justify-between gap-4 text-center sm:ml-28 sm:flex-row sm:items-end sm:text-left">
             <div>
               <div className="flex items-center justify-center sm:justify-start gap-2">
-                <h1 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-gray-100">
+                <h1 className="text-xl sm:text-2xl font-black text-fb-text">
                   {targetUser.name}
                 </h1>
               </div>
@@ -261,7 +261,7 @@ export const ProfileView: React.FC = () => {
                 <>
                   <button
                     onClick={() => setActiveTab('cosmetics')}
-                    className="px-4 py-2 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 rounded-xl text-xs font-bold hover:bg-purple-100 transition flex items-center gap-1.5"
+                    className="px-4 py-2 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 rounded-lg text-xs font-bold hover:bg-purple-100 transition flex items-center gap-1.5"
                   >
                     <Sparkles className="w-4 h-4" />
                     <span>Kho vật phẩm</span>
@@ -269,7 +269,7 @@ export const ProfileView: React.FC = () => {
 
                   <button
                     onClick={() => setIsEditingProfile(true)}
-                    className="px-4 py-2 bg-gray-100 dark:bg-[#3A3B3C] text-gray-800 dark:text-gray-200 rounded-xl text-xs font-bold hover:bg-gray-200 transition flex items-center gap-1.5"
+                    className="px-4 py-2 bg-fb-input text-fb-text rounded-lg text-xs font-bold hover:bg-gray-200 transition flex items-center gap-1.5"
                   >
                     <Edit className="w-4 h-4" />
                     <span>Chỉnh sửa trang cá nhân</span>
@@ -282,7 +282,7 @@ export const ProfileView: React.FC = () => {
                       type="button"
                       onClick={() => toggleFollowUser(targetUser.id)}
                       aria-pressed={isFollowing}
-                      className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                      className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
                         isFollowing
                           ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 hover:bg-purple-100'
                           : 'bg-purple-600 hover:bg-purple-700 text-white'
@@ -299,7 +299,7 @@ export const ProfileView: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => sendFriendRequest(targetUser.id)}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+                      className="px-4 py-2 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5"
                     >
                       <UserPlus className="w-4 h-4" />
                       <span>Thêm bạn bè</span>
@@ -310,7 +310,7 @@ export const ProfileView: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => cancelFriendRequest(targetUser.id)}
-                      className="px-4 py-2 bg-gray-100 dark:bg-[#3A3B3C] text-gray-700 dark:text-gray-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+                      className="px-4 py-2 bg-fb-input text-fb-text rounded-lg text-xs font-bold transition flex items-center gap-1.5"
                     >
                       <UserMinus className="w-4 h-4" />
                       <span>Hủy lời mời</span>
@@ -322,7 +322,7 @@ export const ProfileView: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => acceptFriendRequest(targetUser.id)}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+                        className="px-4 py-2 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5"
                       >
                         <Check className="w-4 h-4" />
                         <span>Xác nhận lời mời</span>
@@ -330,7 +330,7 @@ export const ProfileView: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => declineFriendRequest(targetUser.id)}
-                        className="px-4 py-2 bg-gray-100 dark:bg-[#3A3B3C] text-gray-700 dark:text-gray-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+                        className="px-4 py-2 bg-fb-input text-fb-text rounded-lg text-xs font-bold transition flex items-center gap-1.5"
                       >
                         <X className="w-4 h-4" />
                         <span>Từ chối</span>
@@ -339,7 +339,7 @@ export const ProfileView: React.FC = () => {
                   )}
 
                   {relationAction === 'ALREADY_FRIENDS' && (
-                    <span className="px-4 py-2 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 rounded-xl text-xs font-bold flex items-center gap-1.5">
+                    <span className="px-4 py-2 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 rounded-lg text-xs font-bold flex items-center gap-1.5">
                       <UserCheck className="w-4 h-4" />
                       <span>Đã là bạn bè</span>
                     </span>
@@ -347,7 +347,7 @@ export const ProfileView: React.FC = () => {
 
                   <button
                     onClick={() => openChatDock(targetUser.id)}
-                    className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center gap-1.5"
+                    className="px-5 py-2 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg text-xs font-bold shadow-md transition flex items-center gap-1.5"
                   >
                     <MessageCircle className="w-4 h-4" />
                     <span>Nhắn tin</span>
@@ -361,7 +361,7 @@ export const ProfileView: React.FC = () => {
                         targetUser.name,
                       )
                     }
-                    className="p-2 text-gray-500 hover:text-red-600 border border-gray-200 dark:border-gray-700 rounded-xl transition"
+                    className="p-2 text-gray-500 hover:text-red-600 border border-fb-divider rounded-lg transition"
                     title="Báo cáo người dùng"
                   >
                     <ShieldAlert className="w-4 h-4" />
@@ -375,7 +375,7 @@ export const ProfileView: React.FC = () => {
           <div
             role="tablist"
             aria-label="Mục hồ sơ"
-            className="flex overflow-x-auto border-t border-gray-100 dark:border-gray-700 mt-4 text-xs font-bold text-gray-600 dark:text-gray-300"
+            className="flex overflow-x-auto border-t border-fb-divider mt-4 text-xs font-bold text-fb-text-2"
           >
             {[
               { id: 'POSTS', label: 'Bài viết' },
@@ -392,7 +392,7 @@ export const ProfileView: React.FC = () => {
                 className={`shrink-0 py-3 px-4 border-b-2 transition ${
                   activeTab === tab.id
                     ? 'border-blue-600 text-blue-600 font-bold'
-                    : 'border-transparent hover:bg-gray-50 dark:hover:bg-[#3A3B3C]'
+                    : 'border-transparent hover:bg-fb-hover'
                 }`}
               >
                 {tab.label}
@@ -425,16 +425,16 @@ export const ProfileView: React.FC = () => {
           {/* CỘT TRÁI (360px): Giới thiệu & Bạn bè (5 cols) */}
           <div className="md:col-span-5 space-y-4">
             {/* Bio card */}
-            <div className="bg-white dark:bg-[#242526] rounded-xl shadow-xs border border-gray-200 dark:border-gray-700 p-4 space-y-3">
-              <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100">
+            <div className="bg-fb-card rounded-lg shadow-fb-card p-4 space-y-3">
+              <h3 className="font-bold text-sm text-fb-text">
                 Giới thiệu
               </h3>
 
-              <p className="text-center text-xs leading-relaxed text-gray-700 dark:text-gray-300">
+              <p className="text-center text-xs leading-relaxed text-fb-text">
                 {targetUser.bio || 'Chưa cập nhật tiểu sử.'}
               </p>
 
-              <div className="pt-2 border-t border-gray-100 dark:border-gray-700 space-y-2 text-xs text-gray-600 dark:text-gray-400">
+              <div className="pt-2 border-t border-fb-divider space-y-2 text-xs text-fb-text-2">
                 <p>
                   🎓 Đang học tại: <strong>{targetUser.faculty}</strong>
                 </p>
@@ -448,9 +448,9 @@ export const ProfileView: React.FC = () => {
             </div>
 
             {/* 9 Friends grid */}
-            <div className="bg-white dark:bg-[#242526] rounded-xl shadow-xs border border-gray-200 dark:border-gray-700 p-4 space-y-2">
+            <div className="bg-fb-card rounded-lg shadow-fb-card p-4 space-y-2">
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100">
+                <h3 className="font-bold text-sm text-fb-text">
                   Bạn bè
                 </h3>
                 <span className="text-xs text-gray-500">
@@ -472,7 +472,7 @@ export const ProfileView: React.FC = () => {
                         alt={friend.name}
                         className="h-20 w-full rounded-lg object-cover transition group-hover:opacity-90"
                       />
-                      <span className="mt-1 block truncate text-[10px] font-bold text-gray-700 dark:text-gray-300">
+                      <span className="mt-1 block truncate text-[10px] font-bold text-fb-text">
                         {friend.name}
                       </span>
                     </button>
@@ -501,7 +501,7 @@ export const ProfileView: React.FC = () => {
           <div className="md:col-span-7 space-y-4">
             {activeTab === 'FRIENDS' && (
               <section className="space-y-3">
-                <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                <h2 className="text-lg font-bold text-fb-text">
                   Bạn bè của {isMe ? 'bạn' : targetUser.name}
                 </h2>
                 {profileFriends.length > 0 ? (
@@ -511,11 +511,11 @@ export const ProfileView: React.FC = () => {
                         key={friend.id}
                         type="button"
                         onClick={() => openFriendProfile(friend.id)}
-                        className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 text-left shadow-xs transition hover:bg-gray-50 dark:border-gray-700 dark:bg-[#242526] dark:hover:bg-[#3A3B3C]"
+                        className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 text-left shadow-xs transition hover:bg-gray-50 dark:border-gray-700 dark:bg-[#242526] dark:hover:bg-[#3A3B3C]"
                       >
                         <AvatarWithFrame user={friend} size="md" />
                         <span className="min-w-0">
-                          <span className="block truncate text-sm font-bold text-gray-900 dark:text-gray-100">
+                          <span className="block truncate text-sm font-bold text-fb-text">
                             {friend.name}
                           </span>
                           <span className="block truncate text-xs text-gray-500">
@@ -526,7 +526,7 @@ export const ProfileView: React.FC = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="rounded-xl border border-gray-200 bg-white p-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-[#242526]">
+                  <div className="rounded-lg border border-gray-200 bg-white p-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-[#242526]">
                     {isMe
                       ? 'Bạn chưa có bạn bè nào.'
                       : 'Người này chưa có bạn bè hiển thị.'}
@@ -541,16 +541,16 @@ export const ProfileView: React.FC = () => {
                 {userPosts.map((post) => (
                   <article
                     key={post.id}
-                    className="bg-white dark:bg-[#242526] rounded-xl shadow-xs border border-gray-200 dark:border-gray-700 overflow-hidden"
+                    className="bg-fb-card rounded-lg shadow-fb-card overflow-hidden"
                   >
                     <div className="p-4 flex items-start justify-between">
                       <div className="flex items-center gap-3">
                         <AvatarWithFrame user={post.author} size="md" />
                         <div>
-                          <h4 className="font-bold text-sm text-gray-900 dark:text-gray-100">
+                          <h4 className="font-bold text-sm text-fb-text">
                             {post.author.name}
                           </h4>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                          <span className="text-xs text-fb-text-2">
                             {formatPostTime(post.createdAt)}
                           </span>
                         </div>
@@ -565,12 +565,12 @@ export const ProfileView: React.FC = () => {
                               activeMenuPostId === post.id ? null : post.id,
                             )
                           }
-                          className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] text-gray-500"
+                          className="p-1.5 rounded-full hover:bg-fb-hover text-gray-500"
                         >
                           <MoreHorizontal className="w-5 h-5" />
                         </button>
                         {activeMenuPostId === post.id && (
-                          <div className="absolute right-0 top-8 bg-white dark:bg-[#242526] shadow-xl border border-gray-200 dark:border-gray-700 rounded-xl py-1 w-48 z-30 text-xs">
+                          <div className="absolute right-0 top-8 bg-fb-card shadow-xl border border-fb-divider rounded-lg py-1 w-48 z-30 text-xs">
                             {isMe ? (
                               <>
                                 <button
@@ -579,7 +579,7 @@ export const ProfileView: React.FC = () => {
                                     openPostComposer(post.id);
                                     setActiveMenuPostId(null);
                                   }}
-                                  className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-[#3A3B3C]"
+                                  className="w-full px-3 py-2 text-left hover:bg-fb-hover"
                                 >
                                   Sửa bài viết
                                 </button>
@@ -607,7 +607,7 @@ export const ProfileView: React.FC = () => {
                                     );
                                     setActiveMenuPostId(null);
                                   }}
-                                  className="w-full px-3 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C]"
+                                  className="w-full px-3 py-2 text-left text-fb-text hover:bg-fb-hover"
                                 >
                                   Báo cáo bài viết
                                 </button>
@@ -620,7 +620,7 @@ export const ProfileView: React.FC = () => {
                                     );
                                     setActiveMenuPostId(null);
                                   }}
-                                  className="w-full px-3 py-2 text-left text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center gap-1.5 border-t border-gray-100 dark:border-gray-700"
+                                  className="w-full px-3 py-2 text-left text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center gap-1.5 border-t border-fb-divider"
                                 >
                                   <Ban className="w-3.5 h-3.5" />
                                   <span>
@@ -691,13 +691,13 @@ export const ProfileView: React.FC = () => {
                               )}
                             </div>
                           )}
-                          <div className="px-2 py-1 flex items-center justify-between text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-300">
+                          <div className="px-2 py-1 flex items-center justify-between text-xs sm:text-sm font-semibold text-fb-text-2">
                             <button
                               type="button"
                               onClick={() => toggleLikePost(post.id)}
-                              className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition ${
+                              className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-fb-hover transition ${
                                 post.isLiked
-                                  ? 'text-blue-600 dark:text-blue-400 font-bold'
+                                  ? 'text-fb-blue font-bold'
                                   : ''
                               }`}
                             >
@@ -709,7 +709,7 @@ export const ProfileView: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => setActivePostDetail(post, true)}
-                              className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition"
+                              className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-fb-hover transition"
                             >
                               <MessageCircle className="w-4 h-4" />
                               <span>Bình luận</span>

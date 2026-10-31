@@ -51,7 +51,7 @@ function CommentRow({
         onClick={openAuthorProfile}
       />
       <div className="min-w-0 flex-1">
-        <div className="rounded-2xl bg-gray-100 px-3 py-2 dark:bg-[#3A3B3C]">
+        <div className="rounded-lg bg-gray-100 px-3 py-2 dark:bg-[#3A3B3C]">
           <button
             type="button"
             onClick={openAuthorProfile}
@@ -59,7 +59,7 @@ function CommentRow({
           >
             {comment.author.name}
           </button>
-          <p className="whitespace-pre-wrap wrap-break-word text-gray-800 dark:text-gray-200">
+          <p className="whitespace-pre-wrap wrap-break-word text-fb-text">
             {comment.content}
           </p>
         </div>

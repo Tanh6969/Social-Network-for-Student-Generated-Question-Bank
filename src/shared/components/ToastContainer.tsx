@@ -27,7 +27,7 @@ export const ToastContainer: React.FC = () => {
         return (
           <div
             key={toast.id}
-            className={`pointer-events-auto flex items-start gap-3 p-3.5 bg-white dark:bg-[#242526] text-gray-900 dark:text-gray-100 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 ${borderMap[toast.type]} animate-in slide-in-from-right duration-200`}
+            className={`pointer-events-auto flex items-start gap-3 p-3.5 bg-fb-card text-fb-text rounded-lg shadow-xl border border-fb-divider ${borderMap[toast.type]} animate-in slide-in-from-right duration-200`}
           >
             {iconMap[toast.type]}
             <p className="text-xs font-medium flex-1 pt-0.5">{toast.message}</p>

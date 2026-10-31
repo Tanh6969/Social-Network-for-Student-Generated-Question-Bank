@@ -94,7 +94,7 @@ export const QuestionBankExportView: React.FC<QuestionBankExportViewProps> = ({ 
   return (
     <div className="space-y-5">
       {/* Scope Disclaimer / Banner */}
-      <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-3">
+      <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-3">
         <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
         <div className="space-y-1">
           <p className="font-bold text-sm">
@@ -110,10 +110,10 @@ export const QuestionBankExportView: React.FC<QuestionBankExportViewProps> = ({ 
         {/* Left Form (7 cols) */}
         <form
           onSubmit={handleExport}
-          className="lg:col-span-7 bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-5 sm:p-6 space-y-5 text-xs"
+          className="lg:col-span-7 bg-fb-card rounded-lg shadow-fb-card p-5 sm:p-6 space-y-5 text-xs"
         >
-          <div className="border-b border-gray-100 dark:border-gray-700 pb-3">
-            <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+          <div className="border-b border-fb-divider pb-3">
+            <h3 className="text-base font-bold text-fb-text flex items-center gap-2">
               <Database className="w-5 h-5 text-blue-600" />
               <span>Cấu hình xuất ngân hàng câu hỏi</span>
             </h3>
@@ -124,7 +124,7 @@ export const QuestionBankExportView: React.FC<QuestionBankExportViewProps> = ({ 
 
           {/* Subject selection */}
           <div className="space-y-1.5">
-            <label className="block font-bold text-gray-800 dark:text-gray-200">
+            <label className="block font-bold text-fb-text">
               Môn học cần xuất <span className="text-red-500">*</span>:
             </label>
             <div className="relative">
@@ -132,7 +132,7 @@ export const QuestionBankExportView: React.FC<QuestionBankExportViewProps> = ({ 
                 value={selectedSubjectId}
                 onChange={(e) => setSelectedSubjectId(Number(e.target.value))}
                 disabled={loadingSubjects || isSubmitting}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-hidden disabled:opacity-60 cursor-pointer"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-fb-input border border-gray-200 dark:border-gray-600 text-fb-text font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-hidden disabled:opacity-60 cursor-pointer"
               >
                 {subjects.length === 0 ? (
                   <option value="">{loadingSubjects ? 'Đang tải danh mục môn học...' : 'Chưa có môn học'}</option>
@@ -149,7 +149,7 @@ export const QuestionBankExportView: React.FC<QuestionBankExportViewProps> = ({ 
 
           {/* Format selection */}
           <div className="space-y-1.5">
-            <label className="block font-bold text-gray-800 dark:text-gray-200">
+            <label className="block font-bold text-fb-text">
               Định dạng file xuất <span className="text-red-500">*</span>:
             </label>
             <div className="grid grid-cols-2 gap-3">
@@ -157,10 +157,10 @@ export const QuestionBankExportView: React.FC<QuestionBankExportViewProps> = ({ 
                 type="button"
                 onClick={() => setFormat('pdf')}
                 disabled={isSubmitting}
-                className={`p-3.5 rounded-xl border flex items-center gap-3 transition cursor-pointer ${
+                className={`p-3.5 rounded-lg border flex items-center gap-3 transition cursor-pointer ${
                   format === 'pdf'
                     ? 'border-blue-600 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-bold ring-1 ring-blue-600'
-                    : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#3A3B3C] text-gray-700 dark:text-gray-300'
+                    : 'border-fb-divider hover:bg-fb-hover text-fb-text'
                 }`}
               >
                 <FileText className="w-6 h-6 text-red-500 shrink-0" />
@@ -174,10 +174,10 @@ export const QuestionBankExportView: React.FC<QuestionBankExportViewProps> = ({ 
                 type="button"
                 onClick={() => setFormat('excel')}
                 disabled={isSubmitting}
-                className={`p-3.5 rounded-xl border flex items-center gap-3 transition cursor-pointer ${
+                className={`p-3.5 rounded-lg border flex items-center gap-3 transition cursor-pointer ${
                   format === 'excel'
                     ? 'border-blue-600 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-bold ring-1 ring-blue-600'
-                    : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#3A3B3C] text-gray-700 dark:text-gray-300'
+                    : 'border-fb-divider hover:bg-fb-hover text-fb-text'
                 }`}
               >
                 <FileSpreadsheet className="w-6 h-6 text-emerald-500 shrink-0" />
@@ -190,7 +190,7 @@ export const QuestionBankExportView: React.FC<QuestionBankExportViewProps> = ({ 
           </div>
 
           {/* Include Answer Option */}
-          <div className="p-3.5 bg-gray-50 dark:bg-[#1E1F20] rounded-xl border border-gray-200 dark:border-gray-700">
+          <div className="p-3.5 bg-fb-input rounded-lg border border-fb-divider">
             <label className="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
@@ -200,10 +200,10 @@ export const QuestionBankExportView: React.FC<QuestionBankExportViewProps> = ({ 
                 className="w-4 h-4 mt-0.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
               />
               <div className="space-y-0.5">
-                <span className="font-bold text-gray-900 dark:text-gray-100 block">
+                <span className="font-bold text-fb-text block">
                   Kèm đáp án đúng và lời giải chi tiết
                 </span>
-                <span className="text-[11px] text-gray-500 dark:text-gray-400 block">
+                <span className="text-[11px] text-fb-text-2 block">
                   Nếu bỏ chọn, file xuất chỉ chứa nội dung đề bài và phương án lựa chọn (phù hợp để in làm tài liệu kiểm tra cho sinh viên).
                 </span>
               </div>
@@ -212,7 +212,7 @@ export const QuestionBankExportView: React.FC<QuestionBankExportViewProps> = ({ 
 
           {/* Error Message */}
           {error && (
-            <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 flex items-start gap-2.5">
+            <div className="p-3.5 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 flex items-start gap-2.5">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
@@ -222,7 +222,7 @@ export const QuestionBankExportView: React.FC<QuestionBankExportViewProps> = ({ 
           <button
             type="submit"
             disabled={isSubmitting || !selectedSubjectId}
-            className="w-full py-3 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            className="w-full py-3 px-5 rounded-lg bg-fb-blue hover:bg-fb-blue-hover text-white font-bold transition shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
           >
             {isSubmitting ? (
               <>
@@ -242,29 +242,29 @@ export const QuestionBankExportView: React.FC<QuestionBankExportViewProps> = ({ 
         <div className="lg:col-span-5 space-y-4">
           {/* Result Card if available */}
           {exportResult ? (
-            <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-emerald-300 dark:border-emerald-800/80 p-5 space-y-4 text-xs">
+            <div className="bg-fb-card rounded-lg shadow-xs border border-emerald-300 dark:border-emerald-800/80 p-5 space-y-4 text-xs">
               <div className="flex items-center gap-2.5 text-emerald-800 dark:text-emerald-300 font-bold text-sm">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                 <span>File ngân hàng câu hỏi đã sẵn sàng!</span>
               </div>
 
-              <div className="p-3.5 bg-emerald-50/70 dark:bg-emerald-950/30 rounded-xl border border-emerald-100 dark:border-emerald-900/40 space-y-2 text-gray-700 dark:text-gray-300">
+              <div className="p-3.5 bg-emerald-50/70 dark:bg-emerald-950/30 rounded-lg border border-emerald-100 dark:border-emerald-900/40 space-y-2 text-fb-text">
                 <div className="flex justify-between items-center py-1 border-b border-emerald-200/50 dark:border-emerald-900/50">
                   <span className="text-gray-500">Môn học:</span>
-                  <span className="font-bold text-gray-900 dark:text-gray-100">
+                  <span className="font-bold text-fb-text">
                     {selectedSubjectObj?.name || 'Môn học'}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-1 border-b border-emerald-200/50 dark:border-emerald-900/50">
                   <span className="text-gray-500">Định dạng:</span>
-                  <span className="font-bold uppercase text-blue-700 dark:text-blue-300">
+                  <span className="font-bold text-blue-700 dark:text-blue-300">
                     {format}
                   </span>
                 </div>
                 {exportResult.questions_count !== undefined && (
                   <div className="flex justify-between items-center py-1 border-b border-emerald-200/50 dark:border-emerald-900/50">
                     <span className="text-gray-500">Tổng số câu hỏi:</span>
-                    <span className="font-bold text-gray-900 dark:text-gray-100">
+                    <span className="font-bold text-fb-text">
                       {exportResult.questions_count} câu
                     </span>
                   </div>
@@ -272,7 +272,7 @@ export const QuestionBankExportView: React.FC<QuestionBankExportViewProps> = ({ 
                 {exportResult.file_size_mb !== undefined && (
                   <div className="flex justify-between items-center py-1 border-b border-emerald-200/50 dark:border-emerald-900/50">
                     <span className="text-gray-500">Dung lượng:</span>
-                    <span className="font-bold text-gray-900 dark:text-gray-100">
+                    <span className="font-bold text-fb-text">
                       {exportResult.file_size_mb.toFixed(2)} MB
                     </span>
                   </div>
@@ -291,7 +291,7 @@ export const QuestionBankExportView: React.FC<QuestionBankExportViewProps> = ({ 
                 <button
                   type="button"
                   onClick={handleDownload}
-                  className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center justify-center gap-2 transition shadow-xs cursor-pointer text-xs"
+                  className="w-full py-3 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center justify-center gap-2 transition shadow-xs cursor-pointer text-xs"
                 >
                   <Download className="w-4 h-4" />
                   <span>Tải file ngân hàng câu hỏi ({format.toUpperCase()})</span>
@@ -300,12 +300,12 @@ export const QuestionBankExportView: React.FC<QuestionBankExportViewProps> = ({ 
               )}
             </div>
           ) : (
-            <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-5 space-y-3 text-xs">
-              <h4 className="font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <div className="bg-fb-card rounded-lg shadow-fb-card p-5 space-y-3 text-xs">
+              <h4 className="font-bold text-fb-text flex items-center gap-2">
                 <BookOpen className="w-4 h-4 text-blue-600" />
                 <span>Hướng dẫn sử dụng</span>
               </h4>
-              <ul className="space-y-2 text-gray-600 dark:text-gray-400 text-[11px] leading-relaxed">
+              <ul className="space-y-2 text-fb-text-2 text-[11px] leading-relaxed">
                 <li className="flex items-start gap-2">
                   <span className="font-bold text-blue-600">•</span>
                   <span>

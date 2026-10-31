@@ -118,12 +118,12 @@ export function ProfilePhotoEditor({
         role="dialog"
         aria-modal="true"
         aria-labelledby="profile-photo-editor-title"
-        className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-[#242526]"
+        className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-lg bg-white shadow-2xl dark:bg-[#242526]"
       >
         <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-700">
           <h2
             id="profile-photo-editor-title"
-            className="font-bold text-gray-900 dark:text-gray-100"
+            className="font-bold text-fb-text"
           >
             {kind === 'avatar' ? 'Cập nhật ảnh đại diện' : 'Cập nhật ảnh bìa'}
           </h2>
@@ -178,7 +178,7 @@ export function ProfilePhotoEditor({
               onPointerCancel={() => {
                 dragStart.current = null;
               }}
-              className={`relative cursor-grab touch-none overflow-hidden bg-gray-200 active:cursor-grabbing ${kind === 'avatar' ? 'h-56 w-56 rounded-full' : 'aspect-[2.7/1] w-full max-w-2xl rounded-xl'}`}
+              className={`relative cursor-grab touch-none overflow-hidden bg-gray-200 active:cursor-grabbing ${kind === 'avatar' ? 'h-56 w-56 rounded-full' : 'aspect-[2.7/1] w-full max-w-2xl rounded-lg'}`}
               aria-label="Kéo ảnh để căn vị trí"
             >
               <img
@@ -196,7 +196,7 @@ export function ProfilePhotoEditor({
           <div className="flex items-center gap-3">
             <label
               htmlFor="profile-photo-zoom"
-              className="shrink-0 text-sm text-gray-600 dark:text-gray-300"
+              className="shrink-0 text-sm text-fb-text-2"
             >
               Thu phóng
             </label>
@@ -255,7 +255,7 @@ export function ProfilePhotoEditor({
           )}
           {options.length > 0 && (
             <section aria-label="Ảnh của bạn" className="space-y-2">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+              <h3 className="text-sm font-semibold text-fb-text">
                 Ảnh của bạn
               </h3>
               <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">

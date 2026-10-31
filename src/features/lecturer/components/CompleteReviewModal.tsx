@@ -21,20 +21,20 @@ export const CompleteReviewModal: React.FC<CompleteReviewModalProps> = ({
   if (!isOpen || !sessionId) return null;
 
   return (
-    <div className="fixed inset-0 z-[230] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-2xl max-w-md w-full border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-[230] flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-150">
+      <div className="bg-fb-card rounded-lg shadow-2xl max-w-md w-full border border-fb-divider overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-amber-50 dark:bg-amber-950/30">
+        <div className="px-5 py-4 border-b border-fb-divider flex items-center justify-between bg-amber-50 dark:bg-amber-950/30">
           <div className="flex items-center gap-2.5">
-            <span className="p-2 rounded-xl bg-amber-600 text-white shadow-xs">
+            <span className="p-2 rounded-lg bg-amber-600 text-white shadow-xs">
               <CheckCheck className="w-5 h-5" />
             </span>
             <div>
-              <h3 className="font-bold text-base text-gray-900 dark:text-gray-100">
+              <h3 className="font-bold text-base text-fb-text">
                 Hoàn tất phiên kiểm duyệt
               </h3>
               {sessionTitle && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-xs">
+                <p className="text-xs text-fb-text-2 truncate max-w-xs">
                   {sessionTitle}
                 </p>
               )}
@@ -52,7 +52,7 @@ export const CompleteReviewModal: React.FC<CompleteReviewModalProps> = ({
 
         {/* Body */}
         <div className="p-5 space-y-4">
-          <div className="flex items-start gap-3 p-3.5 rounded-xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-900 dark:text-amber-200 text-xs">
+          <div className="flex items-start gap-3 p-3.5 rounded-lg bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-900 dark:text-amber-200 text-xs">
             <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
             <p className="leading-relaxed">
               Bạn có chắc chắn muốn hoàn tất kiểm duyệt phiên này? Các câu hỏi vẫn còn ở
@@ -61,17 +61,17 @@ export const CompleteReviewModal: React.FC<CompleteReviewModalProps> = ({
             </p>
           </div>
 
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Hệ thống sẽ chuyển trạng thái phiên sang <span className="font-semibold text-gray-700 dark:text-gray-300">Đã giải quyết (RESOLVED)</span> và tự động gửi thông báo kết quả kiểm duyệt tới tác giả.
+          <p className="text-xs text-fb-text-2">
+            Hệ thống sẽ chuyển trạng thái phiên sang <span className="font-semibold text-fb-text">Đã giải quyết (RESOLVED)</span> và tự động gửi thông báo kết quả kiểm duyệt tới tác giả.
           </p>
 
           {/* Footer */}
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-700">
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-fb-divider">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition cursor-pointer disabled:opacity-50"
+              className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-xs font-semibold text-fb-text hover:bg-fb-hover transition cursor-pointer disabled:opacity-50"
             >
               Quay lại
             </button>
@@ -79,7 +79,7 @@ export const CompleteReviewModal: React.FC<CompleteReviewModalProps> = ({
               type="button"
               onClick={onConfirm}
               disabled={isSubmitting}
-              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+              className="px-4 py-2 rounded-lg bg-fb-blue hover:bg-fb-blue-hover text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
             >
               {isSubmitting && (
                 <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />

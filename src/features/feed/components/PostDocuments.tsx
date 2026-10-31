@@ -42,7 +42,7 @@ export function PostDocuments({
         {documents.map((document, index) => (
           <div
             key={`${document.url}-${index}`}
-            className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-[#303132]"
+            className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-[#303132]"
           >
             <FileText className="h-6 w-6 shrink-0 text-blue-600" />
             <button
@@ -80,11 +80,11 @@ export function PostDocuments({
             role="dialog"
             aria-modal="true"
             aria-label={`Tài liệu ${selected.name}`}
-            className="flex h-full max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-white dark:bg-[#242526]"
+            className="flex h-full max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-lg bg-fb-card"
           >
             <div className="flex items-center gap-3 border-b border-gray-200 p-3 dark:border-gray-700">
               <FileText className="h-5 w-5 shrink-0 text-blue-600" />
-              <span className="min-w-0 flex-1 truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
+              <span className="min-w-0 flex-1 truncate text-sm font-semibold text-fb-text">
                 {selected.name}
               </span>
               <a
@@ -122,7 +122,7 @@ export function PostDocuments({
             ) : (
               <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
                 <FileText className="h-12 w-12 text-blue-600" />
-                <p className="max-w-md text-sm text-gray-600 dark:text-gray-300">
+                <p className="max-w-md text-sm text-fb-text-2">
                   Trình duyệt không xem trực tiếp định dạng này. Mở tệp trong
                   tab mới hoặc tải xuống để xem.
                 </p>

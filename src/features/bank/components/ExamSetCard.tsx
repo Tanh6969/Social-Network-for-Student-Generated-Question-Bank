@@ -1,6 +1,7 @@
 import React from 'react';
 import { StudentExamSet } from '../studentBankData';
-import { FileText, Star, ChevronRight, Eye } from 'lucide-react';
+import { getSubjectTone } from '../subjectTone';
+import { FileText, Play, Star, Users } from 'lucide-react';
 
 interface ExamSetCardProps {
   exam: StudentExamSet;
@@ -9,6 +10,7 @@ interface ExamSetCardProps {
   onViewAuthorProfile: (userId: string) => void;
 }
 
+// Thẻ bộ đề: tác giả + nhãn môn → nội dung → số liệu & hành động trên cùng một hàng
 export const ExamSetCard: React.FC<ExamSetCardProps> = ({
   exam,
   onSelectExam,
@@ -16,104 +18,83 @@ export const ExamSetCard: React.FC<ExamSetCardProps> = ({
   onViewAuthorProfile,
 }) => {
   return (
-    <article className="group bg-white dark:bg-[#242526] rounded-xl shadow-xs hover:shadow-md border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-200 p-4 flex flex-col justify-between gap-3">
-      <div>
-        {/* Top: Course badge, subject, exam code */}
-        <div className="flex items-center justify-between gap-2 mb-1.5">
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 dark:bg-blue-950/70 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60">
-              {exam.courseCode}
-            </span>
-            <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-              {exam.subject}
-            </span>
-            <span className="text-gray-400">·</span>
-            <span className="text-xs text-gray-500 truncate max-w-[280px]">
-              {exam.chapter}
-            </span>
-          </div>
-
-          <span className="text-[11px] text-gray-400 font-mono shrink-0">
-            #{exam.code}
-          </span>
-        </div>
-
-        {/* Title */}
-        <h3
-          onClick={() => onSelectExam(exam)}
-          className="text-base font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition cursor-pointer line-clamp-2 leading-snug mb-1"
-        >
-          {exam.title}
-        </h3>
-
-        {/* Description (if any) */}
-        {exam.description && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 mb-2">
-            {exam.description}
-          </p>
-        )}
-
-        {/* Author info */}
-        <div className="flex items-center gap-2 text-xs text-gray-500">
-          <img
-            src={exam.creator.avatar}
-            alt={exam.creator.name}
+    <article className="bg-fb-card rounded-lg shadow-fb-card p-4 transition-shadow hover:shadow-md">
+      {/* Tác giả & môn học */}
+      <header className="flex items-center gap-2.5">
+        <img
+          src={exam.creator.avatar}
+          alt=""
+          onClick={() => onViewAuthorProfile(exam.creator.id)}
+          className="w-9 h-9 rounded-full object-cover cursor-pointer"
+        />
+        <div className="min-w-0 flex-1 leading-tight">
+          <button
+            type="button"
             onClick={() => onViewAuthorProfile(exam.creator.id)}
-            className="w-5 h-5 rounded-full object-cover cursor-pointer hover:ring-1 hover:ring-blue-500 transition"
-          />
-          <span
-            onClick={() => onViewAuthorProfile(exam.creator.id)}
-            className="font-semibold text-gray-800 dark:text-gray-200 hover:underline cursor-pointer"
+            className="text-[15px] font-semibold text-fb-text hover:underline cursor-pointer"
           >
             {exam.creator.name}
-          </span>
-          <span className="text-gray-400">·</span>
-          <span className="text-gray-400">{exam.createdAt}</span>
+          </button>
+          <p className="text-[13px] text-fb-text-2">{exam.createdAt}</p>
         </div>
-      </div>
+        <span
+          className={`shrink-0 max-w-[45%] truncate px-2.5 py-1 rounded-full text-xs font-semibold ${getSubjectTone(exam.subject)}`}
+          title={`${exam.courseCode} · ${exam.subject}`}
+        >
+          {exam.courseCode} · {exam.subject}
+        </span>
+      </header>
 
-      {/* Bottom Section: Metrics & Action buttons */}
-      <div className="pt-2.5 border-t border-gray-100 dark:border-gray-700/80 flex items-center justify-between gap-3">
-        {/* Metrics */}
-        <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 shrink-0">
-          <span className="flex items-center gap-1 font-semibold text-gray-700 dark:text-gray-200">
-            <FileText className="w-3.5 h-3.5 text-blue-500" />
-            {exam.questions.length} câu
-          </span>
+      {/* Nội dung */}
+      <button
+        type="button"
+        onClick={() => onSelectExam(exam)}
+        className="block w-full text-left mt-3 cursor-pointer group"
+      >
+        <h3 className="text-[17px] font-semibold leading-snug text-fb-text group-hover:text-fb-blue transition-colors line-clamp-2">
+          {exam.title}
+        </h3>
+        <p className="text-[13px] text-fb-text-2 mt-0.5">{exam.chapter}</p>
+        {exam.description && (
+          <p className="text-[15px] text-fb-text mt-1.5 line-clamp-2">{exam.description}</p>
+        )}
+      </button>
 
-          <span className="flex items-center gap-1">
-            <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-            <strong className="text-gray-800 dark:text-gray-200 font-bold">
+      {/* Số liệu & hành động */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mt-3 pt-3 border-t border-fb-divider">
+        <div className="flex items-center gap-4 text-[13px] text-fb-text-2">
+          <span className="flex items-center gap-1" title={`${exam.ratingCount} lượt đánh giá`}>
+            <Star className="w-4 h-4 text-amber-500 fill-amber-500" aria-hidden="true" />
+            <strong className="font-semibold text-fb-text">
               {exam.ratingAverage > 0 ? exam.ratingAverage.toFixed(1) : '—'}
             </strong>
-            <span className="text-[11px] text-gray-400">
-              ({exam.ratingCount})
-            </span>
+            ({exam.ratingCount})
           </span>
-
-          <span className="text-[11px] hidden sm:inline">
+          <span className="flex items-center gap-1">
+            <FileText className="w-4 h-4 text-fb-blue" aria-hidden="true" />
+            {exam.questions.length} câu
+          </span>
+          <span className="flex items-center gap-1">
+            <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
             {exam.totalAttempts} lượt làm
           </span>
         </div>
 
-        {/* Buttons */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => onSelectExam(exam)}
-            className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
+            className="h-9 px-4 rounded-md bg-fb-btn hover:bg-fb-btn-hover text-[15px] font-semibold text-fb-text transition-colors cursor-pointer"
           >
-            <Eye className="w-3.5 h-3.5" />
-            <span>Xem chi tiết</span>
+            Xem chi tiết
           </button>
-
           <button
             type="button"
             onClick={() => onQuickPractice(exam)}
-            className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-[#3A3B3C] dark:hover:bg-[#4E4F50] text-gray-700 dark:text-gray-200 text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap"
+            className="h-9 px-4 rounded-md bg-fb-blue hover:bg-fb-blue-hover text-[15px] font-semibold text-white flex items-center gap-1.5 transition-colors cursor-pointer"
           >
-            <span>Làm thử</span>
-            <ChevronRight className="w-3.5 h-3.5" />
+            <Play className="w-4 h-4 fill-white" aria-hidden="true" />
+            Làm thử
           </button>
         </div>
       </div>

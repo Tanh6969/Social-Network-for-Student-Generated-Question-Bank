@@ -82,7 +82,7 @@ export const FeedView: React.FC = () => {
   const myRank = leaderboard.find((l) => l.user.id === currentUser.id)?.rank;
 
   return (
-    <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 flex justify-between items-start gap-4 lg:gap-8 xl:gap-12 2xl:gap-16">
+    <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 flex justify-between items-start gap-4 xl:gap-6">
       {/* ================= CỘT TRÁI (sticky sát lề trái) ================= */}
       <aside className="hidden lg:block w-[280px] xl:w-[300px] 2xl:w-[320px] shrink-0 sticky top-18 h-[calc(100vh-5rem)] overflow-y-auto space-y-2 pr-2 select-none">
         {/* User Quick Info */}
@@ -91,14 +91,14 @@ export const FeedView: React.FC = () => {
             setViewingUserId(currentUser.id);
             setActiveTab('profile');
           }}
-          className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] cursor-pointer transition text-gray-800 dark:text-gray-100"
+          className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] cursor-pointer transition text-fb-text"
         >
           <AvatarWithFrame user={currentUser} size="md" />
           <div className="min-w-0">
-            <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 truncate">
+            <h3 className="font-bold text-sm text-fb-text truncate">
               {currentUser.name}
             </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+            <p className="text-xs text-fb-text-2 truncate">
               {currentUser.classOrTitle}
             </p>
             {role !== 'LECTURER' && (
@@ -112,7 +112,7 @@ export const FeedView: React.FC = () => {
         </div>
 
         {/* Shortcuts list - Tối giản & đồng bộ màu sắc */}
-        <div className="space-y-0.5 text-sm font-medium text-gray-700 dark:text-gray-200">
+        <div className="space-y-0.5 text-sm font-medium text-fb-text">
           {role === 'LECTURER' ? (
             // Giảng viên: các trang chức năng đã có trên header, sidebar chỉ hiện dữ liệu cá nhân
             <LecturerSidebarSections />
@@ -122,14 +122,14 @@ export const FeedView: React.FC = () => {
           )}
         </div>
 
-        <div className="pt-4 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400 space-y-1">
+        <div className="pt-4 border-t border-fb-divider text-xs text-fb-text-2 space-y-1">
           <p>© 2026 UniSocial & ExamBank Đại học</p>
           <p>Mạng xã hội học tập & Ngân hàng đề thi chuẩn Quốc gia</p>
         </div>
       </aside>
 
       {/* ================= CỘT GIỮA (cuộn nội dung, có khoảng trống 2 bên) ================= */}
-      <main className="flex-1 max-w-[680px] mx-auto space-y-4 px-1 sm:px-2">
+      <main className="flex-1 min-w-0 max-w-[760px] mx-auto space-y-4">
         <PostComposerCard />
 
         {/* Polling Banner: "Có bài viết mới" */}
@@ -139,7 +139,7 @@ export const FeedView: React.FC = () => {
               setHasNewPostsBanner(false);
               showToast('Đã cập nhật bảng tin mới nhất!', 'info');
             }}
-            className="bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100/70 border border-blue-200 dark:border-blue-800 rounded-xl p-3 text-center text-xs font-semibold text-blue-700 dark:text-blue-300 cursor-pointer shadow-xs transition flex items-center justify-center gap-2"
+            className="bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100/70 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-center text-xs font-semibold text-blue-700 dark:text-blue-300 cursor-pointer shadow-xs transition flex items-center justify-center gap-2"
           >
             <RefreshCw className="w-4 h-4 animate-spin text-blue-600" />
             <span>
@@ -150,7 +150,7 @@ export const FeedView: React.FC = () => {
 
         {/* Feed Posts */}
         {unavailablePost && (
-          <div className="rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-700 dark:border-gray-700 dark:bg-[#242526] dark:text-gray-200">
+          <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-700 dark:border-gray-700 dark:bg-[#242526] dark:text-gray-200">
             Bài viết này không tồn tại hoặc bạn không có quyền xem.
             <button
               type="button"
@@ -171,7 +171,7 @@ export const FeedView: React.FC = () => {
           return (
             <article
               key={post.id}
-              className="bg-white dark:bg-[#242526] rounded-xl shadow-xs border border-gray-200 dark:border-gray-700 overflow-hidden"
+              className="bg-fb-card rounded-lg shadow-fb-card overflow-hidden"
             >
               {/* Header */}
               <div className="p-4 flex items-start justify-between">
@@ -191,12 +191,12 @@ export const FeedView: React.FC = () => {
                           setViewingUserId(post.author.id);
                           setActiveTab('profile');
                         }}
-                        className="font-bold text-sm text-gray-900 dark:text-gray-100 hover:underline cursor-pointer"
+                        className="font-bold text-sm text-fb-text hover:underline cursor-pointer"
                       >
                         {post.author.name}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center gap-1.5 text-xs text-fb-text-2">
                       <span>{formatPostTime(post.createdAt)}</span>
                     </div>
                   </div>
@@ -209,13 +209,13 @@ export const FeedView: React.FC = () => {
                         activeMenuPostId === post.id ? null : post.id,
                       )
                     }
-                    className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] text-gray-500"
+                    className="p-1.5 rounded-full hover:bg-fb-hover text-gray-500"
                   >
                     <MoreHorizontal className="w-5 h-5" />
                   </button>
 
                   {activeMenuPostId === post.id && (
-                    <div className="absolute right-0 top-8 bg-white dark:bg-[#242526] shadow-xl border border-gray-200 dark:border-gray-700 rounded-xl py-1 w-48 z-30 text-xs">
+                    <div className="absolute right-0 top-8 bg-fb-card shadow-xl border border-fb-divider rounded-lg py-1 w-48 z-30 text-xs">
                       {post.author.id === currentUser.id ? (
                         <>
                           <button
@@ -223,7 +223,7 @@ export const FeedView: React.FC = () => {
                               openPostComposer(post.id);
                               setActiveMenuPostId(null);
                             }}
-                            className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-[#3A3B3C]"
+                            className="w-full px-3 py-2 text-left hover:bg-fb-hover"
                           >
                             Sửa bài viết
                           </button>
@@ -249,7 +249,7 @@ export const FeedView: React.FC = () => {
                               );
                               setActiveMenuPostId(null);
                             }}
-                            className="w-full px-3 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C]"
+                            className="w-full px-3 py-2 text-left text-fb-text hover:bg-fb-hover"
                           >
                             Báo cáo bài viết
                           </button>
@@ -261,7 +261,7 @@ export const FeedView: React.FC = () => {
                               );
                               setActiveMenuPostId(null);
                             }}
-                            className="w-full px-3 py-2 text-left text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center gap-1.5 border-t border-gray-100 dark:border-gray-700"
+                            className="w-full px-3 py-2 text-left text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center gap-1.5 border-t border-fb-divider"
                           >
                             <Ban className="w-3.5 h-3.5" />
                             <span>
@@ -322,12 +322,12 @@ export const FeedView: React.FC = () => {
               )}
 
               {/* Action Buttons: Thích | Bình luận | Chia sẻ */}
-              <div className="px-2 py-1 flex items-center justify-between text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-300">
+              <div className="px-2 py-1 flex items-center justify-between text-xs sm:text-sm font-semibold text-fb-text-2">
                 <button
                   onClick={() => toggleLikePost(post.id)}
-                  className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition ${
+                  className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-fb-hover transition ${
                     post.isLiked
-                      ? 'text-blue-600 dark:text-blue-400 font-bold'
+                      ? 'text-fb-blue font-bold'
                       : ''
                   }`}
                 >
@@ -339,7 +339,7 @@ export const FeedView: React.FC = () => {
 
                 <button
                   onClick={() => setActivePostDetail(post, true)}
-                  className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition"
+                  className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-fb-hover transition"
                 >
                   <MessageCircle className="w-4 h-4" />
                   <span>Bình luận</span>
@@ -358,7 +358,7 @@ export const FeedView: React.FC = () => {
             <div
               role="status"
               aria-label="Đang tải bài viết"
-              className="animate-pulse rounded-xl border border-gray-200 bg-white p-4 text-left shadow-xs dark:border-gray-700 dark:bg-[#242526]"
+              className="animate-pulse rounded-lg border border-gray-200 bg-white p-4 text-left shadow-xs dark:border-gray-700 dark:bg-[#242526]"
             >
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700" />
@@ -390,10 +390,10 @@ export const FeedView: React.FC = () => {
       <aside className="hidden xl:block w-[300px] xl:w-[320px] 2xl:w-[340px] shrink-0 sticky top-18 h-[calc(100vh-5rem)] overflow-y-auto space-y-4 select-none pl-1">
         {/* Minigame Widget */}
         {minigames.length > 0 && (
-          <div className="bg-white dark:bg-[#242526] rounded-xl shadow-xs border border-gray-200 dark:border-gray-700 p-4">
+          <div className="bg-fb-card rounded-lg shadow-fb-card p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
-                <Gamepad2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <span className="text-xs font-semibold text-fb-text flex items-center gap-1.5">
+                <Gamepad2 className="w-4 h-4 text-fb-blue" />
                 Minigame tuần
               </span>
               <span className="text-[10px] bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300 px-2 py-0.5 rounded-md font-medium">
@@ -401,7 +401,7 @@ export const FeedView: React.FC = () => {
               </span>
             </div>
 
-            <h4 className="font-semibold text-xs text-gray-900 dark:text-gray-100 line-clamp-2 mb-1.5">
+            <h4 className="font-semibold text-xs text-fb-text line-clamp-2 mb-1.5">
               {minigames[0].title}
             </h4>
             <p className="text-[11px] text-gray-500 mb-3">
@@ -411,7 +411,7 @@ export const FeedView: React.FC = () => {
 
             <button
               onClick={() => setActiveTab('game')}
-              className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs rounded-lg shadow-xs transition"
+              className="w-full py-2 bg-fb-blue hover:bg-fb-blue-hover text-white font-medium text-xs rounded-lg shadow-xs transition"
             >
               {minigames[0].hasUserGuessed
                 ? 'Xem dự đoán của bạn'
@@ -421,9 +421,9 @@ export const FeedView: React.FC = () => {
         )}
 
         {/* Lời mời kết bạn thật */}
-        <div className="bg-white dark:bg-[#242526] rounded-xl shadow-xs border border-gray-200 dark:border-gray-700 p-4">
+        <div className="bg-fb-card rounded-lg shadow-fb-card p-4">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+            <span className="text-xs font-semibold text-fb-text-2">
               Lời mời kết bạn ({incomingRequests.length})
             </span>
             <button
@@ -457,7 +457,7 @@ export const FeedView: React.FC = () => {
                         setViewingUserId(req.id);
                         setActiveTab('profile');
                       }}
-                      className="font-semibold text-xs text-gray-900 dark:text-gray-100 truncate hover:underline cursor-pointer"
+                      className="font-semibold text-xs text-fb-text truncate hover:underline cursor-pointer"
                     >
                       {req.name}
                     </p>
@@ -467,13 +467,13 @@ export const FeedView: React.FC = () => {
                     <div className="flex items-center gap-2 mt-1.5">
                       <button
                         onClick={() => acceptFriendRequest(req.id)}
-                        className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-medium"
+                        className="px-3 py-1 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-md text-xs font-medium"
                       >
                         Xác nhận
                       </button>
                       <button
                         onClick={() => declineFriendRequest(req.id)}
-                        className="px-3 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-700 dark:text-gray-300 rounded-md text-xs font-medium"
+                        className="px-3 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-fb-text rounded-md text-xs font-medium"
                       >
                         Xóa
                       </button>
@@ -486,9 +486,9 @@ export const FeedView: React.FC = () => {
         </div>
 
         {/* Top 3 Bảng xếp hạng tuần */}
-        <div className="bg-white dark:bg-[#242526] rounded-xl shadow-xs border border-gray-200 dark:border-gray-700 p-4">
+        <div className="bg-fb-card rounded-lg shadow-fb-card p-4">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+            <span className="text-xs font-semibold text-fb-text-2 flex items-center gap-1.5">
               <Trophy className="w-3.5 h-3.5 text-gray-400" />
               Top cống hiến tuần
             </span>
@@ -508,7 +508,7 @@ export const FeedView: React.FC = () => {
                   setViewingUserId(lead.user.id);
                   setActiveTab('profile');
                 }}
-                className="flex items-center justify-between p-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-[#3A3B3C] cursor-pointer"
+                className="flex items-center justify-between p-1.5 rounded-lg hover:bg-fb-hover cursor-pointer"
               >
                 <div className="flex items-center gap-2 truncate">
                   <span
@@ -516,18 +516,18 @@ export const FeedView: React.FC = () => {
                       lead.rank === 1
                         ? 'bg-blue-600 text-white'
                         : lead.rank === 2
-                          ? 'bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200'
-                          : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                          ? 'bg-gray-300 dark:bg-gray-600 text-fb-text'
+                          : 'bg-gray-200 dark:bg-gray-700 text-fb-text-2'
                     }`}
                   >
                     {lead.rank}
                   </span>
                   <AvatarWithFrame user={lead.user} size="sm" />
-                  <span className="font-medium text-xs text-gray-800 dark:text-gray-200 truncate">
+                  <span className="font-medium text-xs text-fb-text truncate">
                     {lead.user.name}
                   </span>
                 </div>
-                <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 shrink-0">
+                <span className="text-xs font-semibold text-fb-text-2 shrink-0">
                   {lead.score} đ
                 </span>
               </div>

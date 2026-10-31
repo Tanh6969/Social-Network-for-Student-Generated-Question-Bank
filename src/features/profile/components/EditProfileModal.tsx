@@ -51,9 +51,9 @@ export function EditProfileModal({
   };
 
   const inputClassName =
-    'w-full rounded-xl border border-gray-300 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 outline-hidden transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-[#3A3B3C] dark:text-gray-100';
+    'w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 outline-hidden transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-[#3A3B3C] dark:text-gray-100';
   const labelClassName =
-    'mb-1.5 block text-sm font-semibold text-gray-800 dark:text-gray-200';
+    'mb-1.5 block text-sm font-semibold text-fb-text';
 
   return (
     <div
@@ -66,13 +66,13 @@ export function EditProfileModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="edit-profile-title"
-        className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-[#242526]"
+        className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg bg-white shadow-2xl dark:bg-[#242526]"
       >
         <header className="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-700">
           <div>
             <h2
               id="edit-profile-title"
-              className="text-lg font-bold text-gray-900 dark:text-gray-100"
+              className="text-lg font-bold text-fb-text"
             >
               Chỉnh sửa trang cá nhân
             </h2>

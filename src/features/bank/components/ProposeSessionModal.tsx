@@ -120,16 +120,16 @@ export const ProposeSessionModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-2xl max-w-5xl w-full max-h-[92vh] overflow-hidden flex flex-col border border-gray-200 dark:border-gray-700">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/60 animate-in fade-in duration-200">
+      <div className="bg-fb-card rounded-lg shadow-2xl max-w-5xl w-full max-h-[92vh] overflow-hidden flex flex-col border border-fb-divider">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-[#1E1F20]">
+        <div className="p-4 border-b border-fb-divider flex items-center justify-between bg-fb-input">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold">
               +
             </div>
             <div>
-              <h3 className="font-bold text-sm sm:text-base text-gray-900 dark:text-gray-100">
+              <h3 className="font-bold text-sm sm:text-base text-fb-text">
                 Đề xuất phiên câu hỏi thi mới (BANK.02)
               </h3>
               <p className="text-xs text-gray-500">
@@ -152,7 +152,7 @@ export const ProposeSessionModal: React.FC = () => {
           <div className="lg:col-span-7 p-5 space-y-4">
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-xs font-bold text-fb-text mb-1">
                   Tiêu đề phiên đề xuất *
                 </label>
                 <input
@@ -160,19 +160,19 @@ export const ProposeSessionModal: React.FC = () => {
                   placeholder="Ví dụ: Bộ 3 câu trắc nghiệm Tầng Giao vận & Bắt tay 3 bước TCP"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-[#3A3B3C] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-fb-input text-fb-text focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-xs font-bold text-fb-text mb-1">
                     Môn học
                   </label>
                   <select
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
-                    className="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-[#3A3B3C] text-gray-900 dark:text-gray-100"
+                    className="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-fb-input text-fb-text"
                   >
                     <option value="Mạng máy tính">Mạng máy tính</option>
                     <option value="Cấu trúc dữ liệu & Giải thuật">Cấu trúc dữ liệu & Giải thuật</option>
@@ -183,21 +183,21 @@ export const ProposeSessionModal: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-xs font-bold text-fb-text mb-1">
                     Chương học
                   </label>
                   <input
                     type="text"
                     value={chapter}
                     onChange={(e) => setChapter(e.target.value)}
-                    className="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-[#3A3B3C] text-gray-900 dark:text-gray-100"
+                    className="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-fb-input text-fb-text"
                   />
                 </div>
               </div>
             </div>
 
             {/* Stepper / Tabs chọn câu */}
-            <div className="flex items-center gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-2 pt-2 border-t border-fb-divider">
               <span className="text-xs font-bold text-gray-500">Các câu hỏi:</span>
               <div className="flex items-center gap-1.5 flex-wrap">
                 {questionsList.map((_, idx) => (
@@ -208,7 +208,7 @@ export const ProposeSessionModal: React.FC = () => {
                     className={`w-7 h-7 rounded-lg text-xs font-bold transition ${
                       activeQuestionIndex === idx
                         ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'
+                        : 'bg-gray-100 dark:bg-gray-700 text-fb-text hover:bg-gray-200'
                     }`}
                   >
                     {idx + 1}
@@ -235,9 +235,9 @@ export const ProposeSessionModal: React.FC = () => {
             </div>
 
             {/* Content of selected question */}
-            <div className="space-y-3 bg-gray-50 dark:bg-[#1E1F20] p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+            <div className="space-y-3 bg-fb-input p-4 rounded-lg border border-fb-divider">
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-xs font-bold text-fb-text mb-1">
                   Nội dung câu hỏi #{activeQuestionIndex + 1} *
                 </label>
                 <textarea
@@ -245,13 +245,13 @@ export const ProposeSessionModal: React.FC = () => {
                   placeholder="Nhập nội dung câu hỏi trắc nghiệm..."
                   value={currentQ.content}
                   onChange={(e) => handleUpdateQuestion({ content: e.target.value })}
-                  className="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#242526] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-fb-card text-fb-text focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               {/* 4 options */}
               <div className="space-y-2">
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300">
+                <label className="block text-xs font-bold text-fb-text">
                   4 Phương án lựa chọn & Đánh dấu đáp án đúng:
                 </label>
                 {currentQ.options.map((opt) => (
@@ -270,7 +270,7 @@ export const ProposeSessionModal: React.FC = () => {
                       placeholder={`Nội dung phương án ${opt.id}...`}
                       value={opt.text}
                       onChange={(e) => handleUpdateOption(opt.id, e.target.value)}
-                      className="flex-1 px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#242526] text-gray-900 dark:text-gray-100 resize-y min-h-[38px] break-words leading-relaxed"
+                      className="flex-1 px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-fb-card text-fb-text resize-y min-h-[38px] break-words leading-relaxed"
                     />
                   </div>
                 ))}
@@ -279,7 +279,7 @@ export const ProposeSessionModal: React.FC = () => {
               {/* Explanation & Difficulty */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-xs font-bold text-fb-text mb-1">
                     Độ khó
                   </label>
                   <select
@@ -287,7 +287,7 @@ export const ProposeSessionModal: React.FC = () => {
                     onChange={(e) =>
                       handleUpdateQuestion({ difficulty: e.target.value as QuestionDifficulty })
                     }
-                    className="w-full px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#242526] text-gray-900 dark:text-gray-100"
+                    className="w-full px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-fb-card text-fb-text"
                   >
                     <option value="EASY">Dễ</option>
                     <option value="MEDIUM">Trung bình</option>
@@ -296,7 +296,7 @@ export const ProposeSessionModal: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-xs font-bold text-fb-text mb-1">
                     Giải thích đáp án
                   </label>
                   <input
@@ -304,7 +304,7 @@ export const ProposeSessionModal: React.FC = () => {
                     placeholder="Giải thích vì sao đáp án này đúng..."
                     value={currentQ.explanation}
                     onChange={(e) => handleUpdateQuestion({ explanation: e.target.value })}
-                    className="w-full px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#242526] text-gray-900 dark:text-gray-100"
+                    className="w-full px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-fb-card text-fb-text"
                   />
                 </div>
               </div>
@@ -313,12 +313,12 @@ export const ProposeSessionModal: React.FC = () => {
 
           {/* CỘT PHẢI: Xem trước trực tiếp (Live Preview, 5 cols) */}
           <div className="lg:col-span-5 p-5 bg-[#F9FAFB] dark:bg-[#18191A] flex flex-col">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500 mb-3">
               <Eye className="w-4 h-4 text-blue-600" />
               <span>Xem trước dạng đề thi thực tế</span>
             </div>
 
-            <div className="bg-white dark:bg-[#242526] rounded-xl p-4 border border-gray-200 dark:border-gray-700 shadow-md space-y-3">
+            <div className="bg-fb-card rounded-lg p-4 border border-fb-divider shadow-md space-y-3">
               <div className="flex items-center justify-between text-[11px]">
                 <span className="font-bold text-blue-600 bg-blue-50 dark:bg-blue-950 px-2 py-0.5 rounded">
                   {subject}
@@ -328,7 +328,7 @@ export const ProposeSessionModal: React.FC = () => {
                 </span>
               </div>
 
-              <h4 className="font-bold text-xs text-gray-900 dark:text-gray-100">
+              <h4 className="font-bold text-xs text-fb-text">
                 Câu {activeQuestionIndex + 1}: {currentQ.content || '... (Chưa nhập nội dung câu hỏi)'}
               </h4>
 
@@ -339,7 +339,7 @@ export const ProposeSessionModal: React.FC = () => {
                     className={`p-2 rounded-lg border text-xs flex items-start justify-between gap-2 ${
                       opt.id === currentQ.correctAnswer
                         ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-400 text-emerald-800 dark:text-emerald-200 font-semibold'
-                        : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300'
+                        : 'bg-gray-50 dark:bg-gray-800/50 border-fb-divider text-fb-text'
                     }`}
                   >
                     <span className="flex-1 break-words whitespace-pre-wrap leading-relaxed">
@@ -360,7 +360,7 @@ export const ProposeSessionModal: React.FC = () => {
                 </div>
               )}
 
-              <div className="pt-2 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between text-[10px] text-gray-400">
+              <div className="pt-2 border-t border-fb-divider flex items-center justify-between text-[10px] text-gray-400">
                 <span>Người biên soạn: {currentUser.name}</span>
                 <span>Trạng thái: Dự thảo</span>
               </div>
@@ -373,11 +373,11 @@ export const ProposeSessionModal: React.FC = () => {
         </div>
 
         {/* Footer actions */}
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#1E1F20] flex items-center justify-between">
+        <div className="p-4 border-t border-fb-divider bg-fb-input flex items-center justify-between">
           <button
             type="button"
             onClick={() => setIsProposeSessionModalOpen(false)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-xs font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition"
           >
             Hủy bỏ
           </button>
@@ -385,7 +385,7 @@ export const ProposeSessionModal: React.FC = () => {
           <button
             type="button"
             onClick={handleSubmit}
-            className="px-6 py-2.5 bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center gap-1.5"
+            className="px-6 py-2.5 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg text-xs font-bold shadow-md transition flex items-center gap-1.5"
           >
             <Send className="w-4 h-4" />
             <span>Gửi Hội đồng Giảng viên phê duyệt</span>

@@ -229,10 +229,10 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Top Bar: Back button & Complete Review */}
-      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-fb-divider">
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#242526] text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition cursor-pointer shadow-2xs"
+          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-fb-card text-xs font-semibold text-fb-text hover:bg-fb-hover transition cursor-pointer shadow-2xs"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Quay lại danh sách</span>
@@ -242,7 +242,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
           <button
             onClick={() => setIsCompleteModalOpen(true)}
             disabled={isCompleting}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
           >
             <CheckCheck className="w-4 h-4" />
             <span>Hoàn tất kiểm duyệt phiên</span>
@@ -251,7 +251,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
       </div>
 
       {/* Session Metadata Card */}
-      <div className="bg-white dark:bg-[#242526] rounded-2xl p-5 border border-gray-200 dark:border-gray-700 shadow-xs space-y-4">
+      <div className="bg-fb-card rounded-lg p-5 shadow-fb-card space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-1.5 max-w-3xl">
             <div className="flex items-center gap-2 flex-wrap">
@@ -277,19 +277,19 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
               )}
             </div>
 
-            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+            <h3 className="text-xl font-bold text-fb-text">
               {session.title || 'Phiên đề xuất câu hỏi'}
             </h3>
 
             {session.content && (
-              <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-line">
+              <p className="text-sm text-fb-text-2 leading-relaxed whitespace-pre-line">
                 {session.content}
               </p>
             )}
           </div>
 
           {/* Counts statistics */}
-          <div className="flex items-center gap-2 flex-wrap bg-gray-50 dark:bg-[#1E1F20] p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-medium">
+          <div className="flex items-center gap-2 flex-wrap bg-fb-input p-2.5 rounded-lg border border-fb-divider text-xs font-medium">
             <span className="text-gray-500">Tổng: <b>{questions.length}</b></span>
             <span>•</span>
             <span className="text-amber-600 dark:text-amber-400">Chờ: <b>{pendingCount}</b></span>
@@ -301,7 +301,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
         </div>
 
         {/* Footer info: Author & Created time */}
-        <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 dark:text-gray-400 pt-3 border-t border-gray-100 dark:border-gray-800">
+        <div className="flex flex-wrap items-center gap-4 text-xs text-fb-text-2 pt-3 border-t border-fb-divider">
           <div className="flex items-center gap-2">
             {session.author?.avatar_url ? (
               <img
@@ -314,7 +314,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
             )}
             <span>
               Người đề xuất:{' '}
-              <span className="font-semibold text-gray-700 dark:text-gray-300">
+              <span className="font-semibold text-fb-text">
                 {session.author?.full_name || 'Sinh viên'}
               </span>
             </span>
@@ -342,7 +342,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
 
       {/* Error state */}
       {!loading && error && (
-        <div className="p-5 rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 space-y-3">
+        <div className="p-5 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 space-y-3">
           <div className="flex items-start gap-2.5">
             <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
             <div>
@@ -352,7 +352,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
           </div>
           <button
             onClick={fetchSessionDetail}
-            className="px-4 py-1.5 rounded-xl bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition cursor-pointer"
+            className="px-4 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition cursor-pointer"
           >
             Thử lại
           </button>
@@ -364,7 +364,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
         <div className="space-y-4">
           {/* Question Filter & Per-Page Controls */}
           {questions.length > 0 && (
-            <div className="bg-white dark:bg-[#242526] rounded-2xl p-3 border border-gray-200 dark:border-gray-700 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="bg-fb-card rounded-lg p-3 shadow-fb-card flex flex-wrap items-center justify-between gap-3 text-xs">
               {/* Filter Chips */}
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-gray-500 font-bold flex items-center gap-1 mr-1">
@@ -376,7 +376,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                   className={`px-3 py-1.5 rounded-full font-bold transition text-xs cursor-pointer ${
                     questionFilter === 'ALL'
                       ? 'bg-blue-600 text-white shadow-2xs'
-                      : 'bg-gray-100 dark:bg-[#3A3B3C] text-gray-700 dark:text-gray-300 hover:bg-gray-200'
+                      : 'bg-fb-input text-fb-text hover:bg-gray-200'
                   }`}
                 >
                   Tất cả ({questions.length})
@@ -422,7 +422,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                 <select
                   value={questionsPerPage}
                   onChange={(e) => setQuestionsPerPage(Number(e.target.value))}
-                  className="py-1 px-2.5 rounded-lg bg-gray-50 dark:bg-[#3A3B3C] border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200 text-xs font-semibold focus:outline-hidden cursor-pointer"
+                  className="py-1 px-2.5 rounded-lg bg-fb-input border border-gray-200 dark:border-gray-600 text-fb-text text-xs font-semibold focus:outline-hidden cursor-pointer"
                 >
                   <option value={2}>2 câu</option>
                   <option value={3}>3 câu</option>
@@ -435,7 +435,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
 
           {/* Bulk Action Bar (only if not read-only and has pending questions) */}
           {!readOnly && pendingQuestions.length > 0 && (
-            <div className="bg-blue-50/70 dark:bg-blue-950/30 rounded-2xl p-3.5 border border-blue-200 dark:border-blue-800/60 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="bg-blue-50/70 dark:bg-blue-950/30 rounded-lg p-3.5 border border-blue-200 dark:border-blue-800/60 flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -446,7 +446,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                 />
                 <label
                   htmlFor="select-all-pending"
-                  className="font-semibold text-gray-800 dark:text-gray-200 cursor-pointer select-none"
+                  className="font-semibold text-fb-text cursor-pointer select-none"
                 >
                   Chọn tất cả ({pendingQuestions.length} câu chờ duyệt)
                 </label>
@@ -462,7 +462,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                   <button
                     onClick={() => handleApprove(selectedQuestionIds)}
                     disabled={isApproving}
-                    className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition shadow-2xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                    className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition shadow-2xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>Phê duyệt ({selectedQuestionIds.length}) câu đã chọn</span>
@@ -471,7 +471,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                   <button
                     onClick={() => setRejectingIds(selectedQuestionIds)}
                     disabled={isRejecting}
-                    className="px-3.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold transition shadow-2xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                    className="px-3.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold transition shadow-2xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
                   >
                     <XCircle className="w-3.5 h-3.5" />
                     <span>Từ chối ({selectedQuestionIds.length}) câu đã chọn</span>
@@ -483,7 +483,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
 
           {/* Question Cards */}
           {filteredQuestions.length === 0 ? (
-            <div className="bg-white dark:bg-[#242526] rounded-2xl border border-gray-200 dark:border-gray-700 p-12 text-center text-gray-500 text-xs">
+            <div className="bg-fb-card rounded-lg border border-fb-divider p-12 text-center text-gray-500 text-xs">
               Không tìm thấy câu hỏi nào phù hợp với bộ lọc đã chọn.
             </div>
           ) : (
@@ -502,14 +502,14 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                 return (
                   <div
                     key={q.question_id || globalIdx}
-                    className={`bg-white dark:bg-[#242526] rounded-2xl border transition shadow-xs overflow-hidden ${
+                    className={`bg-fb-card rounded-lg border transition shadow-xs overflow-hidden ${
                       isSelected
                         ? 'border-blue-500 ring-2 ring-blue-500/20'
                         : isApproved
                         ? 'border-emerald-200 dark:border-emerald-900/60'
                         : isRejected
                         ? 'border-red-200 dark:border-red-900/60'
-                        : 'border-gray-200 dark:border-gray-700'
+                        : 'border-fb-divider'
                     }`}
                   >
                     {/* Duplicate Warning Banner */}
@@ -548,11 +548,11 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                               className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
                             />
                           )}
-                          <span className="px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-[#3A3B3C] text-xs font-bold text-gray-700 dark:text-gray-300">
+                          <span className="px-2.5 py-1 rounded-lg bg-fb-input text-xs font-bold text-fb-text">
                             Câu {globalIdx + 1}
                           </span>
                           {q.question_id && (
-                            <span className="text-[11px] text-gray-400 font-mono">
+                            <span className="text-[11px] text-gray-400 tabular-nums">
                               ID: #{q.question_id}
                             </span>
                           )}
@@ -580,7 +580,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                       </div>
 
                       {/* Question Content */}
-                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100 whitespace-pre-wrap break-words leading-relaxed">
+                      <div className="text-sm font-medium text-fb-text whitespace-pre-wrap break-words leading-relaxed">
                         {q.content}
                       </div>
 
@@ -593,12 +593,12 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                               href={imgUrl}
                               target="_blank"
                               rel="noreferrer"
-                              className="block relative group rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 hover:opacity-90"
+                              className="block relative group rounded-lg overflow-hidden border border-fb-divider hover:opacity-90"
                             >
                               <img
                                 src={imgUrl}
                                 alt={`Minh họa câu hỏi ${globalIdx + 1}`}
-                                className="max-h-48 max-w-xs object-cover rounded-xl"
+                                className="max-h-48 max-w-xs object-cover rounded-lg"
                               />
                             </a>
                           ))}
@@ -615,17 +615,17 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                           return (
                             <div
                               key={key}
-                              className={`p-3 rounded-xl border text-xs flex items-start gap-2.5 ${
+                              className={`p-3 rounded-lg border text-xs flex items-start gap-2.5 ${
                                 isCorrect
                                   ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-950 dark:text-emerald-200 font-semibold shadow-2xs'
-                                  : 'border-gray-200 dark:border-gray-700/80 bg-gray-50/70 dark:bg-[#1E1F20] text-gray-700 dark:text-gray-300'
+                                  : 'border-fb-divider/80 bg-gray-50/70 dark:bg-[#1E1F20] text-fb-text'
                               }`}
                             >
                               <span
                                 className={`w-6 h-6 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
                                   isCorrect
                                     ? 'bg-emerald-600 text-white'
-                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                                    : 'bg-gray-200 dark:bg-gray-700 text-fb-text'
                                 }`}
                               >
                                 {key}
@@ -638,7 +638,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                                   <img
                                     src={opt.media_url}
                                     alt={`Ảnh đáp án ${key}`}
-                                    className="max-h-24 max-w-full rounded-lg mt-1.5 object-cover border border-gray-200 dark:border-gray-700"
+                                    className="max-h-24 max-w-full rounded-lg mt-1.5 object-cover border border-fb-divider"
                                   />
                                 )}
                               </div>
@@ -652,8 +652,8 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
 
                       {/* Explanation */}
                       {q.explanation && (
-                        <div className="p-3.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/50 text-xs text-blue-900 dark:text-blue-200 flex items-start gap-2.5">
-                          <HelpCircle className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                        <div className="p-3.5 rounded-lg bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/50 text-xs text-blue-900 dark:text-blue-200 flex items-start gap-2.5">
+                          <HelpCircle className="w-4 h-4 text-fb-blue shrink-0 mt-0.5" />
                           <div className="space-y-0.5">
                             <span className="font-bold block">Giải thích đáp án:</span>
                             <span className="whitespace-pre-wrap leading-relaxed">
@@ -665,7 +665,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
 
                       {/* Edit Log */}
                       {q.edit_log && (
-                        <div className="text-[11px] text-gray-500 dark:text-gray-400 pt-1 flex items-center gap-2">
+                        <div className="text-[11px] text-fb-text-2 pt-1 flex items-center gap-2">
                           <span className="font-medium">Nhật ký sửa đổi:</span>
                           <span>
                             {q.edit_log.actor_name || 'Giảng viên'}{' '}
@@ -677,11 +677,11 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
 
                       {/* Question Single Actions */}
                       {!readOnly && (
-                        <div className="pt-3 border-t border-gray-100 dark:border-gray-800 flex flex-wrap items-center justify-end gap-2 text-xs">
+                        <div className="pt-3 border-t border-fb-divider flex flex-wrap items-center justify-end gap-2 text-xs">
                           <button
                             type="button"
                             onClick={() => setEditingQuestion(q)}
-                            className="px-3 py-1.5 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/40 transition cursor-pointer flex items-center gap-1.5"
+                            className="px-3 py-1.5 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 text-fb-blue font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/40 transition cursor-pointer flex items-center gap-1.5"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                             <span>Chỉnh sửa</span>
@@ -693,7 +693,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                                 type="button"
                                 onClick={() => setRejectingIds([q.question_id!])}
                                 disabled={isRejecting}
-                                className="px-3 py-1.5 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 font-semibold hover:bg-red-100 transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                                className="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 font-semibold hover:bg-red-100 transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
                               >
                                 <XCircle className="w-3.5 h-3.5" />
                                 <span>Từ chối</span>
@@ -703,7 +703,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                                 type="button"
                                 onClick={() => handleApprove([q.question_id!])}
                                 disabled={isApproving}
-                                className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition shadow-2xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                                className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition shadow-2xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
                               >
                                 <CheckCircle2 className="w-3.5 h-3.5" />
                                 <span>Phê duyệt</span>
@@ -720,18 +720,18 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
 
             {/* Question Pagination Bar */}
             {totalQuestionPages > 1 && (
-              <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-white dark:bg-[#242526] rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xs">
+              <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-fb-card rounded-lg border border-fb-divider shadow-2xs">
                 <p className="text-xs text-gray-500">
                   Hiển thị câu{' '}
-                  <span className="font-bold text-gray-800 dark:text-gray-200">
+                  <span className="font-bold text-fb-text">
                     {(currentQuestionPage - 1) * questionsPerPage + 1}
                   </span>{' '}
                   đến{' '}
-                  <span className="font-bold text-gray-800 dark:text-gray-200">
+                  <span className="font-bold text-fb-text">
                     {Math.min(currentQuestionPage * questionsPerPage, filteredQuestions.length)}
                   </span>{' '}
                   trên tổng số{' '}
-                  <span className="font-bold text-gray-800 dark:text-gray-200">
+                  <span className="font-bold text-fb-text">
                     {filteredQuestions.length}
                   </span>{' '}
                   câu hỏi
@@ -742,7 +742,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                     type="button"
                     onClick={() => setCurrentQuestionPage((p) => Math.max(1, p - 1))}
                     disabled={currentQuestionPage <= 1}
-                    className="px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#242526] text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#3A3B3C] disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1 cursor-pointer"
+                    className="px-2.5 py-1.5 rounded-lg border border-fb-divider bg-fb-card text-xs font-semibold text-fb-text hover:bg-fb-hover disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1 cursor-pointer"
                   >
                     <ChevronLeft className="w-3.5 h-3.5" />
                     <span>Trước</span>
@@ -755,8 +755,8 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                       onClick={() => setCurrentQuestionPage(pageNum)}
                       className={`w-7 h-7 rounded-lg text-xs font-bold transition flex items-center justify-center cursor-pointer ${
                         pageNum === currentQuestionPage
-                          ? 'bg-blue-600 text-white shadow-xs'
-                          : 'bg-white dark:bg-[#242526] border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C]'
+                          ? 'bg-blue-600 text-white shadow-fb-card'
+                          : 'bg-fb-card text-fb-text hover:bg-fb-hover'
                       }`}
                     >
                       {pageNum}
@@ -767,7 +767,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                     type="button"
                     onClick={() => setCurrentQuestionPage((p) => Math.min(totalQuestionPages, p + 1))}
                     disabled={currentQuestionPage >= totalQuestionPages}
-                    className="px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#242526] text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#3A3B3C] disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1 cursor-pointer"
+                    className="px-2.5 py-1.5 rounded-lg border border-fb-divider bg-fb-card text-xs font-semibold text-fb-text hover:bg-fb-hover disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1 cursor-pointer"
                   >
                     <span>Sau</span>
                     <ChevronRight className="w-3.5 h-3.5" />

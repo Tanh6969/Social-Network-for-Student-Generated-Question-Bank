@@ -25,11 +25,11 @@ export function ProfilePhotoLibrary({
   onOpenPostPhoto: (post: Post, index: number) => void;
 }) {
   return (
-    <section className="mt-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-[#242526]">
+    <section className="mt-4 rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-[#242526]">
       <div className="flex items-center justify-between gap-3 border-b border-gray-100 pb-4 dark:border-gray-700">
         <div className="flex items-center gap-2">
           <Images className="h-5 w-5 text-blue-600" />
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+          <h2 className="text-lg font-bold text-fb-text">
             Ảnh
           </h2>
         </div>
@@ -80,7 +80,7 @@ function PhotoSection({
 }) {
   return (
     <div className="pt-5">
-      <h3 className="mb-3 text-sm font-bold text-gray-900 dark:text-gray-100">
+      <h3 className="mb-3 text-sm font-bold text-fb-text">
         {title}
       </h3>
       {photos.length ? (

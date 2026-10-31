@@ -19,7 +19,7 @@ export function PostContent({
     : content;
 
   return (
-    <div className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">
+    <div className="text-sm text-fb-text leading-relaxed">
       <p className="whitespace-pre-wrap wrap-break-word">
         {isLong && !expanded ? `${preview}…` : content}
       </p>
@@ -28,7 +28,7 @@ export function PostContent({
           type="button"
           onClick={() => setExpanded((value) => !value)}
           aria-expanded={expanded}
-          className="mt-1 font-semibold text-gray-600 dark:text-gray-300 hover:underline"
+          className="mt-1 font-semibold text-fb-text-2 hover:underline"
         >
           {expanded ? 'Xem bớt' : 'Xem thêm'}
         </button>

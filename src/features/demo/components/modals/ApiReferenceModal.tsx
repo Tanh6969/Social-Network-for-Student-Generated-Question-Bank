@@ -79,10 +79,10 @@ export const ApiReferenceModal: React.FC = () => {
   );
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-6 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-gray-200 dark:border-gray-700">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-6 bg-black/70 animate-in fade-in duration-200">
+      <div className="bg-fb-card rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-fb-divider">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-emerald-50 dark:bg-emerald-950/40">
+        <div className="p-4 border-b border-fb-divider flex items-center justify-between bg-emerald-50 dark:bg-emerald-950/40">
           <div>
             <h3 className="font-bold text-sm sm:text-base text-emerald-950 dark:text-emerald-100 flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5 text-emerald-600" />
@@ -102,7 +102,7 @@ export const ApiReferenceModal: React.FC = () => {
         </div>
 
         {/* Search */}
-        <div className="p-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-[#1E1F20]">
+        <div className="p-3 border-b border-fb-divider bg-fb-input">
           <div className="relative">
             <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
             <input
@@ -110,7 +110,7 @@ export const ApiReferenceModal: React.FC = () => {
               placeholder="Lọc theo tên API hoặc mã màn hình..."
               value={filterSearch}
               onChange={(e) => setFilterSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border bg-white dark:bg-[#242526] text-gray-900 dark:text-gray-100"
+              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border bg-fb-card text-fb-text"
             />
           </div>
         </div>
@@ -119,7 +119,7 @@ export const ApiReferenceModal: React.FC = () => {
         <div className="flex-1 overflow-y-auto p-4">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700 text-gray-500 font-bold">
+              <tr className="border-b border-fb-divider text-gray-500 font-bold">
                 <th className="py-2 px-3">API Endpoint</th>
                 <th className="py-2 px-3">Màn hình tương ứng</th>
                 <th className="py-2 px-3 text-right">Thao tác thử</th>
@@ -127,11 +127,11 @@ export const ApiReferenceModal: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {filtered.map((item, idx) => (
-                <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-[#3A3B3C]/50 transition">
-                  <td className="py-2.5 px-3 font-mono font-semibold text-blue-600 dark:text-blue-400">
+                <tr key={idx} className="hover:bg-fb-hover/50 transition">
+                  <td className="py-2.5 px-3 font-mono font-semibold text-fb-blue">
                     {item.api}
                   </td>
-                  <td className="py-2.5 px-3 font-medium text-gray-800 dark:text-gray-200">
+                  <td className="py-2.5 px-3 font-medium text-fb-text">
                     {item.screen}
                   </td>
                   <td className="py-2.5 px-3 text-right">
@@ -144,7 +144,7 @@ export const ApiReferenceModal: React.FC = () => {
                         }
                         setIsApiReferenceOpen(false);
                       }}
-                      className="px-2.5 py-1 bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 hover:bg-blue-100 rounded-md font-bold text-[11px] inline-flex items-center gap-1"
+                      className="px-2.5 py-1 bg-blue-50 dark:bg-blue-950 text-fb-blue hover:bg-blue-100 rounded-md font-bold text-[11px] inline-flex items-center gap-1"
                     >
                       <span>Xem màn</span>
                       <ExternalLink className="w-3 h-3" />

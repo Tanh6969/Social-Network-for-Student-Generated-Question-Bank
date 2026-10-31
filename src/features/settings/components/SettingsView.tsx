@@ -299,17 +299,17 @@ const SettingsContent: React.FC = () => {
     <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 flex flex-col md:flex-row gap-6 lg:gap-8 xl:gap-10 items-start">
       {/* CỘT TRÁI: Menu Cài đặt (sticky sát lề trái) */}
       <aside className="w-full md:w-80 shrink-0 space-y-2 select-none md:sticky md:top-18">
-        <h2 className="text-xl font-black text-gray-900 dark:text-gray-100 px-2 mb-3">
+        <h2 className="text-xl font-black text-fb-text px-2 mb-3">
           Cài đặt & Quyền riêng tư
         </h2>
 
-        <div className="bg-white dark:bg-[#242526] rounded-xl shadow-xs border border-gray-200 dark:border-gray-700 p-2 space-y-1 text-xs font-semibold text-gray-700 dark:text-gray-300">
+        <div className="bg-fb-card rounded-lg shadow-fb-card p-2 space-y-1 text-xs font-semibold text-fb-text">
           <button
             onClick={() => setActiveTab('ACCOUNT')}
             className={`w-full flex items-center gap-3 p-2.5 rounded-lg transition text-left ${
               activeTab === 'ACCOUNT'
                 ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 font-bold'
-                : 'hover:bg-gray-100 dark:hover:bg-[#3A3B3C]'
+                : 'hover:bg-fb-hover'
             }`}
           >
             <User className="w-4 h-4" />
@@ -321,14 +321,14 @@ const SettingsContent: React.FC = () => {
             className={`w-full flex items-center justify-between p-2.5 rounded-lg transition text-left ${
               activeTab === 'BLOCKING'
                 ? 'bg-red-50 dark:bg-red-950/40 text-red-600 font-bold'
-                : 'hover:bg-gray-100 dark:hover:bg-[#3A3B3C]'
+                : 'hover:bg-fb-hover'
             }`}
           >
             <div className="flex items-center gap-3">
               <Ban className="w-4 h-4 text-red-500" />
               <span>Quản lý chặn người dùng</span>
             </div>
-            <span className="text-[10px] bg-gray-100 dark:bg-[#3A3B3C] px-2 py-0.5 rounded-full font-bold">
+            <span className="text-[10px] bg-fb-input px-2 py-0.5 rounded-full font-bold">
               {blockedUsers.length}
             </span>
           </button>
@@ -338,7 +338,7 @@ const SettingsContent: React.FC = () => {
             className={`w-full flex items-center gap-3 p-2.5 rounded-lg transition text-left ${
               activeTab === 'SECURITY'
                 ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 font-bold'
-                : 'hover:bg-gray-100 dark:hover:bg-[#3A3B3C]'
+                : 'hover:bg-fb-hover'
             }`}
           >
             <Lock className="w-4 h-4" />
@@ -350,7 +350,7 @@ const SettingsContent: React.FC = () => {
             className={`w-full flex items-center gap-3 p-2.5 rounded-lg transition text-left ${
               activeTab === 'PUSH'
                 ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 font-bold'
-                : 'hover:bg-gray-100 dark:hover:bg-[#3A3B3C]'
+                : 'hover:bg-fb-hover'
             }`}
           >
             <Bell className="w-4 h-4" />
@@ -362,7 +362,7 @@ const SettingsContent: React.FC = () => {
             className={`w-full flex items-center gap-3 p-2.5 rounded-lg transition text-left ${
               activeTab === 'DEVICES'
                 ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 font-bold'
-                : 'hover:bg-gray-100 dark:hover:bg-[#3A3B3C]'
+                : 'hover:bg-fb-hover'
             }`}
           >
             <Smartphone className="w-4 h-4" />
@@ -371,7 +371,7 @@ const SettingsContent: React.FC = () => {
 
           <button
             onClick={toggleDarkMode}
-            className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition text-left"
+            className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-fb-hover transition text-left"
           >
             <div className="flex items-center gap-3">
               <Moon className="w-4 h-4" />
@@ -382,7 +382,7 @@ const SettingsContent: React.FC = () => {
             </span>
           </button>
 
-          <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
+          <div className="pt-2 border-t border-fb-divider">
             <button
               onClick={() => setActiveTab('DELETE')}
               className={`w-full flex items-center gap-3 p-2.5 rounded-lg transition text-left text-red-600 ${
@@ -399,10 +399,10 @@ const SettingsContent: React.FC = () => {
       </aside>
 
       {/* CỘT PHẢI: Nội dung chi tiết */}
-      <main className="flex-1 bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-6">
+      <main className="flex-1 bg-fb-card rounded-lg shadow-fb-card p-6">
         {activeTab === 'ACCOUNT' && (
           <div className="space-y-4 text-xs">
-            <h3 className="font-bold text-base text-gray-900 dark:text-gray-100 pb-2 border-b border-gray-100 dark:border-gray-700">
+            <h3 className="font-bold text-base text-fb-text pb-2 border-b border-fb-divider">
               Thông tin tài khoản trường
             </h3>
 
@@ -412,7 +412,7 @@ const SettingsContent: React.FC = () => {
                 type="text"
                 disabled
                 value={currentUser.name}
-                className="w-full p-2.5 bg-gray-100 dark:bg-[#3A3B3C] rounded-lg border text-gray-700 dark:text-gray-300"
+                className="w-full p-2.5 bg-fb-input rounded-lg border text-fb-text"
               />
             </div>
 
@@ -424,7 +424,7 @@ const SettingsContent: React.FC = () => {
                 type="text"
                 disabled
                 value={currentUser.email}
-                className="w-full p-2.5 bg-gray-100 dark:bg-[#3A3B3C] rounded-lg border text-gray-700 dark:text-gray-300"
+                className="w-full p-2.5 bg-fb-input rounded-lg border text-fb-text"
               />
             </div>
 
@@ -436,7 +436,7 @@ const SettingsContent: React.FC = () => {
                 type="text"
                 disabled
                 value={currentUser.faculty}
-                className="w-full p-2.5 bg-gray-100 dark:bg-[#3A3B3C] rounded-lg border text-gray-700 dark:text-gray-300"
+                className="w-full p-2.5 bg-fb-input rounded-lg border text-fb-text"
               />
             </div>
           </div>
@@ -445,7 +445,7 @@ const SettingsContent: React.FC = () => {
         {activeTab === 'BLOCKING' && (
           <div className="space-y-5 text-xs">
             <div>
-              <h3 className="font-bold text-base text-gray-900 dark:text-gray-100 pb-2 border-b border-gray-100 dark:border-gray-700">
+              <h3 className="font-bold text-base text-fb-text pb-2 border-b border-fb-divider">
                 Quản lý danh sách chặn (Block / Unblock)
               </h3>
               <p className="text-gray-500 mt-2 leading-relaxed">
@@ -457,15 +457,15 @@ const SettingsContent: React.FC = () => {
               </p>
             </div>
 
-            <div className="p-4 rounded-xl bg-gray-50 dark:bg-[#1E1F20] border border-gray-200 dark:border-gray-700 space-y-3">
-              <label className="font-bold text-gray-800 dark:text-gray-200 block">
+            <div className="p-4 rounded-lg bg-fb-input border border-fb-divider space-y-3">
+              <label className="font-bold text-fb-text block">
                 Thêm người vào danh sách chặn
               </label>
               <div className="flex flex-col sm:flex-row gap-2">
                 <select
                   value={selectedBlockUserId}
                   onChange={(e) => setSelectedBlockUserId(e.target.value)}
-                  className="flex-1 p-2.5 rounded-xl bg-white dark:bg-[#242526] border border-gray-200 dark:border-gray-700"
+                  className="flex-1 p-2.5 rounded-lg bg-fb-card border border-fb-divider"
                 >
                   <option value="">-- Chọn người dùng cần chặn --</option>
                   {allUsers
@@ -481,7 +481,7 @@ const SettingsContent: React.FC = () => {
                   value={blockReasonInput}
                   onChange={(e) => setBlockReasonInput(e.target.value)}
                   placeholder="Lý do chặn (tùy chọn)..."
-                  className="flex-1 p-2.5 rounded-xl bg-white dark:bg-[#242526] border border-gray-200 dark:border-gray-700"
+                  className="flex-1 p-2.5 rounded-lg bg-fb-card border border-fb-divider"
                 />
                 <button
                   type="button"
@@ -491,7 +491,7 @@ const SettingsContent: React.FC = () => {
                     setSelectedBlockUserId('');
                     setBlockReasonInput('');
                   }}
-                  className="px-4 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 text-white rounded-xl font-bold shrink-0"
+                  className="px-4 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 text-white rounded-lg font-bold shrink-0"
                 >
                   Chặn ngay
                 </button>
@@ -499,16 +499,16 @@ const SettingsContent: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <h4 className="font-bold text-gray-800 dark:text-gray-200">
+              <h4 className="font-bold text-fb-text">
                 Danh sách đối tượng đang bị chặn ({blockedUsers.length})
               </h4>
               {blockedUsers.length === 0 ? (
-                <div className="py-8 text-center text-gray-400 border border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
+                <div className="py-8 text-center text-gray-400 border border-dashed border-fb-divider rounded-lg">
                   <Shield className="w-8 h-8 mx-auto mb-1 opacity-60" />
                   <p>Chưa có người dùng nào trong danh sách chặn.</p>
                 </div>
               ) : (
-                <div className="divide-y divide-gray-100 dark:divide-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4">
+                <div className="divide-y divide-gray-100 dark:divide-gray-800 border border-fb-divider rounded-lg px-4">
                   {blockedUsers.map((entry) => {
                     const u = allUsers.find((item) => item.id === entry.userId);
                     if (!u) return null;
@@ -524,7 +524,7 @@ const SettingsContent: React.FC = () => {
                             className="w-10 h-10 rounded-full object-cover grayscale"
                           />
                           <div>
-                            <p className="font-bold text-gray-900 dark:text-gray-100">
+                            <p className="font-bold text-fb-text">
                               {u.name}
                             </p>
                             <p className="text-[11px] text-gray-500 flex items-center gap-1">
@@ -536,7 +536,7 @@ const SettingsContent: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => unblockUser(u.id)}
-                          className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold flex items-center gap-1.5"
+                          className="px-3.5 py-1.5 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg font-bold flex items-center gap-1.5"
                         >
                           <Unlock className="w-3.5 h-3.5" />
                           <span>Bỏ chặn</span>
@@ -552,7 +552,7 @@ const SettingsContent: React.FC = () => {
 
         {activeTab === 'SECURITY' && (
           <div className="space-y-4 text-xs">
-            <h3 className="font-bold text-base text-gray-900 dark:text-gray-100 pb-2 border-b border-gray-100 dark:border-gray-700">
+            <h3 className="font-bold text-base text-fb-text pb-2 border-b border-fb-divider">
               Mật khẩu & Bảo mật
             </h3>
             <p className="text-gray-500">
@@ -564,7 +564,7 @@ const SettingsContent: React.FC = () => {
 
         {activeTab === 'PUSH' && (
           <div className="space-y-4 text-xs">
-            <h3 className="font-bold text-base text-gray-900 dark:text-gray-100 pb-2 border-b border-gray-100 dark:border-gray-700">
+            <h3 className="font-bold text-base text-fb-text pb-2 border-b border-fb-divider">
               Cài đặt thông báo đẩy (Push Notifications)
             </h3>
 
@@ -583,9 +583,9 @@ const SettingsContent: React.FC = () => {
               </p>
             )}
 
-            <label className="flex items-center justify-between gap-4 rounded-xl bg-gray-50 p-3 dark:bg-[#1E1F20]">
+            <label className="flex items-center justify-between gap-4 rounded-lg bg-gray-50 p-3 dark:bg-[#1E1F20]">
               <span>
-                <span className="block font-bold text-gray-800 dark:text-gray-200">
+                <span className="block font-bold text-fb-text">
                   Bật thông báo đẩy
                 </span>
                 <span className="text-[11px] text-gray-500">
@@ -609,15 +609,15 @@ const SettingsContent: React.FC = () => {
               disabled={!pushPreferences.enabled}
               className="space-y-3 disabled:opacity-50"
             >
-              <legend className="mb-2 font-bold text-gray-800 dark:text-gray-200">
+              <legend className="mb-2 font-bold text-fb-text">
                 Loại thông báo
               </legend>
               {pushNotificationTypes.map(({ id, label }) => (
                 <label
                   key={id}
-                  className="flex items-center justify-between gap-4 rounded-xl bg-gray-50 p-3 dark:bg-[#1E1F20]"
+                  className="flex items-center justify-between gap-4 rounded-lg bg-gray-50 p-3 dark:bg-[#1E1F20]"
                 >
-                  <span className="font-semibold text-gray-700 dark:text-gray-300">
+                  <span className="font-semibold text-fb-text">
                     {label}
                   </span>
                   <input
@@ -637,8 +637,8 @@ const SettingsContent: React.FC = () => {
                 </label>
               ))}
 
-              <fieldset className="space-y-3 rounded-xl border border-gray-200 p-3 dark:border-gray-700">
-                <legend className="px-1 font-bold text-gray-800 dark:text-gray-200">
+              <fieldset className="space-y-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+                <legend className="px-1 font-bold text-fb-text">
                   Âm thanh thông báo
                 </legend>
                 <label className="flex items-center gap-2">
@@ -695,7 +695,7 @@ const SettingsContent: React.FC = () => {
                         className={`rounded-lg px-3 py-2 font-bold text-white ${
                           isRecordingVoice
                             ? 'bg-red-600 hover:bg-red-700'
-                            : 'bg-blue-600 hover:bg-blue-700'
+                            : 'bg-fb-blue hover:bg-fb-blue-hover'
                         } disabled:cursor-not-allowed disabled:opacity-60`}
                       >
                         {isStartingVoiceRecording
@@ -740,12 +740,12 @@ const SettingsContent: React.FC = () => {
 
         {activeTab === 'DEVICES' && (
           <div className="space-y-4 text-xs">
-            <h3 className="font-bold text-base text-gray-900 dark:text-gray-100 pb-2 border-b border-gray-100 dark:border-gray-700">
+            <h3 className="font-bold text-base text-fb-text pb-2 border-b border-fb-divider">
               Quản lý thiết bị đã đăng nhập (NOTI.06)
             </h3>
-            <div className="p-3 bg-gray-50 dark:bg-[#1E1F20] rounded-xl flex items-center justify-between border">
+            <div className="p-3 bg-fb-input rounded-lg flex items-center justify-between border">
               <div>
-                <p className="font-bold text-gray-900 dark:text-gray-100">
+                <p className="font-bold text-fb-text">
                   Chrome trên macOS · Thiết bị hiện tại
                 </p>
                 <span className="text-emerald-600 font-semibold">
@@ -758,7 +758,7 @@ const SettingsContent: React.FC = () => {
 
         {activeTab === 'DELETE' && (
           <div className="space-y-4 text-xs">
-            <div className="p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 rounded-xl space-y-2">
+            <div className="p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 rounded-lg space-y-2">
               <h4 className="font-bold text-red-700 dark:text-red-300 flex items-center gap-1.5">
                 <AlertTriangle className="w-4 h-4" /> Cảnh báo xóa tài khoản
               </h4>
