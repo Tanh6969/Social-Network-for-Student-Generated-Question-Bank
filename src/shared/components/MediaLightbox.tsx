@@ -102,7 +102,7 @@ export function MediaLightbox({
             type="button"
             onClick={onClose}
             aria-label="Đóng trình xem"
-            className="rounded-full bg-black/40 p-2 hover:bg-white/20"
+            className="rounded-full bg-black/40 p-2 hover:bg-fb-card/20"
           >
             <X className="h-5 w-5" />
           </button>
@@ -117,7 +117,7 @@ export function MediaLightbox({
                 type="button"
                 onClick={() => setZoomed((value) => !value)}
                 aria-label={zoomed ? 'Thu nhỏ ảnh' : 'Phóng to ảnh'}
-                className="rounded-full bg-black/40 p-2 hover:bg-white/20"
+                className="rounded-full bg-black/40 p-2 hover:bg-fb-card/20"
               >
                 {zoomed ? (
                   <Minimize2 className="h-5 w-5" />
@@ -176,7 +176,7 @@ export function MediaLightbox({
               type="button"
               onClick={() => goTo(safeIndex - 1)}
               aria-label="Ảnh trước"
-              className="absolute left-3 top-1/2 rounded-full bg-black/55 p-2 hover:bg-white/20"
+              className="absolute left-3 top-1/2 rounded-full bg-black/55 p-2 hover:bg-fb-card/20"
             >
               <ChevronLeft className="h-6 w-6" />
             </button>
@@ -184,7 +184,7 @@ export function MediaLightbox({
               type="button"
               onClick={() => goTo(safeIndex + 1)}
               aria-label="Ảnh tiếp theo"
-              className="absolute right-3 top-1/2 rounded-full bg-black/55 p-2 hover:bg-white/20"
+              className="absolute right-3 top-1/2 rounded-full bg-black/55 p-2 hover:bg-fb-card/20"
             >
               <ChevronRight className="h-6 w-6" />
             </button>
@@ -192,7 +192,7 @@ export function MediaLightbox({
         )}
       </div>
       {sidebar && (
-        <aside className="max-h-[40vh] w-full overflow-y-auto bg-white text-gray-900 dark:bg-[#242526] dark:text-gray-100 md:max-h-none md:w-[400px]">
+        <aside className="max-h-[40vh] w-full overflow-y-auto bg-fb-card text-fb-text md:max-h-none md:w-[400px]">
           {sidebar}
         </aside>
       )}

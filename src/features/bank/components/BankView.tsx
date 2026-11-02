@@ -44,12 +44,12 @@ const SubjectItem: React.FC<{
       )}
     </span>
     <span
-      className={`flex-1 min-w-0 truncate text-[15px] font-medium ${active ? 'text-fb-blue' : 'text-fb-text'}`}
+      className={`flex-1 min-w-0 truncate text-body font-medium ${active ? 'text-fb-blue' : 'text-fb-text'}`}
     >
       {label}
     </span>
     {count !== undefined && (
-      <span className="text-[13px] font-semibold text-fb-text-2">{count}</span>
+      <span className="text-sm font-semibold text-fb-text-2">{count}</span>
     )}
   </button>
 );
@@ -214,13 +214,13 @@ export const BankView: React.FC = () => {
               placeholder="Tìm bộ đề, môn học, tác giả"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-10 pl-9 pr-3 bg-fb-input rounded-full text-[15px] text-fb-text placeholder:text-fb-text-2 outline-none focus:ring-2 focus:ring-fb-blue/40"
+              className="w-full h-10 pl-9 pr-3 bg-fb-input rounded-full text-body text-fb-text placeholder:text-fb-text-2 outline-none focus:ring-2 focus:ring-fb-blue/40"
             />
           </div>
 
           <button
             onClick={() => setActiveTab('propose')}
-            className="mt-3 w-full h-10 rounded-md bg-fb-blue hover:bg-fb-blue-hover text-white text-[15px] font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+            className="mt-3 w-full h-10 rounded-md bg-fb-blue hover:bg-fb-blue-hover text-white text-body font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
           >
             <Plus className="w-5 h-5" aria-hidden="true" />
             Đề xuất bộ đề mới
@@ -237,7 +237,7 @@ export const BankView: React.FC = () => {
 
           {mockSubjectsTree.map((group) => (
             <div key={group.name} className="mt-2">
-              <p className="px-2 pt-1 pb-0.5 text-[13px] font-semibold text-fb-text-2">
+              <p className="px-2 pt-1 pb-0.5 text-sm font-semibold text-fb-text-2">
                 {group.name}
               </p>
               {group.subjects.map((sub) => (
@@ -277,7 +277,7 @@ export const BankView: React.FC = () => {
                 <h2 className="text-xl font-bold text-fb-text truncate">
                   {selectedSubject}
                 </h2>
-                <span className="shrink-0 text-[15px] text-fb-text-2">
+                <span className="shrink-0 text-body text-fb-text-2">
                   {filteredExamSets.length} bộ đề
                 </span>
               </div>
@@ -294,7 +294,7 @@ export const BankView: React.FC = () => {
                   placeholder="Tìm bộ đề, môn học, tác giả"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full h-10 pl-9 pr-3 bg-fb-input rounded-full text-[15px] text-fb-text placeholder:text-fb-text-2 outline-none focus:ring-2 focus:ring-fb-blue/40"
+                  className="w-full h-10 pl-9 pr-3 bg-fb-input rounded-full text-body text-fb-text placeholder:text-fb-text-2 outline-none focus:ring-2 focus:ring-fb-blue/40"
                 />
               </div>
 
@@ -308,7 +308,7 @@ export const BankView: React.FC = () => {
                     key={opt.value}
                     onClick={() => setSortBy(opt.value)}
                     aria-pressed={sortBy === opt.value}
-                    className={`shrink-0 h-9 px-4 rounded-full text-[15px] font-semibold transition-colors cursor-pointer ${
+                    className={`shrink-0 h-9 px-4 rounded-full text-body font-semibold transition-colors cursor-pointer ${
                       sortBy === opt.value
                         ? 'bg-fb-blue-soft text-fb-blue'
                         : 'bg-fb-btn text-fb-text hover:bg-fb-btn-hover'
@@ -340,12 +340,12 @@ export const BankView: React.FC = () => {
                 <p className="mt-2 text-[17px] font-semibold text-fb-text">
                   Chưa có bộ đề phù hợp
                 </p>
-                <p className="text-[15px] text-fb-text-2">
+                <p className="text-body text-fb-text-2">
                   Thử đổi từ khoá hoặc chọn môn học khác.
                 </p>
                 <button
                   onClick={() => setActiveTab('propose')}
-                  className="mt-4 h-9 px-4 rounded-md bg-fb-blue hover:bg-fb-blue-hover text-white text-[15px] font-semibold transition-colors cursor-pointer"
+                  className="mt-4 h-9 px-4 rounded-md bg-fb-blue hover:bg-fb-blue-hover text-white text-body font-semibold transition-colors cursor-pointer"
                 >
                   Đề xuất bộ đề đầu tiên
                 </button>
@@ -373,12 +373,12 @@ export const BankView: React.FC = () => {
                 <BookOpen className="w-5 h-5" aria-hidden="true" />
               </span>
               <span className="min-w-0">
-                <span className="block text-[15px] font-medium text-fb-text leading-snug line-clamp-2">
+                <span className="block text-body font-medium text-fb-text leading-snug line-clamp-2">
                   {exam.title}
                 </span>
-                <span className="flex items-center gap-1 text-[13px] text-fb-text-2">
+                <span className="flex items-center gap-1 text-sm text-fb-text-2">
                   <Star
-                    className="w-3.5 h-3.5 text-amber-500 fill-amber-500"
+                    className="w-3.5 h-3.5 text-fb-warning fill-amber-500"
                     aria-hidden="true"
                   />
                   {exam.ratingAverage.toFixed(1)} · {exam.totalAttempts} lượt làm
@@ -398,14 +398,14 @@ export const BankView: React.FC = () => {
               onClick={() => openProfile(user.id)}
               className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-fb-hover text-left transition-colors cursor-pointer"
             >
-              <span className="w-5 text-center text-[15px] font-bold text-fb-text-2">
+              <span className="w-5 text-center text-body font-bold text-fb-text-2">
                 {index + 1}
               </span>
               <img src={user.avatar} alt="" className="w-9 h-9 rounded-full object-cover" />
-              <span className="flex-1 min-w-0 truncate text-[15px] font-medium text-fb-text">
+              <span className="flex-1 min-w-0 truncate text-body font-medium text-fb-text">
                 {user.name}
               </span>
-              <span className="shrink-0 text-[13px] text-fb-text-2">{count} bộ đề</span>
+              <span className="shrink-0 text-sm text-fb-text-2">{count} bộ đề</span>
             </button>
           ))}
         </section>

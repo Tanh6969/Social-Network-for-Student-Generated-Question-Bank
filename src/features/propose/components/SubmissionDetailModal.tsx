@@ -70,7 +70,7 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
         {/* Header */}
         <div className="p-4 border-b border-fb-divider flex items-center justify-between bg-fb-input">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-lg bg-fb-blue-soft text-fb-blue flex items-center justify-center shrink-0">
               <BookOpen className="w-5 h-5" />
             </div>
             <div className="min-w-0">
@@ -79,7 +79,7 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
                   Chi tiết phiên đề xuất
                 </h3>
               </div>
-              <p className="text-xs text-gray-500 truncate">
+              <p className="text-xs text-fb-text-2 truncate">
                 Môn:{' '}
                 <span className="font-semibold text-fb-text">
                   {detail?.subject_name || 'Đang tải...'} ({detail?.subject_code || ''})
@@ -90,7 +90,7 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 cursor-pointer transition"
+            className="p-1.5 rounded-full hover:bg-fb-btn-hover text-fb-text-2 cursor-pointer transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -99,14 +99,14 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
           {loading && (
-            <div className="flex flex-col items-center justify-center py-16 text-gray-500">
-              <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mb-3" />
+            <div className="flex flex-col items-center justify-center py-16 text-fb-text-2">
+              <div className="w-8 h-8 border-3 border-fb-blue border-t-transparent rounded-full animate-spin mb-3" />
               <p className="text-sm">Đang tải dữ liệu phiên đề xuất...</p>
             </div>
           )}
 
           {error && (
-            <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 flex items-start gap-3">
+            <div className="p-4 rounded-lg bg-fb-danger-soft border border-fb-danger/30 text-fb-danger flex items-start gap-3">
               <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
               <div>
                 <p className="font-semibold text-sm">Lỗi tải dữ liệu</p>
@@ -130,7 +130,7 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
 
                 <div className="flex flex-wrap items-center gap-4 text-xs text-fb-text-2 pt-2 border-t border-fb-divider">
                   <div className="flex items-center gap-1.5">
-                    <Calendar className="w-4 h-4 text-gray-400" />
+                    <Calendar className="w-4 h-4 text-fb-text-3" />
                     <span>
                       Tạo lúc:{' '}
                       {detail.created_at
@@ -140,17 +140,17 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
                   </div>
 
                   <div className="flex items-center gap-1.5">
-                    <Heart className="w-4 h-4 text-rose-500" />
+                    <Heart className="w-4 h-4 text-fb-danger" />
                     <span>{detail.react_count || 0} lượt thích</span>
                   </div>
 
                   <div className="flex items-center gap-1.5">
-                    <MessageSquare className="w-4 h-4 text-blue-500" />
+                    <MessageSquare className="w-4 h-4 text-fb-blue" />
                     <span>{detail.comment_count || 0} bình luận</span>
                   </div>
 
                   {detail.reviewed_by_lecturer && (
-                    <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
+                    <div className="flex items-center gap-1.5 text-fb-success font-medium">
                       <UserCheck className="w-4 h-4" />
                       <span>
                         Duyệt bởi: {detail.reviewed_by_lecturer}
@@ -178,7 +178,7 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-2">
-                          <span className="w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                          <span className="w-6 h-6 rounded-full bg-fb-blue text-white font-bold text-xs flex items-center justify-center shrink-0">
                             {qIndex + 1}
                           </span>
                           <span className="font-semibold text-sm text-fb-text">
@@ -187,7 +187,7 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
                         </div>
 
                         {q.confidence_score !== undefined && (
-                          <div className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                          <div className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-fb-warning-soft text-fb-warning border border-fb-warning/30">
                             <Sparkles className="w-3.5 h-3.5" />
                             <span>Độ tự tin: {q.confidence_score}/4</span>
                           </div>
@@ -220,15 +220,15 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
                             key={opt.key}
                             className={`p-3 rounded-lg border text-xs sm:text-sm flex items-start gap-2.5 transition ${
                               opt.is_correct
-                                ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200 font-semibold'
-                                : 'border-fb-divider bg-gray-50/60 dark:bg-[#1E1F20] text-gray-800 dark:text-gray-300'
+                                ? 'border-fb-success bg-fb-success-soft/70 text-fb-success font-semibold'
+                                : 'border-fb-divider bg-fb-inset/60 text-fb-text'
                             }`}
                           >
                             <span
                               className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
                                 opt.is_correct
-                                  ? 'bg-emerald-600 text-white'
-                                  : 'bg-gray-200 dark:bg-gray-700 text-fb-text'
+                                  ? 'bg-fb-success text-white'
+                                  : 'bg-fb-btn text-fb-text'
                               }`}
                             >
                               {opt.key}
@@ -244,7 +244,7 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
                               )}
                             </div>
                             {opt.is_correct && (
-                              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                              <CheckCircle2 className="w-4 h-4 text-fb-success shrink-0 mt-0.5" />
                             )}
                           </div>
                         ))}
@@ -252,8 +252,8 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
 
                       {/* Explanation */}
                       {q.explanation && (
-                        <div className="mt-3 p-3 rounded-lg bg-blue-50/70 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 text-xs text-blue-900 dark:text-blue-200 flex items-start gap-2">
-                          <HelpCircle className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                        <div className="mt-3 p-3 rounded-lg bg-fb-blue-soft/70 border border-fb-blue/30 text-xs text-fb-blue flex items-start gap-2">
+                          <HelpCircle className="w-4 h-4 text-fb-blue shrink-0 mt-0.5" />
                           <div>
                             <span className="font-semibold block mb-0.5">Giải thích đáp án:</span>
                             <span>{q.explanation}</span>
@@ -263,7 +263,7 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
                     </div>
                   ))
                 ) : (
-                  <p className="text-xs text-gray-500 text-center py-4">
+                  <p className="text-xs text-fb-text-2 text-center py-4">
                     Phiên chưa có câu hỏi nào.
                   </p>
                 )}
@@ -276,7 +276,7 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
         <div className="p-4 border-t border-fb-divider flex justify-end bg-fb-input">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-200 dark:bg-gray-700 text-fb-text hover:bg-gray-300 dark:hover:bg-gray-600 transition cursor-pointer"
+            className="px-4 py-2 text-sm font-semibold rounded-lg bg-fb-btn text-fb-text hover:bg-fb-btn-hover transition cursor-pointer"
           >
             Đóng
           </button>

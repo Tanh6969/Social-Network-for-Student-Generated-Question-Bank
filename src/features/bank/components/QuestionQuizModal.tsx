@@ -62,10 +62,10 @@ export const QuestionQuizModal: React.FC = () => {
         <div className="p-4 border-b border-fb-divider flex items-center justify-between bg-fb-input">
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300 px-2.5 py-0.5 rounded-full">
+              <span className="font-bold text-xs bg-fb-blue-soft text-fb-blue px-2.5 py-0.5 rounded-full">
                 {activeQuizQuestion.subject}
               </span>
-              <span className="text-xs text-gray-500">{activeQuizQuestion.chapter}</span>
+              <span className="text-xs text-fb-text-2">{activeQuizQuestion.chapter}</span>
             </div>
             <h3 className="font-bold text-sm text-fb-text mt-1">
               Kiểm tra trực tuyến & Làm thử câu hỏi
@@ -77,7 +77,7 @@ export const QuestionQuizModal: React.FC = () => {
               setActiveQuizQuestion(null);
               handleReset();
             }}
-            className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500"
+            className="p-1.5 rounded-full hover:bg-fb-btn-hover text-fb-text-2"
           >
             <X className="w-5 h-5" />
           </button>
@@ -89,8 +89,8 @@ export const QuestionQuizModal: React.FC = () => {
             onClick={() => setActiveTab('QUIZ')}
             className={`py-2.5 px-3 border-b-2 transition ${
               activeTab === 'QUIZ'
-                ? 'border-blue-600 text-fb-blue'
-                : 'border-transparent text-gray-500 hover:text-gray-800'
+                ? 'border-fb-blue text-fb-blue'
+                : 'border-transparent text-fb-text-2 hover:text-fb-text'
             }`}
           >
             Làm bài thi
@@ -99,8 +99,8 @@ export const QuestionQuizModal: React.FC = () => {
             onClick={() => setActiveTab('STATS')}
             className={`py-2.5 px-3 border-b-2 transition flex items-center gap-1.5 ${
               activeTab === 'STATS'
-                ? 'border-blue-600 text-fb-blue'
-                : 'border-transparent text-gray-500 hover:text-gray-800'
+                ? 'border-fb-blue text-fb-blue'
+                : 'border-transparent text-fb-text-2 hover:text-fb-text'
             }`}
           >
             <BarChart2 className="w-3.5 h-3.5" />
@@ -126,17 +126,17 @@ export const QuestionQuizModal: React.FC = () => {
                   const isAnswer = activeQuizQuestion.correctAnswer === opt.id;
 
                   let optionStyle =
-                    'border-fb-divider bg-fb-card hover:border-blue-400';
+                    'border-fb-divider bg-fb-card hover:border-fb-blue';
                   if (isSelected && !hasSubmitted) {
                     optionStyle =
-                      'border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 ring-1 ring-blue-600';
+                      'border-fb-blue bg-fb-blue-soft/70 text-fb-blue ring-1 ring-fb-blue';
                   } else if (hasSubmitted) {
                     if (isAnswer) {
                       optionStyle =
-                        'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 ring-2 ring-emerald-500';
+                        'border-fb-success bg-fb-success-soft text-fb-success ring-2 ring-fb-success';
                     } else if (isSelected && !isAnswer) {
                       optionStyle =
-                        'border-red-500 bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-200 ring-2 ring-red-500';
+                        'border-fb-danger bg-fb-danger-soft text-fb-danger ring-2 ring-fb-danger';
                     }
                   }
 
@@ -150,8 +150,8 @@ export const QuestionQuizModal: React.FC = () => {
                         <span
                           className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
                             isSelected || (hasSubmitted && isAnswer)
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-gray-100 dark:bg-gray-700 text-fb-text'
+                              ? 'bg-fb-blue text-white'
+                              : 'bg-fb-input text-fb-text'
                           }`}
                         >
                           {opt.id}
@@ -160,10 +160,10 @@ export const QuestionQuizModal: React.FC = () => {
                       </div>
 
                       {hasSubmitted && isAnswer && (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                        <CheckCircle2 className="w-5 h-5 text-fb-success shrink-0" />
                       )}
                       {hasSubmitted && isSelected && !isAnswer && (
-                        <XCircle className="w-5 h-5 text-red-600 shrink-0" />
+                        <XCircle className="w-5 h-5 text-fb-danger shrink-0" />
                       )}
                     </div>
                   );
@@ -175,29 +175,29 @@ export const QuestionQuizModal: React.FC = () => {
                 <div
                   className={`p-4 rounded-lg border animate-in fade-in duration-200 ${
                     isCorrect
-                      ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800'
-                      : 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800'
+                      ? 'bg-fb-success-soft border-fb-success/30'
+                      : 'bg-fb-danger-soft border-fb-danger/30'
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-2 font-bold text-sm">
                     {isCorrect ? (
                       <>
-                        <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                        <span className="text-emerald-800 dark:text-emerald-300">
+                        <CheckCircle2 className="w-5 h-5 text-fb-success" />
+                        <span className="text-fb-success">
                           Chính xác! (+10 Điểm cống hiến)
                         </span>
                       </>
                     ) : (
                       <>
-                        <XCircle className="w-5 h-5 text-red-600" />
-                        <span className="text-red-800 dark:text-red-300">
+                        <XCircle className="w-5 h-5 text-fb-danger" />
+                        <span className="text-fb-danger">
                           Chưa chính xác! Đáp án đúng là {activeQuizQuestion.correctAnswer}
                         </span>
                       </>
                     )}
                   </div>
 
-                  <p className="text-xs text-fb-text leading-relaxed font-normal bg-white/70 dark:bg-black/30 p-3 rounded-lg border border-black/5">
+                  <p className="text-xs text-fb-text leading-relaxed font-normal bg-fb-card/70 p-3 rounded-lg border border-black/5">
                     <strong>Lời giải chi tiết: </strong>
                     {activeQuizQuestion.explanation}
                   </p>
@@ -207,10 +207,10 @@ export const QuestionQuizModal: React.FC = () => {
           ) : (
             /* STATS TAB (BANK.08, BANK.10) */
             <div className="space-y-4">
-              <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800 flex items-center justify-between">
+              <div className="p-4 bg-fb-blue-soft rounded-lg border border-fb-blue/30 flex items-center justify-between">
                 <div>
-                  <span className="text-xs text-gray-500">Tỉ lệ trả lời đúng</span>
-                  <p className="text-2xl font-black text-blue-700 dark:text-blue-400">
+                  <span className="text-xs text-fb-text-2">Tỉ lệ trả lời đúng</span>
+                  <p className="text-2xl font-bold text-fb-blue">
                     {activeQuizQuestion.totalAttempts > 0
                       ? Math.round(
                           (activeQuizQuestion.correctAttempts / activeQuizQuestion.totalAttempts) *
@@ -221,8 +221,8 @@ export const QuestionQuizModal: React.FC = () => {
                   </p>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs text-gray-500">Tổng số lượt làm</span>
-                  <p className="text-2xl font-black text-fb-text">
+                  <span className="text-xs text-fb-text-2">Tổng số lượt làm</span>
+                  <p className="text-2xl font-bold text-fb-text">
                     {activeQuizQuestion.totalAttempts || 145}
                   </p>
                 </div>
@@ -230,7 +230,7 @@ export const QuestionQuizModal: React.FC = () => {
 
               {/* Bar chart of distribution */}
               <div>
-                <h4 className="font-bold text-xs text-gray-500 mb-2">
+                <h4 className="font-bold text-xs text-fb-text-2 mb-2">
                   Phân bố lựa chọn phương án của sinh viên:
                 </h4>
                 <div className="space-y-2 text-xs">
@@ -248,17 +248,17 @@ export const QuestionQuizModal: React.FC = () => {
                     return (
                       <div key={letter} className="flex items-center gap-2">
                         <span className="w-5 font-bold">{letter}</span>
-                        <div className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                        <div className="flex-1 bg-fb-input rounded-full h-3 overflow-hidden">
                           <div
                             className={`h-full ${
                               letter === activeQuizQuestion.correctAnswer
-                                ? 'bg-emerald-500'
-                                : 'bg-blue-500'
+                                ? 'bg-fb-success'
+                                : 'bg-fb-blue'
                             }`}
                             style={{ width: `${pct}%` }}
                           />
                         </div>
-                        <span className="w-12 text-right text-gray-500">{pct}% ({count})</span>
+                        <span className="w-12 text-right text-fb-text-2">{pct}% ({count})</span>
                       </div>
                     );
                   })}
@@ -268,10 +268,10 @@ export const QuestionQuizModal: React.FC = () => {
               {/* Phân bố đánh giá 0 - 4 sao (GET /questions/{id}/statistics) */}
               <div className="pt-3 border-t border-fb-divider">
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-bold text-xs text-gray-500">
+                  <h4 className="font-bold text-xs text-fb-text-2">
                     Phân bố đánh giá (thang 0 – 4 sao):
                   </h4>
-                  <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
+                  <span className="text-xs font-bold text-fb-warning">
                     TB: {activeQuizQuestion.ratingAverage ? Math.min(4.0, activeQuizQuestion.ratingAverage).toFixed(1) : '3.8'} / 4.0
                   </span>
                 </div>
@@ -294,13 +294,13 @@ export const QuestionQuizModal: React.FC = () => {
                         <span className="w-12 font-medium text-fb-text-2">
                           {level} sao
                         </span>
-                        <div className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
+                        <div className="flex-1 bg-fb-input rounded-full h-2.5 overflow-hidden">
                           <div
-                            className="h-full bg-amber-400 rounded-full transition-all"
+                            className="h-full bg-fb-warning rounded-full"
                             style={{ width: `${pct}%` }}
                           />
                         </div>
-                        <span className="w-12 text-right text-gray-400 text-[11px]">
+                        <span className="w-12 text-right text-fb-text-3 text-xs">
                           {pct}% ({count})
                         </span>
                       </div>
@@ -324,15 +324,15 @@ export const QuestionQuizModal: React.FC = () => {
                       <Star
                         className={`w-7 h-7 ${
                           (userStars || activeQuizQuestion.userRatedStars || 0) >= star
-                            ? 'text-amber-500 fill-amber-500'
-                            : 'text-gray-300 dark:text-gray-600'
+                            ? 'text-fb-warning fill-amber-500'
+                            : 'text-fb-text-3'
                         }`}
                       />
                     </button>
                   ))}
                 </div>
                 {hasRated && (
-                  <p className="text-xs text-emerald-600 font-semibold">
+                  <p className="text-xs text-fb-success font-semibold">
                     Đã lưu đánh giá {userStars} / 4 sao!
                   </p>
                 )}
@@ -346,20 +346,20 @@ export const QuestionQuizModal: React.FC = () => {
           {hasSubmitted ? (
             <button
               onClick={handleReset}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition flex items-center gap-1.5"
+              className="px-4 py-2 border border-fb-divider rounded-lg text-xs font-semibold hover:bg-fb-hover transition flex items-center gap-1.5"
             >
               <RotateCcw className="w-4 h-4" />
               <span>Làm lại câu này</span>
             </button>
           ) : (
-            <div className="text-xs text-gray-400">Chọn 1 đáp án A, B, C hoặc D</div>
+            <div className="text-xs text-fb-text-3">Chọn 1 đáp án A, B, C hoặc D</div>
           )}
 
           {!hasSubmitted ? (
             <button
               onClick={handleSubmit}
               disabled={!selectedOption}
-              className="px-6 py-2 bg-fb-blue hover:bg-fb-blue-hover disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white rounded-lg text-xs font-bold shadow-md transition"
+              className="px-6 py-2 bg-fb-blue hover:bg-fb-blue-hover disabled:bg-fb-divider text-white rounded-lg text-xs font-bold shadow-md transition"
             >
               Nộp bài kiểm tra
             </button>

@@ -179,7 +179,7 @@ export const Navbar: React.FC = () => {
           className="flex items-center gap-2 cursor-pointer group"
         >
           <div className="w-10 h-10 rounded-full bg-fb-blue flex items-center justify-center text-white">
-            <span className="font-black text-xl tracking-tighter">U</span>
+            <span className="font-bold text-xl tracking-tighter">U</span>
           </div>
           <span className="hidden sm:inline font-bold text-lg text-fb-text tracking-tight">
             Uni<span className="text-fb-blue">Social</span>
@@ -196,13 +196,13 @@ export const Navbar: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => toggleSearch(true)}
-              className="w-full h-10 pl-9 pr-8 rounded-full bg-fb-input text-sm text-fb-text placeholder-gray-500 dark:placeholder-gray-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition-all"
+              className="w-full h-10 pl-9 pr-8 rounded-full bg-fb-input text-sm text-fb-text placeholder-fb-text-2 focus:outline-hidden focus:ring-2 focus:ring-fb-blue transition-shadow"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-2.5 text-fb-text-3 hover:text-fb-text-2"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -212,12 +212,12 @@ export const Navbar: React.FC = () => {
           {/* Search Dropdown (SOC.14) */}
           {isSearchOpen && (
             <div className="absolute top-12 left-0 w-80 bg-fb-card rounded-lg shadow-xl border border-fb-divider p-3 z-[110] animate-in fade-in zoom-in-95 duration-150">
-              <div className="flex items-center justify-between text-xs text-gray-500 font-semibold px-2 mb-2">
+              <div className="flex items-center justify-between text-xs text-fb-text-2 font-semibold px-2 mb-2">
                 <span>Tìm kiếm gần đây</span>
                 {savedSearches.length > 0 && (
                   <button
                     onClick={clearAllSavedSearches}
-                    className="text-blue-600 hover:underline"
+                    className="text-fb-blue hover:underline"
                   >
                     Xóa tất cả
                   </button>
@@ -236,7 +236,7 @@ export const Navbar: React.FC = () => {
                       }}
                     >
                       <div className="flex items-center gap-2 truncate">
-                        <Search className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                        <Search className="w-3.5 h-3.5 text-fb-text-3 shrink-0" />
                         <span className="truncate">{term}</span>
                       </div>
                       <button
@@ -244,7 +244,7 @@ export const Navbar: React.FC = () => {
                           e.stopPropagation();
                           removeSavedSearch(term);
                         }}
-                        className="text-gray-400 hover:text-gray-600 p-1"
+                        className="text-fb-text-3 hover:text-fb-text-2 p-1"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -252,11 +252,11 @@ export const Navbar: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-gray-400 px-2 py-1">Chưa có lịch sử tìm kiếm</p>
+                <p className="text-xs text-fb-text-3 px-2 py-1">Chưa có lịch sử tìm kiếm</p>
               )}
 
               <div className="border-t border-fb-divider pt-2">
-                <span className="text-xs text-gray-500 font-semibold px-2 block mb-1.5">
+                <span className="text-xs text-fb-text-2 font-semibold px-2 block mb-1.5">
                   Xu hướng ôn thi
                 </span>
                 <div className="flex flex-wrap gap-1.5 px-1">
@@ -267,7 +267,7 @@ export const Navbar: React.FC = () => {
                         triggerSearch(trend);
                         setIsSearchOpen(false);
                       }}
-                      className="text-xs px-2.5 py-1 bg-fb-input text-fb-text rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 transition"
+                      className="text-xs px-2.5 py-1 bg-fb-input text-fb-text rounded-full hover:bg-fb-blue-soft hover:text-fb-blue transition"
                     >
                       {trend}
                     </button>
@@ -309,7 +309,7 @@ export const Navbar: React.FC = () => {
             >
               <CheckSquare className={`w-6 h-6 ${activeTab === 'review' ? 'stroke-[2.5]' : ''}`} />
               {pendingSessionsCount > 0 && (
-                <span className="absolute top-2 right-3 px-1.5 py-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full animate-pulse-subtle">
+                <span className="absolute top-2 right-3 px-1.5 py-0.5 text-xs font-bold bg-fb-danger text-white rounded-full animate-pulse-subtle">
                   {pendingSessionsCount}
                 </span>
               )}
@@ -420,9 +420,9 @@ export const Navbar: React.FC = () => {
           title={isDarkMode ? 'Chuyển sang Chế độ sáng' : 'Chuyển sang Chế độ tối'}
         >
           {isDarkMode ? (
-            <Sun className="w-5 h-5 text-amber-400" />
+            <Sun className="w-5 h-5 text-fb-warning" />
           ) : (
-            <Moon className="w-5 h-5 text-gray-700" />
+            <Moon className="w-5 h-5 text-fb-text" />
           )}
         </button>
 
@@ -449,11 +449,11 @@ export const Navbar: React.FC = () => {
                         handleTabClick('review');
                         setIsGridMenuOpen(false);
                       }}
-                      className="p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-left transition"
+                      className="p-2.5 rounded-lg bg-fb-blue-soft hover:bg-fb-blue/20 text-left transition"
                     >
-                      <CheckSquare className="w-5 h-5 text-blue-600 mb-1" />
-                      <span className="font-semibold block text-blue-700 dark:text-blue-300">Kiểm duyệt</span>
-                      <span className="text-[10px] text-gray-500">Thẩm định phiên</span>
+                      <CheckSquare className="w-5 h-5 text-fb-blue mb-1" />
+                      <span className="font-semibold block text-fb-blue">Kiểm duyệt</span>
+                      <span className="text-xs text-fb-text-2">Thẩm định phiên</span>
                     </button>
 
                     <button
@@ -461,11 +461,11 @@ export const Navbar: React.FC = () => {
                         handleTabClick('exams');
                         setIsGridMenuOpen(false);
                       }}
-                      className="p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-left transition"
+                      className="p-2.5 rounded-lg bg-fb-blue-soft hover:bg-fb-blue/20 text-left transition"
                     >
-                      <Database className="w-5 h-5 text-blue-600 mb-1" />
-                      <span className="font-semibold block text-blue-700 dark:text-blue-300">Quản lý đề thi</span>
-                      <span className="text-[10px] text-gray-500">Tạo & xuất dữ liệu</span>
+                      <Database className="w-5 h-5 text-fb-blue mb-1" />
+                      <span className="font-semibold block text-fb-blue">Quản lý đề thi</span>
+                      <span className="text-xs text-fb-text-2">Tạo & xuất dữ liệu</span>
                     </button>
 
                     <button
@@ -473,11 +473,11 @@ export const Navbar: React.FC = () => {
                         handleTabClick('propose');
                         setIsGridMenuOpen(false);
                       }}
-                      className="p-2.5 rounded-lg bg-fb-input hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-left transition"
+                      className="p-2.5 rounded-lg bg-fb-input hover:bg-fb-success-soft text-left transition"
                     >
-                      <FilePlus className="w-5 h-5 text-emerald-600 mb-1" />
+                      <FilePlus className="w-5 h-5 text-fb-success mb-1" />
                       <span className="font-semibold block text-fb-text">Đề xuất câu hỏi</span>
-                      <span className="text-[10px] text-gray-500">Biên soạn & duyệt</span>
+                      <span className="text-xs text-fb-text-2">Biên soạn & duyệt</span>
                     </button>
 
                     <button
@@ -485,11 +485,11 @@ export const Navbar: React.FC = () => {
                         handleTabClick('bank');
                         setIsGridMenuOpen(false);
                       }}
-                      className="p-2.5 rounded-lg bg-fb-input hover:bg-blue-50 dark:hover:bg-blue-950/40 text-left transition"
+                      className="p-2.5 rounded-lg bg-fb-input hover:bg-fb-blue-soft text-left transition"
                     >
-                      <BookOpen className="w-5 h-5 text-blue-600 mb-1" />
+                      <BookOpen className="w-5 h-5 text-fb-blue mb-1" />
                       <span className="font-semibold block text-fb-text">Ngân hàng đề</span>
-                      <span className="text-[10px] text-gray-500">Đóng góp & ôn tập</span>
+                      <span className="text-xs text-fb-text-2">Đóng góp & ôn tập</span>
                     </button>
                   </>
                 ) : (
@@ -499,11 +499,11 @@ export const Navbar: React.FC = () => {
                         handleTabClick('bank');
                         setIsGridMenuOpen(false);
                       }}
-                      className="p-2.5 rounded-lg bg-fb-input hover:bg-blue-50 dark:hover:bg-blue-950/40 text-left transition"
+                      className="p-2.5 rounded-lg bg-fb-input hover:bg-fb-blue-soft text-left transition"
                     >
-                      <BookOpen className="w-5 h-5 text-blue-600 mb-1" />
+                      <BookOpen className="w-5 h-5 text-fb-blue mb-1" />
                       <span className="font-semibold block text-fb-text">Ngân hàng đề</span>
-                      <span className="text-[10px] text-gray-500">Đóng góp & ôn tập</span>
+                      <span className="text-xs text-fb-text-2">Đóng góp & ôn tập</span>
                     </button>
 
                     <button
@@ -511,11 +511,11 @@ export const Navbar: React.FC = () => {
                         handleTabClick('propose');
                         setIsGridMenuOpen(false);
                       }}
-                      className="p-2.5 rounded-lg bg-fb-input hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-left transition"
+                      className="p-2.5 rounded-lg bg-fb-input hover:bg-fb-success-soft text-left transition"
                     >
-                      <FilePlus className="w-5 h-5 text-emerald-600 mb-1" />
+                      <FilePlus className="w-5 h-5 text-fb-success mb-1" />
                       <span className="font-semibold block text-fb-text">Đề xuất câu hỏi</span>
-                      <span className="text-[10px] text-gray-500">Biên soạn & duyệt</span>
+                      <span className="text-xs text-fb-text-2">Biên soạn & duyệt</span>
                     </button>
 
                     <button
@@ -523,11 +523,11 @@ export const Navbar: React.FC = () => {
                         handleTabClick('exams');
                         setIsGridMenuOpen(false);
                       }}
-                      className="p-2.5 rounded-lg bg-fb-input hover:bg-blue-50 dark:hover:bg-blue-950/40 text-left transition"
+                      className="p-2.5 rounded-lg bg-fb-input hover:bg-fb-blue-soft text-left transition"
                     >
-                      <Database className="w-5 h-5 text-blue-600 mb-1" />
+                      <Database className="w-5 h-5 text-fb-blue mb-1" />
                       <span className="font-semibold block text-fb-text">Quản lý đề thi</span>
-                      <span className="text-[10px] text-gray-500">Tạo & xuất dữ liệu</span>
+                      <span className="text-xs text-fb-text-2">Tạo & xuất dữ liệu</span>
                     </button>
                   </>
                 )}
@@ -537,11 +537,11 @@ export const Navbar: React.FC = () => {
                     handleTabClick('cosmetics');
                     setIsGridMenuOpen(false);
                   }}
-                  className="p-2.5 rounded-lg bg-fb-input hover:bg-amber-50 dark:hover:bg-amber-950/40 text-left transition"
+                  className="p-2.5 rounded-lg bg-fb-input hover:bg-fb-warning-soft text-left transition"
                 >
-                  <Sparkles className="w-5 h-5 text-amber-500 mb-1" />
+                  <Sparkles className="w-5 h-5 text-fb-warning mb-1" />
                   <span className="font-semibold block text-fb-text">Kho vật phẩm</span>
-                  <span className="text-[10px] text-gray-500">Khung & hiệu ứng</span>
+                  <span className="text-xs text-fb-text-2">Khung & hiệu ứng</span>
                 </button>
 
                 <button
@@ -549,11 +549,11 @@ export const Navbar: React.FC = () => {
                     handleTabClick('game');
                     setIsGridMenuOpen(false);
                   }}
-                  className="p-2.5 rounded-lg bg-fb-input hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-left transition"
+                  className="p-2.5 rounded-lg bg-fb-input hover:bg-fb-success-soft text-left transition"
                 >
-                  <Gamepad2 className="w-5 h-5 text-emerald-600 mb-1" />
+                  <Gamepad2 className="w-5 h-5 text-fb-success mb-1" />
                   <span className="font-semibold block text-fb-text">Minigame tuần</span>
-                  <span className="text-[10px] text-gray-500">Dự đoán & Bảng vàng</span>
+                  <span className="text-xs text-fb-text-2">Dự đoán & Bảng vàng</span>
                 </button>
               </div>
             </div>
@@ -569,7 +569,7 @@ export const Navbar: React.FC = () => {
           >
             <MessageCircle className="w-5 h-5" />
             {unreadMessagesCount > 0 && (
-              <span className="absolute -top-1 -right-1 px-1.5 py-0.2 text-[10px] font-bold bg-red-500 text-white rounded-full">
+              <span className="absolute -top-1 -right-1 px-1.5 py-0.2 text-xs font-bold bg-fb-danger text-white rounded-full">
                 {unreadMessagesCount}
               </span>
             )}
@@ -584,13 +584,13 @@ export const Navbar: React.FC = () => {
                     handleTabClick('messenger');
                     setIsMessengerOpen(false);
                   }}
-                  className="text-xs text-blue-600 hover:underline font-semibold"
+                  className="text-xs text-fb-blue hover:underline font-semibold"
                 >
                   Xem tất cả trong Messenger
                 </button>
               </div>
 
-              <div className="divide-y divide-gray-100 dark:divide-gray-800 overflow-y-auto max-h-[60vh] flex-1">
+              <div className="divide-y divide-fb-divider overflow-y-auto max-h-[60vh] flex-1">
                 {conversations.map((conv) => (
                   <div
                     key={conv.id}
@@ -606,14 +606,14 @@ export const Navbar: React.FC = () => {
                         <p className="font-semibold text-sm text-fb-text truncate">
                           {conv.partner.name}
                         </p>
-                        <span className="text-[10px] text-gray-400">{conv.lastMessageTime}</span>
+                        <span className="text-xs text-fb-text-3">{conv.lastMessageTime}</span>
                       </div>
                       <p className="text-xs text-fb-text-2 truncate">
                         {conv.lastMessage}
                       </p>
                     </div>
                     {conv.unreadCount > 0 && (
-                      <span className="w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0" />
+                      <span className="w-2.5 h-2.5 rounded-full bg-fb-blue shrink-0" />
                     )}
                   </div>
                 ))}
@@ -631,7 +631,7 @@ export const Navbar: React.FC = () => {
           >
             <Bell className="w-5 h-5" />
             {unreadNotificationsCount > 0 && (
-              <span className="absolute -top-1 -right-1 px-1.5 py-0.2 text-[10px] font-bold bg-red-500 text-white rounded-full">
+              <span className="absolute -top-1 -right-1 px-1.5 py-0.2 text-xs font-bold bg-fb-danger text-white rounded-full">
                 {unreadNotificationsCount}
               </span>
             )}
@@ -644,14 +644,14 @@ export const Navbar: React.FC = () => {
                 {unreadNotificationsCount > 0 && (
                   <button
                     onClick={markAllNotificationsAsRead}
-                    className="text-xs text-blue-600 hover:underline font-semibold"
+                    className="text-xs text-fb-blue hover:underline font-semibold"
                   >
                     Đọc tất cả
                   </button>
                 )}
               </div>
 
-              <div className="divide-y divide-gray-100 dark:divide-gray-800 overflow-y-auto max-h-[60vh] flex-1">
+              <div className="divide-y divide-fb-divider overflow-y-auto max-h-[60vh] flex-1">
                 {notifications.map((notif) => (
                   <div
                     key={notif.id}
@@ -671,10 +671,10 @@ export const Navbar: React.FC = () => {
                     className={`flex items-start gap-3 p-2.5 rounded-lg cursor-pointer transition ${
                       notif.isRead
                         ? 'hover:bg-fb-hover/50 opacity-80'
-                        : 'bg-blue-50/60 dark:bg-blue-950/30 hover:bg-blue-100/60 font-medium'
+                        : 'bg-fb-blue-soft/60 hover:bg-fb-blue/20 font-medium'
                     }`}
                   >
-                    <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 flex items-center justify-center shrink-0">
+                    <div className="w-9 h-9 rounded-full bg-fb-blue-soft text-fb-blue flex items-center justify-center shrink-0">
                       <Bell className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -684,12 +684,12 @@ export const Navbar: React.FC = () => {
                       <p className="text-xs text-fb-text-2 line-clamp-2 mt-0.5">
                         {notif.message}
                       </p>
-                      <span className="text-[10px] text-gray-400 mt-1 block">
+                      <span className="text-xs text-fb-text-3 mt-1 block">
                         {notif.timestamp}
                       </span>
                     </div>
                     {!notif.isRead && (
-                      <span className="w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0 mt-1" />
+                      <span className="w-2.5 h-2.5 rounded-full bg-fb-blue shrink-0 mt-1" />
                     )}
                   </div>
                 ))}
@@ -725,7 +725,7 @@ export const Navbar: React.FC = () => {
                   <p className="text-xs text-fb-text-2 truncate">
                     {currentUser.classOrTitle}
                   </p>
-                  <span className="text-[10px] text-fb-blue font-semibold">
+                  <span className="text-xs text-fb-blue font-semibold">
                     Xem hồ sơ của bạn
                   </span>
                 </div>
@@ -739,7 +739,7 @@ export const Navbar: React.FC = () => {
                   }}
                   className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-fb-hover transition text-left"
                 >
-                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <Sparkles className="w-4 h-4 text-fb-warning" />
                   <span>Kho vật phẩm & Khung avatar</span>
                 </button>
 
@@ -750,7 +750,7 @@ export const Navbar: React.FC = () => {
                   }}
                   className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-fb-hover transition text-left"
                 >
-                  <Settings className="w-4 h-4 text-gray-500" />
+                  <Settings className="w-4 h-4 text-fb-text-2" />
                   <span>Cài đặt & Quyền riêng tư</span>
                 </button>
 
@@ -760,13 +760,13 @@ export const Navbar: React.FC = () => {
                 >
                   <div className="flex items-center gap-3">
                     {isDarkMode ? (
-                      <Sun className="w-4 h-4 text-amber-400" />
+                      <Sun className="w-4 h-4 text-fb-warning" />
                     ) : (
-                      <Moon className="w-4 h-4 text-gray-500" />
+                      <Moon className="w-4 h-4 text-fb-text-2" />
                     )}
                     <span>Chế độ tối (Dark mode)</span>
                   </div>
-                  <span className="text-xs font-semibold text-gray-400">
+                  <span className="text-xs font-semibold text-fb-text-3">
                     {isDarkMode ? 'Bật' : 'Tắt'}
                   </span>
                 </button>
@@ -778,7 +778,7 @@ export const Navbar: React.FC = () => {
                   }}
                   className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-fb-hover transition text-left"
                 >
-                  <HelpCircle className="w-4 h-4 text-blue-500" />
+                  <HelpCircle className="w-4 h-4 text-fb-blue" />
                   <span>Hướng dẫn sử dụng (Tour)</span>
                 </button>
 
@@ -788,10 +788,10 @@ export const Navbar: React.FC = () => {
                       handleTabClick('exams');
                       setIsUserMenuOpen(false);
                     }}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-bold transition text-left cursor-pointer"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-fb-blue-soft text-fb-blue font-bold transition text-left cursor-pointer"
                   >
                     <div className="flex items-center gap-3">
-                      <Database className="w-4 h-4 text-blue-600" />
+                      <Database className="w-4 h-4 text-fb-blue" />
                       <span>Quản lý đề thi & Xuất file</span>
                     </div>
                   </button>
@@ -803,7 +803,7 @@ export const Navbar: React.FC = () => {
                       setIsUserMenuOpen(false);
                       logout();
                     }}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-red-600 transition text-left"
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-fb-danger-soft text-fb-danger transition text-left"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>Đăng xuất</span>

@@ -74,7 +74,7 @@ export const ClassStudentsModal: React.FC<ClassStudentsModalProps> = ({ courseCl
           <button
             onClick={onClose}
             aria-label="Đóng"
-            className="w-8 h-8 shrink-0 rounded-full hover:bg-fb-hover flex items-center justify-center text-gray-500 cursor-pointer"
+            className="w-8 h-8 shrink-0 rounded-full hover:bg-fb-hover flex items-center justify-center text-fb-text-2 cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -83,13 +83,13 @@ export const ClassStudentsModal: React.FC<ClassStudentsModalProps> = ({ courseCl
         {/* Search */}
         <div className="px-4 py-3 border-b border-fb-divider">
           <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-fb-text-3" />
             <input
               autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Tìm theo họ tên, MSSV, lớp sinh hoạt..."
-              className="w-full pl-9 pr-3 py-2 rounded-lg bg-fb-input text-sm text-fb-text placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-blue-500/40"
+              className="w-full pl-9 pr-3 py-2 rounded-lg bg-fb-input text-sm text-fb-text placeholder:text-fb-text-3 outline-none focus:ring-2 focus:ring-fb-blue/40"
             />
           </div>
         </div>
@@ -97,10 +97,10 @@ export const ClassStudentsModal: React.FC<ClassStudentsModalProps> = ({ courseCl
         {/* List */}
         <div className="flex-1 overflow-y-auto px-2 py-2">
           {filtered === null && (
-            <p className="py-10 text-center text-sm text-gray-400">Đang tải danh sách...</p>
+            <p className="py-10 text-center text-sm text-fb-text-3">Đang tải danh sách...</p>
           )}
           {filtered?.length === 0 && (
-            <div className="py-10 flex flex-col items-center gap-2 text-sm text-gray-400">
+            <div className="py-10 flex flex-col items-center gap-2 text-sm text-fb-text-3">
               <Users className="w-8 h-8" />
               {query ? 'Không tìm thấy sinh viên phù hợp.' : 'Lớp chưa có sinh viên nào.'}
             </div>
@@ -127,7 +127,7 @@ export const ClassStudentsModal: React.FC<ClassStudentsModalProps> = ({ courseCl
                   href={`mailto:${student.email}`}
                   title={student.email}
                   aria-label={`Gửi email cho ${student.full_name}`}
-                  className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 opacity-0 group-hover:opacity-100 focus:opacity-100 transition"
+                  className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-fb-text-3 hover:text-fb-blue hover:bg-fb-blue-soft opacity-0 group-hover:opacity-100 focus:opacity-100 transition"
                 >
                   <Mail className="w-4 h-4" />
                 </a>

@@ -62,14 +62,14 @@ export const ExamGeneratorWizard: React.FC = () => {
         {/* Header */}
         <div className="p-4 border-b border-fb-divider flex items-center justify-between bg-fb-input">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-cyan-100 text-cyan-700 flex items-center justify-center font-bold">
+            <div className="w-8 h-8 rounded-full bg-fb-blue-soft text-fb-blue flex items-center justify-center font-bold">
               <FileCode className="w-4 h-4" />
             </div>
             <div>
               <h3 className="font-bold text-sm sm:text-base text-fb-text">
                 Bộ Sinh Đề Thi Tự Động (EXAM.01 – EXAM.04)
               </h3>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-fb-text-2">
                 Wizard 3 bước: Cấu hình ma trận độ khó → Bốc ngẫu nhiên câu hỏi → Xuất mã đề kèm đáp án
               </p>
             </div>
@@ -77,7 +77,7 @@ export const ExamGeneratorWizard: React.FC = () => {
 
           <button
             onClick={() => setIsExamWizardOpen(false)}
-            className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500"
+            className="p-1.5 rounded-full hover:bg-fb-btn-hover text-fb-text-2"
           >
             <X className="w-5 h-5" />
           </button>
@@ -85,18 +85,18 @@ export const ExamGeneratorWizard: React.FC = () => {
 
         {/* Stepper indicator */}
         <div className="flex border-b border-fb-divider px-6 py-3 bg-fb-card text-xs font-bold">
-          <div className={`flex items-center gap-2 ${step >= 1 ? 'text-blue-600' : 'text-gray-400'}`}>
-            <span className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-950 flex items-center justify-center">1</span>
+          <div className={`flex items-center gap-2 ${step >= 1 ? 'text-fb-blue' : 'text-fb-text-3'}`}>
+            <span className="w-5 h-5 rounded-full bg-fb-blue-soft flex items-center justify-center">1</span>
             <span>Thông tin đề thi</span>
           </div>
-          <ArrowRight className="w-4 h-4 text-gray-300 mx-4" />
-          <div className={`flex items-center gap-2 ${step >= 2 ? 'text-blue-600' : 'text-gray-400'}`}>
-            <span className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-950 flex items-center justify-center">2</span>
+          <ArrowRight className="w-4 h-4 text-fb-text-3 mx-4" />
+          <div className={`flex items-center gap-2 ${step >= 2 ? 'text-fb-blue' : 'text-fb-text-3'}`}>
+            <span className="w-5 h-5 rounded-full bg-fb-blue-soft flex items-center justify-center">2</span>
             <span>Ma trận & Tỉ lệ độ khó</span>
           </div>
-          <ArrowRight className="w-4 h-4 text-gray-300 mx-4" />
-          <div className={`flex items-center gap-2 ${step >= 3 ? 'text-emerald-600' : 'text-gray-400'}`}>
-            <span className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center">3</span>
+          <ArrowRight className="w-4 h-4 text-fb-text-3 mx-4" />
+          <div className={`flex items-center gap-2 ${step >= 3 ? 'text-fb-success' : 'text-fb-text-3'}`}>
+            <span className="w-5 h-5 rounded-full bg-fb-success-soft flex items-center justify-center">3</span>
             <span>Xem trước & Xuất file</span>
           </div>
         </div>
@@ -113,7 +113,7 @@ export const ExamGeneratorWizard: React.FC = () => {
                   type="text"
                   value={examTitle}
                   onChange={(e) => setExamTitle(e.target.value)}
-                  className="w-full p-2.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-fb-input"
+                  className="w-full p-2.5 text-xs border border-fb-divider rounded-lg bg-fb-input"
                 />
               </div>
 
@@ -125,7 +125,7 @@ export const ExamGeneratorWizard: React.FC = () => {
                   <select
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
-                    className="w-full p-2.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-fb-input"
+                    className="w-full p-2.5 text-xs border border-fb-divider rounded-lg bg-fb-input"
                   >
                     <option value="Mạng máy tính">Mạng máy tính</option>
                     <option value="Cấu trúc dữ liệu & Giải thuật">Cấu trúc dữ liệu & Giải thuật</option>
@@ -141,7 +141,7 @@ export const ExamGeneratorWizard: React.FC = () => {
                   <select
                     value={durationMinutes}
                     onChange={(e) => setDurationMinutes(Number(e.target.value))}
-                    className="w-full p-2.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-fb-input"
+                    className="w-full p-2.5 text-xs border border-fb-divider rounded-lg bg-fb-input"
                   >
                     <option value={45}>45 phút</option>
                     <option value={60}>60 phút</option>
@@ -159,7 +159,7 @@ export const ExamGeneratorWizard: React.FC = () => {
                     type="number"
                     value={totalQuestions}
                     onChange={(e) => setTotalQuestions(Number(e.target.value))}
-                    className="w-full p-2.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-fb-input"
+                    className="w-full p-2.5 text-xs border border-fb-divider rounded-lg bg-fb-input"
                   />
                 </div>
 
@@ -171,7 +171,7 @@ export const ExamGeneratorWizard: React.FC = () => {
                     type="number"
                     value={numExamCodes}
                     onChange={(e) => setNumExamCodes(Number(e.target.value))}
-                    className="w-full p-2.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-fb-input"
+                    className="w-full p-2.5 text-xs border border-fb-divider rounded-lg bg-fb-input"
                   />
                 </div>
               </div>
@@ -180,12 +180,12 @@ export const ExamGeneratorWizard: React.FC = () => {
 
           {step === 2 && (
             <div className="space-y-4 max-w-xl mx-auto">
-              <h4 className="font-bold text-xs text-gray-500">
+              <h4 className="font-bold text-xs text-fb-text-2">
                 Cấu hình tỉ lệ ma trận độ khó (%):
               </h4>
 
-              <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 rounded-lg space-y-2">
-                <div className="flex justify-between text-xs font-bold text-emerald-800 dark:text-emerald-300">
+              <div className="p-4 bg-fb-success-soft rounded-lg space-y-2">
+                <div className="flex justify-between text-xs font-bold text-fb-success">
                   <span>Dễ (Nhận biết / Thông hiểu)</span>
                   <span>{easyPercent}% ({Math.round((totalQuestions * easyPercent) / 100)} câu)</span>
                 </div>
@@ -199,8 +199,8 @@ export const ExamGeneratorWizard: React.FC = () => {
                 />
               </div>
 
-              <div className="p-4 bg-amber-50 dark:bg-amber-950/40 rounded-lg space-y-2">
-                <div className="flex justify-between text-xs font-bold text-amber-800 dark:text-amber-300">
+              <div className="p-4 bg-fb-warning-soft rounded-lg space-y-2">
+                <div className="flex justify-between text-xs font-bold text-fb-warning">
                   <span>Trung bình (Vận dụng)</span>
                   <span>{mediumPercent}% ({Math.round((totalQuestions * mediumPercent) / 100)} câu)</span>
                 </div>
@@ -214,8 +214,8 @@ export const ExamGeneratorWizard: React.FC = () => {
                 />
               </div>
 
-              <div className="p-4 bg-red-50 dark:bg-red-950/40 rounded-lg space-y-2">
-                <div className="flex justify-between text-xs font-bold text-red-800 dark:text-red-300">
+              <div className="p-4 bg-fb-danger-soft rounded-lg space-y-2">
+                <div className="flex justify-between text-xs font-bold text-fb-danger">
                   <span>Khó (Vận dụng cao)</span>
                   <span>{hardPercent}% ({Math.round((totalQuestions * hardPercent) / 100)} câu)</span>
                 </div>
@@ -233,18 +233,18 @@ export const ExamGeneratorWizard: React.FC = () => {
 
           {step === 3 && generatedExamResult && (
             <div className="space-y-4">
-              <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 rounded-lg flex items-center justify-between">
+              <div className="p-4 bg-fb-success-soft border border-fb-success/30 rounded-lg flex items-center justify-between">
                 <div>
-                  <h4 className="font-bold text-sm text-emerald-900 dark:text-emerald-200">
+                  <h4 className="font-bold text-sm text-fb-success">
                     Đã sinh thành công {generatedExamResult.examCodes.length} mã đề thi!
                   </h4>
-                  <p className="text-xs text-emerald-700 dark:text-emerald-300">
+                  <p className="text-xs text-fb-success">
                     Các mã đề: {generatedExamResult.examCodes.join(', ')} · Tổng {generatedExamResult.totalQuestions} câu hỏi
                   </p>
                 </div>
                 <button
                   onClick={() => showToast('Đã tải xuống file đề thi và đáp án PDF!', 'success')}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-md flex items-center gap-1.5"
+                  className="px-4 py-2 bg-fb-success hover:bg-fb-success/90 text-white rounded-lg text-xs font-bold shadow-md flex items-center gap-1.5"
                 >
                   <Download className="w-4 h-4" />
                   <span>Tải file đề (PDF)</span>
@@ -255,18 +255,18 @@ export const ExamGeneratorWizard: React.FC = () => {
                 <p className="font-bold text-fb-text">
                   {generatedExamResult.title} - Thời gian: {generatedExamResult.durationMinutes} phút
                 </p>
-                <div className="grid grid-cols-3 gap-2 text-center pt-2">
-                  <div className="bg-fb-card p-2 rounded-lg border">
-                    <span className="text-gray-500 block">Dễ</span>
-                    <span className="font-bold text-emerald-600">{generatedExamResult.difficultyMatrix.easy} câu</span>
+                <div className="grid grid-cols-3 divide-x divide-fb-divider text-center pt-2">
+                  <div className="p-2">
+                    <span className="text-fb-text-2 block">Dễ</span>
+                    <span className="font-bold text-fb-success">{generatedExamResult.difficultyMatrix.easy} câu</span>
                   </div>
-                  <div className="bg-fb-card p-2 rounded-lg border">
-                    <span className="text-gray-500 block">Trung bình</span>
-                    <span className="font-bold text-amber-600">{generatedExamResult.difficultyMatrix.medium} câu</span>
+                  <div className="p-2">
+                    <span className="text-fb-text-2 block">Trung bình</span>
+                    <span className="font-bold text-fb-warning">{generatedExamResult.difficultyMatrix.medium} câu</span>
                   </div>
-                  <div className="bg-fb-card p-2 rounded-lg border">
-                    <span className="text-gray-500 block">Khó</span>
-                    <span className="font-bold text-red-600">{generatedExamResult.difficultyMatrix.hard} câu</span>
+                  <div className="p-2">
+                    <span className="text-fb-text-2 block">Khó</span>
+                    <span className="font-bold text-fb-danger">{generatedExamResult.difficultyMatrix.hard} câu</span>
                   </div>
                 </div>
               </div>
@@ -306,7 +306,7 @@ export const ExamGeneratorWizard: React.FC = () => {
           {step === 3 && (
             <button
               onClick={() => setIsExamWizardOpen(false)}
-              className="ml-auto px-6 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold"
+              className="ml-auto px-6 py-2 bg-fb-blue text-white rounded-lg text-xs font-bold"
             >
               Hoàn thành
             </button>

@@ -91,7 +91,7 @@ export const FeedView: React.FC = () => {
             setViewingUserId(currentUser.id);
             setActiveTab('profile');
           }}
-          className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] cursor-pointer transition text-fb-text"
+          className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-fb-btn-hover/60 cursor-pointer transition text-fb-text"
         >
           <AvatarWithFrame user={currentUser} size="md" />
           <div className="min-w-0">
@@ -102,7 +102,7 @@ export const FeedView: React.FC = () => {
               {currentUser.classOrTitle}
             </p>
             {role !== 'LECTURER' && (
-              <p className="flex items-center gap-1 text-xs font-semibold text-amber-600 dark:text-amber-400 truncate">
+              <p className="flex items-center gap-1 text-xs font-semibold text-fb-warning truncate">
                 <Trophy className="w-3.5 h-3.5 shrink-0" />
                 {currentUser.points.toLocaleString('vi-VN')} điểm
                 {myRank && <> · Hạng #{myRank}</>}
@@ -139,9 +139,9 @@ export const FeedView: React.FC = () => {
               setHasNewPostsBanner(false);
               showToast('Đã cập nhật bảng tin mới nhất!', 'info');
             }}
-            className="bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100/70 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-center text-xs font-semibold text-blue-700 dark:text-blue-300 cursor-pointer shadow-xs transition flex items-center justify-center gap-2"
+            className="bg-fb-blue-soft hover:bg-fb-blue/20 border border-fb-blue/30 rounded-lg p-3 text-center text-xs font-semibold text-fb-blue cursor-pointer shadow-xs transition flex items-center justify-center gap-2"
           >
-            <RefreshCw className="w-4 h-4 animate-spin text-blue-600" />
+            <RefreshCw className="w-4 h-4 animate-spin text-fb-blue" />
             <span>
               Có 2 bài viết và câu hỏi thi mới được cập nhật – Nhấn để làm mới
             </span>
@@ -150,12 +150,12 @@ export const FeedView: React.FC = () => {
 
         {/* Feed Posts */}
         {unavailablePost && (
-          <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-700 dark:border-gray-700 dark:bg-[#242526] dark:text-gray-200">
+          <div className="rounded-lg border border-fb-divider bg-fb-card p-4 text-sm text-fb-text">
             Bài viết này không tồn tại hoặc bạn không có quyền xem.
             <button
               type="button"
               onClick={() => navigate('/feed', { replace: true })}
-              className="ml-2 font-semibold text-blue-600 hover:underline"
+              className="ml-2 font-semibold text-fb-blue hover:underline"
             >
               Về bảng tin
             </button>
@@ -209,7 +209,7 @@ export const FeedView: React.FC = () => {
                         activeMenuPostId === post.id ? null : post.id,
                       )
                     }
-                    className="p-1.5 rounded-full hover:bg-fb-hover text-gray-500"
+                    className="p-1.5 rounded-full hover:bg-fb-hover text-fb-text-2"
                   >
                     <MoreHorizontal className="w-5 h-5" />
                   </button>
@@ -233,7 +233,7 @@ export const FeedView: React.FC = () => {
                                 deletePost(post.id);
                               setActiveMenuPostId(null);
                             }}
-                            className="w-full px-3 py-2 text-left text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                            className="w-full px-3 py-2 text-left text-fb-danger hover:bg-fb-danger-soft"
                           >
                             Xóa bài viết
                           </button>
@@ -261,7 +261,7 @@ export const FeedView: React.FC = () => {
                               );
                               setActiveMenuPostId(null);
                             }}
-                            className="w-full px-3 py-2 text-left text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center gap-1.5 border-t border-fb-divider"
+                            className="w-full px-3 py-2 text-left text-fb-danger hover:bg-fb-danger-soft flex items-center gap-1.5 border-t border-fb-divider"
                           >
                             <Ban className="w-3.5 h-3.5" />
                             <span>
@@ -298,11 +298,11 @@ export const FeedView: React.FC = () => {
 
               {/* Stats Bar */}
               {(post.likesCount > 0 || visibleCommentsCount > 0) && (
-                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-2 text-xs text-gray-500 dark:border-gray-700">
+                <div className="flex items-center justify-between border-b border-fb-divider px-4 py-2 text-xs text-fb-text-2">
                   <div className="flex items-center gap-1.5">
                     {post.likesCount > 0 && (
                       <>
-                        <span className="rounded-full bg-blue-600 p-1 text-white">
+                        <span className="rounded-full bg-fb-blue p-1 text-white">
                           <ThumbsUp className="h-2.5 w-2.5" />
                         </span>
                         <span>{post.likesCount} lượt thích</span>
@@ -352,30 +352,30 @@ export const FeedView: React.FC = () => {
         })}
         <div
           ref={feedSentinelRef}
-          className="py-3 text-center text-xs text-gray-500"
+          className="py-3 text-center text-xs text-fb-text-2"
         >
           {feedPages.isLoadingMore && (
             <div
               role="status"
               aria-label="Đang tải bài viết"
-              className="animate-pulse rounded-lg border border-gray-200 bg-white p-4 text-left shadow-xs dark:border-gray-700 dark:bg-[#242526]"
+              className="animate-pulse rounded-lg border border-fb-divider bg-fb-card p-4 text-left shadow-xs"
             >
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700" />
+                <div className="h-10 w-10 rounded-full bg-fb-btn" />
                 <div className="space-y-2">
-                  <div className="h-3 w-28 rounded bg-gray-200 dark:bg-gray-700" />
-                  <div className="h-2 w-20 rounded bg-gray-200 dark:bg-gray-700" />
+                  <div className="h-3 w-28 rounded bg-fb-btn" />
+                  <div className="h-2 w-20 rounded bg-fb-btn" />
                 </div>
               </div>
-              <div className="mt-5 h-3 w-full rounded bg-gray-200 dark:bg-gray-700" />
-              <div className="mt-2 h-3 w-2/3 rounded bg-gray-200 dark:bg-gray-700" />
+              <div className="mt-5 h-3 w-full rounded bg-fb-btn" />
+              <div className="mt-2 h-3 w-2/3 rounded bg-fb-btn" />
             </div>
           )}
           {feedPages.hasMore && !feedPages.isLoadingMore && (
             <button
               type="button"
               onClick={feedPages.loadMore}
-              className="font-semibold text-blue-600 hover:underline"
+              className="font-semibold text-fb-blue hover:underline"
             >
               Xem thêm bài viết
             </button>
@@ -396,7 +396,7 @@ export const FeedView: React.FC = () => {
                 <Gamepad2 className="w-4 h-4 text-fb-blue" />
                 Minigame tuần
               </span>
-              <span className="text-[10px] bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300 px-2 py-0.5 rounded-md font-medium">
+              <span className="text-xs bg-fb-input text-fb-text-2 px-2 py-0.5 rounded-md font-medium">
                 Còn {minigames[0].closesInHours} giờ
               </span>
             </div>
@@ -404,7 +404,7 @@ export const FeedView: React.FC = () => {
             <h4 className="font-semibold text-xs text-fb-text line-clamp-2 mb-1.5">
               {minigames[0].title}
             </h4>
-            <p className="text-[11px] text-gray-500 mb-3">
+            <p className="text-xs text-fb-text-2 mb-3">
               Thưởng ngay +{minigames[0].rewardPoints} điểm cống hiến cho dự
               đoán chính xác nhất!
             </p>
@@ -428,14 +428,14 @@ export const FeedView: React.FC = () => {
             </span>
             <button
               onClick={() => setActiveTab('friends')}
-              className="text-xs text-blue-600 hover:underline font-medium"
+              className="text-xs text-fb-blue hover:underline font-medium"
             >
               Xem tất cả
             </button>
           </div>
 
           {incomingRequests.length === 0 ? (
-            <p className="text-xs text-gray-400 py-2">
+            <p className="text-xs text-fb-text-3 py-2">
               Không có lời mời kết bạn mới.
             </p>
           ) : (
@@ -461,7 +461,7 @@ export const FeedView: React.FC = () => {
                     >
                       {req.name}
                     </p>
-                    <p className="text-[11px] text-gray-500">
+                    <p className="text-xs text-fb-text-2">
                       {getMutualFriendsCount(req.id)} bạn chung
                     </p>
                     <div className="flex items-center gap-2 mt-1.5">
@@ -473,7 +473,7 @@ export const FeedView: React.FC = () => {
                       </button>
                       <button
                         onClick={() => declineFriendRequest(req.id)}
-                        className="px-3 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-fb-text rounded-md text-xs font-medium"
+                        className="px-3 py-1 bg-fb-input hover:bg-fb-btn-hover text-fb-text rounded-md text-xs font-medium"
                       >
                         Xóa
                       </button>
@@ -489,12 +489,12 @@ export const FeedView: React.FC = () => {
         <div className="bg-fb-card rounded-lg shadow-fb-card p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold text-fb-text-2 flex items-center gap-1.5">
-              <Trophy className="w-3.5 h-3.5 text-gray-400" />
+              <Trophy className="w-3.5 h-3.5 text-fb-text-3" />
               Top cống hiến tuần
             </span>
             <button
               onClick={() => setActiveTab('game')}
-              className="text-xs text-blue-600 hover:underline font-medium"
+              className="text-xs text-fb-blue hover:underline font-medium"
             >
               Bảng vàng
             </button>
@@ -512,12 +512,12 @@ export const FeedView: React.FC = () => {
               >
                 <div className="flex items-center gap-2 truncate">
                   <span
-                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                    className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
                       lead.rank === 1
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-fb-blue text-white'
                         : lead.rank === 2
-                          ? 'bg-gray-300 dark:bg-gray-600 text-fb-text'
-                          : 'bg-gray-200 dark:bg-gray-700 text-fb-text-2'
+                          ? 'bg-fb-divider text-fb-text'
+                          : 'bg-fb-btn text-fb-text-2'
                     }`}
                   >
                     {lead.rank}

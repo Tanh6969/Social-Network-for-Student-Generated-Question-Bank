@@ -363,11 +363,11 @@ export const ProposeView: React.FC = () => {
       <aside className="w-full md:w-80 lg:w-84 xl:w-88 shrink-0 bg-fb-card border-r border-fb-divider md:sticky md:top-14 md:h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-5 flex flex-col select-none z-20">
         <div className="space-y-4">
           <div className="px-1 pt-1 pb-3 border-b border-fb-divider">
-            <h2 className="text-xl font-black text-fb-text flex items-center gap-2.5">
-              <GraduationCap className="w-6 h-6 text-blue-600" />
+            <h2 className="text-xl font-bold text-fb-text flex items-center gap-2.5">
+              <GraduationCap className="w-6 h-6 text-fb-blue" />
               <span>Đề xuất câu hỏi</span>
             </h2>
-            <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+            <p className="text-xs text-fb-text-2 mt-1 leading-relaxed">
               Biên soạn & đóng góp câu hỏi vào ngân hàng đề toàn trường
             </p>
           </div>
@@ -378,14 +378,14 @@ export const ProposeView: React.FC = () => {
             <button
               onClick={() => setActiveTab('create')}
               className={`w-full flex items-center justify-between p-3.5 rounded-lg transition cursor-pointer text-left ${activeTab === 'create'
-                  ? 'bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-fb-blue font-bold shadow-xs'
+                  ? 'bg-fb-blue-soft border border-fb-blue/30 text-fb-blue font-bold shadow-xs'
                   : 'hover:bg-fb-hover text-fb-text font-semibold'
                 }`}
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div
                   className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${activeTab === 'create'
-                      ? 'bg-blue-600 text-white shadow-xs'
+                      ? 'bg-fb-blue text-white shadow-xs'
                       : 'bg-fb-input text-fb-text-2'
                     }`}
                 >
@@ -393,13 +393,13 @@ export const ProposeView: React.FC = () => {
                 </div>
                 <div className="min-w-0">
                   <span className="text-sm block truncate">Soạn phiên mới</span>
-                  <span className="text-xs text-gray-500 font-normal block truncate">
+                  <span className="text-xs text-fb-text-2 font-normal block truncate">
                     Tạo câu hỏi & nộp duyệt
                   </span>
                 </div>
               </div>
               <ChevronRight
-                className={`w-4 h-4 shrink-0 transition-transform ${activeTab === 'create' ? 'text-blue-600 translate-x-0.5' : 'text-gray-400 opacity-60'
+                className={`w-4 h-4 shrink-0 transition-transform ${activeTab === 'create' ? 'text-fb-blue translate-x-0.5' : 'text-fb-text-3 opacity-60'
                   }`}
               />
             </button>
@@ -408,14 +408,14 @@ export const ProposeView: React.FC = () => {
             <button
               onClick={() => setActiveTab('my-submissions')}
               className={`w-full flex items-center justify-between p-3.5 rounded-lg transition cursor-pointer text-left ${activeTab === 'my-submissions'
-                  ? 'bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-fb-blue font-bold shadow-xs'
+                  ? 'bg-fb-blue-soft border border-fb-blue/30 text-fb-blue font-bold shadow-xs'
                   : 'hover:bg-fb-hover text-fb-text font-semibold'
                 }`}
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div
                   className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${activeTab === 'my-submissions'
-                      ? 'bg-blue-600 text-white shadow-xs'
+                      ? 'bg-fb-blue text-white shadow-xs'
                       : 'bg-fb-input text-fb-text-2'
                     }`}
                 >
@@ -423,7 +423,7 @@ export const ProposeView: React.FC = () => {
                 </div>
                 <div className="min-w-0">
                   <span className="text-sm block truncate">Phiên của tôi</span>
-                  <span className="text-xs text-gray-500 font-normal block truncate">
+                  <span className="text-xs text-fb-text-2 font-normal block truncate">
                     Theo dõi, sửa & xóa
                   </span>
                 </div>
@@ -432,15 +432,15 @@ export const ProposeView: React.FC = () => {
                 {submissions.length > 0 && (
                   <span
                     className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'my-submissions'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 dark:bg-gray-700 text-fb-text'
+                        ? 'bg-fb-blue text-white'
+                        : 'bg-fb-btn text-fb-text'
                       }`}
                   >
                     {submissions.length}
                   </span>
                 )}
                 <ChevronRight
-                  className={`w-4 h-4 transition-transform ${activeTab === 'my-submissions' ? 'text-blue-600 translate-x-0.5' : 'text-gray-400 opacity-60'
+                  className={`w-4 h-4 transition-transform ${activeTab === 'my-submissions' ? 'text-fb-blue translate-x-0.5' : 'text-fb-text-3 opacity-60'
                     }`}
                 />
               </div>
@@ -461,7 +461,7 @@ export const ProposeView: React.FC = () => {
                   <h3 className="font-bold text-sm sm:text-base text-fb-text">
                     Thông tin phiên nộp
                   </h3>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-fb-text-2">
                     Các trường đánh dấu (*) là bắt buộc
                   </p>
                 </div>
@@ -478,7 +478,7 @@ export const ProposeView: React.FC = () => {
                       onChange={(e) => setTitle(e.target.value)}
                       placeholder="Ví dụ: Bộ câu hỏi ôn tập Chương 3 - Giao thức Tầng Mạng & Định tuyến OSPF"
                       required
-                      className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50/50 dark:bg-[#3A3B3C] text-fb-text focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition"
+                      className="w-full px-3 py-2 text-sm rounded-lg border border-fb-divider bg-fb-inset/50 text-fb-text focus:outline-hidden focus:ring-2 focus:ring-fb-blue transition"
                     />
                   </div>
 
@@ -490,7 +490,7 @@ export const ProposeView: React.FC = () => {
                       <select
                         value={selectedSubjectId}
                         onChange={(e) => setSelectedSubjectId(Number(e.target.value))}
-                        className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50/50 dark:bg-[#3A3B3C] text-fb-text focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition font-medium"
+                        className="w-full px-3 py-2 text-sm rounded-lg border border-fb-divider bg-fb-inset/50 text-fb-text focus:outline-hidden focus:ring-2 focus:ring-fb-blue transition font-medium"
                       >
                         {enrolledSubjects.map((sub) => (
                           <option key={sub.subject_id} value={sub.subject_id}>
@@ -509,7 +509,7 @@ export const ProposeView: React.FC = () => {
                         value={sourceUrl}
                         onChange={(e) => setSourceUrl(e.target.value)}
                         placeholder="https://tailieu.hust.edu.vn/..."
-                        className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50/50 dark:bg-[#3A3B3C] text-fb-text focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition"
+                        className="w-full px-3 py-2 text-sm rounded-lg border border-fb-divider bg-fb-inset/50 text-fb-text focus:outline-hidden focus:ring-2 focus:ring-fb-blue transition"
                       />
                     </div>
                   </div>
@@ -523,7 +523,7 @@ export const ProposeView: React.FC = () => {
                       value={content}
                       onChange={(e) => setContent(e.target.value)}
                       placeholder="Tóm tắt nội dung bộ câu hỏi hoặc mục đích ôn tập..."
-                      className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50/50 dark:bg-[#3A3B3C] text-fb-text focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition"
+                      className="w-full px-3 py-2 text-sm rounded-lg border border-fb-divider bg-fb-inset/50 text-fb-text focus:outline-hidden focus:ring-2 focus:ring-fb-blue transition"
                     />
                   </div>
                 </div>
@@ -535,7 +535,7 @@ export const ProposeView: React.FC = () => {
                       <span className="font-bold text-sm text-fb-text">
                         Danh sách câu hỏi
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-fb-text-2">
                         ({questions.length} câu)
                       </span>
                     </div>
@@ -543,7 +543,7 @@ export const ProposeView: React.FC = () => {
                     <button
                       type="button"
                       onClick={handleAddQuestion}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-fb-blue border border-blue-200 dark:border-blue-800 text-xs font-bold hover:bg-blue-100 transition cursor-pointer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-fb-blue-soft text-fb-blue border border-fb-blue/30 text-xs font-bold hover:bg-fb-blue/20 transition cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Thêm câu mới</span>
@@ -558,8 +558,8 @@ export const ProposeView: React.FC = () => {
                         type="button"
                         onClick={() => setActiveQIndex(idx)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${idx === activeQIndex
-                            ? 'bg-blue-600 text-white shadow-xs'
-                            : 'bg-fb-input text-fb-text hover:bg-gray-200 dark:hover:bg-gray-700'
+                            ? 'bg-fb-blue text-white shadow-xs'
+                            : 'bg-fb-input text-fb-text hover:bg-fb-btn-hover'
                           }`}
                       >
                         Câu {idx + 1}
@@ -569,7 +569,7 @@ export const ProposeView: React.FC = () => {
 
                   {/* Question Editor */}
                   {currentQ && (
-                    <div className="p-4 rounded-lg border border-fb-divider bg-gray-50/70 dark:bg-[#1E1F20] space-y-3.5">
+                    <div className="p-4 rounded-lg border border-fb-divider bg-fb-inset/70 space-y-3.5">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-fb-blue">
                           Nội dung Câu {activeQIndex + 1}
@@ -578,7 +578,7 @@ export const ProposeView: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => handleDeleteQuestion(activeQIndex)}
-                            className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1 cursor-pointer font-medium"
+                            className="text-xs text-fb-danger hover:text-fb-danger flex items-center gap-1 cursor-pointer font-medium"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                             <span>Xóa câu này</span>
@@ -596,7 +596,7 @@ export const ProposeView: React.FC = () => {
                           onChange={(e) => handleUpdateCurrentQ({ content: e.target.value })}
                           placeholder="Nhập đề bài câu hỏi trắc nghiệm..."
                           required
-                          className="w-full p-2.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-fb-card text-fb-text focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                          className="w-full p-2.5 text-sm rounded-lg border border-fb-divider bg-fb-card text-fb-text focus:outline-hidden focus:ring-2 focus:ring-fb-blue"
                         />
                       </div>
 
@@ -610,16 +610,16 @@ export const ProposeView: React.FC = () => {
                             <div
                               key={opt.key}
                               className={`p-2.5 rounded-lg border flex items-start gap-2.5 transition ${opt.is_correct
-                                  ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/20'
-                                  : 'border-gray-300 dark:border-gray-600 bg-fb-card'
+                                  ? 'border-fb-success bg-fb-success-soft/70'
+                                  : 'border-fb-divider bg-fb-card'
                                 }`}
                             >
                               <button
                                 type="button"
                                 onClick={() => handleSetCorrectOption(opt.key)}
                                 className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 cursor-pointer transition mt-0.5 ${opt.is_correct
-                                    ? 'bg-emerald-600 text-white shadow-xs scale-105'
-                                    : 'bg-gray-200 dark:bg-gray-700 text-fb-text hover:bg-gray-300'
+                                    ? 'bg-fb-success text-white shadow-xs scale-105'
+                                    : 'bg-fb-btn text-fb-text hover:bg-fb-btn-hover'
                                   }`}
                                 title={opt.is_correct ? 'Đáp án đúng' : 'Bấm để đặt làm đáp án đúng'}
                               >
@@ -633,7 +633,7 @@ export const ProposeView: React.FC = () => {
                                 className="flex-1 bg-transparent text-xs sm:text-sm text-fb-text focus:outline-hidden resize-y min-h-[44px] break-words leading-relaxed"
                               />
                               {opt.is_correct && (
-                                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-1" />
+                                <CheckCircle2 className="w-4 h-4 text-fb-success shrink-0 mt-1" />
                               )}
                             </div>
                           ))}
@@ -652,7 +652,7 @@ export const ProposeView: React.FC = () => {
                             handleUpdateCurrentQ({ explanation: e.target.value })
                           }
                           placeholder="Giải thích nguyên lý hoặc tài liệu tham khảo..."
-                          className="w-full p-2.5 text-xs sm:text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-fb-card text-fb-text focus:outline-hidden"
+                          className="w-full p-2.5 text-xs sm:text-sm rounded-lg border border-fb-divider bg-fb-card text-fb-text focus:outline-hidden"
                         />
                       </div>
 
@@ -665,7 +665,7 @@ export const ProposeView: React.FC = () => {
                             onChange={(e) =>
                               handleUpdateCurrentQ({ llm_generated: e.target.checked })
                             }
-                            className="w-4 h-4 text-blue-600 rounded"
+                            className="w-4 h-4 text-fb-blue rounded"
                           />
                           <span className="text-fb-text font-medium">
                             Đánh dấu do AI/LLM hỗ trợ sinh
@@ -673,13 +673,13 @@ export const ProposeView: React.FC = () => {
                         </label>
 
                         <div className="flex items-center gap-2">
-                          <span className="text-gray-500 font-medium">Độ tự tin [0 - 4]:</span>
+                          <span className="text-fb-text-2 font-medium">Độ tự tin [0 - 4]:</span>
                           <select
                             value={currentQ.confidence}
                             onChange={(e) =>
                               handleUpdateCurrentQ({ confidence: Number(e.target.value) })
                             }
-                            className="px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-fb-card text-xs font-semibold text-fb-text"
+                            className="px-2 py-1 rounded-lg border border-fb-divider bg-fb-card text-xs font-semibold text-fb-text"
                           >
                             <option value={4}>4.0 - Tự tin / Câu hỏi hay</option>
                             <option value={3.5}>3.5 - Cơ bản / Tốt</option>
@@ -701,7 +701,7 @@ export const ProposeView: React.FC = () => {
                   >
                     {isSubmitting ? (
                       <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <div className="w-4 h-4 border-2 border-fb-card border-t-transparent rounded-full animate-spin" />
                         <span>Đang nộp phiên đề xuất...</span>
                       </>
                     ) : (
@@ -719,20 +719,20 @@ export const ProposeView: React.FC = () => {
                 <div className="bg-fb-card rounded-lg shadow-fb-card p-4 sm:p-5">
                   <div className="flex items-center justify-between pb-3 border-b border-fb-divider mb-3.5">
                     <div className="flex items-center gap-2">
-                      <Eye className="w-4 h-4 text-blue-600" />
+                      <Eye className="w-4 h-4 text-fb-blue" />
                       <h4 className="font-bold text-sm text-fb-text">
                         Xem trước trực tiếp (Live Preview)
                       </h4>
                     </div>
-                    <span className="text-[11px] font-semibold text-gray-400">
+                    <span className="text-xs font-semibold text-fb-text-3">
                       Câu {activeQIndex + 1} / {questions.length}
                     </span>
                   </div>
 
                   {/* Preview Box */}
                   <div className="space-y-3.5">
-                    <div className="p-3.5 rounded-lg bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40">
-                      <span className="text-[10px] font-bold text-fb-blue block mb-1">
+                    <div className="p-3.5 rounded-lg bg-fb-blue-soft/50 border border-fb-blue/30">
+                      <span className="text-xs font-bold text-fb-blue block mb-1">
                         {enrolledSubjects.find((s) => s.subject_id === selectedSubjectId)?.name ||
                           'Môn học chưa chọn'}{' '}
                         - {title || 'Chưa nhập tiêu đề'}
@@ -748,14 +748,14 @@ export const ProposeView: React.FC = () => {
                         <div
                           key={opt.key}
                           className={`p-2.5 rounded-lg border text-xs sm:text-sm flex items-start gap-2.5 transition ${opt.is_correct
-                              ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200 font-semibold'
-                              : 'border-fb-divider bg-gray-50/40 dark:bg-[#1E1F20] text-fb-text'
+                              ? 'border-fb-success bg-fb-success-soft/70 text-fb-success font-semibold'
+                              : 'border-fb-divider bg-fb-inset/40 text-fb-text'
                             }`}
                         >
                           <span
                             className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5 ${opt.is_correct
-                                ? 'bg-emerald-600 text-white'
-                                : 'bg-gray-200 dark:bg-gray-700 text-fb-text'
+                                ? 'bg-fb-success text-white'
+                                : 'bg-fb-btn text-fb-text'
                               }`}
                           >
                             {opt.key}
@@ -764,7 +764,7 @@ export const ProposeView: React.FC = () => {
                             {opt.text || `Nội dung phương án ${opt.key}`}
                           </span>
                           {opt.is_correct && (
-                            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 rounded-full shrink-0">
+                            <span className="text-xs font-bold text-fb-success bg-fb-success-soft px-2 py-0.5 rounded-full shrink-0">
                               Đáp án đúng
                             </span>
                           )}
@@ -774,9 +774,9 @@ export const ProposeView: React.FC = () => {
 
                     {/* Explanation preview */}
                     {currentQ?.explanation && (
-                      <div className="p-3 rounded-lg bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200 space-y-1">
+                      <div className="p-3 rounded-lg bg-fb-warning-soft/60 border border-fb-warning/30 text-xs text-fb-warning space-y-1">
                         <div className="flex items-center gap-1.5 font-bold">
-                          <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                          <Sparkles className="w-3.5 h-3.5 text-fb-warning" />
                           <span>Giải thích chi tiết:</span>
                         </div>
                         <p className="text-fb-text">
@@ -797,7 +797,7 @@ export const ProposeView: React.FC = () => {
             {/* Filter Bar */}
             <div className="bg-fb-card rounded-lg shadow-fb-card p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-2.5 flex-1">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-500">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-fb-text-2">
                   <Filter className="w-4 h-4" />
                   <span>Lọc:</span>
                 </div>
@@ -808,7 +808,7 @@ export const ProposeView: React.FC = () => {
                   onChange={(e) =>
                     setFilterSubjectId(e.target.value ? Number(e.target.value) : undefined)
                   }
-                  className="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-fb-input text-xs font-medium text-fb-text focus:outline-hidden"
+                  className="px-3 py-1.5 rounded-lg border border-fb-divider bg-fb-input text-xs font-medium text-fb-text focus:outline-hidden"
                 >
                   <option value="">Tất cả môn học</option>
                   {enrolledSubjects.map((sub) => (
@@ -828,7 +828,7 @@ export const ProposeView: React.FC = () => {
                         : undefined
                     )
                   }
-                  className="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-fb-input text-xs font-medium text-fb-text focus:outline-hidden"
+                  className="px-3 py-1.5 rounded-lg border border-fb-divider bg-fb-input text-xs font-medium text-fb-text focus:outline-hidden"
                 >
                   <option value="">Tất cả trạng thái</option>
                   <option value="PENDING">Chờ duyệt</option>
@@ -840,27 +840,27 @@ export const ProposeView: React.FC = () => {
               <div className="flex items-center gap-2.5 flex-wrap">
                 <button
                   onClick={() => fetchMySubmissions()}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 text-xs font-semibold text-fb-text hover:bg-fb-hover transition cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-fb-divider text-xs font-semibold text-fb-text hover:bg-fb-hover transition cursor-pointer"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${loadingSubmissions ? 'animate-spin' : ''}`} />
                   <span>Làm mới</span>
                 </button>
-                <span className="text-xs text-gray-500 font-medium ml-1">
-                  Tổng <span className="font-bold text-blue-600">{submissions.length}</span> phiên
+                <span className="text-xs text-fb-text-2 font-medium ml-1">
+                  Tổng <span className="font-bold text-fb-blue">{submissions.length}</span> phiên
                 </span>
               </div>
             </div>
 
             {/* Dòng hướng dẫn sinh viên: Chỉ sửa & xóa khi Chờ duyệt */}
-            <div className="flex items-start sm:items-center gap-3 p-3.5 sm:px-4 sm:py-3 rounded-lg bg-amber-50/90 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 text-xs text-amber-900 dark:text-amber-200 shadow-2xs">
-              <div className="w-6 h-6 rounded-lg bg-amber-200/60 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0 font-bold">
+            <div className="flex items-start sm:items-center gap-3 p-3.5 sm:px-4 sm:py-3 rounded-lg bg-fb-warning-soft/90 border border-fb-warning/30 text-xs text-fb-warning shadow-2xs">
+              <div className="w-6 h-6 rounded-lg bg-fb-warning/60 text-fb-warning flex items-center justify-center shrink-0 mt-0.5 sm:mt-0 font-bold">
                 <Info className="w-4 h-4" />
               </div>
               <p className="leading-relaxed">
                 <span className="font-bold">Lưu ý sinh viên:</span> Bạn chỉ có thể{' '}
                 <span className="font-bold underline underline-offset-2">Chỉnh sửa</span> và{' '}
                 <span className="font-bold underline underline-offset-2">Xóa</span> phiên đề xuất khi đang ở trạng thái{' '}
-                <span className="inline-block px-1.5 py-0.5 rounded font-bold bg-amber-200/80 dark:bg-amber-900/70 text-amber-900 dark:text-amber-200 text-[11px]">
+                <span className="inline-block px-1.5 py-0.5 rounded font-bold bg-fb-warning/80 text-fb-warning text-xs">
                   Chờ duyệt
                 </span>
                 . Khi phiên ở trạng thái khác (đang thẩm định hoặc đã duyệt), các nút thao tác này sẽ tự động được làm mờ và khóa lại.
@@ -869,27 +869,27 @@ export const ProposeView: React.FC = () => {
 
             {/* Submissions Cards List */}
             {loadingSubmissions ? (
-              <div className="py-20 flex flex-col items-center justify-center text-gray-500">
-                <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mb-3" />
+              <div className="py-20 flex flex-col items-center justify-center text-fb-text-2">
+                <div className="w-8 h-8 border-3 border-fb-blue border-t-transparent rounded-full animate-spin mb-3" />
                 <p className="text-sm">Đang tải danh sách phiên đề xuất...</p>
               </div>
             ) : submissions.length === 0 ? (
               <div className="bg-fb-card rounded-lg border border-fb-divider p-12 text-center space-y-3">
-                <div className="w-14 h-14 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center mx-auto">
+                <div className="w-14 h-14 rounded-full bg-fb-blue-soft text-fb-blue flex items-center justify-center mx-auto">
                   <FilePlus className="w-7 h-7" />
                 </div>
                 <div className="max-w-md mx-auto space-y-1">
                   <h4 className="font-bold text-base text-fb-text">
                     Chưa có phiên đề xuất nào
                   </h4>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-fb-text-2">
                     Bạn chưa nộp phiên đề xuất nào phù hợp với bộ lọc hiện tại. Hãy tạo
                     phiên mới để đóng góp vào ngân hàng đề!
                   </p>
                 </div>
                 <button
                   onClick={() => setActiveTab('create')}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition cursor-pointer"
+                  className="px-4 py-2 bg-fb-blue text-white rounded-lg text-xs font-bold hover:bg-fb-blue-hover transition cursor-pointer"
                 >
                   + Soạn phiên đề xuất ngay
                 </button>
@@ -904,23 +904,23 @@ export const ProposeView: React.FC = () => {
                     return (
                       <div
                         key={sub.session_id}
-                        className="bg-fb-card rounded-lg p-4 sm:p-5 shadow-fb-card hover:border-blue-400 dark:hover:border-blue-600 transition space-y-3"
+                        className="bg-fb-card rounded-lg p-4 sm:p-5 shadow-fb-card hover:border-fb-blue transition space-y-3"
                       >
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div className="space-y-1 max-w-2xl">
                             <div className="flex items-center gap-2 flex-wrap">
                               {status === 'RESOLVED' ? (
-                                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-fb-success-soft text-fb-success border border-fb-success/30 flex items-center gap-1">
                                   <CheckCircle2 className="w-3 h-3" />
                                   <span>Đã duyệt</span>
                                 </span>
                               ) : status === 'REVIEWING' ? (
-                                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center gap-1">
+                                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-fb-blue-soft text-fb-blue border border-fb-blue/30 flex items-center gap-1">
                                   <Clock className="w-3 h-3" />
                                   <span>Đang thẩm định</span>
                                 </span>
                               ) : (
-                                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 flex items-center gap-1">
+                                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-fb-warning-soft text-fb-warning border border-fb-warning/30 flex items-center gap-1">
                                   <Clock className="w-3 h-3" />
                                   <span>Chờ duyệt</span>
                                 </span>
@@ -928,7 +928,7 @@ export const ProposeView: React.FC = () => {
                             </div>
 
                             <h4
-                              className="font-bold text-base text-fb-text hover:text-blue-600 cursor-pointer"
+                              className="font-bold text-base text-fb-text hover:text-fb-blue cursor-pointer"
                               onClick={() => setSelectedDetailId(sub.session_id || null)}
                             >
                               {sub.title}
@@ -956,8 +956,8 @@ export const ProposeView: React.FC = () => {
                               onClick={() => isPending && setSelectedEditId(sub.session_id || null)}
                               className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition flex items-center gap-1.5 ${
                                 isPending
-                                  ? 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 text-fb-blue hover:bg-blue-100 cursor-pointer shadow-2xs'
-                                  : 'opacity-40 cursor-not-allowed border-fb-divider bg-fb-input text-gray-400 dark:text-gray-500'
+                                  ? 'border-fb-blue/30 bg-fb-blue-soft text-fb-blue hover:bg-fb-blue/20 cursor-pointer shadow-2xs'
+                                  : 'opacity-40 cursor-not-allowed border-fb-divider bg-fb-input text-fb-text-3'
                               }`}
                               title={
                                 isPending
@@ -976,8 +976,8 @@ export const ProposeView: React.FC = () => {
                               }
                               className={`p-1.5 rounded-lg border transition ${
                                 isPending
-                                  ? 'border-red-200 dark:border-red-900/50 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer shadow-2xs'
-                                  : 'opacity-40 cursor-not-allowed border-fb-divider bg-fb-input text-gray-400 dark:text-gray-500'
+                                  ? 'border-fb-danger/30 text-fb-danger hover:bg-fb-danger-soft cursor-pointer shadow-2xs'
+                                  : 'opacity-40 cursor-not-allowed border-fb-divider bg-fb-input text-fb-text-3'
                               }`}
                               title={
                                 isPending
@@ -1011,11 +1011,11 @@ export const ProposeView: React.FC = () => {
 
                         <div className="flex items-center gap-3">
                           <div className="flex items-center gap-1">
-                            <Heart className="w-3.5 h-3.5 text-rose-500" />
+                            <Heart className="w-3.5 h-3.5 text-fb-danger" />
                             <span>{sub.react_count || 0}</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <MessageSquare className="w-3.5 h-3.5 text-blue-500" />
+                            <MessageSquare className="w-3.5 h-3.5 text-fb-blue" />
                             <span>{sub.comment_count || 0}</span>
                           </div>
                         </div>
@@ -1039,11 +1039,11 @@ export const ProposeView: React.FC = () => {
                           {Math.min(safeCurrentPage * pageSize, submissions.length)}
                         </span>{' '}
                         trong tổng số{' '}
-                        <span className="font-bold text-blue-600">{submissions.length}</span> phiên
+                        <span className="font-bold text-fb-blue">{submissions.length}</span> phiên
                       </span>
 
                       <div className="flex items-center gap-1.5">
-                        <span className="text-gray-400">•</span>
+                        <span className="text-fb-text-3">•</span>
                         <span>Mỗi trang:</span>
                         <select
                           value={pageSize}
@@ -1051,7 +1051,7 @@ export const ProposeView: React.FC = () => {
                             setPageSize(Number(e.target.value));
                             setCurrentPage(1);
                           }}
-                          className="px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#3A3B3C] text-xs font-semibold text-fb-text focus:outline-hidden cursor-pointer"
+                          className="px-2 py-1 rounded-lg border border-fb-divider bg-fb-card text-xs font-semibold text-fb-text focus:outline-hidden cursor-pointer"
                         >
                           <option value={3}>3 phiên</option>
                           <option value={5}>5 phiên</option>
@@ -1067,7 +1067,7 @@ export const ProposeView: React.FC = () => {
                           type="button"
                           onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                           disabled={safeCurrentPage === 1}
-                          className="px-2.5 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-fb-card text-fb-text font-semibold hover:bg-fb-hover disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer flex items-center gap-1"
+                          className="px-2.5 py-1.5 rounded-lg border border-fb-divider bg-fb-card text-fb-text font-semibold hover:bg-fb-hover disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer flex items-center gap-1"
                         >
                           <ChevronLeft className="w-3.5 h-3.5" />
                           <span className="hidden sm:inline">Trước</span>
@@ -1089,15 +1089,15 @@ export const ProposeView: React.FC = () => {
                               return (
                                 <React.Fragment key={page}>
                                   {hasGap && (
-                                    <span className="px-1 text-gray-400 font-bold">...</span>
+                                    <span className="px-1 text-fb-text-3 font-bold">...</span>
                                   )}
                                   <button
                                     type="button"
                                     onClick={() => setCurrentPage(page)}
                                     className={`w-8 h-8 rounded-lg text-xs font-bold transition cursor-pointer ${
                                       page === safeCurrentPage
-                                        ? 'bg-blue-600 text-white shadow-xs'
-                                        : 'border border-gray-300 dark:border-gray-700 bg-fb-card text-fb-text hover:bg-fb-hover'
+                                        ? 'bg-fb-blue text-white shadow-xs'
+                                        : 'border border-fb-divider bg-fb-card text-fb-text hover:bg-fb-hover'
                                     }`}
                                   >
                                     {page}
@@ -1111,7 +1111,7 @@ export const ProposeView: React.FC = () => {
                           type="button"
                           onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                           disabled={safeCurrentPage === totalPages}
-                          className="px-2.5 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-fb-card text-fb-text font-semibold hover:bg-fb-hover disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer flex items-center gap-1"
+                          className="px-2.5 py-1.5 rounded-lg border border-fb-divider bg-fb-card text-fb-text font-semibold hover:bg-fb-hover disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer flex items-center gap-1"
                         >
                           <span className="hidden sm:inline">Sau</span>
                           <ChevronRight className="w-3.5 h-3.5" />

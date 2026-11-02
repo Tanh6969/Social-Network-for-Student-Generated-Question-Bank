@@ -40,9 +40,9 @@ export const RejectReasonModal: React.FC<RejectReasonModalProps> = ({
     <div className="fixed inset-0 z-[230] flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-150">
       <div className="bg-fb-card rounded-lg shadow-2xl max-w-lg w-full border border-fb-divider overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-fb-divider flex items-center justify-between bg-red-50/80 dark:bg-red-950/30">
+        <div className="px-5 py-4 border-b border-fb-divider flex items-center justify-between bg-fb-danger-soft/80">
           <div className="flex items-center gap-2.5">
-            <span className="p-2 rounded-lg bg-red-600 text-white shadow-xs">
+            <span className="p-2 rounded-lg bg-fb-danger text-white shadow-xs">
               <AlertTriangle className="w-5 h-5" />
             </span>
             <div>
@@ -58,7 +58,7 @@ export const RejectReasonModal: React.FC<RejectReasonModalProps> = ({
           <button
             onClick={onClose}
             disabled={isSubmitting}
-            className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 cursor-pointer disabled:opacity-50"
+            className="p-1.5 rounded-full hover:bg-fb-btn-hover text-fb-text-2 cursor-pointer disabled:opacity-50"
           >
             <X className="w-5 h-5" />
           </button>
@@ -78,8 +78,8 @@ export const RejectReasonModal: React.FC<RejectReasonModalProps> = ({
                   onClick={() => setReason(preset)}
                   className={`text-xs px-2.5 py-1.5 rounded-lg border text-left transition cursor-pointer ${
                     reason === preset
-                      ? 'border-red-500 bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 font-semibold'
-                      : 'border-fb-divider bg-fb-input text-fb-text-2 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      ? 'border-fb-danger bg-fb-danger-soft text-fb-danger font-semibold'
+                      : 'border-fb-divider bg-fb-input text-fb-text-2 hover:bg-fb-hover'
                   }`}
                 >
                   {preset}
@@ -90,7 +90,7 @@ export const RejectReasonModal: React.FC<RejectReasonModalProps> = ({
 
           <div>
             <label className="block text-xs font-bold text-fb-text mb-1.5">
-              Lý do từ chối cụ thể <span className="text-red-500">*</span>:
+              Lý do từ chối cụ thể <span className="text-fb-danger">*</span>:
             </label>
             <textarea
               rows={3}
@@ -98,7 +98,7 @@ export const RejectReasonModal: React.FC<RejectReasonModalProps> = ({
               onChange={(e) => setReason(e.target.value)}
               placeholder="Nhập lý do câu hỏi chưa đạt yêu cầu..."
               required
-              className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-fb-card text-sm text-fb-text focus:border-red-500 focus:outline-hidden resize-y"
+              className="w-full px-3.5 py-2.5 rounded-lg border border-fb-divider bg-fb-card text-sm text-fb-text focus:border-fb-danger focus:outline-hidden resize-y"
             />
           </div>
 
@@ -108,17 +108,17 @@ export const RejectReasonModal: React.FC<RejectReasonModalProps> = ({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-xs font-semibold text-fb-text hover:bg-fb-hover transition cursor-pointer disabled:opacity-50"
+              className="px-4 py-2 rounded-lg border border-fb-divider text-xs font-semibold text-fb-text hover:bg-fb-hover transition cursor-pointer disabled:opacity-50"
             >
               Hủy bỏ
             </button>
             <button
               type="submit"
               disabled={isSubmitting || !reason.trim()}
-              className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+              className="px-4 py-2 rounded-lg bg-fb-danger hover:bg-fb-danger/90 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
             >
               {isSubmitting && (
-                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-3.5 h-3.5 border-2 border-fb-card border-t-transparent rounded-full animate-spin" />
               )}
               <span>Xác nhận từ chối</span>
             </button>

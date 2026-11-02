@@ -59,7 +59,7 @@ export const SearchResultsView: React.FC = () => {
     <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 flex flex-col md:flex-row gap-6 lg:gap-8 xl:gap-10 items-start">
       {/* CỘT TRÁI: Bộ lọc tìm kiếm (sticky sát lề trái) */}
       <aside className="w-full md:w-72 shrink-0 space-y-2 select-none md:sticky md:top-18">
-        <h2 className="text-xl font-black text-fb-text px-2 mb-3">
+        <h2 className="text-xl font-bold text-fb-text px-2 mb-3">
           Kết quả tìm kiếm
         </h2>
 
@@ -87,7 +87,7 @@ export const SearchResultsView: React.FC = () => {
               onClick={() => setFilterType(item.id as typeof filterType)}
               className={`w-full flex items-center gap-3 p-2.5 rounded-lg transition text-left ${
                 filterType === item.id
-                  ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 font-bold'
+                  ? 'bg-fb-blue-soft text-fb-blue font-bold'
                   : 'hover:bg-fb-hover'
               }`}
             >
@@ -101,9 +101,9 @@ export const SearchResultsView: React.FC = () => {
       {/* CỘT PHẢI: Kết quả tìm kiếm */}
       <main className="flex-1 space-y-4">
         <div className="bg-fb-card rounded-lg shadow-fb-card p-4">
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-fb-text-2">
             Kết quả tìm kiếm cho từ khóa:{' '}
-            <strong className="text-blue-600 font-bold">"{searchQuery}"</strong>
+            <strong className="text-fb-blue font-bold">"{searchQuery}"</strong>
           </p>
         </div>
 
@@ -111,7 +111,7 @@ export const SearchResultsView: React.FC = () => {
         {(filterType === 'ALL' || filterType === 'USERS') &&
           uMatch.length > 0 && (
             <div className="space-y-3">
-              <h3 className="font-bold text-xs text-gray-500 px-2">
+              <h3 className="font-bold text-xs text-fb-text-2 px-2">
                 Mọi người ({uMatch.length})
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -130,12 +130,12 @@ export const SearchResultsView: React.FC = () => {
                         <p className="font-bold text-xs text-fb-text truncate">
                           {u.name}
                         </p>
-                        <p className="text-[11px] text-gray-500 truncate">
+                        <p className="text-xs text-fb-text-2 truncate">
                           {u.classOrTitle} · {u.faculty}
                         </p>
                       </div>
                     </div>
-                    <span className="text-[11px] font-semibold text-blue-600 shrink-0">
+                    <span className="text-xs font-semibold text-fb-blue shrink-0">
                       Xem hồ sơ
                     </span>
                   </div>
@@ -148,7 +148,7 @@ export const SearchResultsView: React.FC = () => {
         {(filterType === 'ALL' || filterType === 'QUESTIONS') &&
           qMatch.length > 0 && (
             <div className="space-y-3">
-              <h3 className="font-bold text-xs text-gray-500 px-2">
+              <h3 className="font-bold text-xs text-fb-text-2 px-2">
                 Câu hỏi trong ngân hàng ({qMatch.length})
               </h3>
               {qMatch.map((q) => (
@@ -157,8 +157,8 @@ export const SearchResultsView: React.FC = () => {
                   className="bg-fb-card rounded-lg p-4 space-y-2 shadow-fb-card"
                 >
                   <div className="flex justify-between text-xs">
-                    <span className="font-bold text-blue-600">{q.subject}</span>
-                    <span className="text-gray-500">{q.chapter}</span>
+                    <span className="font-bold text-fb-blue">{q.subject}</span>
+                    <span className="text-fb-text-2">{q.chapter}</span>
                   </div>
                   <p className="font-semibold text-xs text-fb-text">
                     {q.content}
@@ -166,7 +166,7 @@ export const SearchResultsView: React.FC = () => {
                   <div className="pt-2 flex justify-end">
                     <button
                       onClick={() => setActiveQuizQuestion(q)}
-                      className="px-3 py-1 bg-blue-600 text-white rounded-lg text-xs font-bold"
+                      className="px-3 py-1 bg-fb-blue text-white rounded-lg text-xs font-bold"
                     >
                       Làm thử câu này
                     </button>
@@ -180,7 +180,7 @@ export const SearchResultsView: React.FC = () => {
         {(filterType === 'ALL' || filterType === 'POSTS') &&
           pMatch.length > 0 && (
             <div className="space-y-3">
-              <h3 className="font-bold text-xs text-gray-500 px-2">
+              <h3 className="font-bold text-xs text-fb-text-2 px-2">
                 Bài viết trên Bảng tin ({pMatch.length})
               </h3>
               {pMatch.map((post) => (
@@ -197,7 +197,7 @@ export const SearchResultsView: React.FC = () => {
                   <PostContent key={post.id} content={post.content} compact />
                   <button
                     onClick={() => setActivePostDetail(post)}
-                    className="text-xs font-semibold text-blue-600 hover:underline"
+                    className="text-xs font-semibold text-fb-blue hover:underline"
                   >
                     Xem chi tiết và bình luận
                   </button>
@@ -207,12 +207,12 @@ export const SearchResultsView: React.FC = () => {
           )}
 
         {uMatch.length === 0 && qMatch.length === 0 && pMatch.length === 0 && (
-          <div className="bg-fb-card rounded-lg p-12 text-center text-gray-400 border border-fb-divider">
+          <div className="bg-fb-card rounded-lg p-12 text-center text-fb-text-3 border border-fb-divider">
             <Search className="w-12 h-12 mx-auto mb-2 opacity-50" />
             <p className="font-bold text-sm text-fb-text">
               Không tìm thấy kết quả phù hợp cho "{searchQuery}"
             </p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-fb-text-2 mt-1">
               Hãy thử kiểm tra lại chính tả hoặc tìm theo tên môn học (Mạng máy
               tính, CSDL, Giải tích...)
             </p>

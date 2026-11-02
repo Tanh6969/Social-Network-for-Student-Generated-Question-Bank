@@ -23,28 +23,28 @@ export const TourGuideModal: React.FC = () => {
       title: 'Chào mừng bạn đến với UniSocial & ExamBank!',
       desc: 'Nền tảng mạng xã hội học tập kết hợp ngân hàng đề thi đại học chuẩn quốc gia, thiết kế theo phong cách Facebook Web kinh điển (3 cột, 2 cột và chat dock realtime).',
       icon: Compass,
-      color: 'text-blue-600 bg-blue-100',
+      color: 'text-fb-blue bg-fb-blue-soft',
       actionText: 'Bắt đầu tìm hiểu'
     },
     {
       title: 'Đề xuất & Ôn tập Ngân hàng đề thi',
       desc: 'Sinh viên có thể trực tiếp biên soạn các câu hỏi trắc nghiệm A, B, C, D kèm lời giải thích, kiểm tra làm thử tự động với hiệu ứng âm thanh và chấm điểm cống hiến.',
       icon: BookOpen,
-      color: 'text-indigo-600 bg-indigo-100',
+      color: 'text-fb-blue bg-fb-blue-soft',
       actionText: 'Tiếp tục'
     },
     {
       title: 'Quy trình Giảng viên kiểm duyệt & AI',
       desc: 'Hội đồng Giảng viên có khu vực kiểm duyệt 3 panel độc quyền: rà soát trùng lặp, dùng AI tối ưu hoá đáp án nhiễu, phê chuẩn vào ngân hàng trường và sinh đề thi tự động.',
       icon: CheckSquare,
-      color: 'text-purple-600 bg-purple-100',
+      color: 'text-fb-blue bg-fb-blue-soft',
       actionText: 'Khám phá tiếp'
     },
     {
       title: 'Minigame Dự đoán & Kho Cosmetics',
       desc: 'Tham gia dự đoán số lượng SV tham gia hoặc quy mô ngân hàng trước Chủ Nhật để tích điểm, lọt top Bảng vàng và mở khóa các khung avatar hào quang hoàng gia!',
       icon: Sparkles,
-      color: 'text-amber-600 bg-amber-100',
+      color: 'text-fb-warning bg-fb-warning-soft',
       actionText: 'Hoàn thành'
     }
   ];
@@ -64,12 +64,12 @@ export const TourGuideModal: React.FC = () => {
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60">
       <div className="bg-fb-card rounded-lg shadow-2xl max-w-lg w-full p-6 border border-fb-divider space-y-5 text-center animate-in zoom-in-95 duration-150">
         <div className="flex justify-between items-center">
-          <span className="text-[10px] font-bold text-gray-400">
+          <span className="text-xs font-bold text-fb-text-3">
             Hướng dẫn sử dụng · Bước {currentStep + 1}/{steps.length}
           </span>
           <button
             onClick={() => setIsTourGuideOpen(false)}
-            className="p-1 rounded-full hover:bg-gray-100 text-gray-400"
+            className="p-1 rounded-full hover:bg-fb-hover text-fb-text-3"
           >
             <X className="w-4 h-4" />
           </button>
@@ -80,7 +80,7 @@ export const TourGuideModal: React.FC = () => {
         </div>
 
         <div className="space-y-2">
-          <h3 className="text-lg font-black text-fb-text">
+          <h3 className="text-lg font-bold text-fb-text">
             {step.title}
           </h3>
           <p className="text-xs text-fb-text-2 leading-relaxed px-4">
@@ -93,8 +93,8 @@ export const TourGuideModal: React.FC = () => {
           {steps.map((_, idx) => (
             <div
               key={idx}
-              className={`h-2 rounded-full transition-all ${
-                idx === currentStep ? 'w-6 bg-blue-600' : 'w-2 bg-gray-200 dark:bg-gray-700'
+              className={`h-2 rounded-full transition-colors ${
+                idx === currentStep ? 'w-6 bg-fb-blue' : 'w-2 bg-fb-btn'
               }`}
             />
           ))}
@@ -105,7 +105,7 @@ export const TourGuideModal: React.FC = () => {
           <button
             onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
             disabled={currentStep === 0}
-            className="px-3 py-1.5 text-xs text-gray-400 disabled:opacity-0 font-semibold"
+            className="px-3 py-1.5 text-xs text-fb-text-3 disabled:opacity-0 font-semibold"
           >
             Quay lại
           </button>

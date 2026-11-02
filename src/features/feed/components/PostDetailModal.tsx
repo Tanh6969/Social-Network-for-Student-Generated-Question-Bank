@@ -69,14 +69,14 @@ function PostDetail({
   const mediaUrls = post.mediaUrls ?? [];
   const sidebar = (
     <div className="flex h-full min-h-0 w-full flex-col bg-fb-card">
-      <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
+      <div className="flex items-center justify-between border-b border-fb-divider p-4">
         <div className="flex min-w-0 items-center gap-3">
           <AvatarWithFrame user={post.author} size="md" />
           <div className="min-w-0">
             <h3 className="truncate text-sm font-bold text-fb-text">
               {post.author.name}
             </h3>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-fb-text-2">
               {formatPostTime(post.createdAt)}
             </span>
           </div>
@@ -88,7 +88,7 @@ function PostDetail({
               onClick={() =>
                 openReportModal('BÀI VIẾT', post.id, post.content.slice(0, 40))
               }
-              className="flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-red-600"
+              className="flex items-center gap-1 text-xs font-semibold text-fb-text-2 hover:text-fb-danger"
               title="Báo cáo bài viết"
             >
               <Flag className="h-3.5 w-3.5" />
@@ -100,7 +100,7 @@ function PostDetail({
               type="button"
               onClick={close}
               aria-label="Đóng chi tiết"
-              className="rounded-full p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="rounded-full p-1.5 text-fb-text-2 hover:bg-fb-hover"
             >
               <X className="h-5 w-5" />
             </button>
@@ -112,16 +112,16 @@ function PostDetail({
         {post.documents?.length ? (
           <PostDocuments documents={post.documents} />
         ) : null}
-        <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-xs dark:border-gray-700">
+        <div className="flex items-center justify-between border-t border-fb-divider pt-3 text-xs">
           <button
             type="button"
             onClick={() => toggleLikePost(post.id)}
-            className={`flex items-center gap-1.5 font-semibold ${post.isLiked ? 'text-blue-600' : 'text-gray-600'}`}
+            className={`flex items-center gap-1.5 font-semibold ${post.isLiked ? 'text-fb-blue' : 'text-fb-text-2'}`}
           >
             <ThumbsUp className="h-4 w-4" />
             Thích
           </button>
-          <div className="flex gap-3 text-gray-500">
+          <div className="flex gap-3 text-fb-text-2">
             {post.likesCount > 0 && <span>{post.likesCount} lượt thích</span>}
             {visibleCommentsCount > 0 && (
               <span>{visibleCommentsCount} bình luận</span>
@@ -137,13 +137,13 @@ function PostDetail({
             }}
           />
         ) : (
-          <p className="py-6 text-center text-xs text-gray-500">
+          <p className="py-6 text-center text-xs text-fb-text-2">
             Chưa có bình luận.
           </p>
         )}
       </div>
       {replyTarget && (
-        <div className="flex items-center justify-between px-4 pb-1 text-xs text-blue-600">
+        <div className="flex items-center justify-between px-4 pb-1 text-xs text-fb-blue">
           <span>Đang trả lời {replyTarget.author.name}</span>
           <button
             type="button"
@@ -154,7 +154,7 @@ function PostDetail({
           </button>
         </div>
       )}
-      <div className="flex items-center gap-2 border-t border-gray-200 p-3 dark:border-gray-700">
+      <div className="flex items-center gap-2 border-t border-fb-divider p-3">
         <AvatarWithFrame user={currentUser} size="sm" />
         <input
           ref={commentInputRef}
@@ -170,14 +170,14 @@ function PostDetail({
               : 'Viết bình luận...'
           }
           aria-label="Nội dung bình luận"
-          className="min-w-0 flex-1 rounded-full bg-gray-100 px-3.5 py-2 text-xs dark:bg-[#3A3B3C]"
+          className="min-w-0 flex-1 rounded-full bg-fb-input px-3.5 py-2 text-xs"
         />
         <button
           type="button"
           onClick={submitComment}
           disabled={!commentInput.trim()}
           aria-label="Gửi bình luận"
-          className="p-2 text-blue-600 disabled:text-gray-300"
+          className="p-2 text-fb-blue disabled:text-fb-text-3"
         >
           <Send className="h-4 w-4" />
         </button>
@@ -205,7 +205,7 @@ function PostDetail({
         role="dialog"
         aria-modal="true"
         aria-label="Chi tiết bài viết"
-        className="flex max-h-[90vh] w-full max-w-xl flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-[#242526]"
+        className="flex max-h-[90vh] w-full max-w-xl flex-col overflow-hidden rounded-lg border border-fb-divider bg-fb-card shadow-2xl"
       >
         {sidebar}
       </div>

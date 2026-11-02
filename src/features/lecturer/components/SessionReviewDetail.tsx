@@ -232,7 +232,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-fb-divider">
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-fb-card text-xs font-semibold text-fb-text hover:bg-fb-hover transition cursor-pointer shadow-2xs"
+          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-fb-divider bg-fb-card text-xs font-semibold text-fb-text hover:bg-fb-hover transition cursor-pointer shadow-2xs"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Quay lại danh sách</span>
@@ -242,7 +242,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
           <button
             onClick={() => setIsCompleteModalOpen(true)}
             disabled={isCompleting}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-fb-success hover:bg-fb-success/90 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
           >
             <CheckCheck className="w-4 h-4" />
             <span>Hoàn tất kiểm duyệt phiên</span>
@@ -255,22 +255,22 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-1.5 max-w-3xl">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-fb-blue-soft text-fb-blue border border-fb-blue/30">
                 {session.topic || 'Học phần'}
               </span>
 
               {session.status === 'REVIEWING' ? (
-                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center gap-1">
+                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-fb-blue-soft text-fb-blue border border-fb-blue/30 flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   <span>Đang kiểm duyệt</span>
                 </span>
               ) : session.status === 'RESOLVED' ? (
-                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-fb-success-soft text-fb-success border border-fb-success/30 flex items-center gap-1">
                   <CheckCircle2 className="w-3 h-3" />
                   <span>Đã giải quyết</span>
                 </span>
               ) : (
-                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 flex items-center gap-1">
+                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-fb-warning-soft text-fb-warning border border-fb-warning/30 flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   <span>Chờ kiểm duyệt</span>
                 </span>
@@ -289,14 +289,11 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
           </div>
 
           {/* Counts statistics */}
-          <div className="flex items-center gap-2 flex-wrap bg-fb-input p-2.5 rounded-lg border border-fb-divider text-xs font-medium">
-            <span className="text-gray-500">Tổng: <b>{questions.length}</b></span>
-            <span>•</span>
-            <span className="text-amber-600 dark:text-amber-400">Chờ: <b>{pendingCount}</b></span>
-            <span>•</span>
-            <span className="text-emerald-600 dark:text-emerald-400">Đã duyệt: <b>{approvedCount}</b></span>
-            <span>•</span>
-            <span className="text-red-500">Từ chối: <b>{rejectedCount}</b></span>
+          <div className="flex items-center gap-x-4 gap-y-1 flex-wrap bg-fb-input p-2.5 rounded-lg border border-fb-divider text-xs font-medium">
+            <span className="text-fb-text-2">Tổng: <b>{questions.length}</b></span>
+            <span className="text-fb-warning">Chờ: <b>{pendingCount}</b></span>
+            <span className="text-fb-success">Đã duyệt: <b>{approvedCount}</b></span>
+            <span className="text-fb-danger">Từ chối: <b>{rejectedCount}</b></span>
           </div>
         </div>
 
@@ -310,7 +307,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                 className="w-5 h-5 rounded-full object-cover"
               />
             ) : (
-              <User className="w-4 h-4 text-gray-400" />
+              <User className="w-4 h-4 text-fb-text-3" />
             )}
             <span>
               Người đề xuất:{' '}
@@ -322,7 +319,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
 
           {session.created_at && (
             <div className="flex items-center gap-1.5">
-              <Calendar className="w-4 h-4 text-gray-400" />
+              <Calendar className="w-4 h-4 text-fb-text-3" />
               <span>
                 Ngày tạo:{' '}
                 {new Date(session.created_at).toLocaleString('vi-VN')}
@@ -334,15 +331,15 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
 
       {/* Loading state */}
       {loading && (
-        <div className="py-20 flex flex-col items-center justify-center text-gray-500">
-          <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mb-3" />
+        <div className="py-20 flex flex-col items-center justify-center text-fb-text-2">
+          <div className="w-8 h-8 border-3 border-fb-blue border-t-transparent rounded-full animate-spin mb-3" />
           <p className="text-sm">Đang tải danh sách câu hỏi trong phiên...</p>
         </div>
       )}
 
       {/* Error state */}
       {!loading && error && (
-        <div className="p-5 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 space-y-3">
+        <div className="p-5 rounded-lg bg-fb-danger-soft border border-fb-danger/30 text-fb-danger space-y-3">
           <div className="flex items-start gap-2.5">
             <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
             <div>
@@ -352,7 +349,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
           </div>
           <button
             onClick={fetchSessionDetail}
-            className="px-4 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition cursor-pointer"
+            className="px-4 py-1.5 rounded-lg bg-fb-danger text-white text-xs font-semibold hover:bg-fb-danger/90 transition cursor-pointer"
           >
             Thử lại
           </button>
@@ -367,7 +364,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
             <div className="bg-fb-card rounded-lg p-3 shadow-fb-card flex flex-wrap items-center justify-between gap-3 text-xs">
               {/* Filter Chips */}
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-gray-500 font-bold flex items-center gap-1 mr-1">
+                <span className="text-fb-text-2 font-bold flex items-center gap-1 mr-1">
                   <Filter className="w-3.5 h-3.5" /> Lọc câu hỏi:
                 </span>
                 <button
@@ -375,8 +372,8 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                   onClick={() => setQuestionFilter('ALL')}
                   className={`px-3 py-1.5 rounded-full font-bold transition text-xs cursor-pointer ${
                     questionFilter === 'ALL'
-                      ? 'bg-blue-600 text-white shadow-2xs'
-                      : 'bg-fb-input text-fb-text hover:bg-gray-200'
+                      ? 'bg-fb-blue text-white shadow-2xs'
+                      : 'bg-fb-input text-fb-text hover:bg-fb-btn-hover'
                   }`}
                 >
                   Tất cả ({questions.length})
@@ -386,8 +383,8 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                   onClick={() => setQuestionFilter('PENDING')}
                   className={`px-3 py-1.5 rounded-full font-bold transition text-xs cursor-pointer ${
                     questionFilter === 'PENDING'
-                      ? 'bg-amber-600 text-white shadow-2xs'
-                      : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 hover:bg-amber-100'
+                      ? 'bg-fb-warning text-fb-card shadow-2xs'
+                      : 'bg-fb-warning-soft text-fb-warning hover:bg-fb-warning/20'
                   }`}
                 >
                   Chờ duyệt ({pendingCount})
@@ -397,8 +394,8 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                   onClick={() => setQuestionFilter('APPROVED')}
                   className={`px-3 py-1.5 rounded-full font-bold transition text-xs cursor-pointer ${
                     questionFilter === 'APPROVED'
-                      ? 'bg-emerald-600 text-white shadow-2xs'
-                      : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100'
+                      ? 'bg-fb-success text-white shadow-2xs'
+                      : 'bg-fb-success-soft text-fb-success hover:bg-fb-success/20'
                   }`}
                 >
                   Đã duyệt ({approvedCount})
@@ -408,8 +405,8 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                   onClick={() => setQuestionFilter('REJECTED')}
                   className={`px-3 py-1.5 rounded-full font-bold transition text-xs cursor-pointer ${
                     questionFilter === 'REJECTED'
-                      ? 'bg-red-600 text-white shadow-2xs'
-                      : 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 hover:bg-red-100'
+                      ? 'bg-fb-danger text-white shadow-2xs'
+                      : 'bg-fb-danger-soft text-fb-danger hover:bg-fb-danger/20'
                   }`}
                 >
                   Từ chối ({rejectedCount})
@@ -418,11 +415,11 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
 
               {/* Questions per page selector */}
               <div className="flex items-center gap-1.5">
-                <span className="text-gray-500 text-[11px]">Mỗi trang:</span>
+                <span className="text-fb-text-2 text-xs">Mỗi trang:</span>
                 <select
                   value={questionsPerPage}
                   onChange={(e) => setQuestionsPerPage(Number(e.target.value))}
-                  className="py-1 px-2.5 rounded-lg bg-fb-input border border-gray-200 dark:border-gray-600 text-fb-text text-xs font-semibold focus:outline-hidden cursor-pointer"
+                  className="py-1 px-2.5 rounded-lg bg-fb-input border border-fb-divider text-fb-text text-xs font-semibold focus:outline-hidden cursor-pointer"
                 >
                   <option value={2}>2 câu</option>
                   <option value={3}>3 câu</option>
@@ -435,14 +432,14 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
 
           {/* Bulk Action Bar (only if not read-only and has pending questions) */}
           {!readOnly && pendingQuestions.length > 0 && (
-            <div className="bg-blue-50/70 dark:bg-blue-950/30 rounded-lg p-3.5 border border-blue-200 dark:border-blue-800/60 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="bg-fb-blue-soft/70 rounded-lg p-3.5 border border-fb-blue/30 flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   id="select-all-pending"
                   checked={allPendingSelected}
                   onChange={handleToggleSelectAllPending}
-                  className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
+                  className="w-4 h-4 text-fb-blue rounded border-fb-divider focus:ring-fb-blue cursor-pointer"
                 />
                 <label
                   htmlFor="select-all-pending"
@@ -451,7 +448,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                   Chọn tất cả ({pendingQuestions.length} câu chờ duyệt)
                 </label>
                 {selectedQuestionIds.length > 0 && (
-                  <span className="text-blue-600 font-bold ml-1">
+                  <span className="text-fb-blue font-bold ml-1">
                     (Đã chọn {selectedQuestionIds.length})
                   </span>
                 )}
@@ -462,7 +459,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                   <button
                     onClick={() => handleApprove(selectedQuestionIds)}
                     disabled={isApproving}
-                    className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition shadow-2xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                    className="px-3.5 py-1.5 rounded-lg bg-fb-success hover:bg-fb-success/90 text-white font-bold transition shadow-2xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>Phê duyệt ({selectedQuestionIds.length}) câu đã chọn</span>
@@ -471,7 +468,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                   <button
                     onClick={() => setRejectingIds(selectedQuestionIds)}
                     disabled={isRejecting}
-                    className="px-3.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold transition shadow-2xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                    className="px-3.5 py-1.5 rounded-lg bg-fb-danger hover:bg-fb-danger/90 text-white font-bold transition shadow-2xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
                   >
                     <XCircle className="w-3.5 h-3.5" />
                     <span>Từ chối ({selectedQuestionIds.length}) câu đã chọn</span>
@@ -483,7 +480,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
 
           {/* Question Cards */}
           {filteredQuestions.length === 0 ? (
-            <div className="bg-fb-card rounded-lg border border-fb-divider p-12 text-center text-gray-500 text-xs">
+            <div className="bg-fb-card rounded-lg border border-fb-divider p-12 text-center text-fb-text-2 text-xs">
               Không tìm thấy câu hỏi nào phù hợp với bộ lọc đã chọn.
             </div>
           ) : (
@@ -504,18 +501,18 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                     key={q.question_id || globalIdx}
                     className={`bg-fb-card rounded-lg border transition shadow-xs overflow-hidden ${
                       isSelected
-                        ? 'border-blue-500 ring-2 ring-blue-500/20'
+                        ? 'border-fb-blue ring-2 ring-fb-blue/20'
                         : isApproved
-                        ? 'border-emerald-200 dark:border-emerald-900/60'
+                        ? 'border-fb-success/30'
                         : isRejected
-                        ? 'border-red-200 dark:border-red-900/60'
+                        ? 'border-fb-danger/30'
                         : 'border-fb-divider'
                     }`}
                   >
                     {/* Duplicate Warning Banner */}
                     {duplicateWarning && (
-                      <div className="px-4 py-2.5 bg-amber-500/10 border-b border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs flex items-start gap-2.5">
-                        <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <div className="px-4 py-2.5 bg-fb-warning/10 border-b border-fb-warning/30 text-fb-warning text-xs flex items-start gap-2.5">
+                        <AlertTriangle className="w-4 h-4 text-fb-warning shrink-0 mt-0.5" />
                         <div className="space-y-1 min-w-0">
                           <p className="font-bold">
                             Cảnh báo trùng lặp tự động (Độ tương đồng:{' '}
@@ -523,12 +520,12 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                             {duplicateWarning.tier || 'RULE_BASED'})
                           </p>
                           {duplicateWarning.similar_question_id && (
-                            <p className="text-[11px] opacity-90">
+                            <p className="text-xs opacity-90">
                               Trùng với câu hỏi ID #{duplicateWarning.similar_question_id} đã có trong hệ thống.
                             </p>
                           )}
                           {duplicateWarning.matched_snipet && (
-                            <p className="text-[11px] italic bg-amber-50 dark:bg-amber-950/40 p-2 rounded-lg border border-amber-200 dark:border-amber-900/40">
+                            <p className="text-xs italic bg-fb-warning-soft p-2 rounded-lg border border-fb-warning/30">
                               "{duplicateWarning.matched_snipet}"
                             </p>
                           )}
@@ -545,14 +542,14 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                               type="checkbox"
                               checked={isSelected}
                               onChange={() => handleToggleSelectQuestion(q.question_id)}
-                              className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
+                              className="w-4 h-4 text-fb-blue rounded border-fb-divider focus:ring-fb-blue cursor-pointer"
                             />
                           )}
                           <span className="px-2.5 py-1 rounded-lg bg-fb-input text-xs font-bold text-fb-text">
                             Câu {globalIdx + 1}
                           </span>
                           {q.question_id && (
-                            <span className="text-[11px] text-gray-400 tabular-nums">
+                            <span className="text-xs text-fb-text-3 tabular-nums">
                               ID: #{q.question_id}
                             </span>
                           )}
@@ -561,17 +558,17 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                         {/* Status Badge */}
                         <div>
                           {isApproved ? (
-                            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-fb-success-soft text-fb-success border border-fb-success/30 flex items-center gap-1">
                               <CheckCircle2 className="w-3.5 h-3.5" />
                               <span>Đã phê duyệt</span>
                             </span>
                           ) : isRejected ? (
-                            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800 flex items-center gap-1">
+                            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-fb-danger-soft text-fb-danger border border-fb-danger/30 flex items-center gap-1">
                               <XCircle className="w-3.5 h-3.5" />
                               <span>Bị từ chối</span>
                             </span>
                           ) : (
-                            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 flex items-center gap-1">
+                            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-fb-warning-soft text-fb-warning border border-fb-warning/30 flex items-center gap-1">
                               <Clock className="w-3.5 h-3.5" />
                               <span>Chờ duyệt</span>
                             </span>
@@ -617,15 +614,15 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                               key={key}
                               className={`p-3 rounded-lg border text-xs flex items-start gap-2.5 ${
                                 isCorrect
-                                  ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-950 dark:text-emerald-200 font-semibold shadow-2xs'
-                                  : 'border-fb-divider/80 bg-gray-50/70 dark:bg-[#1E1F20] text-fb-text'
+                                  ? 'border-fb-success bg-fb-success-soft/70 text-fb-success font-semibold shadow-2xs'
+                                  : 'border-fb-divider/80 bg-fb-inset/70 text-fb-text'
                               }`}
                             >
                               <span
                                 className={`w-6 h-6 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
                                   isCorrect
-                                    ? 'bg-emerald-600 text-white'
-                                    : 'bg-gray-200 dark:bg-gray-700 text-fb-text'
+                                    ? 'bg-fb-success text-white'
+                                    : 'bg-fb-btn text-fb-text'
                                 }`}
                               >
                                 {key}
@@ -643,7 +640,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                                 )}
                               </div>
                               {isCorrect && (
-                                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                                <CheckCircle2 className="w-4 h-4 text-fb-success shrink-0 mt-0.5" />
                               )}
                             </div>
                           );
@@ -652,7 +649,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
 
                       {/* Explanation */}
                       {q.explanation && (
-                        <div className="p-3.5 rounded-lg bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/50 text-xs text-blue-900 dark:text-blue-200 flex items-start gap-2.5">
+                        <div className="p-3.5 rounded-lg bg-fb-blue-soft/70 border border-fb-blue/30 text-xs text-fb-blue flex items-start gap-2.5">
                           <HelpCircle className="w-4 h-4 text-fb-blue shrink-0 mt-0.5" />
                           <div className="space-y-0.5">
                             <span className="font-bold block">Giải thích đáp án:</span>
@@ -665,7 +662,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
 
                       {/* Edit Log */}
                       {q.edit_log && (
-                        <div className="text-[11px] text-fb-text-2 pt-1 flex items-center gap-2">
+                        <div className="text-xs text-fb-text-2 pt-1 flex items-center gap-2">
                           <span className="font-medium">Nhật ký sửa đổi:</span>
                           <span>
                             {q.edit_log.actor_name || 'Giảng viên'}{' '}
@@ -681,7 +678,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                           <button
                             type="button"
                             onClick={() => setEditingQuestion(q)}
-                            className="px-3 py-1.5 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 text-fb-blue font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/40 transition cursor-pointer flex items-center gap-1.5"
+                            className="px-3 py-1.5 rounded-lg border border-fb-blue/30 bg-fb-blue-soft text-fb-blue font-semibold hover:bg-fb-blue/20 transition cursor-pointer flex items-center gap-1.5"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                             <span>Chỉnh sửa</span>
@@ -693,7 +690,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                                 type="button"
                                 onClick={() => setRejectingIds([q.question_id!])}
                                 disabled={isRejecting}
-                                className="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 font-semibold hover:bg-red-100 transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                                className="px-3 py-1.5 rounded-lg border border-fb-danger/30 bg-fb-danger-soft text-fb-danger font-semibold hover:bg-fb-danger/20 transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
                               >
                                 <XCircle className="w-3.5 h-3.5" />
                                 <span>Từ chối</span>
@@ -703,7 +700,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                                 type="button"
                                 onClick={() => handleApprove([q.question_id!])}
                                 disabled={isApproving}
-                                className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition shadow-2xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                                className="px-3.5 py-1.5 rounded-lg bg-fb-success hover:bg-fb-success/90 text-white font-bold transition shadow-2xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
                               >
                                 <CheckCircle2 className="w-3.5 h-3.5" />
                                 <span>Phê duyệt</span>
@@ -721,7 +718,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
             {/* Question Pagination Bar */}
             {totalQuestionPages > 1 && (
               <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-fb-card rounded-lg border border-fb-divider shadow-2xs">
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-fb-text-2">
                   Hiển thị câu{' '}
                   <span className="font-bold text-fb-text">
                     {(currentQuestionPage - 1) * questionsPerPage + 1}
@@ -755,7 +752,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                       onClick={() => setCurrentQuestionPage(pageNum)}
                       className={`w-7 h-7 rounded-lg text-xs font-bold transition flex items-center justify-center cursor-pointer ${
                         pageNum === currentQuestionPage
-                          ? 'bg-blue-600 text-white shadow-fb-card'
+                          ? 'bg-fb-blue text-white shadow-fb-card'
                           : 'bg-fb-card text-fb-text hover:bg-fb-hover'
                       }`}
                     >

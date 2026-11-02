@@ -9,12 +9,12 @@ const PENDING_LIMIT = 50;
 
 // Màu nhận diện theo môn học, xoay vòng theo subject_id
 const SUBJECT_COLORS = [
-  'bg-blue-500',
-  'bg-emerald-500',
-  'bg-amber-500',
-  'bg-violet-500',
-  'bg-rose-500',
-  'bg-cyan-500',
+  'bg-fb-blue',
+  'bg-fb-success',
+  'bg-fb-warning',
+  'bg-fb-blue',
+  'bg-fb-danger',
+  'bg-fb-blue',
 ];
 
 export const LecturerSidebarSections: React.FC = () => {
@@ -48,16 +48,16 @@ export const LecturerSidebarSections: React.FC = () => {
       {/* Cần duyệt — GET /sessions/pending */}
       <button
         onClick={() => setActiveTab('review')}
-        className="w-full group flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left cursor-pointer"
+        className="w-full group flex items-center justify-between px-3 py-2 rounded-lg hover:bg-fb-btn-hover/60 transition text-left cursor-pointer"
       >
         <span className="flex items-center gap-3">
-          <span className="w-9 h-9 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+          <span className="w-9 h-9 rounded-full bg-fb-warning-soft text-fb-warning flex items-center justify-center">
             <ClipboardCheck className="w-5 h-5" />
           </span>
           Cần duyệt
         </span>
         {pendingCount && pendingCount !== '0' && (
-          <span className="text-xs font-bold text-white bg-red-500 px-2 py-0.5 rounded-full">
+          <span className="text-xs font-bold text-white bg-fb-danger px-2 py-0.5 rounded-full">
             {pendingCount}
           </span>
         )}
@@ -68,23 +68,23 @@ export const LecturerSidebarSections: React.FC = () => {
         <h4 className="px-3 pb-1 text-xs font-semibold text-fb-text-2">
           Lớp phụ trách
         </h4>
-        {classes === null && <p className="px-3 py-2 text-xs text-gray-400">Đang tải...</p>}
+        {classes === null && <p className="px-3 py-2 text-xs text-fb-text-3">Đang tải...</p>}
         {classes?.length === 0 && (
-          <p className="px-3 py-2 text-xs text-gray-400">Học kỳ này bạn chưa phụ trách lớp nào.</p>
+          <p className="px-3 py-2 text-xs text-fb-text-3">Học kỳ này bạn chưa phụ trách lớp nào.</p>
         )}
         {classes?.map((cls) => (
           <button
             key={cls.course_class_id ?? cls.class_code}
             onClick={() => setOpenClass(cls)}
             title={`${cls.subject_code} · ${cls.subject_name} · ${cls.total_students ?? 0} sinh viên`}
-            className="w-full group flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left cursor-pointer"
+            className="w-full group flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-fb-btn-hover/60 transition text-left cursor-pointer"
           >
             <span
               className={`w-2 h-2 shrink-0 rounded-full ${SUBJECT_COLORS[(cls.subject_id ?? 0) % SUBJECT_COLORS.length]}`}
             />
             <span className="flex-1 min-w-0 truncate">{cls.subject_name}</span>
-            <span className="shrink-0 tabular-nums text-xs text-gray-400">{cls.class_code}</span>
-            <ChevronRight className="w-4 h-4 shrink-0 text-gray-300 group-hover:text-gray-500 transition-colors" />
+            <span className="shrink-0 tabular-nums text-xs text-fb-text-3">{cls.class_code}</span>
+            <ChevronRight className="w-4 h-4 shrink-0 text-fb-text-3 group-hover:text-fb-text-2 transition-colors" />
           </button>
         ))}
       </div>

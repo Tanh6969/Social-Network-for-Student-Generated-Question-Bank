@@ -71,14 +71,14 @@ export const ExamExportModal: React.FC<ExamExportModalProps> = ({
         {/* Modal Header */}
         <div className="flex items-start justify-between pb-3 border-b border-fb-divider">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 flex items-center justify-center font-bold">
+            <div className="w-9 h-9 rounded-lg bg-fb-blue-soft text-fb-blue flex items-center justify-center font-bold">
               <Download className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-bold text-sm sm:text-base text-fb-text">
                 Xuất file đề thi
               </h3>
-              <p className="text-[11px] text-gray-500 truncate max-w-xs sm:max-w-sm">
+              <p className="text-xs text-fb-text-2 truncate max-w-xs sm:max-w-sm">
                 {examTitle || `Đề thi #${examId}`}
               </p>
             </div>
@@ -86,7 +86,7 @@ export const ExamExportModal: React.FC<ExamExportModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 cursor-pointer"
+            className="p-1 rounded-full hover:bg-fb-hover text-fb-text-3 hover:text-fb-text-2 cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -105,14 +105,14 @@ export const ExamExportModal: React.FC<ExamExportModalProps> = ({
                 onClick={() => setFormat('pdf')}
                 className={`p-3 rounded-lg border flex items-center gap-2.5 transition cursor-pointer ${
                   format === 'pdf'
-                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-bold ring-1 ring-blue-600'
+                    ? 'border-fb-blue bg-fb-blue-soft text-fb-blue font-bold ring-1 ring-fb-blue'
                     : 'border-fb-divider hover:bg-fb-hover text-fb-text'
                 }`}
               >
-                <FileText className="w-5 h-5 text-red-500" />
+                <FileText className="w-5 h-5 text-fb-danger" />
                 <div className="text-left">
                   <div className="font-bold">PDF in ấn</div>
-                  <div className="text-[10px] text-gray-400">Định dạng tiêu chuẩn đề thi</div>
+                  <div className="text-xs text-fb-text-3">Định dạng tiêu chuẩn đề thi</div>
                 </div>
               </button>
 
@@ -121,14 +121,14 @@ export const ExamExportModal: React.FC<ExamExportModalProps> = ({
                 onClick={() => setFormat('excel')}
                 className={`p-3 rounded-lg border flex items-center gap-2.5 transition cursor-pointer ${
                   format === 'excel'
-                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-bold ring-1 ring-blue-600'
+                    ? 'border-fb-blue bg-fb-blue-soft text-fb-blue font-bold ring-1 ring-fb-blue'
                     : 'border-fb-divider hover:bg-fb-hover text-fb-text'
                 }`}
               >
-                <FileSpreadsheet className="w-5 h-5 text-emerald-500" />
+                <FileSpreadsheet className="w-5 h-5 text-fb-success" />
                 <div className="text-left">
                   <div className="font-bold">Excel (.xlsx)</div>
-                  <div className="text-[10px] text-gray-400">Bảng tính và thống kê</div>
+                  <div className="text-xs text-fb-text-3">Bảng tính và thống kê</div>
                 </div>
               </button>
             </div>
@@ -143,7 +143,7 @@ export const ExamExportModal: React.FC<ExamExportModalProps> = ({
               <select
                 value={paperSize}
                 onChange={(e) => setPaperSize(e.target.value as 'A4' | 'Letter')}
-                className="w-full px-3 py-2 rounded-lg bg-fb-input border border-gray-200 dark:border-gray-600 text-fb-text font-semibold focus:outline-hidden"
+                className="w-full px-3 py-2 rounded-lg bg-fb-input border border-fb-divider text-fb-text font-semibold focus:outline-hidden"
               >
                 <option value="A4">A4 (Tiêu chuẩn Việt Nam - 210 x 297 mm)</option>
                 <option value="Letter">Letter (216 x 279 mm)</option>
@@ -158,13 +158,13 @@ export const ExamExportModal: React.FC<ExamExportModalProps> = ({
                 type="checkbox"
                 checked={includeAnswerKey}
                 onChange={(e) => setIncludeAnswerKey(e.target.checked)}
-                className="w-4 h-4 mt-0.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
+                className="w-4 h-4 mt-0.5 text-fb-blue rounded border-fb-divider focus:ring-fb-blue cursor-pointer"
               />
               <div className="space-y-0.5">
                 <span className="font-bold text-fb-text block">
                   Kèm bảng đáp án đúng
                 </span>
-                <span className="text-[11px] text-fb-text-2 block">
+                <span className="text-xs text-fb-text-2 block">
                   In kèm ma trận phương án đúng ở cuối tài liệu (dành riêng cho Giảng viên chấm thi).
                 </span>
               </div>
@@ -173,7 +173,7 @@ export const ExamExportModal: React.FC<ExamExportModalProps> = ({
 
           {/* Error Message */}
           {error && (
-            <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 flex items-start gap-2">
+            <div className="p-3 rounded-lg bg-fb-danger-soft border border-fb-danger/30 text-fb-danger flex items-start gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
@@ -181,13 +181,13 @@ export const ExamExportModal: React.FC<ExamExportModalProps> = ({
 
           {/* Export Result Success Card */}
           {exportResult && (
-            <div className="p-3.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 space-y-2.5">
-              <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-bold text-xs">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <div className="p-3.5 rounded-lg bg-fb-success-soft border border-fb-success/30 space-y-2.5">
+              <div className="flex items-center gap-2 text-fb-success font-bold text-xs">
+                <CheckCircle2 className="w-4 h-4 text-fb-success" />
                 <span>Tài liệu đã sẵn sàng tải xuống</span>
               </div>
 
-              <div className="text-[11px] text-fb-text-2 space-y-1">
+              <div className="text-xs text-fb-text-2 space-y-1">
                 {exportResult.questions_count !== undefined && (
                   <p>
                     • Số lượng câu hỏi:{' '}
@@ -205,8 +205,8 @@ export const ExamExportModal: React.FC<ExamExportModalProps> = ({
                   </p>
                 )}
                 {exportResult.expires_at && (
-                  <p className="flex items-center gap-1 text-gray-500">
-                    <Clock className="w-3 h-3 text-amber-600" />
+                  <p className="flex items-center gap-1 text-fb-text-2">
+                    <Clock className="w-3 h-3 text-fb-warning" />
                     <span>
                       Hết hạn tải lúc:{' '}
                       {new Date(exportResult.expires_at).toLocaleString('vi-VN')}
@@ -219,7 +219,7 @@ export const ExamExportModal: React.FC<ExamExportModalProps> = ({
                 <button
                   type="button"
                   onClick={handleDownload}
-                  className="w-full py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center justify-center gap-2 transition shadow-xs cursor-pointer"
+                  className="w-full py-2.5 px-4 rounded-lg bg-fb-success hover:bg-fb-success/90 text-white font-bold flex items-center justify-center gap-2 transition shadow-xs cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
                   <span>Tải file xuống máy ({format.toUpperCase()})</span>
@@ -249,7 +249,7 @@ export const ExamExportModal: React.FC<ExamExportModalProps> = ({
           >
             {loading ? (
               <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-fb-card border-t-transparent rounded-full animate-spin" />
                 <span>Đang kết xuất...</span>
               </>
             ) : (

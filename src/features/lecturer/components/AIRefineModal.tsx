@@ -69,18 +69,18 @@ export const AIRefineModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/60 animate-in fade-in duration-200">
-      <div className="bg-fb-card rounded-lg shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-blue-200 dark:border-blue-900">
+      <div className="bg-fb-card rounded-lg shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-fb-blue/30">
         {/* Header */}
-        <div className="p-4 border-b border-fb-divider flex items-center justify-between bg-blue-50 dark:bg-blue-950/40">
+        <div className="p-4 border-b border-fb-divider flex items-center justify-between bg-fb-blue-soft">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-xs">
+            <div className="w-8 h-8 rounded-full bg-fb-blue text-white flex items-center justify-center shadow-xs">
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="font-bold text-sm sm:text-base text-blue-950 dark:text-blue-100">
+              <h3 className="font-bold text-sm sm:text-base text-fb-blue">
                 AI Hỗ Trợ Tinh Chỉnh Câu Hỏi (AI.01 – AI.03)
               </h3>
-              <p className="text-xs text-blue-700 dark:text-blue-300">
+              <p className="text-xs text-fb-blue">
                 Tự động kiểm định ngữ pháp, tối ưu đáp án nhiễu & chuẩn hoá giải thích
               </p>
             </div>
@@ -88,7 +88,7 @@ export const AIRefineModal: React.FC = () => {
 
           <button
             onClick={() => setActiveAIRefineQuestion(null)}
-            className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500"
+            className="p-1.5 rounded-full hover:bg-fb-btn-hover text-fb-text-2"
           >
             <X className="w-5 h-5" />
           </button>
@@ -113,12 +113,12 @@ export const AIRefineModal: React.FC = () => {
                   onClick={() => setRefineGoal(goal.id as any)}
                   className={`p-2.5 rounded-lg border text-left transition ${
                     refineGoal === goal.id
-                      ? 'border-blue-600 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 ring-1 ring-blue-600'
+                      ? 'border-fb-blue bg-fb-blue-soft text-fb-blue ring-1 ring-fb-blue'
                       : 'border-fb-divider hover:bg-fb-hover'
                   }`}
                 >
                   <span className="font-bold block">{goal.label}</span>
-                  <span className="text-[10px] text-gray-400">{goal.desc}</span>
+                  <span className="text-xs text-fb-text-3">{goal.desc}</span>
                 </button>
               ))}
             </div>
@@ -141,9 +141,9 @@ export const AIRefineModal: React.FC = () => {
           {/* 2 CỘT DIFF SO SÁNH (AI.03) */}
           {hasRefined && (
             <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs font-bold text-gray-500">
+              <div className="flex items-center justify-between text-xs font-bold text-fb-text-2">
                 <span>So sánh thay đổi (Diff trực quan):</span>
-                <span className="text-emerald-600 flex items-center gap-1">
+                <span className="text-fb-success flex items-center gap-1">
                   <CheckCheck className="w-4 h-4" /> Đã tạo bản sửa đổi
                 </span>
               </div>
@@ -151,24 +151,24 @@ export const AIRefineModal: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                 {/* Bản gốc */}
                 <div className="p-3.5 bg-fb-input rounded-lg border border-fb-divider">
-                  <span className="font-bold text-gray-500 block mb-1">Bản gốc từ sinh viên</span>
+                  <span className="font-bold text-fb-text-2 block mb-1">Bản gốc từ sinh viên</span>
                   <p className="text-fb-text mb-2">
                     {activeAIRefineQuestion.content}
                   </p>
-                  <div className="pt-2 border-t border-fb-divider text-[11px] text-gray-500">
+                  <div className="pt-2 border-t border-fb-divider text-xs text-fb-text-2">
                     <strong>Giải thích:</strong> {activeAIRefineQuestion.explanation}
                   </div>
                 </div>
 
                 {/* Bản đề xuất AI */}
-                <div className="p-3.5 bg-blue-50/70 dark:bg-blue-950/30 rounded-lg border border-blue-300 dark:border-blue-800">
-                  <span className="font-bold text-blue-700 dark:text-blue-300 block mb-1">
+                <div className="p-3.5 bg-fb-blue-soft/70 rounded-lg border border-fb-blue/30">
+                  <span className="font-bold text-fb-blue block mb-1">
                     BẢN ĐỀ XUẤT TỪ AI (ĐÃ TINH CHỈNH)
                   </span>
-                  <p className="text-blue-900 dark:text-blue-200 font-medium mb-2">
+                  <p className="text-fb-blue font-medium mb-2">
                     {refinedContent}
                   </p>
-                  <div className="pt-2 border-t border-blue-200 dark:border-blue-800 text-[11px] text-blue-800 dark:text-blue-300">
+                  <div className="pt-2 border-t border-fb-blue/30 text-xs text-fb-blue">
                     <strong>Giải thích tối ưu:</strong> {refinedExplanation}
                   </div>
                 </div>
@@ -181,7 +181,7 @@ export const AIRefineModal: React.FC = () => {
         <div className="p-4 border-t border-fb-divider bg-fb-input flex items-center justify-between">
           <button
             onClick={() => setActiveAIRefineQuestion(null)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+            className="px-4 py-2 border border-fb-divider rounded-lg text-xs font-semibold hover:bg-fb-hover transition"
           >
             Đóng
           </button>
@@ -190,7 +190,7 @@ export const AIRefineModal: React.FC = () => {
             <div className="flex items-center gap-2">
               <button
                 onClick={handleStartRefine}
-                className="px-3 py-2 border border-blue-300 text-blue-700 rounded-lg text-xs font-semibold hover:bg-blue-50 transition flex items-center gap-1"
+                className="px-3 py-2 border border-fb-blue/30 text-fb-blue rounded-lg text-xs font-semibold hover:bg-fb-blue-soft transition flex items-center gap-1"
               >
                 <RefreshCw className="w-3.5 h-3.5" /> Thử mục tiêu khác
               </button>

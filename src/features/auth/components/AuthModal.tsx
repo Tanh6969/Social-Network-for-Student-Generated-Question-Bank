@@ -77,7 +77,7 @@ export const AuthModal: React.FC = () => {
       <div className="bg-fb-card rounded-lg shadow-2xl max-w-4xl w-full overflow-hidden border border-fb-divider relative">
         <button
           onClick={closeAuthModal}
-          className="absolute top-4 right-4 z-10 p-1.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 hover:text-gray-800"
+          className="absolute top-4 right-4 z-10 p-1.5 rounded-full bg-fb-input text-fb-text-2 hover:text-fb-text"
         >
           <X className="w-5 h-5" />
         </button>
@@ -87,10 +87,10 @@ export const AuthModal: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-12 min-h-[460px]">
             {/* Left Brand Hero (55%) */}
             <div className="md:col-span-6 bg-fb-blue p-8 text-white flex flex-col justify-center">
-              <div className="w-14 h-14 rounded-lg bg-white text-blue-700 flex items-center justify-center font-black text-3xl shadow-lg mb-4">
+              <div className="w-14 h-14 rounded-lg bg-fb-card text-fb-blue flex items-center justify-center font-bold text-3xl shadow-lg mb-4">
                 U
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black leading-tight mb-2">
+              <h2 className="text-2xl sm:text-3xl font-bold leading-tight mb-2">
                 UniSocial & ExamBank
               </h2>
               <p className="text-blue-100 text-sm leading-relaxed mb-6">
@@ -105,7 +105,7 @@ export const AuthModal: React.FC = () => {
 
             {/* Right Form Card (45%) */}
             <div className="md:col-span-6 p-8 flex flex-col justify-center">
-              <h3 className="font-black text-xl text-fb-text mb-4">
+              <h3 className="font-bold text-xl text-fb-text mb-4">
                 Đăng nhập tài khoản trường
               </h3>
 
@@ -124,11 +124,11 @@ export const AuthModal: React.FC = () => {
                       setLoginError('');
                     }}
                     aria-invalid={Boolean(loginError)}
-                    className={`w-full rounded-lg border p-2.5 text-xs text-gray-900 dark:bg-[#3A3B3C] dark:text-gray-100 ${
+                    className={`w-full rounded-lg border p-2.5 text-xs text-fb-text ${
                       loginError
-                        ? 'border-red-500'
-                        : 'border-gray-300 dark:border-gray-600'
-                    } bg-gray-50`}
+                        ? 'border-fb-danger'
+                        : 'border-fb-divider'
+                    } bg-fb-input`}
                   />
                 </div>
 
@@ -146,18 +146,18 @@ export const AuthModal: React.FC = () => {
                       setLoginError('');
                     }}
                     aria-invalid={Boolean(loginError)}
-                    className={`w-full rounded-lg border p-2.5 text-xs text-gray-900 dark:bg-[#3A3B3C] dark:text-gray-100 ${
+                    className={`w-full rounded-lg border p-2.5 text-xs text-fb-text ${
                       loginError
-                        ? 'border-red-500'
-                        : 'border-gray-300 dark:border-gray-600'
-                    } bg-gray-50`}
+                        ? 'border-fb-danger'
+                        : 'border-fb-divider'
+                    } bg-fb-input`}
                   />
                 </div>
 
                 {loginError && (
                   <p
                     role="alert"
-                    className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300"
+                    className="rounded-lg border border-fb-danger/30 bg-fb-danger-soft px-3 py-2 text-xs text-fb-danger"
                   >
                     {loginError}
                   </p>
@@ -175,7 +175,7 @@ export const AuthModal: React.FC = () => {
               <div className="mt-4 pt-4 border-t border-fb-divider text-center">
                 <button
                   onClick={() => setMode('REGISTER')}
-                  className="text-xs font-bold text-emerald-600 hover:underline"
+                  className="text-xs font-bold text-fb-success hover:underline"
                 >
                   Chưa có tài khoản? Tạo tài khoản mới (AUTH.02)
                 </button>
@@ -185,10 +185,10 @@ export const AuthModal: React.FC = () => {
         ) : mode === 'REGISTER' ? (
           /* AUTH.02: REGISTER MODAL */
           <div className="p-8 max-w-lg mx-auto space-y-4">
-            <h3 className="font-black text-xl text-fb-text text-center">
+            <h3 className="font-bold text-xl text-fb-text text-center">
               Đăng ký tài khoản trường (AUTH.02)
             </h3>
-            <p className="text-xs text-gray-500 text-center">
+            <p className="text-xs text-fb-text-2 text-center">
               Yêu cầu sử dụng email có đuôi @truong.edu.vn để xác thực vai trò học thuật.
             </p>
 
@@ -234,17 +234,17 @@ export const AuthModal: React.FC = () => {
 
               <button
                 type="submit"
-                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow-md transition"
+                className="w-full py-2.5 bg-fb-success hover:bg-fb-success/90 text-white font-bold text-xs rounded-lg shadow-md transition"
               >
                 Gửi mã xác thực OTP
               </button>
             </form>
 
-            <p className="text-center text-xs text-gray-500">
+            <p className="text-center text-xs text-fb-text-2">
               Đã có tài khoản?{' '}
               <button
                 onClick={() => setMode('LOGIN')}
-                className="text-blue-600 font-bold hover:underline"
+                className="text-fb-blue font-bold hover:underline"
               >
                 Đăng nhập ngay
               </button>
@@ -253,10 +253,10 @@ export const AuthModal: React.FC = () => {
         ) : (
           /* AUTH.03: OTP 6 Ô */
           <div className="p-8 max-w-md mx-auto space-y-4 text-center">
-            <h3 className="font-black text-xl text-fb-text">
+            <h3 className="font-bold text-xl text-fb-text">
               Xác thực OTP 6 Số (AUTH.03)
             </h3>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-fb-text-2">
               Mã bảo mật đã được gửi tới <strong>{email}</strong>. Có hiệu lực trong {countdown}s.
             </p>
 
@@ -268,7 +268,7 @@ export const AuthModal: React.FC = () => {
                   maxLength={1}
                   value={code}
                   readOnly
-                  className="w-11 h-12 text-center font-black text-lg border border-gray-300 dark:border-gray-600 rounded-lg bg-fb-input text-fb-text"
+                  className="w-11 h-12 text-center font-bold text-lg border border-fb-divider rounded-lg bg-fb-input text-fb-text"
                 />
               ))}
             </div>

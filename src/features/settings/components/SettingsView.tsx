@@ -299,7 +299,7 @@ const SettingsContent: React.FC = () => {
     <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 flex flex-col md:flex-row gap-6 lg:gap-8 xl:gap-10 items-start">
       {/* CỘT TRÁI: Menu Cài đặt (sticky sát lề trái) */}
       <aside className="w-full md:w-80 shrink-0 space-y-2 select-none md:sticky md:top-18">
-        <h2 className="text-xl font-black text-fb-text px-2 mb-3">
+        <h2 className="text-xl font-bold text-fb-text px-2 mb-3">
           Cài đặt & Quyền riêng tư
         </h2>
 
@@ -308,7 +308,7 @@ const SettingsContent: React.FC = () => {
             onClick={() => setActiveTab('ACCOUNT')}
             className={`w-full flex items-center gap-3 p-2.5 rounded-lg transition text-left ${
               activeTab === 'ACCOUNT'
-                ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 font-bold'
+                ? 'bg-fb-blue-soft text-fb-blue font-bold'
                 : 'hover:bg-fb-hover'
             }`}
           >
@@ -320,15 +320,15 @@ const SettingsContent: React.FC = () => {
             onClick={() => setActiveTab('BLOCKING')}
             className={`w-full flex items-center justify-between p-2.5 rounded-lg transition text-left ${
               activeTab === 'BLOCKING'
-                ? 'bg-red-50 dark:bg-red-950/40 text-red-600 font-bold'
+                ? 'bg-fb-danger-soft text-fb-danger font-bold'
                 : 'hover:bg-fb-hover'
             }`}
           >
             <div className="flex items-center gap-3">
-              <Ban className="w-4 h-4 text-red-500" />
+              <Ban className="w-4 h-4 text-fb-danger" />
               <span>Quản lý chặn người dùng</span>
             </div>
-            <span className="text-[10px] bg-fb-input px-2 py-0.5 rounded-full font-bold">
+            <span className="text-xs bg-fb-input px-2 py-0.5 rounded-full font-bold">
               {blockedUsers.length}
             </span>
           </button>
@@ -337,7 +337,7 @@ const SettingsContent: React.FC = () => {
             onClick={() => setActiveTab('SECURITY')}
             className={`w-full flex items-center gap-3 p-2.5 rounded-lg transition text-left ${
               activeTab === 'SECURITY'
-                ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 font-bold'
+                ? 'bg-fb-blue-soft text-fb-blue font-bold'
                 : 'hover:bg-fb-hover'
             }`}
           >
@@ -349,7 +349,7 @@ const SettingsContent: React.FC = () => {
             onClick={() => setActiveTab('PUSH')}
             className={`w-full flex items-center gap-3 p-2.5 rounded-lg transition text-left ${
               activeTab === 'PUSH'
-                ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 font-bold'
+                ? 'bg-fb-blue-soft text-fb-blue font-bold'
                 : 'hover:bg-fb-hover'
             }`}
           >
@@ -361,7 +361,7 @@ const SettingsContent: React.FC = () => {
             onClick={() => setActiveTab('DEVICES')}
             className={`w-full flex items-center gap-3 p-2.5 rounded-lg transition text-left ${
               activeTab === 'DEVICES'
-                ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 font-bold'
+                ? 'bg-fb-blue-soft text-fb-blue font-bold'
                 : 'hover:bg-fb-hover'
             }`}
           >
@@ -377,7 +377,7 @@ const SettingsContent: React.FC = () => {
               <Moon className="w-4 h-4" />
               <span>Chế độ tối (Dark mode)</span>
             </div>
-            <span className="text-gray-400 font-normal">
+            <span className="text-fb-text-3 font-normal">
               {isDarkMode ? 'Bật' : 'Tắt'}
             </span>
           </button>
@@ -385,10 +385,10 @@ const SettingsContent: React.FC = () => {
           <div className="pt-2 border-t border-fb-divider">
             <button
               onClick={() => setActiveTab('DELETE')}
-              className={`w-full flex items-center gap-3 p-2.5 rounded-lg transition text-left text-red-600 ${
+              className={`w-full flex items-center gap-3 p-2.5 rounded-lg transition text-left text-fb-danger ${
                 activeTab === 'DELETE'
-                  ? 'bg-red-50 dark:bg-red-950/40 font-bold'
-                  : 'hover:bg-red-50'
+                  ? 'bg-fb-danger-soft font-bold'
+                  : 'hover:bg-fb-danger-soft'
               }`}
             >
               <Trash2 className="w-4 h-4" />
@@ -407,7 +407,7 @@ const SettingsContent: React.FC = () => {
             </h3>
 
             <div>
-              <label className="block text-gray-500 mb-1">Họ và tên</label>
+              <label className="block text-fb-text-2 mb-1">Họ và tên</label>
               <input
                 type="text"
                 disabled
@@ -417,7 +417,7 @@ const SettingsContent: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-gray-500 mb-1">
+              <label className="block text-fb-text-2 mb-1">
                 Email trường (@truong.edu.vn)
               </label>
               <input
@@ -429,7 +429,7 @@ const SettingsContent: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-gray-500 mb-1">
+              <label className="block text-fb-text-2 mb-1">
                 Khoa / Viện đào tạo
               </label>
               <input
@@ -448,7 +448,7 @@ const SettingsContent: React.FC = () => {
               <h3 className="font-bold text-base text-fb-text pb-2 border-b border-fb-divider">
                 Quản lý danh sách chặn (Block / Unblock)
               </h3>
-              <p className="text-gray-500 mt-2 leading-relaxed">
+              <p className="text-fb-text-2 mt-2 leading-relaxed">
                 Khi bạn chặn một người: người đó sẽ không còn là bạn bè của bạn,
                 hai người không thể nhắn tin hoặc xem trang cá nhân của nhau, và
                 bình luận của người đó sẽ được ẩn khỏi tầm nhìn của bạn (nhưng
@@ -491,7 +491,7 @@ const SettingsContent: React.FC = () => {
                     setSelectedBlockUserId('');
                     setBlockReasonInput('');
                   }}
-                  className="px-4 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 text-white rounded-lg font-bold shrink-0"
+                  className="px-4 py-2.5 bg-fb-danger hover:bg-fb-danger/90 disabled:bg-fb-divider text-white rounded-lg font-bold shrink-0"
                 >
                   Chặn ngay
                 </button>
@@ -503,12 +503,12 @@ const SettingsContent: React.FC = () => {
                 Danh sách đối tượng đang bị chặn ({blockedUsers.length})
               </h4>
               {blockedUsers.length === 0 ? (
-                <div className="py-8 text-center text-gray-400 border border-dashed border-fb-divider rounded-lg">
+                <div className="py-8 text-center text-fb-text-3 border border-dashed border-fb-divider rounded-lg">
                   <Shield className="w-8 h-8 mx-auto mb-1 opacity-60" />
                   <p>Chưa có người dùng nào trong danh sách chặn.</p>
                 </div>
               ) : (
-                <div className="divide-y divide-gray-100 dark:divide-gray-800 border border-fb-divider rounded-lg px-4">
+                <div className="divide-y divide-fb-divider border border-fb-divider rounded-lg px-4">
                   {blockedUsers.map((entry) => {
                     const u = allUsers.find((item) => item.id === entry.userId);
                     if (!u) return null;
@@ -527,7 +527,7 @@ const SettingsContent: React.FC = () => {
                             <p className="font-bold text-fb-text">
                               {u.name}
                             </p>
-                            <p className="text-[11px] text-gray-500 flex items-center gap-1">
+                            <p className="text-xs text-fb-text-2 flex items-center gap-1">
                               <Clock className="w-3 h-3" /> {entry.blockedAt}
                               {entry.reason ? ` · ${entry.reason}` : ''}
                             </p>
@@ -555,7 +555,7 @@ const SettingsContent: React.FC = () => {
             <h3 className="font-bold text-base text-fb-text pb-2 border-b border-fb-divider">
               Mật khẩu & Bảo mật
             </h3>
-            <p className="text-gray-500">
+            <p className="text-fb-text-2">
               Tài khoản của bạn đang được bảo vệ bởi xác thực trường học
               (@truong.edu.vn).
             </p>
@@ -568,7 +568,7 @@ const SettingsContent: React.FC = () => {
               Cài đặt thông báo đẩy (Push Notifications)
             </h3>
 
-            <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+            <p className="rounded-lg border border-fb-warning/30 bg-fb-warning-soft p-3 text-fb-warning">
               Các lựa chọn và bản ghi được lưu riêng trên trình duyệt này.
               Backend chưa kết nối nhận thông báo đẩy, nên thay đổi tại đây chưa
               bật/tắt thông báo thật trên thiết bị.
@@ -577,18 +577,18 @@ const SettingsContent: React.FC = () => {
             {settingsError && (
               <p
                 role="alert"
-                className="rounded-lg border border-red-200 bg-red-50 p-3 text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-200"
+                className="rounded-lg border border-fb-danger/30 bg-fb-danger-soft p-3 text-fb-danger"
               >
                 {settingsError}
               </p>
             )}
 
-            <label className="flex items-center justify-between gap-4 rounded-lg bg-gray-50 p-3 dark:bg-[#1E1F20]">
+            <label className="flex items-center justify-between gap-4 rounded-lg bg-fb-inset p-3">
               <span>
                 <span className="block font-bold text-fb-text">
                   Bật thông báo đẩy
                 </span>
-                <span className="text-[11px] text-gray-500">
+                <span className="text-xs text-fb-text-2">
                   Tắt để lưu lựa chọn nhưng không muốn nhận thông báo.
                 </span>
               </span>
@@ -601,7 +601,7 @@ const SettingsContent: React.FC = () => {
                     enabled: event.target.checked,
                   })
                 }
-                className="h-4 w-4 rounded text-blue-600"
+                className="h-4 w-4 rounded text-fb-blue"
               />
             </label>
 
@@ -615,7 +615,7 @@ const SettingsContent: React.FC = () => {
               {pushNotificationTypes.map(({ id, label }) => (
                 <label
                   key={id}
-                  className="flex items-center justify-between gap-4 rounded-lg bg-gray-50 p-3 dark:bg-[#1E1F20]"
+                  className="flex items-center justify-between gap-4 rounded-lg bg-fb-inset p-3"
                 >
                   <span className="font-semibold text-fb-text">
                     {label}
@@ -632,12 +632,12 @@ const SettingsContent: React.FC = () => {
                         },
                       })
                     }
-                    className="h-4 w-4 rounded text-blue-600"
+                    className="h-4 w-4 rounded text-fb-blue"
                   />
                 </label>
               ))}
 
-              <fieldset className="space-y-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+              <fieldset className="space-y-3 rounded-lg border border-fb-divider p-3">
                 <legend className="px-1 font-bold text-fb-text">
                   Âm thanh thông báo
                 </legend>
@@ -659,7 +659,7 @@ const SettingsContent: React.FC = () => {
                   type="button"
                   onClick={previewDefaultSound}
                   disabled={!pushPreferences.enabled}
-                  className="rounded-lg border border-gray-300 px-3 py-1.5 font-semibold hover:bg-gray-100 disabled:cursor-not-allowed dark:border-gray-600 dark:hover:bg-[#3A3B3C]"
+                  className="rounded-lg border border-fb-divider px-3 py-1.5 font-semibold hover:bg-fb-hover disabled:cursor-not-allowed"
                 >
                   Nghe thử âm mặc định
                 </button>
@@ -678,8 +678,8 @@ const SettingsContent: React.FC = () => {
                   <span>Âm thanh bằng giọng nói của bạn</span>
                 </label>
                 {pushPreferences.soundMode === 'VOICE' && (
-                  <div className="space-y-3 rounded-lg bg-gray-50 p-3 dark:bg-[#1E1F20]">
-                    <p className="text-gray-500">
+                  <div className="space-y-3 rounded-lg bg-fb-inset p-3">
+                    <p className="text-fb-text-2">
                       Ghi âm tối đa 30 giây. Bản ghi được lưu riêng trên trình
                       duyệt này và chưa được phát cùng thông báo đẩy.
                     </p>
@@ -694,7 +694,7 @@ const SettingsContent: React.FC = () => {
                         disabled={isStartingVoiceRecording}
                         className={`rounded-lg px-3 py-2 font-bold text-white ${
                           isRecordingVoice
-                            ? 'bg-red-600 hover:bg-red-700'
+                            ? 'bg-fb-danger hover:bg-fb-danger/90'
                             : 'bg-fb-blue hover:bg-fb-blue-hover'
                         } disabled:cursor-not-allowed disabled:opacity-60`}
                       >
@@ -708,14 +708,14 @@ const SettingsContent: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => void removeVoiceRecording()}
-                          className="rounded-lg border border-gray-300 px-3 py-2 font-semibold hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-[#3A3B3C]"
+                          className="rounded-lg border border-fb-divider px-3 py-2 font-semibold hover:bg-fb-hover"
                         >
                           Xóa bản ghi
                         </button>
                       )}
                     </div>
                     {isLoadingVoice ? (
-                      <p role="status" className="text-gray-500">
+                      <p role="status" className="text-fb-text-2">
                         Đang tải bản ghi đã lưu…
                       </p>
                     ) : voicePreviewUrl ? (
@@ -726,7 +726,7 @@ const SettingsContent: React.FC = () => {
                         aria-label="Nghe thử bản ghi giọng nói"
                       />
                     ) : (
-                      <p className="text-gray-500">
+                      <p className="text-fb-text-2">
                         Bạn chưa có bản ghi. Cho phép sử dụng micro khi trình
                         duyệt yêu cầu.
                       </p>
@@ -748,7 +748,7 @@ const SettingsContent: React.FC = () => {
                 <p className="font-bold text-fb-text">
                   Chrome trên macOS · Thiết bị hiện tại
                 </p>
-                <span className="text-emerald-600 font-semibold">
+                <span className="text-fb-success font-semibold">
                   Đang hoạt động
                 </span>
               </div>
@@ -758,11 +758,11 @@ const SettingsContent: React.FC = () => {
 
         {activeTab === 'DELETE' && (
           <div className="space-y-4 text-xs">
-            <div className="p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 rounded-lg space-y-2">
-              <h4 className="font-bold text-red-700 dark:text-red-300 flex items-center gap-1.5">
+            <div className="p-4 bg-fb-danger-soft border border-fb-danger/30 rounded-lg space-y-2">
+              <h4 className="font-bold text-fb-danger flex items-center gap-1.5">
                 <AlertTriangle className="w-4 h-4" /> Cảnh báo xóa tài khoản
               </h4>
-              <p className="text-red-800 dark:text-red-200">
+              <p className="text-fb-danger">
                 Khi xóa tài khoản, mọi câu hỏi đã được phê duyệt sẽ được chuyển
                 giao sang tài sản chung của Viện đào tạo. Tài khoản sẽ có 30
                 ngày để hủy yêu cầu xóa.
@@ -774,7 +774,7 @@ const SettingsContent: React.FC = () => {
                     'warning',
                   )
                 }
-                className="mt-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold"
+                className="mt-2 px-4 py-2 bg-fb-danger hover:bg-fb-danger/90 text-white rounded-lg font-bold"
               >
                 Xác nhận yêu cầu xóa tài khoản
               </button>

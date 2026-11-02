@@ -27,7 +27,7 @@ export function PostMediaGallery({
     );
 
   return (
-    <div className="grid grid-cols-2 gap-1 overflow-hidden rounded-lg bg-gray-100 dark:bg-black">
+    <div className="grid grid-cols-2 gap-1 overflow-hidden rounded-lg bg-fb-input">
       {(onRemove ? urls : urls.slice(0, 4)).map((url, index) => (
         <div
           key={`${index}-${url.slice(0, 32)}`}

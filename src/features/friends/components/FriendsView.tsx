@@ -145,7 +145,7 @@ export const FriendsView: React.FC = () => {
                   }}
                   className="w-full px-3 py-2 text-left hover:bg-fb-hover text-fb-text flex items-center gap-2"
                 >
-                  <Users className="w-3.5 h-3.5 text-gray-500" />
+                  <Users className="w-3.5 h-3.5 text-fb-text-2" />
                   <span>Xem trang cá nhân</span>
                 </button>
 
@@ -156,7 +156,7 @@ export const FriendsView: React.FC = () => {
                       setOpenMenuUserId(null);
                       setConfirmAction({ type: 'UNFRIEND', user });
                     }}
-                    className="w-full px-3 py-2 text-left hover:bg-amber-50 dark:hover:bg-amber-950/30 text-amber-600 flex items-center gap-2"
+                    className="w-full px-3 py-2 text-left hover:bg-fb-warning-soft text-fb-warning flex items-center gap-2"
                   >
                     <UserMinus className="w-3.5 h-3.5" />
                     <span>Hủy kết bạn</span>
@@ -171,7 +171,7 @@ export const FriendsView: React.FC = () => {
                   }}
                   className="w-full px-3 py-2 text-left hover:bg-fb-hover text-fb-text flex items-center gap-2"
                 >
-                  <Shield className="w-3.5 h-3.5 text-gray-500" />
+                  <Shield className="w-3.5 h-3.5 text-fb-text-2" />
                   <span>Báo cáo trang cá nhân</span>
                 </button>
 
@@ -182,7 +182,7 @@ export const FriendsView: React.FC = () => {
                     setBlockReason('');
                     setConfirmAction({ type: 'BLOCK', user });
                   }}
-                  className="w-full px-3 py-2 text-left hover:bg-red-50 dark:hover:bg-red-950/30 text-red-600 font-semibold flex items-center gap-2 border-t border-fb-divider"
+                  className="w-full px-3 py-2 text-left hover:bg-fb-danger-soft text-fb-danger font-semibold flex items-center gap-2 border-t border-fb-divider"
                 >
                   <Ban className="w-3.5 h-3.5" />
                   <span>Chặn {user.name.split(' ').slice(-1)[0]}</span>
@@ -202,7 +202,7 @@ export const FriendsView: React.FC = () => {
             />
             {user.isOnline && (
               <span
-                className="absolute bottom-1 right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white dark:border-[#242526] rounded-full"
+                className="absolute bottom-1 right-1 w-3.5 h-3.5 bg-fb-success border-2 border-fb-card rounded-full"
                 title="Đang trực tuyến"
               />
             )}
@@ -214,11 +214,11 @@ export const FriendsView: React.FC = () => {
           >
             {user.name}
           </h4>
-          <p className="text-[11px] text-gray-500">{user.classOrTitle}</p>
-          <p className="text-[11px] text-gray-400 mt-0.5">{user.faculty}</p>
+          <p className="text-xs text-fb-text-2">{user.classOrTitle}</p>
+          <p className="text-xs text-fb-text-3 mt-0.5">{user.faculty}</p>
 
           {mutualCount > 0 && (
-            <span className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-fb-blue bg-blue-50 dark:bg-blue-950/40 px-2.5 py-0.5 rounded-full font-semibold">
+            <span className="mt-1.5 inline-flex items-center gap-1 text-xs text-fb-blue bg-fb-blue-soft px-2.5 py-0.5 rounded-full font-semibold">
               <Users className="w-3 h-3" /> {mutualCount} bạn chung
             </span>
           )}
@@ -231,8 +231,8 @@ export const FriendsView: React.FC = () => {
                   onClick={() => toggleFollowUser(user.id)}
                   className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition ${
                     isFollowing
-                      ? 'bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 hover:bg-purple-100'
-                      : 'bg-purple-600 hover:bg-purple-700 text-white'
+                      ? 'bg-fb-blue-soft text-fb-blue hover:bg-fb-blue/20'
+                      : 'bg-fb-blue hover:bg-fb-blue-hover text-white'
                   }`}
                 >
                   {isFollowing ? '✓ Đang theo dõi' : '+ Theo dõi GV'}
@@ -240,7 +240,7 @@ export const FriendsView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => openChatDock(user.id)}
-                  className="px-2.5 py-1.5 bg-fb-input hover:bg-gray-200 text-fb-text rounded-lg text-xs font-semibold"
+                  className="px-2.5 py-1.5 bg-fb-input hover:bg-fb-btn-hover text-fb-text rounded-lg text-xs font-semibold"
                   title="Nhắn tin cho Giảng viên"
                 >
                   <MessageCircle className="w-3.5 h-3.5" />
@@ -258,7 +258,7 @@ export const FriendsView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => declineFriendRequest(user.id)}
-                  className="py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-fb-text rounded-lg text-xs font-semibold transition"
+                  className="py-1.5 bg-fb-input hover:bg-fb-btn-hover text-fb-text rounded-lg text-xs font-semibold transition"
                 >
                   Xóa
                 </button>
@@ -268,14 +268,14 @@ export const FriendsView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => openChatDock(user.id)}
-                  className="flex-1 py-1.5 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-fb-blue rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition"
+                  className="flex-1 py-1.5 bg-fb-blue-soft hover:bg-fb-blue/20 text-fb-blue rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition"
                 >
                   <MessageCircle className="w-3.5 h-3.5" /> Nhắn tin
                 </button>
                 <button
                   type="button"
                   onClick={() => setConfirmAction({ type: 'UNFRIEND', user })}
-                  className="px-2.5 py-1.5 bg-fb-input hover:bg-red-50 dark:hover:bg-red-950/40 text-fb-text-2 hover:text-red-600 rounded-lg text-xs font-semibold transition flex items-center gap-1"
+                  className="px-2.5 py-1.5 bg-fb-input hover:bg-fb-danger-soft text-fb-text-2 hover:text-fb-danger rounded-lg text-xs font-semibold transition flex items-center gap-1"
                   title="Hủy kết bạn"
                 >
                   <UserMinus className="w-3.5 h-3.5" />
@@ -286,7 +286,7 @@ export const FriendsView: React.FC = () => {
                     setBlockReason('');
                     setConfirmAction({ type: 'BLOCK', user });
                   }}
-                  className="px-2.5 py-1.5 bg-fb-input hover:bg-red-50 dark:hover:bg-red-950/40 text-fb-text-2 hover:text-red-600 rounded-lg text-xs font-semibold transition"
+                  className="px-2.5 py-1.5 bg-fb-input hover:bg-fb-danger-soft text-fb-text-2 hover:text-fb-danger rounded-lg text-xs font-semibold transition"
                   title="Chặn người dùng này"
                 >
                   <Ban className="w-3.5 h-3.5" />
@@ -296,7 +296,7 @@ export const FriendsView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => cancelFriendRequest(user.id)}
-                className="w-full py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-fb-text rounded-lg text-xs font-semibold transition"
+                className="w-full py-1.5 bg-fb-input hover:bg-fb-btn-hover text-fb-text rounded-lg text-xs font-semibold transition"
               >
                 Hủy lời mời đã gửi
               </button>
@@ -313,7 +313,7 @@ export const FriendsView: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => dismissSuggestion(user.id)}
-                    className="px-2.5 py-1.5 bg-fb-input hover:bg-gray-200 text-fb-text-2 rounded-lg text-xs font-semibold"
+                    className="px-2.5 py-1.5 bg-fb-input hover:bg-fb-btn-hover text-fb-text-2 rounded-lg text-xs font-semibold"
                     title="Ẩn gợi ý này"
                   >
                     Gỡ
@@ -342,15 +342,15 @@ export const FriendsView: React.FC = () => {
               onClick={() => setActiveMenu('ALL')}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition text-left ${
                 activeMenu === 'ALL'
-                  ? 'bg-blue-50 dark:bg-blue-950/40 text-fb-blue font-bold'
+                  ? 'bg-fb-blue-soft text-fb-blue font-bold'
                   : 'hover:bg-fb-hover'
               }`}
             >
               <div className="flex items-center gap-3">
-                <Users className="w-4 h-4 text-blue-500" />
+                <Users className="w-4 h-4 text-fb-blue" />
                 <span>Tất cả bạn bè</span>
               </div>
-              <span className="bg-fb-input text-fb-text text-[11px] px-2 py-0.5 rounded-full font-bold">
+              <span className="bg-fb-input text-fb-text text-xs px-2 py-0.5 rounded-full font-bold">
                 {currentUser.friendsCount}
               </span>
             </button>
@@ -360,20 +360,20 @@ export const FriendsView: React.FC = () => {
               onClick={() => setActiveMenu('REQUESTS')}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition text-left ${
                 activeMenu === 'REQUESTS'
-                  ? 'bg-blue-50 dark:bg-blue-950/40 text-fb-blue font-bold'
+                  ? 'bg-fb-blue-soft text-fb-blue font-bold'
                   : 'hover:bg-fb-hover'
               }`}
             >
               <div className="flex items-center gap-3">
-                <UserPlus className="w-4 h-4 text-emerald-500" />
+                <UserPlus className="w-4 h-4 text-fb-success" />
                 <span>Lời mời kết bạn</span>
               </div>
               {incomingRequests.length > 0 ? (
-                <span className="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
+                <span className="bg-fb-blue text-white text-xs px-2 py-0.5 rounded-full font-bold">
                   {incomingRequests.length}
                 </span>
               ) : (
-                <span className="text-[10px] text-gray-400">0</span>
+                <span className="text-xs text-fb-text-3">0</span>
               )}
             </button>
 
@@ -382,15 +382,15 @@ export const FriendsView: React.FC = () => {
               onClick={() => setActiveMenu('SUGGESTIONS')}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition text-left ${
                 activeMenu === 'SUGGESTIONS'
-                  ? 'bg-blue-50 dark:bg-blue-950/40 text-fb-blue font-bold'
+                  ? 'bg-fb-blue-soft text-fb-blue font-bold'
                   : 'hover:bg-fb-hover'
               }`}
             >
               <div className="flex items-center gap-3">
-                <Sparkles className="w-4 h-4 text-amber-500" />
+                <Sparkles className="w-4 h-4 text-fb-warning" />
                 <span>Gợi ý cùng khoa / lớp</span>
               </div>
-              <span className="text-[11px] text-gray-400">
+              <span className="text-xs text-fb-text-3">
                 {suggestionsList.length}
               </span>
             </button>
@@ -400,15 +400,15 @@ export const FriendsView: React.FC = () => {
               onClick={() => setActiveMenu('FOLLOWING')}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition text-left ${
                 activeMenu === 'FOLLOWING'
-                  ? 'bg-blue-50 dark:bg-blue-950/40 text-fb-blue font-bold'
+                  ? 'bg-fb-blue-soft text-fb-blue font-bold'
                   : 'hover:bg-fb-hover'
               }`}
             >
               <div className="flex items-center gap-3">
-                <UserCheck className="w-4 h-4 text-purple-500" />
+                <UserCheck className="w-4 h-4 text-fb-blue" />
                 <span>Đang theo dõi Giảng viên</span>
               </div>
-              <span className="text-[11px] text-gray-400">
+              <span className="text-xs text-fb-text-3">
                 {
                   lecturersList.filter((u) => followingIds.includes(u.id))
                     .length
@@ -422,19 +422,19 @@ export const FriendsView: React.FC = () => {
                 onClick={() => setActiveMenu('BLOCKED')}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition text-left ${
                   activeMenu === 'BLOCKED'
-                    ? 'bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 font-bold'
+                    ? 'bg-fb-danger-soft text-fb-danger font-bold'
                     : 'hover:bg-fb-hover text-fb-text'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <Ban className="w-4 h-4 text-red-500" />
+                  <Ban className="w-4 h-4 text-fb-danger" />
                   <span>Danh sách đã chặn</span>
                 </div>
                 <span
-                  className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                  className={`text-xs px-2 py-0.5 rounded-full font-bold ${
                     blockedUsers.length > 0
-                      ? 'bg-red-600 text-white'
-                      : 'bg-fb-input text-gray-500'
+                      ? 'bg-fb-danger text-white'
+                      : 'bg-fb-input text-fb-text-2'
                   }`}
                 >
                   {blockedUsers.length}
@@ -462,7 +462,7 @@ export const FriendsView: React.FC = () => {
               {activeMenu === 'BLOCKED' &&
                 `Quản lý danh sách chặn (${blockedUsers.length} người đang bị chặn)`}
             </h3>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-xs text-fb-text-2 mt-0.5">
               {activeMenu === 'BLOCKED'
                 ? 'Chặn và bỏ chặn bất kỳ ai không giới hạn thời gian chờ (chuẩn đặc tả Slide 24).'
                 : 'Kết nối bạn bè cùng lớp, trao đổi câu hỏi ôn tập và theo dõi giảng viên bộ môn.'}
@@ -471,7 +471,7 @@ export const FriendsView: React.FC = () => {
 
           {activeMenu !== 'BLOCKED' && (
             <div className="relative w-full sm:w-72">
-              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+              <Search className="w-4 h-4 text-fb-text-3 absolute left-3 top-2.5" />
               <input
                 type="text"
                 placeholder="Tìm theo tên, lớp, khoa..."
@@ -492,7 +492,7 @@ export const FriendsView: React.FC = () => {
               </div>
             ) : (
               <div className="bg-fb-card rounded-lg border border-fb-divider p-10 text-center space-y-3">
-                <Users className="w-10 h-10 text-gray-400 mx-auto" />
+                <Users className="w-10 h-10 text-fb-text-3 mx-auto" />
                 <p className="font-bold text-sm text-fb-text">
                   {searchTerm
                     ? `Không tìm thấy người bạn nào khớp với "${searchTerm}"`
@@ -514,7 +514,7 @@ export const FriendsView: React.FC = () => {
         {activeMenu === 'REQUESTS' && (
           <div className="space-y-6">
             <div className="space-y-3">
-              <h4 className="font-bold text-xs text-gray-500 px-1">
+              <h4 className="font-bold text-xs text-fb-text-2 px-1">
                 Lời mời kết bạn nhận được ({filteredIncoming.length})
               </h4>
               {filteredIncoming.length > 0 ? (
@@ -522,14 +522,14 @@ export const FriendsView: React.FC = () => {
                   {filteredIncoming.map(renderUserCard)}
                 </div>
               ) : (
-                <div className="bg-fb-card rounded-lg border border-fb-divider p-6 text-center text-xs text-gray-500">
+                <div className="bg-fb-card rounded-lg border border-fb-divider p-6 text-center text-xs text-fb-text-2">
                   Không có lời mời kết bạn nào đang chờ xác nhận.
                 </div>
               )}
             </div>
 
             <div className="space-y-3">
-              <h4 className="font-bold text-xs text-gray-500 px-1">
+              <h4 className="font-bold text-xs text-fb-text-2 px-1">
                 Lời mời bạn đã gửi ({filteredSent.length})
               </h4>
               {filteredSent.length > 0 ? (
@@ -537,7 +537,7 @@ export const FriendsView: React.FC = () => {
                   {filteredSent.map(renderUserCard)}
                 </div>
               ) : (
-                <div className="bg-fb-card rounded-lg border border-fb-divider p-6 text-center text-xs text-gray-500">
+                <div className="bg-fb-card rounded-lg border border-fb-divider p-6 text-center text-xs text-fb-text-2">
                   Bạn chưa gửi lời mời kết bạn mới nào.
                 </div>
               )}
@@ -553,7 +553,7 @@ export const FriendsView: React.FC = () => {
                 {filteredSuggestions.map(renderUserCard)}
               </div>
             ) : (
-              <div className="bg-fb-card rounded-lg border border-fb-divider p-10 text-center text-xs text-gray-500">
+              <div className="bg-fb-card rounded-lg border border-fb-divider p-10 text-center text-xs text-fb-text-2">
                 Hiện không còn gợi ý kết bạn mới.
               </div>
             )}
@@ -568,7 +568,7 @@ export const FriendsView: React.FC = () => {
                 {filteredLecturers.map(renderUserCard)}
               </div>
             ) : (
-              <div className="bg-fb-card rounded-lg border border-fb-divider p-10 text-center text-xs text-gray-500">
+              <div className="bg-fb-card rounded-lg border border-fb-divider p-10 text-center text-xs text-fb-text-2">
                 Không tìm thấy giảng viên nào.
               </div>
             )}
@@ -581,10 +581,10 @@ export const FriendsView: React.FC = () => {
             {/* Thêm nhanh người vào danh sách chặn */}
             <div className="bg-fb-card rounded-lg border border-fb-divider p-4 space-y-3">
               <h4 className="font-bold text-xs text-fb-text flex items-center gap-2">
-                <Ban className="w-4 h-4 text-red-600" />
+                <Ban className="w-4 h-4 text-fb-danger" />
                 <span>Thêm người dùng vào danh sách chặn</span>
               </h4>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-fb-text-2">
                 Khi bạn chặn một người: hai người sẽ tự động hủy kết bạn, không
                 thể nhắn tin, không thể xem trang cá nhân của nhau, và bạn sẽ
                 không nhìn thấy bình luận của người đó (nhưng bình luận & lượt
@@ -626,7 +626,7 @@ export const FriendsView: React.FC = () => {
                       setQuickBlockUserId('');
                     }
                   }}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 text-white rounded-lg text-xs font-bold transition shrink-0"
+                  className="px-4 py-2 bg-fb-danger hover:bg-fb-danger/90 disabled:bg-fb-divider text-white rounded-lg text-xs font-bold transition shrink-0"
                 >
                   Chặn người dùng
                 </button>
@@ -639,22 +639,22 @@ export const FriendsView: React.FC = () => {
                 <h4 className="font-bold text-sm text-fb-text">
                   Danh sách người bạn đang chặn ({blockedUsers.length})
                 </h4>
-                <span className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
+                <span className="text-xs text-fb-success font-semibold flex items-center gap-1">
                   <CheckCircle2 className="w-3.5 h-3.5" /> Bỏ chặn & chặn lại
                   không giới hạn thời gian
                 </span>
               </div>
 
               {blockedUsers.length === 0 ? (
-                <div className="py-8 text-center text-xs text-gray-500 space-y-1">
-                  <Shield className="w-8 h-8 text-gray-400 mx-auto mb-1" />
+                <div className="py-8 text-center text-xs text-fb-text-2 space-y-1">
+                  <Shield className="w-8 h-8 text-fb-text-3 mx-auto mb-1" />
                   <p className="font-semibold text-fb-text">
                     Danh sách chặn đang trống
                   </p>
                   <p>Bạn hiện không chặn bất kỳ người dùng nào.</p>
                 </div>
               ) : (
-                <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                <div className="divide-y divide-fb-divider">
                   {blockedUsers.map((entry) => {
                     const blockedUser = allUsers.find(
                       (u) => u.id === entry.userId,
@@ -676,14 +676,14 @@ export const FriendsView: React.FC = () => {
                               <span className="font-bold text-xs text-fb-text">
                                 {blockedUser.name}
                               </span>
-                              <span className="text-[10px] bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full font-bold">
+                              <span className="text-xs bg-fb-danger-soft text-fb-danger px-2 py-0.5 rounded-full font-bold">
                                 Đã chặn
                               </span>
                             </div>
-                            <p className="text-[11px] text-gray-500">
+                            <p className="text-xs text-fb-text-2">
                               {blockedUser.classOrTitle} · {blockedUser.faculty}
                             </p>
-                            <p className="text-[10px] text-gray-400 flex items-center gap-1 mt-0.5">
+                            <p className="text-xs text-fb-text-3 flex items-center gap-1 mt-0.5">
                               <Clock className="w-3 h-3" /> Chặn lúc:{' '}
                               {entry.blockedAt}
                               {entry.reason ? ` · Lý do: ${entry.reason}` : ''}
@@ -695,7 +695,7 @@ export const FriendsView: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => handleOpenProfile(blockedUser.id)}
-                            className="px-3 py-1.5 bg-fb-input hover:bg-gray-200 text-fb-text rounded-lg text-xs font-semibold transition"
+                            className="px-3 py-1.5 bg-fb-input hover:bg-fb-btn-hover text-fb-text rounded-lg text-xs font-semibold transition"
                           >
                             Kiểm tra trang cá nhân
                           </button>
@@ -716,17 +716,17 @@ export const FriendsView: React.FC = () => {
             </div>
 
             {/* Bảng mô phỏng trường hợp "Người khác chặn bạn" để kiểm thử đủ chiều 2 người */}
-            <div className="bg-amber-50/60 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800/60 p-4 space-y-3">
+            <div className="bg-fb-warning-soft/60 rounded-lg border border-fb-warning/30 p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="font-bold text-xs text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                  <h4 className="font-bold text-xs text-fb-warning flex items-center gap-1.5">
                     <EyeOff className="w-4 h-4" />
                     <span>
                       Chế độ kiểm thử chiều ngược lại: Mô phỏng người khác chặn
                       bạn ({blockedByOtherIds.length})
                     </span>
                   </h4>
-                  <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80 mt-0.5">
+                  <p className="text-xs text-fb-warning/80 mt-0.5">
                     Bật công tắc bên dưới để kiểm tra trường hợp đối phương chặn
                     bạn: bạn cũng sẽ bị hủy kết bạn, không xem được trang cá
                     nhân và không nhắn tin được cho họ.
@@ -755,10 +755,10 @@ export const FriendsView: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => toggleSimulatedBlockedByOther(u.id)}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold shrink-0 transition ${
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold shrink-0 transition ${
                           blockingMe
-                            ? 'bg-red-600 text-white'
-                            : 'bg-fb-input text-fb-text-2 hover:bg-gray-200'
+                            ? 'bg-fb-danger text-white'
+                            : 'bg-fb-input text-fb-text-2 hover:bg-fb-btn-hover'
                         }`}
                       >
                         {blockingMe ? 'Đang chặn bạn' : 'Bình thường'}
@@ -780,12 +780,12 @@ export const FriendsView: React.FC = () => {
               <h3 className="font-bold text-sm text-fb-text flex items-center gap-2">
                 {confirmAction.type === 'BLOCK' ? (
                   <>
-                    <Ban className="w-4 h-4 text-red-600" />
+                    <Ban className="w-4 h-4 text-fb-danger" />
                     <span>Chặn {confirmAction.user.name}?</span>
                   </>
                 ) : (
                   <>
-                    <UserMinus className="w-4 h-4 text-amber-600" />
+                    <UserMinus className="w-4 h-4 text-fb-warning" />
                     <span>Hủy kết bạn với {confirmAction.user.name}?</span>
                   </>
                 )}
@@ -795,7 +795,7 @@ export const FriendsView: React.FC = () => {
                 onClick={() => setConfirmAction(null)}
                 className="p-1 rounded-full hover:bg-fb-hover"
               >
-                <X className="w-4 h-4 text-gray-500" />
+                <X className="w-4 h-4 text-fb-text-2" />
               </button>
             </div>
 
@@ -804,7 +804,7 @@ export const FriendsView: React.FC = () => {
                 <p>
                   Khi bạn chặn <strong>{confirmAction.user.name}</strong>:
                 </p>
-                <ul className="space-y-1.5 list-disc pl-4 text-[11px]">
+                <ul className="space-y-1.5 list-disc pl-4 text-xs">
                   <li>
                     Người này sẽ <strong>không còn là bạn bè</strong> của bạn
                     (tự động hủy kết bạn).
@@ -829,7 +829,7 @@ export const FriendsView: React.FC = () => {
                   </li>
                 </ul>
                 <div>
-                  <label className="block text-[11px] font-semibold text-gray-500 mb-1">
+                  <label className="block text-xs font-semibold text-fb-text-2 mb-1">
                     Ghi chú lý do chặn (tùy chọn):
                   </label>
                   <input
@@ -853,7 +853,7 @@ export const FriendsView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setConfirmAction(null)}
-                className="px-4 py-2 rounded-lg text-xs font-semibold bg-fb-input text-fb-text hover:bg-gray-200"
+                className="px-4 py-2 rounded-lg text-xs font-semibold bg-fb-input text-fb-text hover:bg-fb-btn-hover"
               >
                 Hủy
               </button>
@@ -869,8 +869,8 @@ export const FriendsView: React.FC = () => {
                 }}
                 className={`px-4 py-2 rounded-lg text-xs font-bold text-white ${
                   confirmAction.type === 'BLOCK'
-                    ? 'bg-red-600 hover:bg-red-700'
-                    : 'bg-amber-600 hover:bg-amber-700'
+                    ? 'bg-fb-danger hover:bg-fb-danger/90'
+                    : 'bg-fb-warning hover:bg-fb-warning/90'
                 }`}
               >
                 {confirmAction.type === 'BLOCK'

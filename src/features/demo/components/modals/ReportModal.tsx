@@ -21,7 +21,7 @@ export const ReportModal: React.FC = () => {
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60">
       <div className="bg-fb-card rounded-lg shadow-2xl max-w-md w-full p-5 border border-fb-divider space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-fb-divider">
-          <div className="flex items-center gap-2 text-red-600">
+          <div className="flex items-center gap-2 text-fb-danger">
             <ShieldAlert className="w-5 h-5" />
             <h3 className="font-bold text-sm text-fb-text">
               Báo cáo vi phạm (REL.13)
@@ -29,7 +29,7 @@ export const ReportModal: React.FC = () => {
           </div>
           <button
             onClick={closeReportModal}
-            className="p-1 rounded-full hover:bg-gray-100 text-gray-500"
+            className="p-1 rounded-full hover:bg-fb-hover text-fb-text-2"
           >
             <X className="w-4 h-4" />
           </button>
@@ -47,7 +47,7 @@ export const ReportModal: React.FC = () => {
             <select
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-fb-input"
+              className="w-full p-2 border border-fb-divider rounded-lg bg-fb-input"
             >
               <option value="Nội dung sai kiến thức học thuật">Sai kiến thức học thuật / đề sai</option>
               <option value="Spam hoặc quảng cáo">Spam hoặc quảng cáo không liên quan</option>
@@ -66,7 +66,7 @@ export const ReportModal: React.FC = () => {
               placeholder="Cung cấp thêm chi tiết để hội đồng xử lý..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-fb-input"
+              className="w-full p-2 border border-fb-divider rounded-lg bg-fb-input"
             />
           </div>
 
@@ -80,7 +80,7 @@ export const ReportModal: React.FC = () => {
             </button>
             <button
               type="submit"
-              className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xs"
+              className="px-5 py-2 bg-fb-danger hover:bg-fb-danger/90 text-white rounded-lg font-bold text-xs"
             >
               Gửi báo cáo
             </button>

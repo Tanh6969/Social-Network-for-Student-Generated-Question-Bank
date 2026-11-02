@@ -51,11 +51,11 @@ function CommentRow({
         onClick={openAuthorProfile}
       />
       <div className="min-w-0 flex-1">
-        <div className="rounded-lg bg-gray-100 px-3 py-2 dark:bg-[#3A3B3C]">
+        <div className="rounded-lg bg-fb-input px-3 py-2">
           <button
             type="button"
             onClick={openAuthorProfile}
-            className="block text-left font-bold text-gray-900 hover:underline dark:text-gray-100"
+            className="block text-left font-bold text-fb-text hover:underline"
           >
             {comment.author.name}
           </button>
@@ -63,7 +63,7 @@ function CommentRow({
             {comment.content}
           </p>
         </div>
-        <div className="flex items-center gap-3 px-2 pt-1 text-[11px] text-gray-500">
+        <div className="flex items-center gap-3 px-2 pt-1 text-xs text-fb-text-2">
           <span>{formatPostTime(comment.createdAt)}</span>
           {onReply && (
             <button

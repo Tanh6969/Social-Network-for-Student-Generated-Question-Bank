@@ -83,11 +83,11 @@ export const MessengerFullView: React.FC = () => {
         {/* ================= CỘT TRÁI (360px): Danh sách hội thoại ================= */}
         <aside className="w-80 md:w-90 shrink-0 border-r border-fb-divider flex flex-col select-none">
           <div className="p-4 border-b border-fb-divider space-y-3">
-            <h2 className="text-xl font-black text-fb-text">
+            <h2 className="text-xl font-bold text-fb-text">
               Đoạn chat
             </h2>
             <div className="relative">
-              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+              <Search className="w-4 h-4 text-fb-text-3 absolute left-3 top-2.5" />
               <input
                 type="text"
                 placeholder="Tìm kiếm trong Messenger..."
@@ -102,7 +102,7 @@ export const MessengerFullView: React.FC = () => {
                 onClick={() => setFilterTab('ALL')}
                 className={`px-3 py-1 rounded-full transition ${
                   filterTab === 'ALL'
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-fb-blue text-white'
                     : 'bg-fb-input text-fb-text-2'
                 }`}
               >
@@ -112,7 +112,7 @@ export const MessengerFullView: React.FC = () => {
                 onClick={() => setFilterTab('UNREAD')}
                 className={`px-3 py-1 rounded-full transition ${
                   filterTab === 'UNREAD'
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-fb-blue text-white'
                     : 'bg-fb-input text-fb-text-2'
                 }`}
               >
@@ -122,7 +122,7 @@ export const MessengerFullView: React.FC = () => {
           </div>
 
           {/* Conversations List */}
-          <div className="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800 p-2 space-y-1">
+          <div className="flex-1 overflow-y-auto divide-y divide-fb-divider p-2 space-y-1">
             {filteredConversations.map((conv) => {
               const blocked = isBlockedEitherWay(conv.partner.id);
               return (
@@ -131,7 +131,7 @@ export const MessengerFullView: React.FC = () => {
                   onClick={() => setActiveConvId(conv.id)}
                   className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition ${
                     activeConv?.id === conv.id
-                      ? 'bg-blue-50 dark:bg-blue-950/40'
+                      ? 'bg-fb-blue-soft'
                       : 'hover:bg-fb-hover'
                   }`}
                 >
@@ -141,12 +141,12 @@ export const MessengerFullView: React.FC = () => {
                       <p className="font-bold text-xs text-fb-text truncate flex items-center gap-1.5">
                         <span>{conv.partner.name}</span>
                         {blocked && (
-                          <span className="text-[9px] bg-red-100 dark:bg-red-950 text-red-600 px-1.5 py-0.2 rounded-full font-bold">
+                          <span className="text-xs bg-fb-danger-soft text-fb-danger px-1.5 py-0.2 rounded-full font-bold">
                             Đã chặn
                           </span>
                         )}
                       </p>
-                      <span className="text-[10px] text-gray-400">
+                      <span className="text-xs text-fb-text-3">
                         {conv.lastMessageTime}
                       </span>
                     </div>
@@ -163,7 +163,7 @@ export const MessengerFullView: React.FC = () => {
         </aside>
 
         {/* ================= CỘT GIỮA: Khung chat ================= */}
-        <main className="flex-1 flex flex-col min-w-0 bg-[#F9FAFB] dark:bg-[#18191A]">
+        <main className="flex-1 flex flex-col min-w-0 bg-fb-inset">
           {activeConv ? (
             <>
               {/* Header */}
@@ -181,11 +181,11 @@ export const MessengerFullView: React.FC = () => {
                       {activeConv.partner.name}
                     </h3>
                     {isPartnerBlocked ? (
-                      <span className="text-[10px] text-red-500 font-semibold">
+                      <span className="text-xs text-fb-danger font-semibold">
                         Không thể liên lạc (Đang chặn)
                       </span>
                     ) : (
-                      <span className="text-[10px] text-emerald-500 font-medium">
+                      <span className="text-xs text-fb-success font-medium">
                         {activeConv.partner.isOnline
                           ? 'Đang hoạt động'
                           : 'Hoạt động 10 phút trước'}
@@ -194,7 +194,7 @@ export const MessengerFullView: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 text-blue-600">
+                <div className="flex items-center gap-2 text-fb-blue">
                   <button
                     disabled={isPartnerBlocked}
                     onClick={() =>
@@ -230,7 +230,7 @@ export const MessengerFullView: React.FC = () => {
                         {isMine && !msg.isRecalled && (
                           <button
                             onClick={() => recallMessage(activeConv.id, msg.id)}
-                            className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 p-1"
+                            className="opacity-0 group-hover:opacity-100 text-fb-text-3 hover:text-fb-danger p-1"
                             title="Thu hồi tin nhắn"
                           >
                             <Undo2 className="w-3.5 h-3.5" />
@@ -240,20 +240,20 @@ export const MessengerFullView: React.FC = () => {
                         <div
                           className={`p-3 rounded-lg ${
                             msg.isRecalled
-                              ? 'bg-gray-200 dark:bg-gray-800 text-gray-500 italic'
+                              ? 'bg-fb-btn text-fb-text-2 italic'
                               : isMine
-                                ? 'bg-blue-600 text-white rounded-br-xs shadow-fb-card'
+                                ? 'bg-fb-blue text-white rounded-br-xs shadow-fb-card'
                                 : 'bg-fb-card text-fb-text rounded-bl-xs shadow-xs'
                           } ${
                             msg.effect === 'effect_glow' && isMine
-                              ? 'ring-2 ring-cyan-300 shadow-[0_0_10px_rgba(6,182,212,0.6)]'
+                              ? 'ring-2 ring-fb-blue/30 shadow-[0_0_10px_rgba(6,182,212,0.6)]'
                               : ''
                           }`}
                         >
                           {msg.text}
                         </div>
                       </div>
-                      <span className="text-[10px] text-gray-400 mt-0.5 px-1">
+                      <span className="text-xs text-fb-text-3 mt-0.5 px-1">
                         {msg.timestamp} {isMine && '✓'}
                       </span>
                     </div>
@@ -263,8 +263,8 @@ export const MessengerFullView: React.FC = () => {
 
               {/* Input Footer hoặc Thông báo bị chặn (Slide 24: hai người không thể trao đổi tin nhắn với nhau được nữa) */}
               {isPartnerBlocked ? (
-                <div className="p-4 bg-red-50/80 dark:bg-red-950/30 border-t border-red-200 dark:border-red-900/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-                  <div className="flex items-center gap-2.5 text-red-700 dark:text-red-300">
+                <div className="p-4 bg-fb-danger-soft/80 border-t border-fb-danger/30 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2.5 text-fb-danger">
                     <Ban className="w-4 h-4 shrink-0" />
                     <span>
                       {isPartnerBlockedByMe
@@ -298,7 +298,7 @@ export const MessengerFullView: React.FC = () => {
                   <button
                     onClick={handleSend}
                     disabled={!inputText.trim()}
-                    className="p-2.5 rounded-full bg-blue-600 text-white disabled:bg-gray-300 transition"
+                    className="p-2.5 rounded-full bg-fb-blue text-white disabled:bg-fb-divider transition"
                   >
                     <Send className="w-4 h-4" />
                   </button>
@@ -306,7 +306,7 @@ export const MessengerFullView: React.FC = () => {
               )}
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-gray-400">
+            <div className="flex-1 flex items-center justify-center text-fb-text-3">
               Chọn một đoạn chat để bắt đầu trò chuyện
             </div>
           )}
@@ -321,10 +321,10 @@ export const MessengerFullView: React.FC = () => {
                 <h4 className="font-bold text-sm text-fb-text mt-2">
                   {activeConv.partner.name}
                 </h4>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-fb-text-2">
                   {activeConv.partner.classOrTitle}
                 </p>
-                <p className="text-[11px] text-gray-400">
+                <p className="text-xs text-fb-text-3">
                   {activeConv.partner.faculty}
                 </p>
               </div>
@@ -338,7 +338,7 @@ export const MessengerFullView: React.FC = () => {
                   }}
                   className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-fb-hover transition"
                 >
-                  <User className="w-4 h-4 text-gray-500" />
+                  <User className="w-4 h-4 text-fb-text-2" />
                   <span>Xem trang cá nhân</span>
                 </button>
 
@@ -352,7 +352,7 @@ export const MessengerFullView: React.FC = () => {
                   }
                   className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-fb-hover transition"
                 >
-                  <BellOff className="w-4 h-4 text-gray-500" />
+                  <BellOff className="w-4 h-4 text-fb-text-2" />
                   <span>Tắt thông báo</span>
                 </button>
 
@@ -365,7 +365,7 @@ export const MessengerFullView: React.FC = () => {
                       activeConv.partner.name,
                     )
                   }
-                  className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-950/30 text-amber-600 transition"
+                  className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-fb-warning-soft text-fb-warning transition"
                 >
                   <Shield className="w-4 h-4" />
                   <span>Báo cáo cuộc trò chuyện</span>
@@ -375,7 +375,7 @@ export const MessengerFullView: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => unblockUser(activeConv.partner.id)}
-                    className="w-full flex items-center gap-3 p-2 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 font-bold transition"
+                    className="w-full flex items-center gap-3 p-2 rounded-lg bg-fb-blue-soft text-fb-blue font-bold transition"
                   >
                     <Unlock className="w-4 h-4" />
                     <span>Bỏ chặn {activeConv.partner.name}</span>
@@ -390,7 +390,7 @@ export const MessengerFullView: React.FC = () => {
                           'Chặn từ khung chat Messenger',
                         )
                       }
-                      className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-red-600 font-bold transition"
+                      className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-fb-danger-soft text-fb-danger font-bold transition"
                     >
                       <Ban className="w-4 h-4" />
                       <span>Chặn {activeConv.partner.name}</span>

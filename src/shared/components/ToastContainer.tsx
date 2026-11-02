@@ -11,17 +11,17 @@ export const ToastContainer: React.FC = () => {
     <div className="fixed top-16 right-4 z-[300] flex flex-col gap-2 max-w-sm pointer-events-none">
       {toasts.map((toast) => {
         const iconMap = {
-          success: <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />,
-          warning: <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />,
-          error: <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />,
-          info: <Info className="w-5 h-5 text-blue-500 shrink-0" />
+          success: <CheckCircle2 className="w-5 h-5 text-fb-success shrink-0" />,
+          warning: <AlertTriangle className="w-5 h-5 text-fb-warning shrink-0" />,
+          error: <AlertCircle className="w-5 h-5 text-fb-danger shrink-0" />,
+          info: <Info className="w-5 h-5 text-fb-blue shrink-0" />
         };
 
         const borderMap = {
-          success: 'border-l-4 border-l-emerald-500',
-          warning: 'border-l-4 border-l-amber-500',
-          error: 'border-l-4 border-l-red-500',
-          info: 'border-l-4 border-l-blue-500'
+          success: 'border-l-4 border-l-fb-success',
+          warning: 'border-l-4 border-l-fb-warning',
+          error: 'border-l-4 border-l-fb-danger',
+          info: 'border-l-4 border-l-fb-blue'
         };
 
         return (
@@ -33,7 +33,7 @@ export const ToastContainer: React.FC = () => {
             <p className="text-xs font-medium flex-1 pt-0.5">{toast.message}</p>
             <button
               onClick={() => removeToast(toast.id)}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5"
+              className="text-fb-text-3 hover:text-fb-text-2 p-0.5"
             >
               <X className="w-3.5 h-3.5" />
             </button>

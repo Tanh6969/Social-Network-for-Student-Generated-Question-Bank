@@ -33,13 +33,13 @@ export const ExamsView: React.FC = () => {
   if (role !== 'LECTURER') {
     return (
       <div className="w-full max-w-2xl mx-auto px-4 py-16 text-center space-y-4">
-        <div className="w-16 h-16 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto shadow-xs">
+        <div className="w-16 h-16 rounded-full bg-fb-warning-soft text-fb-warning flex items-center justify-center mx-auto shadow-xs">
           <ShieldAlert className="w-8 h-8" />
         </div>
         <h2 className="text-xl font-bold text-fb-text">
           Khu vực dành riêng cho Giảng viên
         </h2>
-        <p className="text-xs text-gray-500 max-w-md mx-auto leading-relaxed">
+        <p className="text-xs text-fb-text-2 max-w-md mx-auto leading-relaxed">
           Chức năng Quản lý đề thi và Xuất ngân hàng câu hỏi chỉ khả dụng cho tài khoản Giảng viên để bảo mật ma trận đề thi và đáp án học thuật.
         </p>
         <div className="pt-2 flex items-center justify-center gap-3">
@@ -54,7 +54,7 @@ export const ExamsView: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveTab('feed')}
-            className="px-4 py-2 bg-fb-input text-fb-text rounded-lg text-xs font-semibold hover:bg-gray-200 transition cursor-pointer"
+            className="px-4 py-2 bg-fb-input text-fb-text rounded-lg text-xs font-semibold hover:bg-fb-btn-hover transition cursor-pointer"
           >
             Quay về Trang chủ
           </button>
@@ -80,13 +80,13 @@ export const ExamsView: React.FC = () => {
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="p-2.5 rounded-lg bg-blue-600 text-white shadow-xs">
+              <span className="p-2.5 rounded-lg bg-fb-blue text-white shadow-xs">
                 <FileCode className="w-5 h-5" />
               </span>
-              <h1 className="text-xl sm:text-2xl font-black text-fb-text tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-bold text-fb-text tracking-tight">
                 Quản lý Đề thi & Xuất dữ liệu
               </h1>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-fb-blue-soft text-fb-blue">
                 Dành cho Giảng viên
               </span>
             </div>
@@ -123,7 +123,7 @@ export const ExamsView: React.FC = () => {
               onClick={() => setActiveSubTab('LIST')}
               className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer shrink-0 ${
                 activeSubTab === 'LIST'
-                  ? 'bg-blue-600 text-white shadow-xs'
+                  ? 'bg-fb-blue text-white shadow-xs'
                   : 'bg-fb-input text-fb-text hover:bg-fb-btn-hover'
               }`}
             >
@@ -136,7 +136,7 @@ export const ExamsView: React.FC = () => {
               onClick={() => setActiveSubTab('GENERATE')}
               className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer shrink-0 ${
                 activeSubTab === 'GENERATE'
-                  ? 'bg-blue-600 text-white shadow-xs'
+                  ? 'bg-fb-blue text-white shadow-xs'
                   : 'bg-fb-input text-fb-text hover:bg-fb-btn-hover'
               }`}
             >
@@ -149,7 +149,7 @@ export const ExamsView: React.FC = () => {
               onClick={() => setActiveSubTab('EXPORT_BANK')}
               className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer shrink-0 ${
                 activeSubTab === 'EXPORT_BANK'
-                  ? 'bg-blue-600 text-white shadow-xs'
+                  ? 'bg-fb-blue text-white shadow-xs'
                   : 'bg-fb-input text-fb-text hover:bg-fb-btn-hover'
               }`}
             >
