@@ -68,7 +68,7 @@ export function PostShareButton({
       {menuOpen && (
         <div
           role="menu"
-          className="absolute bottom-full right-0 z-30 mb-1 w-48 rounded-lg border border-gray-200 bg-white p-1 text-xs shadow-lg dark:border-gray-700 dark:bg-[#242526]"
+          className="absolute bottom-full right-0 z-30 mb-1 w-48 rounded-lg border border-fb-divider bg-fb-card p-1 text-xs shadow-lg"
         >
           <button
             type="button"

@@ -44,21 +44,21 @@ export const AuthPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-fb-canvas text-fb-text flex flex-col justify-between selection:bg-blue-200">
+    <div className="min-h-screen bg-fb-canvas text-fb-text flex flex-col justify-between selection:bg-fb-blue/30">
       <div className="max-w-[1240px] w-full mx-auto px-4 py-8 sm:py-16 flex-1 flex flex-col justify-center">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           {/* ================= CỘT TRÁI (55%): BRAND HERO FACEBOOK STYLE ================= */}
           <div className="lg:col-span-6 space-y-6 text-center lg:text-left">
             <div className="inline-flex items-center gap-3">
               <div className="w-14 h-14 rounded-lg bg-fb-blue flex items-center justify-center text-white shadow-md">
-                <span className="font-black text-3xl tracking-tighter">U</span>
+                <span className="font-bold text-3xl tracking-tighter">U</span>
               </div>
-              <h1 className="text-3xl sm:text-4xl font-black text-fb-blue tracking-tight">
+              <h1 className="text-3xl sm:text-4xl font-bold text-fb-blue tracking-tight">
                 UniSocial
               </h1>
             </div>
 
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-fb-text leading-tight">
+            <h2 className="text-2xl sm:text-3xl font-bold text-fb-text leading-tight">
               Học cùng bạn bè, đóng góp cùng thầy cô.
             </h2>
 
@@ -71,28 +71,28 @@ export const AuthPage: React.FC = () => {
             {/* Academic Feature Highlights */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto lg:mx-0 pt-2 text-xs text-fb-text">
               <div className="p-3 bg-fb-card rounded-lg border border-fb-divider shadow-2xs flex items-center gap-2.5">
-                <BookOpen className="w-4 h-4 text-blue-600 shrink-0" />
+                <BookOpen className="w-4 h-4 text-fb-blue shrink-0" />
                 <span className="font-semibold">
                   Ngân hàng đề thi chuẩn Quốc gia
                 </span>
               </div>
 
               <div className="p-3 bg-fb-card rounded-lg border border-fb-divider shadow-2xs flex items-center gap-2.5">
-                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                <ShieldCheck className="w-4 h-4 text-fb-success shrink-0" />
                 <span className="font-semibold">
                   Hội đồng Giảng viên phê duyệt
                 </span>
               </div>
 
               <div className="p-3 bg-fb-card rounded-lg border border-fb-divider shadow-2xs flex items-center gap-2.5">
-                <Trophy className="w-4 h-4 text-amber-500 shrink-0" />
+                <Trophy className="w-4 h-4 text-fb-warning shrink-0" />
                 <span className="font-semibold">
                   Minigame & Bảng vàng cống hiến
                 </span>
               </div>
 
               <div className="p-3 bg-fb-card rounded-lg border border-fb-divider shadow-2xs flex items-center gap-2.5">
-                <MessageCircle className="w-4 h-4 text-indigo-600 shrink-0" />
+                <MessageCircle className="w-4 h-4 text-fb-blue shrink-0" />
                 <span className="font-semibold">
                   Messenger realtime & Khung avatar
                 </span>
@@ -109,7 +109,7 @@ export const AuthPage: React.FC = () => {
                   <h3 className="text-xl font-bold text-fb-text">
                     Đăng nhập tài khoản trường
                   </h3>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-fb-text-2 mt-1">
                     Nhập email và mật khẩu tài khoản của bạn
                   </p>
                 </div>
@@ -123,7 +123,7 @@ export const AuthPage: React.FC = () => {
                       Email tài khoản
                     </label>
                     <div className="relative">
-                      <Mail className="w-4 h-4 text-gray-400 absolute left-3 top-3 pointer-events-none" />
+                      <Mail className="w-4 h-4 text-fb-text-3 absolute left-3 top-3 pointer-events-none" />
                       <input
                         id="login-email"
                         type="email"
@@ -135,10 +135,10 @@ export const AuthPage: React.FC = () => {
                           setLoginError('');
                         }}
                         aria-invalid={Boolean(loginError)}
-                        className={`w-full pl-9 pr-3 py-2.5 rounded-lg border bg-gray-50 text-xs text-gray-900 transition focus:outline-hidden focus:ring-2 dark:bg-[#3A3B3C] dark:text-gray-100 ${
+                        className={`w-full pl-9 pr-3 py-2.5 rounded-lg border bg-fb-inset text-xs text-fb-text transition focus:outline-hidden focus:ring-2 ${
                           loginError
-                            ? 'border-red-500 focus:ring-red-500'
-                            : 'border-gray-300 focus:ring-blue-500 dark:border-gray-600'
+                            ? 'border-fb-danger focus:ring-fb-danger'
+                            : 'border-fb-divider focus:ring-fb-blue'
                         }`}
                       />
                     </div>
@@ -160,13 +160,13 @@ export const AuthPage: React.FC = () => {
                             'info',
                           )
                         }
-                        className="text-[11px] text-blue-600 hover:underline"
+                        className="text-xs text-fb-blue hover:underline"
                       >
                         Cần đặt lại mật khẩu?
                       </button>
                     </div>
                     <div className="relative">
-                      <Lock className="w-4 h-4 text-gray-400 absolute left-3 top-3 pointer-events-none" />
+                      <Lock className="w-4 h-4 text-fb-text-3 absolute left-3 top-3 pointer-events-none" />
                       <input
                         id="login-password"
                         type={showPassword ? 'text' : 'password'}
@@ -178,16 +178,16 @@ export const AuthPage: React.FC = () => {
                           setLoginError('');
                         }}
                         aria-invalid={Boolean(loginError)}
-                        className={`w-full pl-9 pr-9 py-2.5 rounded-lg border bg-gray-50 text-xs text-gray-900 transition focus:outline-hidden focus:ring-2 dark:bg-[#3A3B3C] dark:text-gray-100 ${
+                        className={`w-full pl-9 pr-9 py-2.5 rounded-lg border bg-fb-inset text-xs text-fb-text transition focus:outline-hidden focus:ring-2 ${
                           loginError
-                            ? 'border-red-500 focus:ring-red-500'
-                            : 'border-gray-300 focus:ring-blue-500 dark:border-gray-600'
+                            ? 'border-fb-danger focus:ring-fb-danger'
+                            : 'border-fb-divider focus:ring-fb-blue'
                         }`}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                        className="absolute right-3 top-2.5 text-fb-text-3 hover:text-fb-text-2"
                       >
                         {showPassword ? (
                           <EyeOff className="w-4 h-4" />
@@ -201,7 +201,7 @@ export const AuthPage: React.FC = () => {
                   {loginError && (
                     <p
                       role="alert"
-                      className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300"
+                      className="rounded-lg border border-fb-danger/30 bg-fb-danger-soft px-3 py-2 text-xs text-fb-danger"
                     >
                       {loginError}
                     </p>
@@ -221,19 +221,19 @@ export const AuthPage: React.FC = () => {
                     <span className="font-bold text-fb-text flex items-center gap-1.5">
                       <KeyRound className="w-3.5 h-3.5 text-fb-blue" />
                       Tài khoản test (Mật khẩu:{' '}
-                      <code className="bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded text-fb-blue tabular-nums font-bold">
+                      <code className="bg-fb-input px-1.5 py-0.5 rounded text-fb-blue tabular-nums font-bold">
                         {mockDemoPassword}
                       </code>
                       )
                     </span>
-                    <span className="text-[10px] text-gray-400">
+                    <span className="text-xs text-fb-text-3">
                       Nhấn để điền
                     </span>
                   </div>
 
                   {/* Nhóm Giảng viên */}
                   <div className="space-y-1">
-                    <span className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 block">
+                    <span className="text-xs font-semibold text-fb-blue block">
                       Giảng viên:
                     </span>
                     <div className="grid grid-cols-2 gap-1.5">
@@ -249,12 +249,12 @@ export const AuthPage: React.FC = () => {
                             setPassword(mockDemoPassword);
                             setLoginError('');
                           }}
-                          className="px-2 py-1.5 bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/40 dark:hover:bg-purple-900/60 border border-purple-200 dark:border-purple-800 rounded-lg text-left transition cursor-pointer"
+                          className="px-2 py-1.5 bg-fb-blue-soft hover:bg-fb-blue/20 border border-fb-blue/30 rounded-lg text-left transition cursor-pointer"
                         >
-                          <p className="text-[11px] font-bold text-purple-700 dark:text-purple-300 truncate tabular-nums">
+                          <p className="text-xs font-bold text-fb-blue truncate tabular-nums">
                             {acc.email}
                           </p>
-                          <p className="text-[10px] text-fb-text-2 truncate">
+                          <p className="text-xs text-fb-text-2 truncate">
                             {acc.name}
                           </p>
                         </button>
@@ -264,7 +264,7 @@ export const AuthPage: React.FC = () => {
 
                   {/* Nhóm Sinh viên */}
                   <div className="space-y-1">
-                    <span className="text-[11px] font-semibold text-fb-blue block">
+                    <span className="text-xs font-semibold text-fb-blue block">
                       Sinh viên:
                     </span>
                     <div className="grid grid-cols-3 gap-1.5">
@@ -283,12 +283,12 @@ export const AuthPage: React.FC = () => {
                             setPassword(mockDemoPassword);
                             setLoginError('');
                           }}
-                          className="px-2 py-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800 rounded-lg text-left transition cursor-pointer"
+                          className="px-2 py-1.5 bg-fb-blue-soft hover:bg-fb-blue/20 border border-fb-blue/30 rounded-lg text-left transition cursor-pointer"
                         >
-                          <p className="text-[11px] font-bold text-blue-700 dark:text-blue-300 truncate tabular-nums">
+                          <p className="text-xs font-bold text-fb-blue truncate tabular-nums">
                             {acc.email}
                           </p>
-                          <p className="text-[10px] text-fb-text-2 truncate">
+                          <p className="text-xs text-fb-text-2 truncate">
                             {acc.name}
                           </p>
                         </button>
@@ -303,7 +303,7 @@ export const AuthPage: React.FC = () => {
       </div>
 
       {/* Footer */}
-      <footer className="py-6 border-t border-gray-200 dark:border-gray-800 text-center text-xs text-gray-500">
+      <footer className="py-6 border-t border-fb-divider text-center text-xs text-fb-text-2">
         <p>
           © 2026 UniSocial & ExamBank Đại học. Nền tảng Mạng xã hội học tập &
           Ngân hàng đề thi chuẩn Quốc gia.

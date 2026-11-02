@@ -17,9 +17,9 @@ const STATUS_ITEMS: {
   icon: React.ElementType;
   color: string;
 }[] = [
-  { status: 'PENDING', label: 'Chờ duyệt', icon: Clock, color: 'text-amber-500' },
-  { status: 'REVIEWING', label: 'Đang duyệt', icon: Eye, color: 'text-blue-500' },
-  { status: 'RESOLVED', label: 'Đã xử lý', icon: CheckCircle, color: 'text-green-500' },
+  { status: 'PENDING', label: 'Chờ duyệt', icon: Clock, color: 'text-fb-warning' },
+  { status: 'REVIEWING', label: 'Đang duyệt', icon: Eye, color: 'text-fb-blue' },
+  { status: 'RESOLVED', label: 'Đã xử lý', icon: CheckCircle, color: 'text-fb-success' },
 ];
 
 // Fallback môn học khi backend chưa sẵn sàng (giống ProposeView)
@@ -108,13 +108,13 @@ export const StudentSidebarSections: React.FC = () => {
               <button
                 key={status}
                 onClick={() => openSubmissions(status)}
-                className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left cursor-pointer"
+                className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-fb-btn-hover/60 transition text-left cursor-pointer"
               >
                 <span className="flex items-center gap-3">
                   <Icon className={`w-4.5 h-4.5 ${color}`} />
                   {label}
                 </span>
-                <span className="text-xs font-bold text-gray-500 bg-fb-input px-2 py-0.5 rounded-full min-w-6 text-center">
+                <span className="text-xs font-bold text-fb-text-2 bg-fb-input px-2 py-0.5 rounded-full min-w-6 text-center">
                   {item
                     ? `${item.count}${item.hasMore ? '+' : ''}`
                     : '…'}
@@ -132,10 +132,10 @@ export const StudentSidebarSections: React.FC = () => {
         </h4>
         <div className="space-y-0.5 text-sm font-medium text-fb-text">
           {subjects === null && (
-            <p className="px-3 py-2 text-xs text-gray-400">Đang tải...</p>
+            <p className="px-3 py-2 text-xs text-fb-text-3">Đang tải...</p>
           )}
           {subjects?.length === 0 && (
-            <p className="px-3 py-2 text-xs text-gray-400">
+            <p className="px-3 py-2 text-xs text-fb-text-3">
               Bạn chưa tham gia lớp học phần nào.
             </p>
           )}
@@ -144,9 +144,9 @@ export const StudentSidebarSections: React.FC = () => {
               key={subject.subject_id ?? subject.code}
               onClick={() => openSubjectBank(subject)}
               title={`Xem ngân hàng đề môn ${subject.name}`}
-              className="w-full group flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-200/60 dark:hover:bg-[#3A3B3C] transition text-left cursor-pointer"
+              className="w-full group flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-fb-btn-hover/60 transition text-left cursor-pointer"
             >
-              <div className="w-9 h-9 shrink-0 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-fb-blue flex items-center justify-center">
+              <div className="w-9 h-9 shrink-0 rounded-lg bg-fb-blue-soft text-fb-blue flex items-center justify-center">
                 <BookOpen className="w-4.5 h-4.5" />
               </div>
               <div className="min-w-0">

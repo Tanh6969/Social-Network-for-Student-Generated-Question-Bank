@@ -122,7 +122,7 @@ const MainContent: React.FC = () => {
       {/* Offline Alert Bar (SYS.01) */}
       {isOfflineSimulated && (
         <div className="bg-gray-800 text-gray-200 text-xs font-medium py-2 px-4 text-center flex items-center justify-center gap-2 border-b border-gray-700">
-          <WifiOff className="w-4 h-4 text-gray-400" />
+          <WifiOff className="w-4 h-4 text-fb-text-3" />
           <span>
             Mất kết nối Internet - Đang hiển thị bản lưu ngoại tuyến (Offline
             cache mode)

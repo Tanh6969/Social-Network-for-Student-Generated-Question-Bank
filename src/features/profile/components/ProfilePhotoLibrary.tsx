@@ -25,10 +25,10 @@ export function ProfilePhotoLibrary({
   onOpenPostPhoto: (post: Post, index: number) => void;
 }) {
   return (
-    <section className="mt-4 rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-[#242526]">
-      <div className="flex items-center justify-between gap-3 border-b border-gray-100 pb-4 dark:border-gray-700">
+    <section className="mt-4 rounded-lg border border-fb-divider bg-fb-card p-5 shadow-sm">
+      <div className="flex items-center justify-between gap-3 border-b border-fb-divider pb-4">
         <div className="flex items-center gap-2">
-          <Images className="h-5 w-5 text-blue-600" />
+          <Images className="h-5 w-5 text-fb-blue" />
           <h2 className="text-lg font-bold text-fb-text">
             Ảnh
           </h2>
@@ -37,7 +37,7 @@ export function ProfilePhotoLibrary({
           <button
             type="button"
             onClick={onAdd}
-            className="flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300"
+            className="flex items-center gap-2 rounded-lg bg-fb-blue-soft px-3 py-2 text-sm font-semibold text-fb-blue hover:bg-fb-blue/20"
           >
             <ImagePlus className="h-4 w-4" />
             Thêm ảnh
@@ -91,7 +91,7 @@ function PhotoSection({
               type="button"
               onClick={() => onOpen(index)}
               aria-label={`Xem ${photo.alt}`}
-              className="aspect-square overflow-hidden rounded-lg bg-gray-100 focus-visible:outline-2 focus-visible:outline-blue-600 dark:bg-gray-800"
+              className="aspect-square overflow-hidden rounded-lg bg-fb-input focus-visible:outline-2 focus-visible:outline-blue-600"
             >
               <img
                 src={photo.url}
@@ -106,7 +106,7 @@ function PhotoSection({
           ))}
         </div>
       ) : (
-        <p className="rounded-lg bg-gray-50 p-6 text-center text-sm text-gray-500 dark:bg-[#3A3B3C]">
+        <p className="rounded-lg bg-fb-inset p-6 text-center text-sm text-fb-text-2">
           {empty ?? 'Chưa có ảnh.'}
         </p>
       )}

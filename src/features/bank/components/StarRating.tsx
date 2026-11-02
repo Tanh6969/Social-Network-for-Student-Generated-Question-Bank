@@ -62,23 +62,23 @@ export const StarRating: React.FC<StarRatingProps> = ({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between gap-2 py-2 px-3 rounded-lg bg-gray-50/80 dark:bg-[#1E1F20]/60 border border-gray-200/60 dark:border-gray-700/60">
+      <div className="flex items-center justify-between gap-2 py-2 px-3 rounded-lg bg-fb-inset/80 border border-fb-divider/60">
         {/* Cột trái: Điểm trung bình (thang điểm 4) & số lượt đánh giá */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400">
-            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+          <div className="flex items-center gap-1 text-xs font-bold text-fb-warning">
+            <Star className="w-3.5 h-3.5 fill-amber-400 text-fb-warning" />
             <span>
               {ratingAverage > 0 ? ratingAverage.toFixed(1) : '—'}
             </span>
-            <span className="text-[10px] text-gray-400 font-normal">/ 4.0</span>
+            <span className="text-xs text-fb-text-3 font-normal">/ 4.0</span>
           </div>
-          <span className="text-xs text-gray-400">({ratingCount})</span>
+          <span className="text-xs text-fb-text-3">({ratingCount})</span>
         </div>
 
         {/* Cột phải: 4 ngôi sao tương tác (thang điểm [0; 4]) */}
         <div className="flex items-center gap-1.5">
           {isAuthor ? (
-            <span className="text-[11px] text-gray-400 font-medium">Tác giả</span>
+            <span className="text-xs text-fb-text-3 font-medium">Tác giả</span>
           ) : (
             <div className="flex items-center gap-1">
               <div
@@ -99,8 +99,8 @@ export const StarRating: React.FC<StarRatingProps> = ({
                       <Star
                         className={`${starSizes[size]} transition-colors ${
                           isFilled
-                            ? 'text-amber-400 fill-amber-400'
-                            : 'text-gray-300 dark:text-gray-600'
+                            ? 'text-fb-warning fill-amber-400'
+                            : 'text-fb-text-3'
                         }`}
                       />
                     </button>
@@ -118,7 +118,7 @@ export const StarRating: React.FC<StarRatingProps> = ({
                     setShowCommentBox(false);
                   }}
                   title="Bỏ đánh giá (về 0 sao)"
-                  className="p-1 text-gray-400 hover:text-rose-500 transition cursor-pointer"
+                  className="p-1 text-fb-text-3 hover:text-fb-danger transition cursor-pointer"
                 >
                   <RotateCcw className="w-3 h-3" />
                 </button>
@@ -133,7 +133,7 @@ export const StarRating: React.FC<StarRatingProps> = ({
                   className={`p-1 transition cursor-pointer ${
                     showCommentBox || userComment
                       ? 'text-fb-blue font-bold'
-                      : 'text-gray-400 hover:text-blue-500'
+                      : 'text-fb-text-3 hover:text-fb-blue'
                   }`}
                 >
                   <MessageSquare className="w-3.5 h-3.5" />
@@ -153,7 +153,7 @@ export const StarRating: React.FC<StarRatingProps> = ({
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSendComment()}
-            className="flex-1 px-3 py-1.5 bg-gray-100 dark:bg-[#2A2B2D] rounded-lg text-xs text-fb-text focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+            className="flex-1 px-3 py-1.5 bg-fb-input rounded-lg text-xs text-fb-text focus:outline-hidden focus:ring-1 focus:ring-fb-blue"
           />
           <button
             type="button"
@@ -169,20 +169,20 @@ export const StarRating: React.FC<StarRatingProps> = ({
 
       {/* Hiển thị nhận xét đã gửi của sinh viên */}
       {userComment && !showCommentBox && (
-        <div className="flex items-center justify-between text-xs bg-blue-50/80 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200 px-3 py-1.5 rounded-lg border border-blue-200/60 dark:border-blue-800/60 animate-in fade-in duration-150">
+        <div className="flex items-center justify-between text-xs bg-fb-blue-soft/80 text-fb-blue px-3 py-1.5 rounded-lg border border-fb-blue/60 animate-in fade-in duration-150">
           <div className="flex items-center gap-1.5 truncate">
             <Check className="w-3.5 h-3.5 text-fb-blue shrink-0" />
             <span className="font-semibold text-fb-text">
               Nhận xét của bạn:
             </span>
-            <span className="italic truncate text-blue-700 dark:text-blue-300">
+            <span className="italic truncate text-fb-blue">
               "{userComment}"
             </span>
           </div>
           <button
             type="button"
             onClick={() => setShowCommentBox(true)}
-            className="text-[11px] font-bold text-blue-600 hover:underline shrink-0 ml-2 cursor-pointer"
+            className="text-xs font-bold text-fb-blue hover:underline shrink-0 ml-2 cursor-pointer"
           >
             Sửa
           </button>

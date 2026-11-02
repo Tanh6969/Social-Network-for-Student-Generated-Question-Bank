@@ -19,7 +19,7 @@ export function PostContent({
     : content;
 
   return (
-    <div className="text-sm text-fb-text leading-relaxed">
+    <div className="text-body text-fb-text leading-relaxed">
       <p className="whitespace-pre-wrap wrap-break-word">
         {isLong && !expanded ? `${preview}…` : content}
       </p>

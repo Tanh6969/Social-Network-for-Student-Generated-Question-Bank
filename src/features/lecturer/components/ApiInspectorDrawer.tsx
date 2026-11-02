@@ -32,8 +32,8 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
       method: 'PUT',
       path: '/questions/{questionId}',
       summary: 'Giảng viên chỉnh sửa câu hỏi',
-      color: 'bg-amber-600',
-      badgeColor: 'text-amber-600 bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800',
+      color: 'bg-fb-warning',
+      badgeColor: 'text-fb-warning bg-fb-warning-soft border-fb-warning/30',
       description: 'Cho phép Giảng viên thẩm định cập nhật nội dung đề bài, các phương án A, B, C, D, đáp án đúng, giải thích và độ khó trước khi phê chuẩn vào ngân hàng đề thi trường.',
       params: [
         { name: 'questionId', type: 'string (path)', required: true, desc: 'ID định danh duy nhất của câu hỏi' }
@@ -60,8 +60,8 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
       method: 'GET',
       path: '/sessions/{sessionId}',
       summary: 'Xem chi tiết phiên đề xuất để duyệt',
-      color: 'bg-blue-600',
-      badgeColor: 'text-blue-600 bg-blue-50 dark:bg-blue-950/40 border-blue-300 dark:border-blue-800',
+      color: 'bg-fb-blue',
+      badgeColor: 'text-fb-blue bg-fb-blue-soft border-fb-blue/30',
       description: 'Lấy toàn bộ thông tin chi tiết của một phiên đề xuất câu hỏi từ sinh viên, danh sách các câu hỏi đi kèm, tình trạng duyệt và phân tích chất lượng AI.',
       params: [
         { name: 'sessionId', type: 'string (path)', required: true, desc: 'ID phiên đề xuất (vd: sess_pending_01)' }
@@ -87,8 +87,8 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
       method: 'POST',
       path: '/sessions/{sessionId}/complete-review',
       summary: 'Chốt hoàn tất duyệt phiên đề xuất',
-      color: 'bg-emerald-600',
-      badgeColor: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800',
+      color: 'bg-fb-success',
+      badgeColor: 'text-fb-success bg-fb-success-soft border-fb-success/30',
       description: 'Chốt phiên thẩm định, khóa phiên duyệt, lưu lại toàn bộ kết quả vào kho lưu trữ và gửi thông báo tổng kết điểm thưởng cho sinh viên.',
       params: [
         { name: 'sessionId', type: 'string (path)', required: true, desc: 'ID phiên cần hoàn tất' }
@@ -108,8 +108,8 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
       method: 'POST',
       path: '/sessions/approve',
       summary: 'Phê duyệt danh sách câu hỏi',
-      color: 'bg-emerald-600',
-      badgeColor: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800',
+      color: 'bg-fb-success',
+      badgeColor: 'text-fb-success bg-fb-success-soft border-fb-success/30',
       description: 'Phê duyệt hàng loạt hoặc từng câu hỏi trong phiên, gán vào Ngân hàng đề thi chính thức được chỉ định và cộng điểm cống hiến cho sinh viên (+20đ/câu).',
       params: [],
       requestBody: {
@@ -130,8 +130,8 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
       method: 'GET',
       path: '/sessions/pending',
       summary: 'Lấy danh sách phiên đề xuất chờ duyệt',
-      color: 'bg-blue-600',
-      badgeColor: 'text-blue-600 bg-blue-50 dark:bg-blue-950/40 border-blue-300 dark:border-blue-800',
+      color: 'bg-fb-blue',
+      badgeColor: 'text-fb-blue bg-fb-blue-soft border-fb-blue/30',
       description: 'Truy vấn danh sách các phiên đề xuất từ sinh viên đang ở trạng thái PENDING hoặc IN_REVIEW, hỗ trợ phân trang và lọc theo môn học.',
       params: [
         { name: 'subject', type: 'string (query)', required: false, desc: 'Lọc theo môn học (vd: Cơ sở dữ liệu)' },
@@ -162,8 +162,8 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
       method: 'POST',
       path: '/sessions/reject',
       summary: 'Từ chối danh sách câu hỏi',
-      color: 'bg-emerald-600',
-      badgeColor: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800',
+      color: 'bg-fb-success',
+      badgeColor: 'text-fb-success bg-fb-success-soft border-fb-success/30',
       description: 'Từ chối câu hỏi không đạt yêu cầu sư phạm, kèm lý do phản hồi chi tiết để sinh viên biết điểm cần hoàn thiện và có thể nộp lại.',
       params: [],
       requestBody: {
@@ -191,9 +191,9 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
     <div className="fixed inset-0 z-[230] flex justify-end bg-black/60 animate-in fade-in duration-200">
       <div className="w-full max-w-2xl bg-fb-card h-full shadow-2xl flex flex-col border-l border-fb-divider overflow-hidden">
         {/* Drawer Header */}
-        <div className="p-4 border-b border-fb-divider flex items-center justify-between bg-gray-50 dark:bg-[#242526]">
+        <div className="p-4 border-b border-fb-divider flex items-center justify-between bg-fb-inset">
           <div className="flex items-center gap-2.5">
-            <span className="p-2 rounded-lg bg-blue-600 text-white shadow-xs">
+            <span className="p-2 rounded-lg bg-fb-blue text-white shadow-xs">
               <Server className="w-5 h-5" />
             </span>
             <div>
@@ -207,7 +207,7 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-fb-hover transition"
+            className="p-1.5 rounded-lg text-fb-text-3 hover:text-fb-text hover:bg-fb-hover transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -219,8 +219,8 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
             onClick={() => setActiveTab('SWAGGER')}
             className={`flex-1 py-3 border-b-2 text-center transition flex items-center justify-center gap-1.5 ${
               activeTab === 'SWAGGER'
-                ? 'border-blue-600 text-fb-blue bg-blue-50/30 dark:bg-blue-950/20'
-                : 'border-transparent text-gray-500 hover:text-gray-800'
+                ? 'border-fb-blue text-fb-blue bg-fb-blue-soft/30'
+                : 'border-transparent text-fb-text-2 hover:text-fb-text'
             }`}
           >
             <Code className="w-4 h-4" />
@@ -230,8 +230,8 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
             onClick={() => setActiveTab('LIVE_LOGS')}
             className={`flex-1 py-3 border-b-2 text-center transition flex items-center justify-center gap-1.5 ${
               activeTab === 'LIVE_LOGS'
-                ? 'border-blue-600 text-fb-blue bg-blue-50/30 dark:bg-blue-950/20'
-                : 'border-transparent text-gray-500 hover:text-gray-800'
+                ? 'border-fb-blue text-fb-blue bg-fb-blue-soft/30'
+                : 'border-transparent text-fb-text-2 hover:text-fb-text'
             }`}
           >
             <Play className="w-4 h-4" />
@@ -245,7 +245,7 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
             <div className="space-y-4">
               {/* 6 API Buttons List */}
               <div className="space-y-1.5">
-                <span className="text-gray-500 font-bold block text-[11px] mb-2">
+                <span className="text-fb-text-2 font-bold block text-xs mb-2">
                   Danh mục 6 API Giảng viên Duyệt (Click chọn để xem chi tiết Payload):
                 </span>
                 {apiSpecs.map((spec, idx) => (
@@ -254,35 +254,35 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
                     onClick={() => setSelectedApiIndex(idx)}
                     className={`p-2.5 rounded-lg border cursor-pointer transition flex items-center justify-between ${
                       selectedApiIndex === idx
-                        ? 'border-blue-600 bg-blue-50/60 dark:bg-blue-950/40 ring-1 ring-blue-600'
-                        : 'border-fb-divider bg-fb-card hover:bg-gray-50 dark:hover:bg-[#2A2B2D]'
+                        ? 'border-fb-blue bg-fb-blue-soft/60 ring-1 ring-fb-blue'
+                        : 'border-fb-divider bg-fb-card hover:bg-fb-hover'
                     }`}
                   >
                     <div className="flex items-center gap-2 truncate">
                       <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-black text-white ${spec.color}`}
+                        className={`px-2 py-0.5 rounded text-xs font-bold text-white ${spec.color}`}
                       >
                         {spec.method}
                       </span>
                       <span className="font-mono font-bold text-fb-text text-xs">
                         {spec.path}
                       </span>
-                      <span className="text-gray-500 truncate text-[11px] hidden sm:inline">
+                      <span className="text-fb-text-2 truncate text-xs hidden sm:inline">
                         — {spec.summary}
                       </span>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
+                    <ChevronRight className="w-4 h-4 text-fb-text-3 shrink-0" />
                   </div>
                 ))}
               </div>
 
               {/* Selected API Documentation Card */}
               {currentApi && (
-                <div className="p-4 rounded-lg border border-fb-divider bg-gray-50/70 dark:bg-[#242526] space-y-3">
+                <div className="p-4 rounded-lg border border-fb-divider bg-fb-inset/70 space-y-3">
                   <div className="flex items-center justify-between border-b border-fb-divider pb-2">
                     <div className="flex items-center gap-2">
                       <span
-                        className={`px-2.5 py-0.5 rounded font-black text-white text-xs ${currentApi.color}`}
+                        className={`px-2.5 py-0.5 rounded font-bold text-white text-xs ${currentApi.color}`}
                       >
                         {currentApi.method}
                       </span>
@@ -312,11 +312,11 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
                               <span className="font-mono font-bold text-fb-blue">
                                 {p.name}
                               </span>{' '}
-                              <span className="text-[10px] text-gray-400">({p.type})</span>
-                              <p className="text-[11px] text-gray-500 mt-0.5">{p.desc}</p>
+                              <span className="text-xs text-fb-text-3">({p.type})</span>
+                              <p className="text-xs text-fb-text-2 mt-0.5">{p.desc}</p>
                             </div>
                             {p.required && (
-                              <span className="text-[10px] font-bold text-red-500">required</span>
+                              <span className="text-xs font-bold text-fb-danger">required</span>
                             )}
                           </div>
                         ))}
@@ -335,13 +335,13 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
                           onClick={() =>
                             handleCopy(JSON.stringify(currentApi.requestBody, null, 2), 'req_spec')
                           }
-                          className="text-[11px] text-blue-600 hover:underline flex items-center gap-1"
+                          className="text-xs text-fb-blue hover:underline flex items-center gap-1"
                         >
                           <Copy className="w-3 h-3" />
                           <span>{copiedLogId === 'req_spec' ? 'Đã sao chép' : 'Sao chép'}</span>
                         </button>
                       </div>
-                      <pre className="p-3 rounded-lg bg-gray-900 text-emerald-400 font-mono text-[11px] overflow-x-auto">
+                      <pre className="p-3 rounded-lg bg-fb-inset text-fb-success font-mono border border-fb-divider text-xs overflow-x-auto">
                         {JSON.stringify(currentApi.requestBody, null, 2)}
                       </pre>
                     </div>
@@ -357,13 +357,13 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
                         onClick={() =>
                           handleCopy(JSON.stringify(currentApi.responseBody, null, 2), 'res_spec')
                         }
-                        className="text-[11px] text-blue-600 hover:underline flex items-center gap-1"
+                        className="text-xs text-fb-blue hover:underline flex items-center gap-1"
                       >
                         <Copy className="w-3 h-3" />
                         <span>{copiedLogId === 'res_spec' ? 'Đã sao chép' : 'Sao chép'}</span>
                       </button>
                     </div>
-                    <pre className="p-3 rounded-lg bg-gray-900 text-blue-300 font-mono text-[11px] overflow-x-auto">
+                    <pre className="p-3 rounded-lg bg-fb-inset text-fb-blue font-mono border border-fb-divider text-xs overflow-x-auto">
                       {JSON.stringify(currentApi.responseBody, null, 2)}
                     </pre>
                   </div>
@@ -374,13 +374,13 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
             /* Live Logs Tab */
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-gray-500 font-bold text-[11px]">
+                <span className="text-fb-text-2 font-bold text-xs">
                   Các lệnh API vừa được thực hiện trong phiên ({apiLogs.length})
                 </span>
                 {apiLogs.length > 0 && (
                   <button
                     onClick={clearApiLogs}
-                    className="text-xs text-red-600 hover:underline flex items-center gap-1"
+                    className="text-xs text-fb-danger hover:underline flex items-center gap-1"
                   >
                     <RotateCcw className="w-3 h-3" />
                     <span>Xóa nhật ký</span>
@@ -389,10 +389,10 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
               </div>
 
               {apiLogs.length === 0 ? (
-                <div className="p-8 text-center text-gray-400 bg-gray-50 dark:bg-[#242526] rounded-lg border border-fb-divider">
+                <div className="p-8 text-center text-fb-text-3 bg-fb-inset rounded-lg border border-fb-divider">
                   <Server className="w-8 h-8 mx-auto mb-2 opacity-50" />
                   <p className="font-semibold">Chưa có lệnh gọi API nào được ghi nhận</p>
-                  <p className="text-[11px] mt-1">
+                  <p className="text-xs mt-1">
                     Hãy thử thực hiện Duyệt, Từ chối, Sửa câu hỏi hoặc Chốt phiên để thấy live log!
                   </p>
                 </div>
@@ -406,14 +406,14 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-black text-white ${
+                            className={`px-2 py-0.5 rounded text-xs font-bold text-white ${
                               log.method === 'GET'
-                                ? 'bg-blue-600'
+                                ? 'bg-fb-blue'
                                 : log.method === 'POST'
-                                ? 'bg-emerald-600'
+                                ? 'bg-fb-success'
                                 : log.method === 'PUT'
-                                ? 'bg-amber-600'
-                                : 'bg-red-600'
+                                ? 'bg-fb-warning'
+                                : 'bg-fb-danger'
                             }`}
                           >
                             {log.method}
@@ -423,23 +423,23 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                          <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-fb-success-soft text-fb-success">
                             {log.statusCode} OK
                           </span>
-                          <span className="text-[10px] text-gray-400">{log.timestamp}</span>
+                          <span className="text-xs text-fb-text-3">{log.timestamp}</span>
                         </div>
                       </div>
 
-                      <p className="text-[11px] font-medium text-fb-text-2">
+                      <p className="text-xs font-medium text-fb-text-2">
                         {log.title}
                       </p>
 
                       {log.payload && (
                         <div>
-                          <span className="text-[10px] font-bold text-gray-500 block mb-0.5">
+                          <span className="text-xs font-bold text-fb-text-2 block mb-0.5">
                             Payload gửi lên:
                           </span>
-                          <pre className="p-2 rounded-lg bg-gray-900 text-emerald-400 font-mono text-[10px] overflow-x-auto">
+                          <pre className="p-2 rounded-lg bg-fb-inset text-fb-success font-mono border border-fb-divider text-xs overflow-x-auto">
                             {JSON.stringify(log.payload, null, 2)}
                           </pre>
                         </div>
@@ -447,10 +447,10 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
 
                       {log.response && (
                         <div>
-                          <span className="text-[10px] font-bold text-gray-500 block mb-0.5">
+                          <span className="text-xs font-bold text-fb-text-2 block mb-0.5">
                             Response phản hồi:
                           </span>
-                          <pre className="p-2 rounded-lg bg-gray-900 text-blue-300 font-mono text-[10px] overflow-x-auto">
+                          <pre className="p-2 rounded-lg bg-fb-inset text-fb-blue font-mono border border-fb-divider text-xs overflow-x-auto">
                             {JSON.stringify(log.response, null, 2)}
                           </pre>
                         </div>
@@ -464,11 +464,11 @@ export const ApiInspectorDrawer: React.FC<ApiInspectorDrawerProps> = ({ isOpen, 
         </div>
 
         {/* Drawer Footer */}
-        <div className="p-3 border-t border-fb-divider bg-gray-50 dark:bg-[#242526] flex items-center justify-between text-xs text-gray-500">
+        <div className="p-3 border-t border-fb-divider bg-fb-inset flex items-center justify-between text-xs text-fb-text-2">
           <span>Chuẩn đặc tả OpenAPI 3.0 / RESTful</span>
           <button
             onClick={onClose}
-            className="px-4 py-1.5 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition"
+            className="px-4 py-1.5 bg-fb-blue text-white rounded-lg font-bold hover:bg-fb-blue-hover transition"
           >
             Đóng
           </button>

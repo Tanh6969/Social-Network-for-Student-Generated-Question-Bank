@@ -51,7 +51,7 @@ export function EditProfileModal({
   };
 
   const inputClassName =
-    'w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 outline-hidden transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-[#3A3B3C] dark:text-gray-100';
+    'w-full rounded-lg border border-fb-divider bg-fb-inset px-3 py-2.5 text-sm text-fb-text outline-hidden transition focus:border-fb-blue focus:ring-2 focus:ring-fb-blue/20';
   const labelClassName =
     'mb-1.5 block text-sm font-semibold text-fb-text';
 
@@ -66,9 +66,9 @@ export function EditProfileModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="edit-profile-title"
-        className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg bg-white shadow-2xl dark:bg-[#242526]"
+        className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg bg-fb-card shadow-2xl"
       >
-        <header className="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-700">
+        <header className="flex items-center justify-between border-b border-fb-divider px-5 py-4">
           <div>
             <h2
               id="edit-profile-title"
@@ -76,7 +76,7 @@ export function EditProfileModal({
             >
               Chỉnh sửa trang cá nhân
             </h2>
-            <p className="mt-0.5 text-xs text-gray-500">
+            <p className="mt-0.5 text-xs text-fb-text-2">
               Cập nhật thông tin giới thiệu và học tập của bạn
             </p>
           </div>
@@ -84,7 +84,7 @@ export function EditProfileModal({
             type="button"
             onClick={onClose}
             aria-label="Đóng cửa sổ chỉnh sửa"
-            className="rounded-full p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="rounded-full p-2 text-fb-text-2 hover:bg-fb-hover"
           >
             <X className="h-5 w-5" />
           </button>
@@ -93,7 +93,7 @@ export function EditProfileModal({
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-col">
           <div className="space-y-6 overflow-y-auto px-5 py-5">
             <section className="space-y-4">
-              <h3 className="border-b border-gray-100 pb-2 text-sm font-bold text-gray-900 dark:border-gray-700 dark:text-gray-100">
+              <h3 className="border-b border-fb-divider pb-2 text-sm font-bold text-fb-text">
                 Thông tin cá nhân
               </h3>
               <div>
@@ -123,14 +123,14 @@ export function EditProfileModal({
                   placeholder="Viết đôi điều về bạn..."
                   className={`${inputClassName} resize-y`}
                 />
-                <p className="mt-1 text-right text-xs text-gray-400">
+                <p className="mt-1 text-right text-xs text-fb-text-3">
                   {form.bio.length}/240
                 </p>
               </div>
             </section>
 
             <section className="space-y-4">
-              <h3 className="border-b border-gray-100 pb-2 text-sm font-bold text-gray-900 dark:border-gray-700 dark:text-gray-100">
+              <h3 className="border-b border-fb-divider pb-2 text-sm font-bold text-fb-text">
                 Học tập và công việc
               </h3>
               <div>
@@ -166,7 +166,7 @@ export function EditProfileModal({
             </section>
 
             <section className="space-y-2">
-              <h3 className="border-b border-gray-100 pb-2 text-sm font-bold text-gray-900 dark:border-gray-700 dark:text-gray-100">
+              <h3 className="border-b border-fb-divider pb-2 text-sm font-bold text-fb-text">
                 Thông tin tài khoản
               </h3>
               <div>
@@ -179,33 +179,33 @@ export function EditProfileModal({
                   readOnly
                   className={`${inputClassName} cursor-not-allowed opacity-70`}
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-fb-text-2">
                   Email và vai trò do tài khoản trường quản lý.
                 </p>
               </div>
             </section>
 
-            <p className="rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-800 dark:bg-blue-950/40 dark:text-blue-200">
+            <p className="rounded-lg bg-fb-blue-soft px-3 py-2 text-xs text-fb-blue">
               Thay đổi hồ sơ trong bản demo chỉ được lưu trong phiên trình duyệt.
             </p>
             {error && (
-              <p role="alert" className="text-sm font-medium text-red-600">
+              <p role="alert" className="text-sm font-medium text-fb-danger">
                 {error}
               </p>
             )}
           </div>
 
-          <footer className="flex justify-end gap-2 border-t border-gray-200 px-5 py-4 dark:border-gray-700">
+          <footer className="flex justify-end gap-2 border-t border-fb-divider px-5 py-4">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200 dark:bg-[#3A3B3C] dark:text-gray-200 dark:hover:bg-gray-600"
+              className="rounded-lg bg-fb-input px-4 py-2 text-sm font-semibold text-fb-text hover:bg-fb-btn-hover"
             >
               Hủy
             </button>
             <button
               type="submit"
-              className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              className="rounded-lg bg-fb-blue px-5 py-2 text-sm font-semibold text-white hover:bg-fb-blue-hover"
             >
               Lưu thay đổi
             </button>

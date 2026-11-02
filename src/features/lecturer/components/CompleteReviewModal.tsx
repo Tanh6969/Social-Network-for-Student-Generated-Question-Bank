@@ -24,9 +24,9 @@ export const CompleteReviewModal: React.FC<CompleteReviewModalProps> = ({
     <div className="fixed inset-0 z-[230] flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-150">
       <div className="bg-fb-card rounded-lg shadow-2xl max-w-md w-full border border-fb-divider overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-fb-divider flex items-center justify-between bg-amber-50 dark:bg-amber-950/30">
+        <div className="px-5 py-4 border-b border-fb-divider flex items-center justify-between bg-fb-warning-soft">
           <div className="flex items-center gap-2.5">
-            <span className="p-2 rounded-lg bg-amber-600 text-white shadow-xs">
+            <span className="p-2 rounded-lg bg-fb-warning text-fb-card shadow-xs">
               <CheckCheck className="w-5 h-5" />
             </span>
             <div>
@@ -44,7 +44,7 @@ export const CompleteReviewModal: React.FC<CompleteReviewModalProps> = ({
           <button
             onClick={onClose}
             disabled={isSubmitting}
-            className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 cursor-pointer disabled:opacity-50"
+            className="p-1.5 rounded-full hover:bg-fb-btn-hover text-fb-text-2 cursor-pointer disabled:opacity-50"
           >
             <X className="w-5 h-5" />
           </button>
@@ -52,8 +52,8 @@ export const CompleteReviewModal: React.FC<CompleteReviewModalProps> = ({
 
         {/* Body */}
         <div className="p-5 space-y-4">
-          <div className="flex items-start gap-3 p-3.5 rounded-lg bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-900 dark:text-amber-200 text-xs">
-            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="flex items-start gap-3 p-3.5 rounded-lg bg-fb-warning-soft/80 border border-fb-warning/30 text-fb-warning text-xs">
+            <AlertCircle className="w-5 h-5 text-fb-warning shrink-0 mt-0.5" />
             <p className="leading-relaxed">
               Bạn có chắc chắn muốn hoàn tất kiểm duyệt phiên này? Các câu hỏi vẫn còn ở
               trạng thái chờ xử lý sẽ bị từ chối. Hành động này có thể không hoàn tác
@@ -71,7 +71,7 @@ export const CompleteReviewModal: React.FC<CompleteReviewModalProps> = ({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-xs font-semibold text-fb-text hover:bg-fb-hover transition cursor-pointer disabled:opacity-50"
+              className="px-4 py-2 rounded-lg border border-fb-divider text-xs font-semibold text-fb-text hover:bg-fb-hover transition cursor-pointer disabled:opacity-50"
             >
               Quay lại
             </button>
@@ -82,7 +82,7 @@ export const CompleteReviewModal: React.FC<CompleteReviewModalProps> = ({
               className="px-4 py-2 rounded-lg bg-fb-blue hover:bg-fb-blue-hover text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
             >
               {isSubmitting && (
-                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-3.5 h-3.5 border-2 border-fb-card border-t-transparent rounded-full animate-spin" />
               )}
               <span>Xác nhận hoàn tất</span>
             </button>

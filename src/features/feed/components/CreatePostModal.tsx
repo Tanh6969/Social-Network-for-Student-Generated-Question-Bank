@@ -250,9 +250,9 @@ function PostComposer({
         role="dialog"
         aria-modal="true"
         aria-labelledby="post-composer-title"
-        className="flex w-full max-w-lg flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-[#242526]"
+        className="flex w-full max-w-lg flex-col overflow-hidden rounded-lg border border-fb-divider bg-fb-card shadow-2xl"
       >
-        <div className="relative flex items-center border-b border-gray-200 p-4 dark:border-gray-700">
+        <div className="relative flex items-center border-b border-fb-divider p-4">
           <h2
             id="post-composer-title"
             className="flex-1 text-center text-base font-bold text-fb-text"
@@ -263,7 +263,7 @@ function PostComposer({
             type="button"
             onClick={closePostComposer}
             aria-label="Đóng"
-            className="absolute right-3 rounded-full p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="absolute right-3 rounded-full p-1.5 text-fb-text-2 hover:bg-fb-hover"
           >
             <X className="h-5 w-5" />
           </button>
@@ -290,11 +290,11 @@ function PostComposer({
               }
               aria-invalid={Boolean(limitIssue || contentIssue)}
               placeholder="Bạn muốn chia sẻ điều gì?"
-              className={`w-full resize-none rounded-lg bg-transparent pb-7 text-sm leading-relaxed text-gray-900 outline-none placeholder:text-gray-400 dark:text-gray-100 ${contentIssue ? 'ring-1 ring-red-500' : ''}`}
+              className={`w-full resize-none rounded-lg bg-transparent pb-7 text-sm leading-relaxed text-fb-text outline-none placeholder:text-fb-text-3 ${contentIssue ? 'ring-1 ring-fb-danger' : ''}`}
             />
             <span
               aria-label={`${wordCount} trên ${MAX_POST_WORDS} từ`}
-              className={`pointer-events-none absolute bottom-2 right-2 text-xs tabular-nums ${countIsRed ? 'font-semibold text-red-600 dark:text-red-400' : 'text-fb-text-2'}`}
+              className={`pointer-events-none absolute bottom-2 right-2 text-xs tabular-nums ${countIsRed ? 'font-semibold text-fb-danger' : 'text-fb-text-2'}`}
             >
               {wordCount}/{MAX_POST_WORDS}
             </span>
@@ -303,7 +303,7 @@ function PostComposer({
             <p
               id="post-content-error"
               role="alert"
-              className="text-xs font-medium text-red-600 dark:text-red-400"
+              className="text-xs font-medium text-fb-danger"
             >
               {contentIssue === 'words'
                 ? 'Bài viết vượt giới hạn 500 từ. Hãy rút ngắn để đăng.'
@@ -376,9 +376,9 @@ function PostComposer({
                 <button
                   type="button"
                   onClick={() => imageInput.current?.click()}
-                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-fb-hover ${mediaType === 'image' && initialMediaKind === 'image' ? 'border-blue-500 text-blue-600' : 'border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-200'}`}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-fb-hover ${mediaType === 'image' && initialMediaKind === 'image' ? 'border-fb-blue text-fb-blue' : 'border-fb-divider text-fb-text'}`}
                 >
-                  <ImagePlus className="h-4 w-4 text-emerald-600" />
+                  <ImagePlus className="h-4 w-4 text-fb-success" />
                   Thêm ảnh
                 </button>
               )}
@@ -387,9 +387,9 @@ function PostComposer({
                 <button
                   type="button"
                   onClick={() => videoInput.current?.click()}
-                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-fb-hover ${mediaType === 'video' && initialMediaKind === 'video' ? 'border-blue-500 text-blue-600' : 'border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-200'}`}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-fb-hover ${mediaType === 'video' && initialMediaKind === 'video' ? 'border-fb-blue text-fb-blue' : 'border-fb-divider text-fb-text'}`}
                 >
-                  <Video className="h-4 w-4 text-blue-600" />
+                  <Video className="h-4 w-4 text-fb-blue" />
                   Thêm video
                 </button>
               )}
@@ -397,9 +397,9 @@ function PostComposer({
               <button
                 type="button"
                 onClick={() => documentInput.current?.click()}
-                className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-fb-hover ${initialMediaKind === 'document' ? 'border-blue-500 text-blue-600' : 'border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-200'}`}
+                className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-fb-hover ${initialMediaKind === 'document' ? 'border-fb-blue text-fb-blue' : 'border-fb-divider text-fb-text'}`}
               >
-                <FileText className="h-4 w-4 text-blue-600" />
+                <FileText className="h-4 w-4 text-fb-blue" />
                 Thêm tài liệu
               </button>
             )}
@@ -407,13 +407,13 @@ function PostComposer({
           {fileError && (
             <p
               role="alert"
-              className="text-xs font-medium text-red-600 dark:text-red-400"
+              className="text-xs font-medium text-fb-danger"
             >
               {fileError}
             </p>
           )}
         </div>
-        <div className="border-t border-gray-100 p-4 dark:border-gray-700">
+        <div className="border-t border-fb-divider p-4">
           <button
             type="button"
             onClick={handleSave}
@@ -422,7 +422,7 @@ function PostComposer({
               Boolean(contentIssue) ||
               isReadingFiles
             }
-            className="w-full rounded-lg bg-blue-600 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 dark:disabled:bg-gray-700"
+            className="w-full rounded-lg bg-fb-blue py-2.5 text-sm font-bold text-white hover:bg-fb-blue-hover disabled:bg-fb-btn disabled:text-fb-text-3"
           >
             {editingPost ? 'Lưu thay đổi' : 'Đăng bài viết'}
           </button>

@@ -230,13 +230,13 @@ export const ReviewDashboardView: React.FC = () => {
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="p-2.5 rounded-lg bg-blue-600 text-white shadow-xs">
+              <span className="p-2.5 rounded-lg bg-fb-blue text-white shadow-xs">
                 <CheckSquare className="w-5 h-5" />
               </span>
-              <h1 className="text-xl sm:text-2xl font-black text-fb-text tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-bold text-fb-text tracking-tight">
                 Kiểm duyệt câu hỏi
               </h1>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-fb-blue-soft text-fb-blue">
                 Dành cho Giảng viên
               </span>
             </div>
@@ -250,16 +250,16 @@ export const ReviewDashboardView: React.FC = () => {
             <button
               onClick={fetchSessions}
               disabled={loading}
-              className="px-3.5 py-2 bg-fb-input hover:bg-gray-200 text-fb-text rounded-lg text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="px-3.5 py-2 bg-fb-input hover:bg-fb-btn-hover text-fb-text rounded-lg text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               title="Làm mới danh sách phiên"
             >
-              <RefreshCw className={`w-4 h-4 text-gray-500 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 text-fb-text-2 ${loading ? 'animate-spin' : ''}`} />
               <span>Làm mới</span>
             </button>
 
             <button
               onClick={() => setActiveTab('exams')}
-              className="px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:hover:bg-blue-900 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+              className="px-3.5 py-2 bg-fb-blue-soft hover:bg-fb-blue/20 text-fb-blue border border-fb-blue/30 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
             >
               <Database className="w-4 h-4 text-fb-blue" />
               <span>Quản lý đề thi & Xuất file</span>
@@ -275,7 +275,7 @@ export const ReviewDashboardView: React.FC = () => {
             ========================================================================= */}
         <aside className="w-full lg:w-64 xl:w-72 shrink-0 bg-fb-card rounded-lg shadow-fb-card p-3 sm:p-4 space-y-2">
           <div className="hidden lg:block pb-2 mb-2 border-b border-fb-divider">
-            <span className="text-xs font-black text-gray-400">
+            <span className="text-xs font-bold text-fb-text-3">
               Trạng thái kiểm duyệt
             </span>
           </div>
@@ -290,19 +290,19 @@ export const ReviewDashboardView: React.FC = () => {
               }}
               className={`flex-1 lg:flex-initial flex items-center justify-between gap-2.5 px-3.5 py-3 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap ${
                 activeTab === 'PENDING'
-                  ? 'bg-blue-600 text-white shadow-xs'
+                  ? 'bg-fb-blue text-white shadow-xs'
                   : 'text-fb-text hover:bg-fb-hover'
               }`}
             >
               <div className="flex items-center gap-2.5">
-                <Clock className={`w-4 h-4 ${activeTab === 'PENDING' ? 'text-white' : 'text-amber-500'}`} />
+                <Clock className={`w-4 h-4 ${activeTab === 'PENDING' ? 'text-white' : 'text-fb-warning'}`} />
                 <span>Chờ kiểm duyệt</span>
               </div>
               <span
-                className={`px-2 py-0.5 rounded-full text-[11px] font-black ${
+                className={`px-2 py-0.5 rounded-full text-xs font-bold ${
                   activeTab === 'PENDING'
-                    ? 'bg-white/20 text-white'
-                    : 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300'
+                    ? 'bg-fb-card/20 text-white'
+                    : 'bg-fb-warning-soft text-fb-warning'
                 }`}
               >
                 {pendingSessions.length}
@@ -317,19 +317,19 @@ export const ReviewDashboardView: React.FC = () => {
               }}
               className={`flex-1 lg:flex-initial flex items-center justify-between gap-2.5 px-3.5 py-3 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap ${
                 activeTab === 'REVIEWING'
-                  ? 'bg-blue-600 text-white shadow-xs'
+                  ? 'bg-fb-blue text-white shadow-xs'
                   : 'text-fb-text hover:bg-fb-hover'
               }`}
             >
               <div className="flex items-center gap-2.5">
-                <Layers className={`w-4 h-4 ${activeTab === 'REVIEWING' ? 'text-white' : 'text-blue-500'}`} />
+                <Layers className={`w-4 h-4 ${activeTab === 'REVIEWING' ? 'text-white' : 'text-fb-blue'}`} />
                 <span>Đang kiểm duyệt</span>
               </div>
               <span
-                className={`px-2 py-0.5 rounded-full text-[11px] font-black ${
+                className={`px-2 py-0.5 rounded-full text-xs font-bold ${
                   activeTab === 'REVIEWING'
-                    ? 'bg-white/20 text-white'
-                    : 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
+                    ? 'bg-fb-card/20 text-white'
+                    : 'bg-fb-blue-soft text-fb-blue'
                 }`}
               >
                 {reviewingSessions.length}
@@ -344,19 +344,19 @@ export const ReviewDashboardView: React.FC = () => {
               }}
               className={`flex-1 lg:flex-initial flex items-center justify-between gap-2.5 px-3.5 py-3 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap ${
                 activeTab === 'HISTORY'
-                  ? 'bg-blue-600 text-white shadow-xs'
+                  ? 'bg-fb-blue text-white shadow-xs'
                   : 'text-fb-text hover:bg-fb-hover'
               }`}
             >
               <div className="flex items-center gap-2.5">
-                <RotateCcw className={`w-4 h-4 ${activeTab === 'HISTORY' ? 'text-white' : 'text-emerald-500'}`} />
+                <RotateCcw className={`w-4 h-4 ${activeTab === 'HISTORY' ? 'text-white' : 'text-fb-success'}`} />
                 <span>Lịch sử kiểm duyệt</span>
               </div>
               <span
-                className={`px-2 py-0.5 rounded-full text-[11px] font-black ${
+                className={`px-2 py-0.5 rounded-full text-xs font-bold ${
                   activeTab === 'HISTORY'
-                    ? 'bg-white/20 text-white'
-                    : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                    ? 'bg-fb-card/20 text-white'
+                    : 'bg-fb-success-soft text-fb-success'
                 }`}
               >
                 {allHistorySessions.length}
@@ -365,9 +365,9 @@ export const ReviewDashboardView: React.FC = () => {
           </div>
 
           {/* Helpful Note Box for Lecturer */}
-          <div className="hidden lg:block mt-4 p-3 bg-fb-input rounded-lg border border-fb-divider text-[11px] text-fb-text-2 space-y-1">
+          <div className="hidden lg:block mt-4 p-3 bg-fb-input rounded-lg border border-fb-divider text-xs text-fb-text-2 space-y-1">
             <p className="font-semibold text-fb-text flex items-center gap-1">
-              <Info className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+              <Info className="w-3.5 h-3.5 text-fb-blue shrink-0" />
               Quy trình kiểm duyệt:
             </p>
             <p>1. Chọn phiên Chờ kiểm duyệt để bắt đầu thẩm định.</p>
@@ -396,16 +396,16 @@ export const ReviewDashboardView: React.FC = () => {
             <>
               {/* Notice Banner for HISTORY tab regarding Swagger endpoint limitation */}
               {activeTab === 'HISTORY' && (
-                <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 text-xs text-blue-900 dark:text-blue-200 flex items-start gap-3">
-                  <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                <div className="p-4 rounded-lg bg-fb-blue-soft border border-fb-blue/30 text-xs text-fb-blue flex items-start gap-3">
+                  <Info className="w-5 h-5 text-fb-blue shrink-0 mt-0.5" />
                   <div className="space-y-1">
                     <p className="font-bold">
                       Thông tin tra cứu lịch sử kiểm duyệt
                     </p>
                     <p className="leading-relaxed">
-                      Hiện tại đặc tả OpenAPI/Swagger của hệ thống chưa cung cấp endpoint chuyên biệt để tra cứu toàn bộ lịch sử các phiên đã hoàn tất (Đề xuất backend bổ sung endpoint <code className="tabular-nums bg-blue-100 dark:bg-blue-900 px-1 py-0.5 rounded">GET /sessions/history</code> hoặc tham số lọc <code className="tabular-nums bg-blue-100 dark:bg-blue-900 px-1 py-0.5 rounded">status=RESOLVED</code> trong API <code className="tabular-nums bg-blue-100 dark:bg-blue-900 px-1 py-0.5 rounded">GET /sessions/pending</code>).
+                      Hiện tại đặc tả OpenAPI/Swagger của hệ thống chưa cung cấp endpoint chuyên biệt để tra cứu toàn bộ lịch sử các phiên đã hoàn tất (Đề xuất backend bổ sung endpoint <code className="tabular-nums bg-fb-blue-soft px-1 py-0.5 rounded">GET /sessions/history</code> hoặc tham số lọc <code className="tabular-nums bg-fb-blue-soft px-1 py-0.5 rounded">status=RESOLVED</code> trong API <code className="tabular-nums bg-fb-blue-soft px-1 py-0.5 rounded">GET /sessions/pending</code>).
                     </p>
-                    <p className="leading-relaxed text-blue-800 dark:text-blue-300">
+                    <p className="leading-relaxed text-fb-blue">
                       Dưới đây hiển thị các phiên đã được chốt duyệt thành công trong phiên làm việc hiện tại ở chế độ chỉ xem.
                     </p>
                   </div>
@@ -416,13 +416,13 @@ export const ReviewDashboardView: React.FC = () => {
               <div className="bg-fb-card rounded-lg p-4 shadow-fb-card flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 text-xs">
                 {/* Search Input */}
                 <div className="relative flex-1">
-                  <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+                  <Search className="w-4 h-4 text-fb-text-3 absolute left-3 top-2.5" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Tìm theo tiêu đề phiên, môn học, sinh viên..."
-                    className="w-full pl-9 pr-3 py-2 rounded-lg bg-fb-input border border-gray-200 dark:border-gray-600 text-fb-text focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                    className="w-full pl-9 pr-3 py-2 rounded-lg bg-fb-input border border-fb-divider text-fb-text focus:ring-2 focus:ring-fb-blue focus:outline-hidden"
                   />
                 </div>
 
@@ -432,7 +432,7 @@ export const ReviewDashboardView: React.FC = () => {
                     <select
                       value={selectedSubjectId}
                       onChange={(e) => setSelectedSubjectId(e.target.value)}
-                      className="appearance-none pl-3 pr-8 py-2 rounded-lg bg-fb-input border border-gray-200 dark:border-gray-600 text-fb-text font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-hidden cursor-pointer"
+                      className="appearance-none pl-3 pr-8 py-2 rounded-lg bg-fb-input border border-fb-divider text-fb-text font-semibold focus:ring-2 focus:ring-fb-blue focus:outline-hidden cursor-pointer"
                     >
                       <option value="ALL">Tất cả môn học ({distinctTopics.length})</option>
                       {distinctTopics.map((topic) => (
@@ -441,7 +441,7 @@ export const ReviewDashboardView: React.FC = () => {
                         </option>
                       ))}
                     </select>
-                    <Filter className="w-3.5 h-3.5 text-gray-400 absolute right-2.5 top-3 pointer-events-none" />
+                    <Filter className="w-3.5 h-3.5 text-fb-text-3 absolute right-2.5 top-3 pointer-events-none" />
                   </div>
 
                   {/* History Filter */}
@@ -449,7 +449,7 @@ export const ReviewDashboardView: React.FC = () => {
                     <select
                       value={historyResultFilter}
                       onChange={(e) => setHistoryResultFilter(e.target.value as 'ALL' | 'RESOLVED' | 'REJECTED')}
-                      className="pl-3 pr-8 py-2 rounded-lg bg-fb-input border border-gray-200 dark:border-gray-600 text-fb-text font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-hidden cursor-pointer"
+                      className="pl-3 pr-8 py-2 rounded-lg bg-fb-input border border-fb-divider text-fb-text font-semibold focus:ring-2 focus:ring-fb-blue focus:outline-hidden cursor-pointer"
                     >
                       <option value="ALL">Tất cả trạng thái</option>
                       <option value="RESOLVED">Đã phê chuẩn (RESOLVED)</option>
@@ -462,12 +462,12 @@ export const ReviewDashboardView: React.FC = () => {
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value as 'NEWEST' | 'OLDEST')}
-                      className="appearance-none pl-3 pr-8 py-2 rounded-lg bg-fb-input border border-gray-200 dark:border-gray-600 text-fb-text font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-hidden cursor-pointer"
+                      className="appearance-none pl-3 pr-8 py-2 rounded-lg bg-fb-input border border-fb-divider text-fb-text font-semibold focus:ring-2 focus:ring-fb-blue focus:outline-hidden cursor-pointer"
                     >
                       <option value="NEWEST">Mới nhất trước</option>
                       <option value="OLDEST">Cũ nhất trước</option>
                     </select>
-                    <ArrowUpDown className="w-3.5 h-3.5 text-gray-400 absolute right-2.5 top-3 pointer-events-none" />
+                    <ArrowUpDown className="w-3.5 h-3.5 text-fb-text-3 absolute right-2.5 top-3 pointer-events-none" />
                   </div>
                 </div>
               </div>
@@ -481,12 +481,12 @@ export const ReviewDashboardView: React.FC = () => {
                       className="bg-fb-card rounded-lg p-5 border border-fb-divider animate-pulse space-y-3"
                     >
                       <div className="flex justify-between items-center">
-                        <div className="h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded-full" />
-                        <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded-md" />
+                        <div className="h-5 w-24 bg-fb-btn rounded-full" />
+                        <div className="h-4 w-16 bg-fb-btn rounded-md" />
                       </div>
-                      <div className="h-6 w-3/4 bg-gray-200 dark:bg-gray-700 rounded-md" />
-                      <div className="h-12 w-full bg-gray-100 dark:bg-gray-800 rounded-lg" />
-                      <div className="h-8 w-full bg-gray-200 dark:bg-gray-700 rounded-lg" />
+                      <div className="h-6 w-3/4 bg-fb-btn rounded-md" />
+                      <div className="h-12 w-full bg-fb-input rounded-lg" />
+                      <div className="h-8 w-full bg-fb-btn rounded-lg" />
                     </div>
                   ))}
                 </div>
@@ -494,12 +494,12 @@ export const ReviewDashboardView: React.FC = () => {
 
               {/* Error State */}
               {!loading && error && (
-                <div className="bg-fb-card rounded-lg p-8 border border-red-200 dark:border-red-900/50 text-center space-y-3">
-                  <AlertCircle className="w-10 h-10 text-red-500 mx-auto" />
+                <div className="bg-fb-card rounded-lg p-8 border border-fb-danger/30 text-center space-y-3">
+                  <AlertCircle className="w-10 h-10 text-fb-danger mx-auto" />
                   <h3 className="font-bold text-sm text-fb-text">
                     Không thể tải dữ liệu phiên kiểm duyệt
                   </h3>
-                  <p className="text-xs text-red-600 dark:text-red-400 max-w-md mx-auto">
+                  <p className="text-xs text-fb-danger max-w-md mx-auto">
                     {error}
                   </p>
                   <button
@@ -515,11 +515,11 @@ export const ReviewDashboardView: React.FC = () => {
               {/* Empty State */}
               {!loading && !error && filteredSessions.length === 0 && (
                 <div className="bg-fb-card rounded-lg p-12 border border-fb-divider text-center space-y-3">
-                  <div className="w-14 h-14 rounded-full bg-fb-input flex items-center justify-center mx-auto text-gray-400">
+                  <div className="w-14 h-14 rounded-full bg-fb-input flex items-center justify-center mx-auto text-fb-text-3">
                     {activeTab === 'PENDING' ? (
-                      <CheckCircle2 className="w-7 h-7 text-emerald-500" />
+                      <CheckCircle2 className="w-7 h-7 text-fb-success" />
                     ) : (
-                      <FileQuestion className="w-7 h-7 text-gray-400" />
+                      <FileQuestion className="w-7 h-7 text-fb-text-3" />
                     )}
                   </div>
                   <h3 className="font-bold text-sm text-fb-text">
@@ -555,17 +555,17 @@ export const ReviewDashboardView: React.FC = () => {
                         <div className="space-y-3">
                           {/* Card Header: Subject Topic + Status Badge */}
                           <div className="flex items-start justify-between gap-2">
-                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 truncate max-w-[65%]">
+                            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-fb-blue-soft text-fb-blue truncate max-w-[65%]">
                               {session.topic || 'Chưa phân môn'}
                             </span>
 
                             <span
-                              className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
+                              className={`px-2 py-0.5 rounded-full text-xs font-bold shrink-0 ${
                                 isPending
-                                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                                  ? 'bg-fb-warning-soft text-fb-warning'
                                   : isReviewing
-                                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
-                                  : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                                  ? 'bg-fb-blue-soft text-fb-blue'
+                                  : 'bg-fb-success-soft text-fb-success'
                               }`}
                             >
                               {isPending
@@ -578,11 +578,11 @@ export const ReviewDashboardView: React.FC = () => {
 
                           {/* Session Title */}
                           <div>
-                            <h3 className="font-bold text-sm text-fb-text group-hover:text-blue-600 transition line-clamp-2">
+                            <h3 className="font-bold text-sm text-fb-text group-hover:text-fb-blue transition line-clamp-2">
                               {session.title || 'Phiên đề xuất không có tiêu đề'}
                             </h3>
                             {session.content && (
-                              <p className="text-[11px] text-fb-text-2 mt-1 line-clamp-2 leading-relaxed">
+                              <p className="text-xs text-fb-text-2 mt-1 line-clamp-2 leading-relaxed">
                                 {session.content}
                               </p>
                             )}
@@ -597,7 +597,7 @@ export const ReviewDashboardView: React.FC = () => {
                                 className="w-8 h-8 rounded-full object-cover shrink-0"
                               />
                             ) : (
-                              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-950/50 flex items-center justify-center text-blue-600 dark:text-blue-300 shrink-0">
+                              <div className="w-8 h-8 rounded-full bg-fb-blue-soft flex items-center justify-center text-fb-blue shrink-0">
                                 <UserIcon className="w-4 h-4" />
                               </div>
                             )}
@@ -606,15 +606,15 @@ export const ReviewDashboardView: React.FC = () => {
                               <span className="font-bold text-xs text-fb-text block truncate">
                                 {session.author?.full_name || 'Sinh viên đề xuất'}
                               </span>
-                              <span className="text-[10px] text-gray-400 block truncate">
+                              <span className="text-xs text-fb-text-3 block truncate">
                                 Mã tác giả: #{session.author?.user_id || '---'}
                               </span>
                             </div>
                           </div>
 
                           {/* Creation Time */}
-                          <div className="flex items-center gap-1.5 text-[11px] text-fb-text-2 pt-1">
-                            <Calendar className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                          <div className="flex items-center gap-1.5 text-xs text-fb-text-2 pt-1">
+                            <Calendar className="w-3.5 h-3.5 text-fb-text-3 shrink-0" />
                             <span>
                               Tạo lúc:{' '}
                               {session.created_at
@@ -626,7 +626,7 @@ export const ReviewDashboardView: React.FC = () => {
 
                         {/* Card Footer: Action Button */}
                         <div className="pt-3 mt-3 border-t border-fb-divider flex items-center justify-between gap-2">
-                          <span className="text-[10px] tabular-nums text-gray-400">
+                          <span className="text-xs tabular-nums text-fb-text-3">
                             ID: {session.session_id}
                           </span>
 
@@ -653,7 +653,7 @@ export const ReviewDashboardView: React.FC = () => {
                           {activeTab === 'HISTORY' && (
                             <button
                               onClick={() => handleStartReview(session)}
-                              className="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-[#3A3B3C] dark:hover:bg-[#4E4F50] text-fb-text rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                              className="px-3.5 py-2 bg-fb-input hover:bg-fb-btn-hover text-fb-text rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer"
                             >
                               <span>Xem chi tiết</span>
                               <ChevronRight className="w-3.5 h-3.5" />
@@ -688,11 +688,11 @@ export const ReviewDashboardView: React.FC = () => {
                     </span>
 
                     <div className="flex items-center gap-1.5 border-l border-fb-divider pl-3">
-                      <span className="text-gray-500 text-[11px]">Mỗi trang:</span>
+                      <span className="text-fb-text-2 text-xs">Mỗi trang:</span>
                       <select
                         value={itemsPerPage}
                         onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                        className="py-1 px-2 rounded-lg bg-fb-input border border-gray-200 dark:border-gray-600 text-fb-text text-xs font-semibold focus:outline-hidden cursor-pointer"
+                        className="py-1 px-2 rounded-lg bg-fb-input border border-fb-divider text-fb-text text-xs font-semibold focus:outline-hidden cursor-pointer"
                       >
                         <option value={4}>4 phiên</option>
                         <option value={6}>6 phiên</option>
@@ -721,7 +721,7 @@ export const ReviewDashboardView: React.FC = () => {
                           onClick={() => setCurrentPage(page)}
                           className={`w-8 h-8 rounded-lg font-bold transition cursor-pointer text-xs ${
                             currentPage === page
-                              ? 'bg-blue-600 text-white shadow-xs'
+                              ? 'bg-fb-blue text-white shadow-xs'
                               : 'border border-fb-divider text-fb-text hover:bg-fb-hover'
                           }`}
                         >

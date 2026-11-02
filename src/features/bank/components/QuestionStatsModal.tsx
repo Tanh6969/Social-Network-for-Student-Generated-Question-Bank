@@ -99,14 +99,14 @@ export const QuestionStatsModal: React.FC<QuestionStatsModalProps> = ({
         {/* Header */}
         <div className="p-4 border-b border-fb-divider flex items-center justify-between bg-fb-input">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/60 text-fb-blue flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-fb-blue-soft text-fb-blue flex items-center justify-center shrink-0">
               <BarChart2 className="w-4 h-4" />
             </div>
             <div>
               <h3 className="font-bold text-sm text-fb-text">
                 Thống kê & Đánh giá câu hỏi
               </h3>
-              <p className="text-[11px] text-gray-500">
+              <p className="text-xs text-fb-text-2">
                 Dữ liệu thống kê cộng đồng từ hệ thống
               </p>
             </div>
@@ -115,14 +115,14 @@ export const QuestionStatsModal: React.FC<QuestionStatsModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition cursor-pointer"
+            className="p-1.5 rounded-full hover:bg-fb-btn-hover text-fb-text-3 hover:text-fb-text-2 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Nội dung tóm tắt câu hỏi */}
-        <div className="px-4 py-3 bg-gray-50/70 dark:bg-[#1E1F20]/50 border-b border-fb-divider">
+        <div className="px-4 py-3 bg-fb-inset/70 border-b border-fb-divider">
           <p className="text-xs font-medium text-fb-text line-clamp-2">
             {question.content}
           </p>
@@ -135,8 +135,8 @@ export const QuestionStatsModal: React.FC<QuestionStatsModalProps> = ({
             onClick={() => setActiveTab('STATS')}
             className={`py-2.5 px-3 border-b-2 transition flex items-center gap-1.5 cursor-pointer ${
               activeTab === 'STATS'
-                ? 'border-blue-600 text-fb-blue'
-                : 'border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
+                ? 'border-fb-blue text-fb-blue'
+                : 'border-transparent text-fb-text-2 hover:text-fb-text'
             }`}
           >
             <TrendingUp className="w-3.5 h-3.5" />
@@ -147,8 +147,8 @@ export const QuestionStatsModal: React.FC<QuestionStatsModalProps> = ({
             onClick={() => setActiveTab('RATINGS')}
             className={`py-2.5 px-3 border-b-2 transition flex items-center gap-1.5 cursor-pointer ${
               activeTab === 'RATINGS'
-                ? 'border-blue-600 text-fb-blue'
-                : 'border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
+                ? 'border-fb-blue text-fb-blue'
+                : 'border-transparent text-fb-text-2 hover:text-fb-text'
             }`}
           >
             <Star className="w-3.5 h-3.5" />
@@ -162,28 +162,28 @@ export const QuestionStatsModal: React.FC<QuestionStatsModalProps> = ({
             <div className="space-y-4">
               {/* Chỉ số tổng quan */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-blue-50/60 dark:bg-blue-950/30 p-3.5 rounded-lg border border-blue-200/60 dark:border-blue-800/60">
+                <div className="bg-fb-blue-soft/60 p-3.5 rounded-lg border border-fb-blue/60">
                   <div className="flex items-center gap-1.5 text-fb-blue text-xs font-semibold mb-1">
                     <Users className="w-4 h-4" />
                     <span>Lượt làm bài</span>
                   </div>
-                  <div className="text-xl font-black text-blue-900 dark:text-blue-200">
+                  <div className="text-xl font-bold text-fb-blue">
                     {totalAnswers}
                   </div>
-                  <div className="text-[10px] text-gray-500">
+                  <div className="text-xs text-fb-text-2">
                     Tổng số sinh viên đã làm
                   </div>
                 </div>
 
-                <div className="bg-emerald-50/60 dark:bg-emerald-950/30 p-3.5 rounded-lg border border-emerald-200/60 dark:border-emerald-800/60">
-                  <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 text-xs font-semibold mb-1">
+                <div className="bg-fb-success-soft/60 p-3.5 rounded-lg border border-fb-success/60">
+                  <div className="flex items-center gap-1.5 text-fb-success text-xs font-semibold mb-1">
                     <CheckCircle2 className="w-4 h-4" />
                     <span>Tỷ lệ làm đúng</span>
                   </div>
-                  <div className="text-xl font-black text-emerald-900 dark:text-emerald-200">
+                  <div className="text-xl font-bold text-fb-success">
                     {correctRate}%
                   </div>
-                  <div className="text-[10px] text-gray-500">
+                  <div className="text-xs text-fb-text-2">
                     {correctAttempts} / {totalAnswers} câu trả lời đúng
                   </div>
                 </div>
@@ -205,21 +205,21 @@ export const QuestionStatsModal: React.FC<QuestionStatsModalProps> = ({
                         <span
                           className={`w-6 h-6 rounded-md flex items-center justify-center font-bold text-xs shrink-0 ${
                             isCorrect
-                              ? 'bg-emerald-600 text-white'
-                              : 'bg-gray-200 dark:bg-gray-700 text-fb-text'
+                              ? 'bg-fb-success text-white'
+                              : 'bg-fb-btn text-fb-text'
                           }`}
                         >
                           {opt}
                         </span>
-                        <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                        <div className="flex-1 bg-fb-btn rounded-full h-3 overflow-hidden">
                           <div
-                            className={`h-full rounded-full transition-all ${
-                              isCorrect ? 'bg-emerald-500' : 'bg-blue-500'
+                            className={`h-full rounded-full ${
+                              isCorrect ? 'bg-fb-success' : 'bg-fb-blue'
                             }`}
                             style={{ width: `${pct}%` }}
                           />
                         </div>
-                        <span className="w-14 text-right text-fb-text-2 text-[11px] font-medium">
+                        <span className="w-14 text-right text-fb-text-2 text-xs font-medium">
                           {pct}% ({count})
                         </span>
                       </div>
@@ -231,17 +231,17 @@ export const QuestionStatsModal: React.FC<QuestionStatsModalProps> = ({
           ) : (
             <div className="space-y-4">
               {/* Tổng quan sao */}
-              <div className="bg-amber-50/60 dark:bg-amber-950/30 p-4 rounded-lg border border-amber-200/60 dark:border-amber-800/60 flex items-center justify-between">
+              <div className="bg-fb-warning-soft/60 p-4 rounded-lg border border-fb-warning/60 flex items-center justify-between">
                 <div>
-                  <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 text-xs font-bold">
-                    <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                  <div className="flex items-center gap-1.5 text-fb-warning text-xs font-bold">
+                    <Star className="w-4 h-4 fill-amber-400 text-fb-warning" />
                     <span>Điểm đánh giá trung bình</span>
                   </div>
                   <div className="flex items-baseline gap-1 mt-1">
-                    <span className="text-2xl font-black text-amber-900 dark:text-amber-200">
+                    <span className="text-2xl font-bold text-fb-warning">
                       {avgRating.toFixed(1)}
                     </span>
-                    <span className="text-xs text-gray-400">/ 4.0</span>
+                    <span className="text-xs text-fb-text-3">/ 4.0</span>
                   </div>
                 </div>
 
@@ -249,7 +249,7 @@ export const QuestionStatsModal: React.FC<QuestionStatsModalProps> = ({
                   <div className="text-lg font-bold text-fb-text">
                     {totalRatings}
                   </div>
-                  <div className="text-xs text-gray-400">Lượt đánh giá</div>
+                  <div className="text-xs text-fb-text-3">Lượt đánh giá</div>
                 </div>
               </div>
 
@@ -268,13 +268,13 @@ export const QuestionStatsModal: React.FC<QuestionStatsModalProps> = ({
                         <span className="w-12 font-medium text-fb-text-2">
                           {level} sao
                         </span>
-                        <div className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
+                        <div className="flex-1 bg-fb-input rounded-full h-2.5 overflow-hidden">
                           <div
-                            className="h-full bg-amber-400 rounded-full transition-all"
+                            className="h-full bg-fb-warning rounded-full"
                             style={{ width: `${pct}%` }}
                           />
                         </div>
-                        <span className="w-14 text-right text-gray-400 text-[11px]">
+                        <span className="w-14 text-right text-fb-text-3 text-xs">
                           {pct}% ({count})
                         </span>
                       </div>
@@ -290,7 +290,7 @@ export const QuestionStatsModal: React.FC<QuestionStatsModalProps> = ({
                     <MessageSquare className="w-3.5 h-3.5" />
                     <span>Nhận xét & đánh giá gần đây</span>
                   </h4>
-                  <span className="text-[11px] text-gray-400">
+                  <span className="text-xs text-fb-text-3">
                     {mockRatingsList.length} nhận xét
                   </span>
                 </div>
@@ -304,19 +304,19 @@ export const QuestionStatsModal: React.FC<QuestionStatsModalProps> = ({
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-fb-text">
                           {item.userName}{' '}
-                          <span className="text-[10px] text-gray-400 font-normal">
+                          <span className="text-xs text-fb-text-3 font-normal">
                             ({item.user_id})
                           </span>
                         </span>
-                        <div className="flex items-center gap-1 text-amber-500 font-bold text-[11px]">
-                          <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                        <div className="flex items-center gap-1 text-fb-warning font-bold text-xs">
+                          <Star className="w-3 h-3 fill-amber-400 text-fb-warning" />
                           <span>{item.rating} / 4.0</span>
                         </div>
                       </div>
                       <p className="text-fb-text-2 leading-relaxed">
                         {item.comment}
                       </p>
-                      <div className="text-[10px] text-gray-400 pt-0.5">
+                      <div className="text-xs text-fb-text-3 pt-0.5">
                         {item.createdAt}
                       </div>
                     </div>
@@ -330,7 +330,7 @@ export const QuestionStatsModal: React.FC<QuestionStatsModalProps> = ({
                           Math.min(mockRatingsList.length, prev + 2),
                         )
                       }
-                      className="w-full py-2 bg-gray-100 dark:bg-[#2A2B2D] hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-xs font-medium text-fb-text-2 transition flex items-center justify-center gap-1 cursor-pointer"
+                      className="w-full py-2 bg-fb-input hover:bg-fb-btn-hover rounded-lg text-xs font-medium text-fb-text-2 transition flex items-center justify-center gap-1 cursor-pointer"
                     >
                       <span>Xem thêm đánh giá</span>
                       <ChevronDown className="w-3.5 h-3.5" />
@@ -347,7 +347,7 @@ export const QuestionStatsModal: React.FC<QuestionStatsModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-fb-text rounded-lg text-xs font-semibold transition cursor-pointer"
+            className="px-5 py-1.5 bg-fb-btn hover:bg-fb-btn-hover text-fb-text rounded-lg text-xs font-semibold transition cursor-pointer"
           >
             Đóng
           </button>

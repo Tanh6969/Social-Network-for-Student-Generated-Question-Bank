@@ -147,13 +147,13 @@ export const ExamListView: React.FC<ExamListViewProps> = ({
       <div className="bg-fb-card rounded-lg shadow-fb-card p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         {/* Search */}
         <div className="relative flex-1">
-          <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+          <Search className="w-4 h-4 text-fb-text-3 absolute left-3 top-2.5" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Tìm theo tiêu đề đề thi, tên môn học hoặc mã đề..."
-            className="w-full pl-9 pr-3 py-2 rounded-lg bg-fb-input border border-gray-200 dark:border-gray-600 text-fb-text placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+            className="w-full pl-9 pr-3 py-2 rounded-lg bg-fb-input border border-fb-divider text-fb-text placeholder-fb-text-3 focus:ring-2 focus:ring-fb-blue focus:outline-hidden"
           />
         </div>
 
@@ -161,14 +161,14 @@ export const ExamListView: React.FC<ExamListViewProps> = ({
         <div className="flex items-center gap-2.5 flex-wrap">
           {/* Subject Filter */}
           <div className="flex items-center gap-1.5">
-            <span className="text-gray-500 font-semibold text-[11px] whitespace-nowrap">Môn học:</span>
+            <span className="text-fb-text-2 font-semibold text-xs whitespace-nowrap">Môn học:</span>
             <select
               value={selectedSubjectId}
               onChange={(e) => {
                 const val = e.target.value === 'ALL' ? 'ALL' : Number(e.target.value);
                 setSelectedSubjectId(val);
               }}
-              className="py-1.5 px-3 rounded-lg bg-fb-input border border-gray-200 dark:border-gray-600 text-fb-text font-semibold focus:outline-hidden cursor-pointer"
+              className="py-1.5 px-3 rounded-lg bg-fb-input border border-fb-divider text-fb-text font-semibold focus:outline-hidden cursor-pointer"
             >
               <option value="ALL">Tất cả môn học</option>
               {subjects.map((s) => (
@@ -181,11 +181,11 @@ export const ExamListView: React.FC<ExamListViewProps> = ({
 
           {/* Limit selector */}
           <div className="flex items-center gap-1.5">
-            <span className="text-gray-500 font-semibold text-[11px] whitespace-nowrap">Mỗi trang:</span>
+            <span className="text-fb-text-2 font-semibold text-xs whitespace-nowrap">Mỗi trang:</span>
             <select
               value={limit}
               onChange={(e) => setLimit(Number(e.target.value))}
-              className="py-1.5 px-2.5 rounded-lg bg-fb-input border border-gray-200 dark:border-gray-600 text-fb-text font-semibold focus:outline-hidden cursor-pointer"
+              className="py-1.5 px-2.5 rounded-lg bg-fb-input border border-fb-divider text-fb-text font-semibold focus:outline-hidden cursor-pointer"
             >
               <option value={10}>10 đề</option>
               <option value={15}>15 đề</option>
@@ -198,7 +198,7 @@ export const ExamListView: React.FC<ExamListViewProps> = ({
             type="button"
             onClick={() => fetchExams(cursorHistory[pageIndex])}
             disabled={loading}
-            className="p-2 rounded-lg border border-fb-divider bg-fb-input text-fb-text-2 hover:bg-gray-100 transition cursor-pointer"
+            className="p-2 rounded-lg border border-fb-divider bg-fb-input text-fb-text-2 hover:bg-fb-hover transition cursor-pointer"
             title="Làm mới danh sách"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -214,9 +214,9 @@ export const ExamListView: React.FC<ExamListViewProps> = ({
               key={i}
               className="bg-fb-card rounded-lg border border-fb-divider p-5 space-y-3 animate-pulse"
             >
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-md w-1/3" />
-              <div className="h-3 bg-gray-100 dark:bg-gray-800 rounded-md w-1/4" />
-              <div className="h-8 bg-gray-50 dark:bg-gray-800 rounded-lg w-full" />
+              <div className="h-4 bg-fb-btn rounded-md w-1/3" />
+              <div className="h-3 bg-fb-input rounded-md w-1/4" />
+              <div className="h-8 bg-fb-inset rounded-lg w-full" />
             </div>
           ))}
         </div>
@@ -224,7 +224,7 @@ export const ExamListView: React.FC<ExamListViewProps> = ({
 
       {/* Error State */}
       {error && !loading && (
-        <div className="p-5 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 flex items-center justify-between">
+        <div className="p-5 rounded-lg bg-fb-danger-soft border border-fb-danger/30 text-fb-danger flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <AlertCircle className="w-5 h-5 shrink-0" />
             <span>{error}</span>
@@ -232,7 +232,7 @@ export const ExamListView: React.FC<ExamListViewProps> = ({
           <button
             type="button"
             onClick={() => fetchExams(cursorHistory[pageIndex])}
-            className="px-3.5 py-1.5 rounded-lg bg-red-600 text-white font-bold hover:bg-red-700 transition"
+            className="px-3.5 py-1.5 rounded-lg bg-fb-danger text-white font-bold hover:bg-fb-danger/90 transition"
           >
             Thử lại
           </button>
@@ -242,13 +242,13 @@ export const ExamListView: React.FC<ExamListViewProps> = ({
       {/* Empty State */}
       {!loading && !error && filteredExams.length === 0 && (
         <div className="bg-fb-card rounded-lg border border-fb-divider p-12 text-center space-y-3">
-          <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 mx-auto flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-fb-blue-soft text-fb-blue mx-auto flex items-center justify-center">
             <FileCode className="w-6 h-6" />
           </div>
           <h4 className="font-bold text-fb-text text-sm">
             Chưa có đề thi nào trong danh sách
           </h4>
-          <p className="text-gray-500 max-w-md mx-auto text-xs leading-relaxed">
+          <p className="text-fb-text-2 max-w-md mx-auto text-xs leading-relaxed">
             Bạn chưa tạo đề thi nào phù hợp với bộ lọc hiện tại. Hãy sử dụng tính năng tạo đề thi tự động từ ngân hàng câu hỏi đã phê duyệt.
           </p>
           <button
@@ -268,26 +268,26 @@ export const ExamListView: React.FC<ExamListViewProps> = ({
           {filteredExams.map((exam) => (
             <div
               key={exam.exam_id}
-              className="bg-fb-card rounded-lg p-5 shadow-fb-card hover:border-blue-300 dark:hover:border-blue-800 transition space-y-3 group"
+              className="bg-fb-card rounded-lg p-5 shadow-fb-card hover:border-fb-blue/30 transition space-y-3 group"
             >
               {/* Header */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                 <div className="space-y-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     {exam.subject_name && (
-                      <span className="px-2.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-bold text-[11px] border border-blue-100 dark:border-blue-900">
+                      <span className="px-2.5 py-0.5 rounded-md bg-fb-blue-soft text-fb-blue font-bold text-xs border border-fb-blue/30">
                         {exam.subject_name}
                       </span>
                     )}
                     {exam.exam_id && (
-                      <span className="text-[11px] tabular-nums text-gray-400 bg-fb-input px-2 py-0.5 rounded-md">
+                      <span className="text-xs tabular-nums text-fb-text-3 bg-fb-input px-2 py-0.5 rounded-md">
                         Mã đề #{exam.exam_id}
                       </span>
                     )}
                   </div>
                   <h4
                     onClick={() => exam.exam_id && onSelectExam(exam.exam_id)}
-                    className="font-bold text-sm sm:text-base text-fb-text hover:text-blue-600 transition cursor-pointer truncate"
+                    className="font-bold text-sm sm:text-base text-fb-text hover:text-fb-blue transition cursor-pointer truncate"
                   >
                     {exam.title || `Đề thi môn ${exam.subject_name || 'chưa đặt tên'}`}
                   </h4>
@@ -303,7 +303,7 @@ export const ExamListView: React.FC<ExamListViewProps> = ({
                     className="px-3 py-1.5 rounded-lg border border-fb-divider hover:bg-fb-hover text-fb-text font-semibold transition flex items-center gap-1.5 cursor-pointer"
                     title="Xuất file PDF hoặc Excel"
                   >
-                    <Download className="w-3.5 h-3.5 text-blue-600" />
+                    <Download className="w-3.5 h-3.5 text-fb-blue" />
                     <span>Xuất file</span>
                   </button>
 
@@ -319,16 +319,16 @@ export const ExamListView: React.FC<ExamListViewProps> = ({
               </div>
 
               {/* Meta details & Difficulty statistics pills */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-fb-divider text-[11px] text-gray-500">
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-fb-divider text-xs text-fb-text-2">
                 <div className="flex items-center gap-4 flex-wrap">
                   <span className="flex items-center gap-1 font-semibold text-fb-text">
-                    <Layers className="w-3.5 h-3.5 text-blue-500" />
+                    <Layers className="w-3.5 h-3.5 text-fb-blue" />
                     <span>{exam.question_count ?? 0} câu hỏi</span>
                   </span>
 
                   {exam.created_at && (
                     <span className="flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                      <Calendar className="w-3.5 h-3.5 text-fb-text-3" />
                       <span>Tạo: {new Date(exam.created_at).toLocaleDateString('vi-VN')}</span>
                     </span>
                   )}
@@ -338,7 +338,7 @@ export const ExamListView: React.FC<ExamListViewProps> = ({
                       href={exam.download_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-emerald-600 hover:underline flex items-center gap-1 font-bold"
+                      className="text-fb-success hover:underline flex items-center gap-1 font-bold"
                     >
                       <Download className="w-3.5 h-3.5" />
                       <span>Tải trực tiếp</span>
@@ -349,13 +349,13 @@ export const ExamListView: React.FC<ExamListViewProps> = ({
                 {/* Difficulty Statistics Badges */}
                 {exam.statistic && (
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-200 dark:border-emerald-900/40">
+                    <span className="px-2 py-0.5 rounded-md bg-fb-success-soft text-fb-success font-bold border border-fb-success/30">
                       Dễ: {exam.statistic.easy_count ?? 0}
                     </span>
-                    <span className="px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 font-bold border border-amber-200 dark:border-amber-900/40">
+                    <span className="px-2 py-0.5 rounded-md bg-fb-warning-soft text-fb-warning font-bold border border-fb-warning/30">
                       TB: {exam.statistic.medium_count ?? 0}
                     </span>
-                    <span className="px-2 py-0.5 rounded-md bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 font-bold border border-red-200 dark:border-red-900/40">
+                    <span className="px-2 py-0.5 rounded-md bg-fb-danger-soft text-fb-danger font-bold border border-fb-danger/30">
                       Khó: {exam.statistic.hard_count ?? 0}
                     </span>
                     {(exam.statistic.unclassified_count ?? 0) > 0 && (
@@ -374,13 +374,13 @@ export const ExamListView: React.FC<ExamListViewProps> = ({
       {/* Cursor Pagination Bar */}
       {!loading && !error && exams.length > 0 && (
         <div className="bg-fb-card rounded-lg p-4 shadow-fb-card flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-          <div className="text-gray-500">
+          <div className="text-fb-text-2">
             Trang hiện tại:{' '}
             <strong className="text-fb-text font-bold">
               {pageIndex + 1}
             </strong>
             {pagination?.after && (
-              <span className="ml-2 tabular-nums text-[10px] text-gray-400">
+              <span className="ml-2 tabular-nums text-xs text-fb-text-3">
                 (Cursor: #{pagination.after})
               </span>
             )}

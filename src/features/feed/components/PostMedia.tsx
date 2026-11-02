@@ -16,7 +16,7 @@ export function PostMedia({
   const video =
     isVideo || /^data:video\//u.test(url) || /\.(mp4|webm)(\?|$)/iu.test(url);
   return (
-    <div className="relative overflow-hidden rounded-lg bg-gray-100 dark:bg-black">
+    <div className="relative overflow-hidden rounded-lg bg-fb-input">
       {video ? (
         <>
           <video

@@ -9,7 +9,7 @@ import {
   HelpCircle,
   Eye,
   Send,
-  Sparkles
+  Sparkles, Lightbulb
 } from 'lucide-react';
 import { QuestionDifficulty } from '../../demo/types';
 
@@ -125,14 +125,14 @@ export const ProposeSessionModal: React.FC = () => {
         {/* Header */}
         <div className="p-4 border-b border-fb-divider flex items-center justify-between bg-fb-input">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold">
+            <div className="w-8 h-8 rounded-full bg-fb-success-soft text-fb-success flex items-center justify-center font-bold">
               +
             </div>
             <div>
               <h3 className="font-bold text-sm sm:text-base text-fb-text">
                 Đề xuất phiên câu hỏi thi mới (BANK.02)
               </h3>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-fb-text-2">
                 Sinh viên biên soạn → Giảng viên kiểm duyệt → Đóng góp vào ngân hàng trường
               </p>
             </div>
@@ -140,14 +140,14 @@ export const ProposeSessionModal: React.FC = () => {
 
           <button
             onClick={() => setIsProposeSessionModalOpen(false)}
-            className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500"
+            className="p-1.5 rounded-full hover:bg-fb-btn-hover text-fb-text-2"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* 2 CỘT SPLIT (Trái form, Phải xem trước trực tiếp) */}
-        <div className="flex-1 overflow-y-auto grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-gray-200 dark:divide-gray-700">
+        <div className="flex-1 overflow-y-auto grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-fb-divider">
           {/* CỘT TRÁI: Form soạn thảo (7 cols) */}
           <div className="lg:col-span-7 p-5 space-y-4">
             <div className="space-y-3">
@@ -160,7 +160,7 @@ export const ProposeSessionModal: React.FC = () => {
                   placeholder="Ví dụ: Bộ 3 câu trắc nghiệm Tầng Giao vận & Bắt tay 3 bước TCP"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-fb-input text-fb-text focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-xs border border-fb-divider rounded-lg bg-fb-input text-fb-text focus:ring-2 focus:ring-fb-blue"
                 />
               </div>
 
@@ -172,7 +172,7 @@ export const ProposeSessionModal: React.FC = () => {
                   <select
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
-                    className="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-fb-input text-fb-text"
+                    className="w-full px-3 py-2 text-xs border border-fb-divider rounded-lg bg-fb-input text-fb-text"
                   >
                     <option value="Mạng máy tính">Mạng máy tính</option>
                     <option value="Cấu trúc dữ liệu & Giải thuật">Cấu trúc dữ liệu & Giải thuật</option>
@@ -190,7 +190,7 @@ export const ProposeSessionModal: React.FC = () => {
                     type="text"
                     value={chapter}
                     onChange={(e) => setChapter(e.target.value)}
-                    className="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-fb-input text-fb-text"
+                    className="w-full px-3 py-2 text-xs border border-fb-divider rounded-lg bg-fb-input text-fb-text"
                   />
                 </div>
               </div>
@@ -198,7 +198,7 @@ export const ProposeSessionModal: React.FC = () => {
 
             {/* Stepper / Tabs chọn câu */}
             <div className="flex items-center gap-2 pt-2 border-t border-fb-divider">
-              <span className="text-xs font-bold text-gray-500">Các câu hỏi:</span>
+              <span className="text-xs font-bold text-fb-text-2">Các câu hỏi:</span>
               <div className="flex items-center gap-1.5 flex-wrap">
                 {questionsList.map((_, idx) => (
                   <button
@@ -207,8 +207,8 @@ export const ProposeSessionModal: React.FC = () => {
                     onClick={() => setActiveQuestionIndex(idx)}
                     className={`w-7 h-7 rounded-lg text-xs font-bold transition ${
                       activeQuestionIndex === idx
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 dark:bg-gray-700 text-fb-text hover:bg-gray-200'
+                        ? 'bg-fb-blue text-white'
+                        : 'bg-fb-input text-fb-text hover:bg-fb-btn-hover'
                     }`}
                   >
                     {idx + 1}
@@ -217,7 +217,7 @@ export const ProposeSessionModal: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleAddQuestion}
-                  className="px-2 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 rounded-lg text-xs font-semibold hover:bg-emerald-100 flex items-center gap-1"
+                  className="px-2 py-1 bg-fb-success-soft text-fb-success rounded-lg text-xs font-semibold hover:bg-fb-success/20 flex items-center gap-1"
                 >
                   <Plus className="w-3.5 h-3.5" /> Thêm câu
                 </button>
@@ -227,7 +227,7 @@ export const ProposeSessionModal: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleDeleteQuestion(activeQuestionIndex)}
-                  className="ml-auto text-red-500 hover:text-red-700 p-1 text-xs flex items-center gap-1"
+                  className="ml-auto text-fb-danger hover:text-fb-danger p-1 text-xs flex items-center gap-1"
                 >
                   <Trash2 className="w-3.5 h-3.5" /> Xóa câu này
                 </button>
@@ -245,7 +245,7 @@ export const ProposeSessionModal: React.FC = () => {
                   placeholder="Nhập nội dung câu hỏi trắc nghiệm..."
                   value={currentQ.content}
                   onChange={(e) => handleUpdateQuestion({ content: e.target.value })}
-                  className="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-fb-card text-fb-text focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-xs border border-fb-divider rounded-lg bg-fb-card text-fb-text focus:ring-2 focus:ring-fb-blue"
                 />
               </div>
 
@@ -261,7 +261,7 @@ export const ProposeSessionModal: React.FC = () => {
                       name={`correct_${activeQuestionIndex}`}
                       checked={currentQ.correctAnswer === opt.id}
                       onChange={() => handleUpdateQuestion({ correctAnswer: opt.id })}
-                      className="w-4 h-4 text-blue-600 mt-2 shrink-0 cursor-pointer"
+                      className="w-4 h-4 text-fb-blue mt-2 shrink-0 cursor-pointer"
                       title="Chọn làm đáp án đúng"
                     />
                     <span className="w-5 font-bold text-xs mt-2 shrink-0">{opt.id}.</span>
@@ -270,7 +270,7 @@ export const ProposeSessionModal: React.FC = () => {
                       placeholder={`Nội dung phương án ${opt.id}...`}
                       value={opt.text}
                       onChange={(e) => handleUpdateOption(opt.id, e.target.value)}
-                      className="flex-1 px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-fb-card text-fb-text resize-y min-h-[38px] break-words leading-relaxed"
+                      className="flex-1 px-3 py-1.5 text-xs border border-fb-divider rounded-lg bg-fb-card text-fb-text resize-y min-h-[38px] break-words leading-relaxed"
                     />
                   </div>
                 ))}
@@ -287,7 +287,7 @@ export const ProposeSessionModal: React.FC = () => {
                     onChange={(e) =>
                       handleUpdateQuestion({ difficulty: e.target.value as QuestionDifficulty })
                     }
-                    className="w-full px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-fb-card text-fb-text"
+                    className="w-full px-3 py-1.5 text-xs border border-fb-divider rounded-lg bg-fb-card text-fb-text"
                   >
                     <option value="EASY">Dễ</option>
                     <option value="MEDIUM">Trung bình</option>
@@ -304,7 +304,7 @@ export const ProposeSessionModal: React.FC = () => {
                     placeholder="Giải thích vì sao đáp án này đúng..."
                     value={currentQ.explanation}
                     onChange={(e) => handleUpdateQuestion({ explanation: e.target.value })}
-                    className="w-full px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-fb-card text-fb-text"
+                    className="w-full px-3 py-1.5 text-xs border border-fb-divider rounded-lg bg-fb-card text-fb-text"
                   />
                 </div>
               </div>
@@ -312,18 +312,18 @@ export const ProposeSessionModal: React.FC = () => {
           </div>
 
           {/* CỘT PHẢI: Xem trước trực tiếp (Live Preview, 5 cols) */}
-          <div className="lg:col-span-5 p-5 bg-[#F9FAFB] dark:bg-[#18191A] flex flex-col">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500 mb-3">
-              <Eye className="w-4 h-4 text-blue-600" />
+          <div className="lg:col-span-5 p-5 bg-fb-inset flex flex-col">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-fb-text-2 mb-3">
+              <Eye className="w-4 h-4 text-fb-blue" />
               <span>Xem trước dạng đề thi thực tế</span>
             </div>
 
             <div className="bg-fb-card rounded-lg p-4 border border-fb-divider shadow-md space-y-3">
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="font-bold text-blue-600 bg-blue-50 dark:bg-blue-950 px-2 py-0.5 rounded">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-fb-blue bg-fb-blue-soft px-2 py-0.5 rounded">
                   {subject}
                 </span>
-                <span className="font-semibold text-gray-500">
+                <span className="font-semibold text-fb-text-2">
                   Độ khó: {currentQ.difficulty === 'EASY' ? 'Dễ' : currentQ.difficulty === 'MEDIUM' ? 'Trung bình' : 'Khó'}
                 </span>
               </div>
@@ -338,15 +338,15 @@ export const ProposeSessionModal: React.FC = () => {
                     key={opt.id}
                     className={`p-2 rounded-lg border text-xs flex items-start justify-between gap-2 ${
                       opt.id === currentQ.correctAnswer
-                        ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-400 text-emerald-800 dark:text-emerald-200 font-semibold'
-                        : 'bg-gray-50 dark:bg-gray-800/50 border-fb-divider text-fb-text'
+                        ? 'bg-fb-success-soft border-fb-success text-fb-success font-semibold'
+                        : 'bg-fb-inset border-fb-divider text-fb-text'
                     }`}
                   >
                     <span className="flex-1 break-words whitespace-pre-wrap leading-relaxed">
                       <strong>{opt.id}.</strong> {opt.text || '...'}
                     </span>
                     {opt.id === currentQ.correctAnswer && (
-                      <span className="text-[10px] bg-emerald-600 text-white px-1.5 py-0.2 rounded font-bold shrink-0 mt-0.5">
+                      <span className="text-xs bg-fb-success text-white px-1.5 py-0.2 rounded font-bold shrink-0 mt-0.5">
                         ĐÚNG
                       </span>
                     )}
@@ -355,19 +355,19 @@ export const ProposeSessionModal: React.FC = () => {
               </div>
 
               {currentQ.explanation && (
-                <div className="p-2.5 bg-blue-50/60 dark:bg-blue-950/30 rounded-lg text-[11px] text-blue-900 dark:text-blue-200">
+                <div className="p-2.5 bg-fb-blue-soft/60 rounded-lg text-xs text-fb-blue">
                   <strong>Giải thích: </strong> {currentQ.explanation}
                 </div>
               )}
 
-              <div className="pt-2 border-t border-fb-divider flex items-center justify-between text-[10px] text-gray-400">
+              <div className="pt-2 border-t border-fb-divider flex items-center justify-between text-xs text-fb-text-3">
                 <span>Người biên soạn: {currentUser.name}</span>
                 <span>Trạng thái: Dự thảo</span>
               </div>
             </div>
 
-            <div className="mt-auto pt-4 text-xs text-gray-500 space-y-1">
-              <p>💡 <strong>Lưu ý:</strong> Câu hỏi được duyệt sẽ giúp bạn nhận +50 điểm cống hiến và mở khoá các khung avatar độc quyền.</p>
+            <div className="mt-auto pt-4 text-xs text-fb-text-2 space-y-1">
+              <p className="flex items-start gap-1.5"><Lightbulb className="w-4 h-4 shrink-0 text-fb-warning" /><span><strong>Lưu ý:</strong> Câu hỏi được duyệt sẽ giúp bạn nhận +50 điểm cống hiến và mở khoá các khung avatar độc quyền.</span></p>
             </div>
           </div>
         </div>
@@ -377,7 +377,7 @@ export const ProposeSessionModal: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsProposeSessionModalOpen(false)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+            className="px-4 py-2 border border-fb-divider rounded-lg text-xs font-semibold hover:bg-fb-hover transition"
           >
             Hủy bỏ
           </button>
