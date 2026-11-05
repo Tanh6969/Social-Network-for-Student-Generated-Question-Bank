@@ -498,21 +498,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     const channel = new BroadcastChannel('sqb:shared-feed');
     feedChannelRef.current = channel;
     channel.onmessage = (event: MessageEvent<unknown>) => {
-      if (!isSharedFeedMessage(event.data)) {
+      const data = event.data;
+      if (!isSharedFeedMessage(data)) {
         console.error('Received an invalid shared-feed message.');
         return;
       }
-      if (event.data.type === 'REQUEST_SNAPSHOT') {
+      if (data.type === 'REQUEST_SNAPSHOT') {
         channel.postMessage({
           type: 'UPDATE_SNAPSHOT',
           posts: postsRef.current,
         });
         return;
       }
+      const snapshotPosts = data.posts;
       setPosts((previous) =>
-        arePostSnapshotsEqual(previous, event.data.posts)
+        arePostSnapshotsEqual(previous, snapshotPosts)
           ? previous
-          : event.data.posts,
+          : snapshotPosts,
       );
     };
     channel.postMessage({ type: 'REQUEST_SNAPSHOT' });
@@ -541,21 +543,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     const channel = new BroadcastChannel('sqb:shared-chat');
     chatChannelRef.current = channel;
     channel.onmessage = (event: MessageEvent<unknown>) => {
-      if (!isSharedChatMessage(event.data)) {
+      const data = event.data;
+      if (!isSharedChatMessage(data)) {
         console.error('Received an invalid shared-chat message.');
         return;
       }
-      if (event.data.type === 'REQUEST_SNAPSHOT') {
+      if (data.type === 'REQUEST_SNAPSHOT') {
         channel.postMessage({
           type: 'UPDATE_SNAPSHOT',
           conversations: conversationRecordsRef.current,
         });
         return;
       }
+      const snapshotConversations = data.conversations;
       setConversationRecords((previous) =>
-        areConversationSnapshotsEqual(previous, event.data.conversations)
+        areConversationSnapshotsEqual(previous, snapshotConversations)
           ? previous
-          : event.data.conversations,
+          : snapshotConversations,
       );
     };
     channel.postMessage({ type: 'REQUEST_SNAPSHOT' });

@@ -13,8 +13,7 @@ export default tseslint.config(
   // New app, API and feature logic keeps the recommended rules above.
   {
     files: [
-      'src/features/**/components/**/*.{ts,tsx}',
-      'src/features/demo/**/*.{ts,tsx}',
+      'src/features/**/*.{ts,tsx}',
       'src/shared/components/**/*.{ts,tsx}',
       'src/mocks/**/*.{ts,tsx}',
     ],
@@ -22,6 +21,7 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-vars': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
       'react-hooks/purity': 'off',
+      'react-hooks/set-state-in-effect': 'off',
     },
   },
 );

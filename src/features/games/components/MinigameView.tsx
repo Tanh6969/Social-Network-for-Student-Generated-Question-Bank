@@ -14,25 +14,33 @@ import {
   History,
   ShieldCheck,
   ChevronRight,
-  Info, Star, Globe, Target, Check, Lock
+  Info,
+  Star,
+  Globe,
+  Target,
+  Check,
+  Lock,
 } from 'lucide-react';
+
+import { OfficialTeacherGameHub } from '../../lecturer/components/games/OfficialTeacherGameHub';
 
 export const MinigameView: React.FC = () => {
   const {
+    role,
     minigames,
     submitGuess,
     leaderboard,
     currentUser,
     setViewingUserId,
     setActiveTab,
-    showToast
+    showToast,
   } = useApp();
 
   const [activeGameMenu, setActiveGameMenu] = useState<'CENTER' | 'LEADERBOARD' | 'BADGES' | 'HISTORY'>('CENTER');
   const [guessInputs, setGuessInputs] = useState<Record<string, number>>({
     game_01: 365,
     game_02: 135,
-    game_03: 3520
+    game_03: 3520,
   });
 
   const handleGuessSubmit = (gameId: string) => {
@@ -42,8 +50,19 @@ export const MinigameView: React.FC = () => {
     }
   };
 
+  // Giảng viên trực tiếp điều hành 6 Minigame (không có đấu trường live hay xem trước sinh viên)
+  if (role === 'LECTURER') {
+    return (
+      <div className="w-full max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 py-5">
+        <OfficialTeacherGameHub />
+      </div>
+    );
+  }
+
+  // Giao diện dành cho Sinh viên
   return (
-    <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 flex flex-col lg:flex-row gap-6 lg:gap-8 xl:gap-12 items-start justify-between">
+    <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4">
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 xl:gap-12 items-start justify-between">
       {/* ================= CỘT TRÁI (sticky sát lề trái) ================= */}
       <aside className="w-full lg:w-[300px] xl:w-[320px] shrink-0 space-y-4 select-none lg:sticky lg:top-18">
         {/* Personal Points & Rank Card - Tối giản */}
@@ -397,6 +416,7 @@ export const MinigameView: React.FC = () => {
           </div>
         )}
       </main>
+      </div>
     </div>
   );
 };
