@@ -114,29 +114,140 @@ export const FriendsView: React.FC = () => {
     return (
       <div
         key={user.id}
-        className="bg-fb-card rounded-lg shadow-fb-card overflow-hidden flex flex-col relative group"
+        className="flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3 hover:bg-fb-hover/50 transition first:rounded-t-lg last:rounded-b-lg"
       >
-        {/* Cover + More menu */}
-        <div className="h-24 bg-fb-blue relative">
-          <img
-            src={user.coverImage}
-            alt="Cover"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute top-2 right-2">
+        {/* Avatar + tên + chức danh */}
+        <div className="flex items-center gap-3 min-w-0 flex-[3]">
+          <div className="relative shrink-0">
+            <AvatarWithFrame
+              user={user}
+              size="md"
+              onClick={() => handleOpenProfile(user.id)}
+            />
+            {user.isOnline && (
+              <span
+                className="absolute bottom-0 right-0 w-3 h-3 bg-fb-success border-2 border-fb-card rounded-full"
+                title="Đang trực tuyến"
+              />
+            )}
+          </div>
+          <div className="min-w-0">
+            <h4
+              onClick={() => handleOpenProfile(user.id)}
+              className="font-bold text-sm text-fb-text hover:underline cursor-pointer truncate"
+            >
+              {user.name}
+            </h4>
+            <p className="text-xs text-fb-text-2 truncate">
+              {user.classOrTitle}
+              <span className="lg:hidden"> · {user.faculty}</span>
+            </p>
+          </div>
+        </div>
+
+        {/* Khoa + bạn chung (màn hình rộng) */}
+        <div className="hidden lg:block min-w-0 flex-[2] text-xs">
+          <p className="text-fb-text-2 truncate">{user.faculty}</p>
+          {mutualCount > 0 && (
+            <p className="mt-0.5 flex items-center gap-1 text-fb-text-3">
+              <Users className="w-3 h-3 shrink-0" /> {mutualCount} bạn chung
+            </p>
+          )}
+        </div>
+
+        {/* Hành động */}
+        <div className="flex items-center justify-end gap-1.5 shrink-0 lg:w-60">
+          {user.role === 'LECTURER' ? (
+            <>
+              <button
+                type="button"
+                onClick={() => toggleFollowUser(user.id)}
+                className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                  isFollowing
+                    ? 'bg-fb-blue-soft text-fb-blue hover:bg-fb-blue/20'
+                    : 'bg-fb-blue hover:bg-fb-blue-hover text-white'
+                }`}
+              >
+                {isFollowing ? '✓ Đang theo dõi' : '+ Theo dõi GV'}
+              </button>
+              <button
+                type="button"
+                onClick={() => openChatDock(user.id)}
+                className="px-2.5 py-1.5 bg-fb-input hover:bg-fb-btn-hover text-fb-text rounded-lg text-xs font-semibold"
+                title="Nhắn tin cho Giảng viên"
+              >
+                <MessageCircle className="w-4 h-4" />
+              </button>
+            </>
+          ) : status === 'REQUEST_RECEIVED' ? (
+            <>
+              <button
+                type="button"
+                onClick={() => acceptFriendRequest(user.id)}
+                className="flex-1 sm:flex-none px-3 py-1.5 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg text-xs font-bold transition"
+              >
+                Xác nhận
+              </button>
+              <button
+                type="button"
+                onClick={() => declineFriendRequest(user.id)}
+                className="flex-1 sm:flex-none px-3 py-1.5 bg-fb-input hover:bg-fb-btn-hover text-fb-text rounded-lg text-xs font-semibold transition"
+              >
+                Xóa
+              </button>
+            </>
+          ) : status === 'FRIEND' ? (
+            <button
+              type="button"
+              onClick={() => openChatDock(user.id)}
+              className="flex-1 sm:flex-none px-3 py-1.5 bg-fb-blue-soft hover:bg-fb-blue/20 text-fb-blue rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition"
+            >
+              <MessageCircle className="w-3.5 h-3.5" /> Nhắn tin
+            </button>
+          ) : status === 'REQUEST_SENT' ? (
+            <button
+              type="button"
+              onClick={() => cancelFriendRequest(user.id)}
+              className="flex-1 sm:flex-none px-3 py-1.5 bg-fb-input hover:bg-fb-btn-hover text-fb-text rounded-lg text-xs font-semibold transition"
+            >
+              Hủy lời mời đã gửi
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => sendFriendRequest(user.id)}
+                className="flex-1 sm:flex-none px-3 py-1.5 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1"
+              >
+                <UserPlus className="w-3.5 h-3.5" /> Thêm bạn bè
+              </button>
+              {activeMenu === 'SUGGESTIONS' && (
+                <button
+                  type="button"
+                  onClick={() => dismissSuggestion(user.id)}
+                  className="px-2.5 py-1.5 bg-fb-input hover:bg-fb-btn-hover text-fb-text-2 rounded-lg text-xs font-semibold"
+                  title="Ẩn gợi ý này"
+                >
+                  Gỡ
+                </button>
+              )}
+            </>
+          )}
+
+          <div className="relative">
             <button
               type="button"
               onClick={() =>
                 setOpenMenuUserId(openMenuUserId === user.id ? null : user.id)
               }
-              className="p-1.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition"
+              className="p-1.5 rounded-lg bg-fb-input hover:bg-fb-btn-hover text-fb-text-2 transition"
               title="Tùy chọn"
             >
               <MoreHorizontal className="w-4 h-4" />
             </button>
 
             {openMenuUserId === user.id && (
-              <div className="absolute right-0 mt-1 w-48 bg-fb-card rounded-lg shadow-xl border border-fb-divider py-1 z-20 text-xs font-medium">
+              <div className="absolute right-0 top-full mt-1 w-48 bg-fb-card rounded-lg shadow-xl border border-fb-divider py-1 z-20 text-xs font-medium">
                 <button
                   type="button"
                   onClick={() => {
@@ -191,144 +302,12 @@ export const FriendsView: React.FC = () => {
             )}
           </div>
         </div>
-
-        {/* Body */}
-        <div className="p-4 pt-0 -mt-8 flex flex-col items-center text-center flex-1">
-          <div className="relative">
-            <AvatarWithFrame
-              user={user}
-              size="xl"
-              onClick={() => handleOpenProfile(user.id)}
-            />
-            {user.isOnline && (
-              <span
-                className="absolute bottom-1 right-1 w-3.5 h-3.5 bg-fb-success border-2 border-fb-card rounded-full"
-                title="Đang trực tuyến"
-              />
-            )}
-          </div>
-
-          <h4
-            onClick={() => handleOpenProfile(user.id)}
-            className="font-bold text-sm text-fb-text hover:underline cursor-pointer mt-2"
-          >
-            {user.name}
-          </h4>
-          <p className="text-xs text-fb-text-2">{user.classOrTitle}</p>
-          <p className="text-xs text-fb-text-3 mt-0.5">{user.faculty}</p>
-
-          {mutualCount > 0 && (
-            <span className="mt-1.5 inline-flex items-center gap-1 text-xs text-fb-blue bg-fb-blue-soft px-2.5 py-0.5 rounded-full font-semibold">
-              <Users className="w-3 h-3" /> {mutualCount} bạn chung
-            </span>
-          )}
-
-          <div className="mt-auto pt-4 w-full space-y-1.5">
-            {user.role === 'LECTURER' ? (
-              <div className="flex gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => toggleFollowUser(user.id)}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition ${
-                    isFollowing
-                      ? 'bg-fb-blue-soft text-fb-blue hover:bg-fb-blue/20'
-                      : 'bg-fb-blue hover:bg-fb-blue-hover text-white'
-                  }`}
-                >
-                  {isFollowing ? '✓ Đang theo dõi' : '+ Theo dõi GV'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openChatDock(user.id)}
-                  className="px-2.5 py-1.5 bg-fb-input hover:bg-fb-btn-hover text-fb-text rounded-lg text-xs font-semibold"
-                  title="Nhắn tin cho Giảng viên"
-                >
-                  <MessageCircle className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ) : status === 'REQUEST_RECEIVED' ? (
-              <div className="grid grid-cols-2 gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => acceptFriendRequest(user.id)}
-                  className="py-1.5 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg text-xs font-bold transition"
-                >
-                  Xác nhận
-                </button>
-                <button
-                  type="button"
-                  onClick={() => declineFriendRequest(user.id)}
-                  className="py-1.5 bg-fb-input hover:bg-fb-btn-hover text-fb-text rounded-lg text-xs font-semibold transition"
-                >
-                  Xóa
-                </button>
-              </div>
-            ) : status === 'FRIEND' ? (
-              <div className="flex gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => openChatDock(user.id)}
-                  className="flex-1 py-1.5 bg-fb-blue-soft hover:bg-fb-blue/20 text-fb-blue rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition"
-                >
-                  <MessageCircle className="w-3.5 h-3.5" /> Nhắn tin
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setConfirmAction({ type: 'UNFRIEND', user })}
-                  className="px-2.5 py-1.5 bg-fb-input hover:bg-fb-danger-soft text-fb-text-2 hover:text-fb-danger rounded-lg text-xs font-semibold transition flex items-center gap-1"
-                  title="Hủy kết bạn"
-                >
-                  <UserMinus className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setBlockReason('');
-                    setConfirmAction({ type: 'BLOCK', user });
-                  }}
-                  className="px-2.5 py-1.5 bg-fb-input hover:bg-fb-danger-soft text-fb-text-2 hover:text-fb-danger rounded-lg text-xs font-semibold transition"
-                  title="Chặn người dùng này"
-                >
-                  <Ban className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ) : status === 'REQUEST_SENT' ? (
-              <button
-                type="button"
-                onClick={() => cancelFriendRequest(user.id)}
-                className="w-full py-1.5 bg-fb-input hover:bg-fb-btn-hover text-fb-text rounded-lg text-xs font-semibold transition"
-              >
-                Hủy lời mời đã gửi
-              </button>
-            ) : (
-              <div className="flex gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => sendFriendRequest(user.id)}
-                  className="flex-1 py-1.5 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1"
-                >
-                  <UserPlus className="w-3.5 h-3.5" /> Thêm bạn bè
-                </button>
-                {activeMenu === 'SUGGESTIONS' && (
-                  <button
-                    type="button"
-                    onClick={() => dismissSuggestion(user.id)}
-                    className="px-2.5 py-1.5 bg-fb-input hover:bg-fb-btn-hover text-fb-text-2 rounded-lg text-xs font-semibold"
-                    title="Ẩn gợi ý này"
-                  >
-                    Gỡ
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
       </div>
     );
   };
 
   return (
-    <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 flex flex-col lg:flex-row gap-6 lg:gap-8 xl:gap-12 items-start justify-between">
+    <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 flex flex-col lg:flex-row gap-4 lg:gap-6 items-start">
       {/* ================= CỘT TRÁI: Menu điều hướng Bạn bè & Chặn ================= */}
       <aside className="w-full lg:w-[300px] xl:w-[320px] shrink-0 space-y-3 select-none lg:sticky lg:top-18">
         <div className="bg-fb-card rounded-lg shadow-fb-card p-3">
@@ -446,7 +425,7 @@ export const FriendsView: React.FC = () => {
       </aside>
 
       {/* ================= CỘT PHẢI: Nội dung chính ================= */}
-      <main className="flex-1 max-w-[1000px] mx-auto space-y-4 w-full">
+      <main className="flex-1 min-w-0 space-y-4 w-full">
         {/* Thanh tìm kiếm & tổng quan */}
         <div className="bg-fb-card rounded-lg shadow-fb-card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
@@ -487,7 +466,7 @@ export const FriendsView: React.FC = () => {
         {activeMenu === 'ALL' && (
           <>
             {filteredFriends.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="bg-fb-card rounded-lg shadow-fb-card divide-y divide-fb-divider">
                 {filteredFriends.map(renderUserCard)}
               </div>
             ) : (
@@ -518,7 +497,7 @@ export const FriendsView: React.FC = () => {
                 Lời mời kết bạn nhận được ({filteredIncoming.length})
               </h4>
               {filteredIncoming.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="bg-fb-card rounded-lg shadow-fb-card divide-y divide-fb-divider">
                   {filteredIncoming.map(renderUserCard)}
                 </div>
               ) : (
@@ -533,7 +512,7 @@ export const FriendsView: React.FC = () => {
                 Lời mời bạn đã gửi ({filteredSent.length})
               </h4>
               {filteredSent.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="bg-fb-card rounded-lg shadow-fb-card divide-y divide-fb-divider">
                   {filteredSent.map(renderUserCard)}
                 </div>
               ) : (
@@ -549,7 +528,7 @@ export const FriendsView: React.FC = () => {
         {activeMenu === 'SUGGESTIONS' && (
           <>
             {filteredSuggestions.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="bg-fb-card rounded-lg shadow-fb-card divide-y divide-fb-divider">
                 {filteredSuggestions.map(renderUserCard)}
               </div>
             ) : (
@@ -564,7 +543,7 @@ export const FriendsView: React.FC = () => {
         {activeMenu === 'FOLLOWING' && (
           <>
             {filteredLecturers.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="bg-fb-card rounded-lg shadow-fb-card divide-y divide-fb-divider">
                 {filteredLecturers.map(renderUserCard)}
               </div>
             ) : (

@@ -62,7 +62,7 @@ export const MinigameView: React.FC = () => {
   // Giao diện dành cho Sinh viên
   return (
     <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4">
-      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 xl:gap-12 items-start justify-between">
+      <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 items-start">
       {/* ================= CỘT TRÁI (sticky sát lề trái) ================= */}
       <aside className="w-full lg:w-[300px] xl:w-[320px] shrink-0 space-y-4 select-none lg:sticky lg:top-18">
         {/* Personal Points & Rank Card - Tối giản */}
@@ -156,8 +156,8 @@ export const MinigameView: React.FC = () => {
         </div>
       </aside>
 
-      {/* ================= CỘT PHẢI: Nội dung chính (có khoảng trống 2 bên) ================= */}
-      <main className="flex-1 max-w-[960px] mx-auto space-y-4">
+      {/* ================= CỘT PHẢI: Nội dung chính ================= */}
+      <main className="flex-1 min-w-0 w-full space-y-4">
         {activeGameMenu === 'CENTER' && (
           <div className="space-y-4">
             <div className="bg-fb-card rounded-lg shadow-fb-card p-5">

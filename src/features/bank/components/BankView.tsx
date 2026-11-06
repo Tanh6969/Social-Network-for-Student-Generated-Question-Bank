@@ -255,7 +255,7 @@ export const BankView: React.FC = () => {
       </aside>
 
       {/* ================= CỘT GIỮA: DANH SÁCH BỘ ĐỀ ================= */}
-      <main className="flex-1 min-w-0 max-w-[760px] mx-auto space-y-3">
+      <main className="flex-1 min-w-0 max-w-[960px] mx-auto space-y-3">
         {activeExam ? (
           <ExamDetailView
             exam={activeExam}

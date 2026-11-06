@@ -852,17 +852,13 @@ export const ProposeView: React.FC = () => {
             </div>
 
             {/* Dòng hướng dẫn sinh viên: Chỉ sửa & xóa khi Chờ duyệt */}
-            <div className="flex items-start sm:items-center gap-3 p-3.5 sm:px-4 sm:py-3 rounded-lg bg-fb-warning-soft/90 border border-fb-warning/30 text-xs text-fb-warning shadow-2xs">
-              <div className="w-6 h-6 rounded-lg bg-fb-warning/60 text-fb-warning flex items-center justify-center shrink-0 mt-0.5 sm:mt-0 font-bold">
-                <Info className="w-4 h-4" />
-              </div>
+            <div className="flex items-start gap-2.5 p-3.5 sm:px-4 sm:py-3 rounded-lg bg-fb-warning-soft border border-fb-warning/30 text-xs text-fb-text">
+              <Info className="w-4 h-4 text-fb-warning shrink-0 mt-px" />
               <p className="leading-relaxed">
                 <span className="font-bold">Lưu ý sinh viên:</span> Bạn chỉ có thể{' '}
-                <span className="font-bold underline underline-offset-2">Chỉnh sửa</span> và{' '}
-                <span className="font-bold underline underline-offset-2">Xóa</span> phiên đề xuất khi đang ở trạng thái{' '}
-                <span className="inline-block px-1.5 py-0.5 rounded font-bold bg-fb-warning/80 text-fb-warning text-xs">
-                  Chờ duyệt
-                </span>
+                <span className="font-bold">Chỉnh sửa</span> và{' '}
+                <span className="font-bold">Xóa</span> phiên đề xuất khi đang ở trạng thái{' '}
+                <span className="font-bold text-fb-warning">Chờ duyệt</span>
                 . Khi phiên ở trạng thái khác (đang thẩm định hoặc đã duyệt), các nút thao tác này sẽ tự động được làm mờ và khóa lại.
               </p>
             </div>

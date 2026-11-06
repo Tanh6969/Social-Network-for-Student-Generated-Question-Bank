@@ -60,7 +60,6 @@ export const ProfileView: React.FC = () => {
     filterVisibleComments,
     blockUser,
     setActiveTab,
-    setViewingUserId,
     openChatDock,
     showToast,
     openReportModal,
