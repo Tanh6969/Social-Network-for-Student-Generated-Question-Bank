@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useApp } from '../../demo/context/AppContext';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
 import { PostContent } from '../../feed/components/PostContent';
@@ -15,6 +15,7 @@ import { ProfilePhotoLibrary } from './ProfilePhotoLibrary';
 import { EditProfileModal } from './EditProfileModal';
 import { formatPostTime } from '../../feed/postUtils';
 import { getProfileRelationAction } from '../profileRelations';
+import { useFeedPages } from '../../feed/useFeedPages';
 import {
   Camera,
   Edit,
@@ -58,6 +59,7 @@ export const ProfileView: React.FC = () => {
     filterVisibleComments,
     blockUser,
     setActiveTab,
+    setViewingUserId,
     openChatDock,
     showToast,
     openReportModal,
@@ -79,6 +81,7 @@ export const ProfileView: React.FC = () => {
     items: LightboxItem[];
     index: number;
   } | null>(null);
+  const profilePostsSentinelRef = useRef<HTMLDivElement>(null);
 
   const targetUser: User = viewingUserId
     ? getUserById(viewingUserId)
@@ -107,6 +110,11 @@ export const ProfileView: React.FC = () => {
             friendStatuses[targetUser.id] === 'FRIEND')),
     )
     .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  const profilePostPages = useFeedPages(
+    userPosts,
+    profilePostsSentinelRef,
+    targetUser.id,
+  );
   const photoHistory = profilePhotoHistory.filter(
     (photo) => photo.userId === targetUser.id,
   );
@@ -424,12 +432,10 @@ export const ProfileView: React.FC = () => {
       {activeTab !== 'PHOTOS' && (
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mt-4 px-2 sm:px-0">
           {/* CỘT TRÁI (360px): Giới thiệu & Bạn bè (5 cols) */}
-          <div className="md:col-span-5 space-y-4">
+          <div className="md:col-span-5 space-y-4 md:sticky md:top-18 md:self-start">
             {/* Bio card */}
             <div className="bg-fb-card rounded-lg shadow-fb-card p-4 space-y-3">
-              <h3 className="font-bold text-sm text-fb-text">
-                Giới thiệu
-              </h3>
+              <h3 className="font-bold text-sm text-fb-text">Giới thiệu</h3>
 
               <p className="text-center text-xs leading-relaxed text-fb-text">
                 {targetUser.bio || 'Chưa cập nhật tiểu sử.'}
@@ -438,11 +444,13 @@ export const ProfileView: React.FC = () => {
               <div className="pt-2 border-t border-fb-divider space-y-2 text-xs text-fb-text-2">
                 <p className="flex items-center gap-2">
                   <GraduationCap className="w-4 h-4 shrink-0" />
-                  <span>Đang học tại:</span> <strong>{targetUser.faculty}</strong>
+                  <span>Đang học tại:</span>{' '}
+                  <strong>{targetUser.faculty}</strong>
                 </p>
                 <p className="flex items-center gap-2">
                   <Users className="w-4 h-4 shrink-0" />
-                  <span>Lớp sinh hoạt:</span> <strong>{targetUser.classOrTitle}</strong>
+                  <span>Lớp sinh hoạt:</span>{' '}
+                  <strong>{targetUser.classOrTitle}</strong>
                 </p>
                 <p className="flex items-center gap-2">
                   <Mail className="w-4 h-4 shrink-0" />
@@ -454,9 +462,7 @@ export const ProfileView: React.FC = () => {
             {/* 9 Friends grid */}
             <div className="bg-fb-card rounded-lg shadow-fb-card p-4 space-y-2">
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-sm text-fb-text">
-                  Bạn bè
-                </h3>
+                <h3 className="font-bold text-sm text-fb-text">Bạn bè</h3>
                 <span className="text-xs text-fb-text-2">
                   {targetUser.friendsCount} người bạn
                 </span>
@@ -469,6 +475,7 @@ export const ProfileView: React.FC = () => {
                       key={friend.id}
                       type="button"
                       onClick={() => openFriendProfile(friend.id)}
+                      aria-label={`Mở trang cá nhân của ${friend.name}`}
                       className="group min-w-0 text-left"
                     >
                       <img
@@ -499,6 +506,65 @@ export const ProfileView: React.FC = () => {
                 </button>
               )}
             </div>
+
+            <section className="rounded-lg bg-fb-card p-4 shadow-fb-card">
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <h3 className="font-bold text-sm text-fb-text">Ảnh</h3>
+                <button
+                  type="button"
+                  onClick={() => setActiveTabLocal('PHOTOS')}
+                  className="rounded-md px-2 py-1 text-xs font-semibold text-fb-blue hover:bg-fb-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                >
+                  Xem tất cả
+                </button>
+              </div>
+              {postPhotos.length + avatarPhotos.length + coverPhotos.length >
+              0 ? (
+                <div className="grid grid-cols-3 gap-1.5">
+                  {[
+                    ...postPhotos.map((photo) => ({
+                      id: photo.id,
+                      url: photo.url,
+                      alt: photo.alt,
+                      open: () => openPostMedia(photo.post, photo.index),
+                    })),
+                    ...avatarPhotos.map((photo, index) => ({
+                      id: photo.id,
+                      url: photo.url,
+                      alt: photo.alt,
+                      open: () => openPhotoGroup(avatarPhotos, index),
+                    })),
+                    ...coverPhotos.map((photo, index) => ({
+                      id: photo.id,
+                      url: photo.url,
+                      alt: photo.alt,
+                      open: () => openPhotoGroup(coverPhotos, index),
+                    })),
+                  ]
+                    .slice(0, 9)
+                    .map((photo) => (
+                      <button
+                        key={photo.id}
+                        type="button"
+                        onClick={photo.open}
+                        aria-label={`Xem ${photo.alt}`}
+                        className="aspect-square overflow-hidden rounded-md bg-fb-input focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                      >
+                        <img
+                          src={photo.url}
+                          alt={photo.alt}
+                          loading="lazy"
+                          className="h-full w-full object-cover transition hover:scale-105"
+                        />
+                      </button>
+                    ))}
+                </div>
+              ) : (
+                <p className="rounded-lg bg-fb-inset p-4 text-center text-xs text-fb-text-2">
+                  Chưa có ảnh.
+                </p>
+              )}
+            </section>
           </div>
 
           {/* CỘT PHẢI: Dòng thời gian bài viết & câu hỏi (7 cols) */}
@@ -542,7 +608,7 @@ export const ProfileView: React.FC = () => {
             {activeTab === 'POSTS' && (
               <>
                 {isMe && <PostComposerCard />}
-                {userPosts.map((post) => (
+                {profilePostPages.visiblePosts.map((post) => (
                   <article
                     key={post.id}
                     className="bg-fb-card rounded-lg shadow-fb-card overflow-hidden"
@@ -700,9 +766,7 @@ export const ProfileView: React.FC = () => {
                               type="button"
                               onClick={() => toggleLikePost(post.id)}
                               className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-fb-hover transition ${
-                                post.isLiked
-                                  ? 'text-fb-blue font-bold'
-                                  : ''
+                                post.isLiked ? 'text-fb-blue font-bold' : ''
                               }`}
                             >
                               <ThumbsUp
@@ -728,6 +792,35 @@ export const ProfileView: React.FC = () => {
                     })()}
                   </article>
                 ))}
+                <div
+                  ref={profilePostsSentinelRef}
+                  className="py-3 text-center text-xs text-fb-text-2"
+                >
+                  {profilePostPages.isLoadingMore && (
+                    <div
+                      role="status"
+                      aria-label="Đang tải bài viết"
+                      className="animate-pulse rounded-lg border border-fb-divider bg-fb-card p-4 text-left shadow-xs"
+                    >
+                      <div className="h-3 w-full rounded bg-fb-btn" />
+                      <div className="mt-2 h-3 w-2/3 rounded bg-fb-btn" />
+                    </div>
+                  )}
+                  {profilePostPages.hasMore &&
+                    !profilePostPages.isLoadingMore && (
+                      <button
+                        type="button"
+                        onClick={profilePostPages.loadMore}
+                        className="font-semibold text-fb-blue hover:underline"
+                      >
+                        Xem thêm bài viết
+                      </button>
+                    )}
+                  {!profilePostPages.hasMore &&
+                    profilePostPages.visiblePosts.length > 0 && (
+                      <span>Đã xem hết bài viết.</span>
+                    )}
+                </div>
               </>
             )}
           </div>
