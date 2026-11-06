@@ -121,7 +121,7 @@ export const SubmissionDetailModal: React.FC<SubmissionDetailModalProps> = ({
             <>
               {/* Meta information card */}
               <div className="bg-gray-50 dark:bg-[#1E1F20] rounded-xl p-4 border border-gray-200 dark:border-gray-700 space-y-3">
-                <h4 className="font-bold text-lg text-gray-900 dark:text-gray-100">
+                <h4 className="font-bold text-lg text-gray-900 dark:text-gray-100 whitespace-pre-wrap break-words leading-snug">
                   {detail.title}
                 </h4>
                 {detail.content && (
@@ -197,7 +197,7 @@ export const SubmissionDetailModal: React.FC<SubmissionDetailModalProps> = ({
                       </div>
 
                       {/* Question content */}
-                      <p className="text-sm sm:text-base text-gray-900 dark:text-gray-100 leading-relaxed font-medium">
+                      <p className="text-sm sm:text-base text-gray-900 dark:text-gray-100 leading-relaxed font-medium whitespace-pre-wrap break-words">
                         {q.content}
                       </p>
 
@@ -258,7 +258,7 @@ export const SubmissionDetailModal: React.FC<SubmissionDetailModalProps> = ({
                           <HelpCircle className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                           <div>
                             <span className="font-semibold block mb-0.5">Giải thích đáp án:</span>
-                            <span>{q.explanation}</span>
+                            <span className="whitespace-pre-wrap break-words leading-relaxed block">{q.explanation}</span>
                           </div>
                         </div>
                       )}

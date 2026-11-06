@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useApp } from '../../demo/context/AppContext';
 import {
   sessionsApi,
@@ -35,6 +35,10 @@ import {
   ChevronLeft,
   Info,
   Clock,
+  Search,
+  X,
+  ArrowUpDown,
+  RotateCcw,
 } from 'lucide-react';
 
 export const ProposeView: React.FC = () => {
@@ -48,10 +52,12 @@ export const ProposeView: React.FC = () => {
   const [loadingSubjects, setLoadingSubjects] = useState(false);
 
   // My Submissions state
-  const [submissions, setSubmissions] = useState<StoredSubmissionSummary[]>([]);
+  const [allSubmissions, setAllSubmissions] = useState<StoredSubmissionSummary[]>([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [filterSubjectId, setFilterSubjectId] = useState<number | undefined>(undefined);
-  const [filterStatus, setFilterStatus] = useState<'PENDING' | 'REVIEWING' | 'RESOLVED' | undefined>(undefined);
+  const [filterStatus, setFilterStatus] = useState<'ALL' | 'PENDING' | 'REVIEWING' | 'RESOLVED'>('ALL');
+  const [sortBy, setSortBy] = useState<'NEWEST' | 'OLDEST' | 'MOST_QUESTIONS'>('NEWEST');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
   const [paginationCursor, setPaginationCursor] = useState<{
@@ -129,26 +135,25 @@ export const ProposeView: React.FC = () => {
       setLoadingSubmissions(true);
       try {
         const res = await sessionsApi.getMySubmissions({
-          subject_id: filterSubjectId,
-          status: filterStatus,
-          limit: 10,
+          limit: 50,
           after: cursorAfter,
         });
-        setSubmissions(res.contents || []);
+        if (res.contents && res.contents.length > 0) {
+          setAllSubmissions(res.contents);
+        } else {
+          setAllSubmissions(getStoredSubmissions());
+        }
         setPaginationCursor(res.pagination || {});
       } catch {
         // Fallback stored mock submissions
-        let list = getStoredSubmissions();
-        if (filterSubjectId) {
-          list = list.filter((s) => s.subject_id === filterSubjectId);
-        }
-        setSubmissions(list);
+        const list = getStoredSubmissions();
+        setAllSubmissions(list);
         setPaginationCursor({ has_next: false, has_prev: false });
       } finally {
         setLoadingSubmissions(false);
       }
     },
-    [filterSubjectId, filterStatus]
+    []
   );
 
   useEffect(() => {
@@ -161,15 +166,85 @@ export const ProposeView: React.FC = () => {
     }
   }, [activeTab, fetchMySubmissions]);
 
+  // Status counts for quick filter pills
+  const statusCounts = useMemo(() => {
+    return {
+      ALL: allSubmissions.length,
+      PENDING: allSubmissions.filter((s) => (s.status || 'PENDING') === 'PENDING').length,
+      REVIEWING: allSubmissions.filter((s) => s.status === 'REVIEWING').length,
+      RESOLVED: allSubmissions.filter((s) => s.status === 'RESOLVED').length,
+    };
+  }, [allSubmissions]);
+
+  // Reactive filtering & sorting (Instant, comprehensive, bug-free)
+  const filteredSubmissions = useMemo(() => {
+    let list = [...allSubmissions];
+
+    // 1. Status filter
+    if (filterStatus !== 'ALL') {
+      list = list.filter((s) => (s.status || 'PENDING') === filterStatus);
+    }
+
+    // 2. Subject filter
+    if (filterSubjectId !== undefined) {
+      list = list.filter((s) => s.subject_id === filterSubjectId);
+    }
+
+    // 3. Search query filter (title, content, subject name, subject code, session code)
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter(
+        (s) =>
+          (s.title || '').toLowerCase().includes(q) ||
+          (s.content || '').toLowerCase().includes(q) ||
+          (s.subject_name || '').toLowerCase().includes(q) ||
+          (s.subject_code || '').toLowerCase().includes(q) ||
+          (s.session_code || '').toLowerCase().includes(q)
+      );
+    }
+
+    // 4. Sort
+    if (sortBy === 'NEWEST') {
+      list.sort(
+        (a, b) =>
+          new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+      );
+    } else if (sortBy === 'OLDEST') {
+      list.sort(
+        (a, b) =>
+          new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
+      );
+    } else if (sortBy === 'MOST_QUESTIONS') {
+      list.sort((a, b) => (b.question_counts || 0) - (a.question_counts || 0));
+    }
+
+    return list;
+  }, [allSubmissions, filterStatus, filterSubjectId, searchQuery, sortBy]);
+
+  // Check if any filter is active
+  const hasActiveFilters =
+    searchQuery.trim() !== '' ||
+    filterSubjectId !== undefined ||
+    filterStatus !== 'ALL' ||
+    sortBy !== 'NEWEST';
+
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setFilterSubjectId(undefined);
+    setFilterStatus('ALL');
+    setSortBy('NEWEST');
+    setCurrentPage(1);
+  };
+
   // Reset page when filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [filterSubjectId, filterStatus]);
+  }, [searchQuery, filterSubjectId, filterStatus, sortBy, pageSize]);
 
   // Pagination calculations for My Submissions
-  const totalPages = Math.max(1, Math.ceil(submissions.length / pageSize));
+  const totalPages = Math.max(1, Math.ceil(filteredSubmissions.length / pageSize));
   const safeCurrentPage = Math.min(currentPage, totalPages);
-  const paginatedSubmissions = submissions.slice(
+  const paginatedSubmissions = filteredSubmissions.slice(
     (safeCurrentPage - 1) * pageSize,
     safeCurrentPage * pageSize
   );
@@ -284,7 +359,7 @@ export const ProposeView: React.FC = () => {
           selectedSubject?.name,
           selectedSubject?.code
         );
-        setSubmissions((prev) => [summary, ...prev]);
+        setAllSubmissions((prev) => [summary, ...prev]);
       }
 
       showToast(`Đã gửi phiên đề xuất "${title}" tới giảng viên duyệt!`, 'success');
@@ -339,7 +414,7 @@ export const ProposeView: React.FC = () => {
       }
       deleteStoredSubmission(sessionId);
       showToast('Đã xóa phiên đề xuất thành công', 'success');
-      setSubmissions((prev) => prev.filter((s) => s.session_id !== sessionId));
+      setAllSubmissions((prev) => prev.filter((s) => s.session_id !== sessionId));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Không thể xóa phiên đề xuất';
       showToast(msg, 'error');
@@ -349,9 +424,9 @@ export const ProposeView: React.FC = () => {
   return (
     <div className="w-full min-h-[calc(100vh-3.5rem)] flex flex-col md:flex-row items-start bg-[#F0F2F5] dark:bg-[#18191A]">
       {/* ================= CỘT TRÁI (LEFT SIDEBAR): CỐ ĐỊNH KHI CUỘN TRANG ================= */}
-      <aside className="w-full md:w-80 lg:w-84 xl:w-88 shrink-0 bg-white dark:bg-[#242526] border-r border-gray-200 dark:border-gray-700 md:sticky md:top-14 md:h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-5 flex flex-col select-none z-20">
-        <div className="space-y-4">
-          <div className="px-1 pt-1 pb-3 border-b border-gray-100 dark:border-gray-800">
+      <aside className="w-full md:w-80 lg:w-84 xl:w-88 shrink-0 bg-white dark:bg-[#242526] border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 sticky top-14 md:h-[calc(100vh-3.5rem)] md:overflow-y-auto p-3 sm:p-4 md:p-5 flex flex-col select-none z-20 shadow-xs md:shadow-none">
+        <div className="space-y-3 md:space-y-4">
+          <div className="hidden md:block px-1 pt-1 pb-3 border-b border-gray-100 dark:border-gray-800">
             <h2 className="text-xl font-black text-gray-900 dark:text-gray-100 flex items-center gap-2.5">
               <GraduationCap className="w-6 h-6 text-blue-600" />
               <span>Đề xuất câu hỏi</span>
@@ -361,76 +436,85 @@ export const ProposeView: React.FC = () => {
             </p>
           </div>
 
-          {/* 2 Tabs Dọc Bên Trái */}
-          <div className="space-y-2">
+          {/* 2 Tabs: Linh hoạt theo màn hình (ngang trên mobile/tablet, dọc trên desktop) */}
+          <div className="grid grid-cols-2 md:flex md:flex-col gap-2">
             {/* Tab 1: Soạn phiên đề xuất mới */}
             <button
+              type="button"
               onClick={() => setActiveTab('create')}
-              className={`w-full flex items-center justify-between p-3.5 rounded-xl transition cursor-pointer text-left ${activeTab === 'create'
+              className={`w-full flex items-center justify-between p-2.5 sm:p-3 md:p-3.5 rounded-xl transition cursor-pointer text-left ${
+                activeTab === 'create'
                   ? 'bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 font-bold shadow-xs'
                   : 'hover:bg-gray-100 dark:hover:bg-[#3A3B3C] text-gray-700 dark:text-gray-300 font-semibold'
-                }`}
+              }`}
             >
-              <div className="flex items-center gap-3 min-w-0">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                 <div
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${activeTab === 'create'
+                  className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                    activeTab === 'create'
                       ? 'bg-blue-600 text-white shadow-xs'
                       : 'bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-400'
-                    }`}
+                  }`}
                 >
-                  <FilePlus className="w-5 h-5" />
+                  <FilePlus className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-sm block truncate">Soạn phiên mới</span>
-                  <span className="text-xs text-gray-500 font-normal block truncate">
+                  <span className="text-xs sm:text-sm block truncate font-bold">Soạn phiên mới</span>
+                  <span className="text-[11px] text-gray-500 font-normal hidden sm:block truncate">
                     Tạo câu hỏi & nộp duyệt
                   </span>
                 </div>
               </div>
               <ChevronRight
-                className={`w-4 h-4 shrink-0 transition-transform ${activeTab === 'create' ? 'text-blue-600 translate-x-0.5' : 'text-gray-400 opacity-60'
-                  }`}
+                className={`hidden md:block w-4 h-4 shrink-0 transition-transform ${
+                  activeTab === 'create' ? 'text-blue-600 translate-x-0.5' : 'text-gray-400 opacity-60'
+                }`}
               />
             </button>
 
             {/* Tab 2: Phiên đề xuất của tôi */}
             <button
+              type="button"
               onClick={() => setActiveTab('my-submissions')}
-              className={`w-full flex items-center justify-between p-3.5 rounded-xl transition cursor-pointer text-left ${activeTab === 'my-submissions'
+              className={`w-full flex items-center justify-between p-2.5 sm:p-3 md:p-3.5 rounded-xl transition cursor-pointer text-left ${
+                activeTab === 'my-submissions'
                   ? 'bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 font-bold shadow-xs'
                   : 'hover:bg-gray-100 dark:hover:bg-[#3A3B3C] text-gray-700 dark:text-gray-300 font-semibold'
-                }`}
+              }`}
             >
-              <div className="flex items-center gap-3 min-w-0">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                 <div
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${activeTab === 'my-submissions'
+                  className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                    activeTab === 'my-submissions'
                       ? 'bg-blue-600 text-white shadow-xs'
                       : 'bg-gray-100 dark:bg-[#3A3B3C] text-gray-600 dark:text-gray-400'
-                    }`}
+                  }`}
                 >
-                  <ListOrdered className="w-5 h-5" />
+                  <ListOrdered className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-sm block truncate">Phiên của tôi</span>
-                  <span className="text-xs text-gray-500 font-normal block truncate">
+                  <span className="text-xs sm:text-sm block truncate font-bold">Phiên của tôi</span>
+                  <span className="text-[11px] text-gray-500 font-normal hidden sm:block truncate">
                     Theo dõi, sửa & xóa
                   </span>
                 </div>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
-                {submissions.length > 0 && (
+                {allSubmissions.length > 0 && (
                   <span
-                    className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === 'my-submissions'
+                    className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                      activeTab === 'my-submissions'
                         ? 'bg-blue-600 text-white'
                         : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                      }`}
+                    }`}
                   >
-                    {submissions.length}
+                    {allSubmissions.length}
                   </span>
                 )}
                 <ChevronRight
-                  className={`w-4 h-4 transition-transform ${activeTab === 'my-submissions' ? 'text-blue-600 translate-x-0.5' : 'text-gray-400 opacity-60'
-                    }`}
+                  className={`hidden md:block w-4 h-4 transition-transform ${
+                    activeTab === 'my-submissions' ? 'text-blue-600 translate-x-0.5' : 'text-gray-400 opacity-60'
+                  }`}
                 />
               </div>
             </button>
@@ -461,13 +545,21 @@ export const ProposeView: React.FC = () => {
                     <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                       Tiêu đề phiên đề xuất *
                     </label>
-                    <input
-                      type="text"
+                    <textarea
+                      rows={2}
                       value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      placeholder="Ví dụ: Bộ câu hỏi ôn tập Chương 3 - Giao thức Tầng Mạng & Định tuyến OSPF"
+                      onChange={(e) => {
+                        setTitle(e.target.value);
+                        e.target.style.height = 'auto';
+                        e.target.style.height = `${Math.max(44, e.target.scrollHeight)}px`;
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.height = 'auto';
+                        e.target.style.height = `${Math.max(44, e.target.scrollHeight)}px`;
+                      }}
+                      placeholder="Ví dụ: Bộ câu hỏi ôn tập Chương 3 (nhấn Enter xuống dòng thoải mái)&#10;Giao thức Tầng Mạng & Định tuyến OSPF..."
                       required
-                      className="w-full px-3 py-2 text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50/50 dark:bg-[#3A3B3C] text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition"
+                      className="w-full px-3 py-2 text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50/50 dark:bg-[#3A3B3C] text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition resize-y min-h-[44px] break-words whitespace-pre-wrap leading-relaxed"
                     />
                   </div>
 
@@ -497,6 +589,9 @@ export const ProposeView: React.FC = () => {
                         type="url"
                         value={sourceUrl}
                         onChange={(e) => setSourceUrl(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') e.preventDefault();
+                        }}
                         placeholder="https://tailieu.hust.edu.vn/..."
                         className="w-full px-3 py-2 text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50/50 dark:bg-[#3A3B3C] text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition"
                       />
@@ -510,9 +605,17 @@ export const ProposeView: React.FC = () => {
                     <textarea
                       rows={2}
                       value={content}
-                      onChange={(e) => setContent(e.target.value)}
-                      placeholder="Tóm tắt nội dung bộ câu hỏi hoặc mục đích ôn tập..."
-                      className="w-full px-3 py-2 text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50/50 dark:bg-[#3A3B3C] text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition"
+                      onChange={(e) => {
+                        setContent(e.target.value);
+                        e.target.style.height = 'auto';
+                        e.target.style.height = `${Math.max(56, e.target.scrollHeight)}px`;
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.height = 'auto';
+                        e.target.style.height = `${Math.max(56, e.target.scrollHeight)}px`;
+                      }}
+                      placeholder="Tóm tắt nội dung bộ câu hỏi hoặc mục đích ôn tập (nhấn Enter để xuống dòng thoải mái)..."
+                      className="w-full px-3 py-2 text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50/50 dark:bg-[#3A3B3C] text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition resize-y min-h-[56px] break-words whitespace-pre-wrap leading-relaxed"
                     />
                   </div>
                 </div>
@@ -582,10 +685,18 @@ export const ProposeView: React.FC = () => {
                         <textarea
                           rows={3}
                           value={currentQ.content}
-                          onChange={(e) => handleUpdateCurrentQ({ content: e.target.value })}
-                          placeholder="Nhập đề bài câu hỏi trắc nghiệm..."
+                          onChange={(e) => {
+                            handleUpdateCurrentQ({ content: e.target.value });
+                            e.target.style.height = 'auto';
+                            e.target.style.height = `${Math.max(80, e.target.scrollHeight)}px`;
+                          }}
+                          onFocus={(e) => {
+                            e.target.style.height = 'auto';
+                            e.target.style.height = `${Math.max(80, e.target.scrollHeight)}px`;
+                          }}
+                          placeholder="Nhập đề bài câu hỏi trắc nghiệm (hỗ trợ nhấn Enter xuống dòng tự do)..."
                           required
-                          className="w-full p-2.5 text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#242526] text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                          className="w-full p-2.5 text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#242526] text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 resize-y min-h-[80px] break-words whitespace-pre-wrap leading-relaxed"
                         />
                       </div>
 
@@ -617,9 +728,17 @@ export const ProposeView: React.FC = () => {
                               <textarea
                                 rows={2}
                                 value={opt.text}
-                                onChange={(e) => handleUpdateOption(opt.key, e.target.value)}
+                                onChange={(e) => {
+                                  handleUpdateOption(opt.key, e.target.value);
+                                  e.target.style.height = 'auto';
+                                  e.target.style.height = `${Math.max(44, e.target.scrollHeight)}px`;
+                                }}
+                                onFocus={(e) => {
+                                  e.target.style.height = 'auto';
+                                  e.target.style.height = `${Math.max(44, e.target.scrollHeight)}px`;
+                                }}
                                 placeholder={`Phương án ${opt.key}...`}
-                                className="flex-1 bg-transparent text-xs sm:text-sm text-gray-900 dark:text-gray-100 focus:outline-hidden resize-y min-h-[44px] break-words leading-relaxed"
+                                className="flex-1 bg-transparent text-xs sm:text-sm text-gray-900 dark:text-gray-100 focus:outline-hidden resize-y min-h-[44px] break-words whitespace-pre-wrap leading-relaxed"
                               />
                               {opt.is_correct && (
                                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-1" />
@@ -637,11 +756,17 @@ export const ProposeView: React.FC = () => {
                         <textarea
                           rows={2}
                           value={currentQ.explanation}
-                          onChange={(e) =>
-                            handleUpdateCurrentQ({ explanation: e.target.value })
-                          }
-                          placeholder="Giải thích nguyên lý hoặc tài liệu tham khảo..."
-                          className="w-full p-2.5 text-xs sm:text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#242526] text-gray-900 dark:text-gray-100 focus:outline-hidden"
+                          onChange={(e) => {
+                            handleUpdateCurrentQ({ explanation: e.target.value });
+                            e.target.style.height = 'auto';
+                            e.target.style.height = `${Math.max(56, e.target.scrollHeight)}px`;
+                          }}
+                          onFocus={(e) => {
+                            e.target.style.height = 'auto';
+                            e.target.style.height = `${Math.max(56, e.target.scrollHeight)}px`;
+                          }}
+                          placeholder="Giải thích nguyên lý hoặc tài liệu tham khảo (nhấn Enter xuống dòng)..."
+                          className="w-full p-2.5 text-xs sm:text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#242526] text-gray-900 dark:text-gray-100 focus:outline-hidden resize-y min-h-[56px] break-words whitespace-pre-wrap leading-relaxed"
                         />
                       </div>
 
@@ -723,10 +848,14 @@ export const ProposeView: React.FC = () => {
                     <div className="p-3.5 rounded-xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-1">
                         {enrolledSubjects.find((s) => s.subject_id === selectedSubjectId)?.name ||
-                          'Môn học chưa chọn'}{' '}
-                        - {title || 'Chưa nhập tiêu đề'}
+                          'Môn học chưa chọn'}
                       </span>
-                      <p className="font-semibold text-sm text-gray-900 dark:text-gray-100 leading-relaxed">
+                      {title && (
+                        <h4 className="font-bold text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap break-words mb-2 leading-snug">
+                          {title}
+                        </h4>
+                      )}
+                      <p className="font-semibold text-sm text-gray-900 dark:text-gray-100 leading-relaxed whitespace-pre-wrap break-words">
                         {currentQ?.content || 'Nội dung câu hỏi sẽ hiển thị ở đây...'}
                       </p>
                     </div>
@@ -768,7 +897,7 @@ export const ProposeView: React.FC = () => {
                           <Sparkles className="w-3.5 h-3.5 text-amber-600" />
                           <span>Giải thích chi tiết:</span>
                         </div>
-                        <p className="text-gray-700 dark:text-gray-300">
+                        <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words leading-relaxed">
                           {currentQ.explanation}
                         </p>
                       </div>
@@ -783,60 +912,188 @@ export const ProposeView: React.FC = () => {
         {/* ================= NỘI DUNG TAB 2: DANH SÁCH PHIÊN CỦA TÔI ================= */}
         {activeTab === 'my-submissions' && (
           <div className="space-y-4">
-            {/* Filter Bar */}
-            <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-2.5 flex-1">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-500">
-                  <Filter className="w-4 h-4" />
-                  <span>Lọc:</span>
+            {/* Filter & Search Toolbar */}
+            <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-4 space-y-3">
+              {/* Row 1: Search + Subject + Sort + Refresh */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+                {/* Search input */}
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Tìm theo tiêu đề, mô tả, môn học, mã phiên..."
+                    className="w-full pl-9 pr-8 py-2 text-xs rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50/70 dark:bg-[#3A3B3C] text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer"
+                      title="Xóa tìm kiếm"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
 
-                {/* Subject filter */}
-                <select
-                  value={filterSubjectId ?? ''}
-                  onChange={(e) =>
-                    setFilterSubjectId(e.target.value ? Number(e.target.value) : undefined)
-                  }
-                  className="px-3 py-1.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#3A3B3C] text-xs font-medium text-gray-800 dark:text-gray-200 focus:outline-hidden"
-                >
-                  <option value="">Tất cả môn học</option>
-                  {enrolledSubjects.map((sub) => (
-                    <option key={sub.subject_id} value={sub.subject_id}>
-                      {sub.name} ({sub.code})
-                    </option>
-                  ))}
-                </select>
+                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                  {/* Subject Filter */}
+                  <div className="relative flex-1 sm:flex-initial">
+                    <select
+                      value={filterSubjectId ?? ''}
+                      onChange={(e) =>
+                        setFilterSubjectId(e.target.value ? Number(e.target.value) : undefined)
+                      }
+                      className="w-full sm:w-auto pl-3 pr-8 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50/70 dark:bg-[#3A3B3C] text-xs font-semibold text-gray-800 dark:text-gray-200 focus:outline-hidden focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                    >
+                      <option value="">Tất cả môn học</option>
+                      {enrolledSubjects.map((sub) => (
+                        <option key={sub.subject_id} value={sub.subject_id}>
+                          {sub.code} - {sub.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                {/* Status filter */}
-                <select
-                  value={filterStatus ?? ''}
-                  onChange={(e) =>
-                    setFilterStatus(
-                      e.target.value
-                        ? (e.target.value as 'PENDING' | 'REVIEWING' | 'RESOLVED')
-                        : undefined
-                    )
-                  }
-                  className="px-3 py-1.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#3A3B3C] text-xs font-medium text-gray-800 dark:text-gray-200 focus:outline-hidden"
-                >
-                  <option value="">Tất cả trạng thái</option>
-                  <option value="PENDING">Chờ duyệt</option>
-                  <option value="REVIEWING">Đang thẩm định</option>
-                  <option value="RESOLVED">Đã duyệt</option>
-                </select>
+                  {/* Sort Filter */}
+                  <div className="relative shrink-0">
+                    <select
+                      value={sortBy}
+                      onChange={(e) =>
+                        setSortBy(e.target.value as 'NEWEST' | 'OLDEST' | 'MOST_QUESTIONS')
+                      }
+                      className="pl-3 pr-8 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50/70 dark:bg-[#3A3B3C] text-xs font-semibold text-gray-800 dark:text-gray-200 focus:outline-hidden focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                    >
+                      <option value="NEWEST">Mới nhất</option>
+                      <option value="OLDEST">Cũ nhất</option>
+                      <option value="MOST_QUESTIONS">Nhiều câu nhất</option>
+                    </select>
+                    <ArrowUpDown className="w-3.5 h-3.5 text-gray-400 absolute right-2.5 top-2.5 pointer-events-none" />
+                  </div>
+
+                  {/* Refresh Button */}
+                  <button
+                    type="button"
+                    onClick={() => fetchMySubmissions()}
+                    className="p-2 sm:px-3 sm:py-2 rounded-xl border border-gray-200 dark:border-gray-600 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition cursor-pointer flex items-center gap-1.5 shrink-0"
+                    title="Làm mới danh sách phiên"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${loadingSubmissions ? 'animate-spin text-blue-600' : ''}`} />
+                    <span className="hidden sm:inline">Làm mới</span>
+                  </button>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <button
-                  onClick={() => fetchMySubmissions()}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-300 dark:border-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition cursor-pointer"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${loadingSubmissions ? 'animate-spin' : ''}`} />
-                  <span>Làm mới</span>
-                </button>
-                <span className="text-xs text-gray-500 font-medium ml-1">
-                  Tổng <span className="font-bold text-blue-600">{submissions.length}</span> phiên
-                </span>
+              {/* Row 2: Status Quick Filter Pills + Result Counter */}
+              <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2.5 border-t border-gray-100 dark:border-gray-700 text-xs">
+                {/* Status Pills */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-gray-400 text-[11px] font-bold uppercase tracking-wider mr-1">
+                    Trạng thái:
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setFilterStatus('ALL')}
+                    className={`px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                      filterStatus === 'ALL'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'bg-gray-100 dark:bg-[#3A3B3C] text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    <span>Tất cả</span>
+                    <span
+                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                        filterStatus === 'ALL' ? 'bg-white/20 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      {statusCounts.ALL}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFilterStatus('PENDING')}
+                    className={`px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                      filterStatus === 'PENDING'
+                        ? 'bg-amber-500 text-white shadow-xs'
+                        : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50 hover:bg-amber-100'
+                    }`}
+                  >
+                    <span>Chờ duyệt</span>
+                    <span
+                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                        filterStatus === 'PENDING' ? 'bg-white/20 text-white' : 'bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-200'
+                      }`}
+                    >
+                      {statusCounts.PENDING}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFilterStatus('REVIEWING')}
+                    className={`px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                      filterStatus === 'REVIEWING'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50 hover:bg-blue-100'
+                    }`}
+                  >
+                    <span>Đang thẩm định</span>
+                    <span
+                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                        filterStatus === 'REVIEWING' ? 'bg-white/20 text-white' : 'bg-blue-200 dark:bg-blue-900 text-blue-900 dark:text-blue-200'
+                      }`}
+                    >
+                      {statusCounts.REVIEWING}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFilterStatus('RESOLVED')}
+                    className={`px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                      filterStatus === 'RESOLVED'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50 hover:bg-emerald-100'
+                    }`}
+                  >
+                    <span>Đã duyệt</span>
+                    <span
+                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                        filterStatus === 'RESOLVED' ? 'bg-white/20 text-white' : 'bg-emerald-200 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-200'
+                      }`}
+                    >
+                      {statusCounts.RESOLVED}
+                    </span>
+                  </button>
+
+                  {/* Reset Filters button */}
+                  {hasActiveFilters && (
+                    <button
+                      type="button"
+                      onClick={handleResetFilters}
+                      className="px-2.5 py-1 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 text-xs font-semibold transition cursor-pointer flex items-center gap-1 ml-1"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>Đặt lại</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Submissions count summary */}
+                <div className="text-gray-500 font-medium">
+                  {hasActiveFilters ? (
+                    <span>
+                      Khớp <span className="font-bold text-blue-600">{filteredSubmissions.length}</span> / {allSubmissions.length} phiên
+                    </span>
+                  ) : (
+                    <span>
+                      Tổng <span className="font-bold text-blue-600">{allSubmissions.length}</span> phiên
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -862,26 +1119,40 @@ export const ProposeView: React.FC = () => {
                 <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mb-3" />
                 <p className="text-sm">Đang tải danh sách phiên đề xuất...</p>
               </div>
-            ) : submissions.length === 0 ? (
+            ) : filteredSubmissions.length === 0 ? (
               <div className="bg-white dark:bg-[#242526] rounded-2xl border border-gray-200 dark:border-gray-700 p-12 text-center space-y-3">
                 <div className="w-14 h-14 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center mx-auto">
                   <FilePlus className="w-7 h-7" />
                 </div>
                 <div className="max-w-md mx-auto space-y-1">
                   <h4 className="font-bold text-base text-gray-900 dark:text-gray-100">
-                    Chưa có phiên đề xuất nào
+                    {allSubmissions.length === 0
+                      ? 'Chưa có phiên đề xuất nào'
+                      : 'Không tìm thấy phiên đề xuất phù hợp'}
                   </h4>
                   <p className="text-xs text-gray-500">
-                    Bạn chưa nộp phiên đề xuất nào phù hợp với bộ lọc hiện tại. Hãy tạo
-                    phiên mới để đóng góp vào ngân hàng đề!
+                    {allSubmissions.length === 0
+                      ? 'Bạn chưa nộp phiên đề xuất nào. Hãy tạo phiên mới để đóng góp vào ngân hàng đề!'
+                      : 'Không có phiên nào khớp với điều kiện lọc hoặc từ khóa tìm kiếm hiện tại.'}
                   </p>
                 </div>
-                <button
-                  onClick={() => setActiveTab('create')}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition cursor-pointer"
-                >
-                  + Soạn phiên đề xuất ngay
-                </button>
+                {allSubmissions.length === 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('create')}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition cursor-pointer"
+                  >
+                    + Soạn phiên đề xuất ngay
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleResetFilters}
+                    className="px-4 py-2 bg-gray-100 dark:bg-[#3A3B3C] text-gray-800 dark:text-gray-200 hover:bg-gray-200 rounded-xl text-xs font-bold transition cursor-pointer"
+                  >
+                    Đặt lại bộ lọc
+                  </button>
+                )}
               </div>
             ) : (
               <div className="space-y-4">
@@ -917,7 +1188,7 @@ export const ProposeView: React.FC = () => {
                             </div>
 
                             <h4
-                              className="font-bold text-base text-gray-900 dark:text-gray-100 hover:text-blue-600 cursor-pointer"
+                              className="font-bold text-base text-gray-900 dark:text-gray-100 hover:text-blue-600 cursor-pointer whitespace-pre-wrap break-words"
                               onClick={() => setSelectedDetailId(sub.session_id || null)}
                             >
                               {sub.title}
@@ -1015,7 +1286,7 @@ export const ProposeView: React.FC = () => {
                 </div>
 
                 {/* Phân trang (Pagination) */}
-                {submissions.length > 0 && (
+                {filteredSubmissions.length > 0 && (
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 pb-1 px-1 text-xs text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700/60 mt-4">
                     <div className="flex items-center gap-3 flex-wrap">
                       <span>
@@ -1025,10 +1296,13 @@ export const ProposeView: React.FC = () => {
                         </span>
                         -
                         <span className="font-semibold text-gray-900 dark:text-gray-100">
-                          {Math.min(safeCurrentPage * pageSize, submissions.length)}
+                          {Math.min(safeCurrentPage * pageSize, filteredSubmissions.length)}
                         </span>{' '}
                         trong tổng số{' '}
-                        <span className="font-bold text-blue-600">{submissions.length}</span> phiên
+                        <span className="font-bold text-blue-600">{filteredSubmissions.length}</span> phiên
+                        {hasActiveFilters && (
+                          <span className="text-gray-400"> (lọc từ {allSubmissions.length} phiên)</span>
+                        )}
                       </span>
 
                       <div className="flex items-center gap-1.5">

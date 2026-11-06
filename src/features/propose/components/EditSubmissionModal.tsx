@@ -280,12 +280,21 @@ export const EditSubmissionModal: React.FC<EditSubmissionModalProps> = ({
                   <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
                     Tiêu đề phiên đề xuất *
                   </label>
-                  <input
-                    type="text"
+                  <textarea
+                    rows={2}
                     value={title}
-                    onChange={(e) => setTitle(e.target.value)}
+                    onChange={(e) => {
+                      setTitle(e.target.value);
+                      e.target.style.height = 'auto';
+                      e.target.style.height = `${Math.max(44, e.target.scrollHeight)}px`;
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.height = 'auto';
+                      e.target.style.height = `${Math.max(44, e.target.scrollHeight)}px`;
+                    }}
+                    placeholder="Tiêu đề phiên đề xuất (nhấn Enter xuống dòng thoải mái)..."
                     required
-                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#3A3B3C] text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#3A3B3C] text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 resize-y min-h-[44px] break-words whitespace-pre-wrap leading-relaxed"
                   />
                 </div>
 
@@ -387,9 +396,17 @@ export const EditSubmissionModal: React.FC<EditSubmissionModalProps> = ({
                     <textarea
                       rows={3}
                       value={currentQ.content}
-                      onChange={(e) => handleUpdateQuestion({ content: e.target.value })}
-                      placeholder="Nhập nội dung đề bài câu hỏi trắc nghiệm..."
-                      className="w-full p-3 text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#242526] text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                      onChange={(e) => {
+                        handleUpdateQuestion({ content: e.target.value });
+                        e.target.style.height = 'auto';
+                        e.target.style.height = `${Math.max(80, e.target.scrollHeight)}px`;
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.height = 'auto';
+                        e.target.style.height = `${Math.max(80, e.target.scrollHeight)}px`;
+                      }}
+                      placeholder="Nhập nội dung đề bài câu hỏi trắc nghiệm (nhấn Enter để xuống dòng thoải mái)..."
+                      className="w-full p-3 text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#242526] text-gray-900 dark:text-gray-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 resize-y min-h-[80px] break-words whitespace-pre-wrap leading-relaxed"
                     />
 
                     {/* Options A, B, C, D */}
@@ -422,9 +439,17 @@ export const EditSubmissionModal: React.FC<EditSubmissionModalProps> = ({
                             <textarea
                               rows={2}
                               value={opt.text}
-                              onChange={(e) => handleUpdateOption(opt.key, e.target.value)}
+                              onChange={(e) => {
+                                handleUpdateOption(opt.key, e.target.value);
+                                e.target.style.height = 'auto';
+                                e.target.style.height = `${Math.max(44, e.target.scrollHeight)}px`;
+                              }}
+                              onFocus={(e) => {
+                                e.target.style.height = 'auto';
+                                e.target.style.height = `${Math.max(44, e.target.scrollHeight)}px`;
+                              }}
                               placeholder={`Nội dung phương án ${opt.key}...`}
-                              className="flex-1 bg-transparent text-xs sm:text-sm text-gray-900 dark:text-gray-100 focus:outline-hidden resize-y min-h-[44px] break-words leading-relaxed"
+                              className="flex-1 bg-transparent text-xs sm:text-sm text-gray-900 dark:text-gray-100 focus:outline-hidden resize-y min-h-[44px] break-words whitespace-pre-wrap leading-relaxed"
                             />
                             {opt.is_correct && (
                               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-1" />
@@ -442,11 +467,17 @@ export const EditSubmissionModal: React.FC<EditSubmissionModalProps> = ({
                       <textarea
                         rows={2}
                         value={currentQ.explanation}
-                        onChange={(e) =>
-                          handleUpdateQuestion({ explanation: e.target.value })
-                        }
-                        placeholder="Giải thích vì sao đáp án này đúng..."
-                        className="w-full p-2.5 text-xs sm:text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#242526] text-gray-900 dark:text-gray-100 focus:outline-hidden"
+                        onChange={(e) => {
+                          handleUpdateQuestion({ explanation: e.target.value });
+                          e.target.style.height = 'auto';
+                          e.target.style.height = `${Math.max(56, e.target.scrollHeight)}px`;
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.height = 'auto';
+                          e.target.style.height = `${Math.max(56, e.target.scrollHeight)}px`;
+                        }}
+                        placeholder="Giải thích vì sao đáp án này đúng (nhấn Enter xuống dòng)..."
+                        className="w-full p-2.5 text-xs sm:text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#242526] text-gray-900 dark:text-gray-100 focus:outline-hidden resize-y min-h-[56px] break-words whitespace-pre-wrap leading-relaxed"
                       />
                     </div>
 

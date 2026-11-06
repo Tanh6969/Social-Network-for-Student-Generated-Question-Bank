@@ -273,7 +273,7 @@ export const ReviewDashboardView: React.FC = () => {
         {/* =========================================================================
             LEFT SIDEBAR (EXACTLY 3 ITEMS: Chờ kiểm duyệt, Đang kiểm duyệt, Lịch sử kiểm duyệt)
             ========================================================================= */}
-        <aside className="w-full lg:w-64 xl:w-72 shrink-0 bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-3 sm:p-4 space-y-2">
+        <aside className="w-full lg:w-64 xl:w-72 shrink-0 bg-white dark:bg-[#242526] rounded-2xl shadow-xs border border-gray-200 dark:border-gray-700 p-3 sm:p-4 space-y-2 lg:sticky lg:top-18 lg:h-fit z-20">
           <div className="hidden lg:block pb-2 mb-2 border-b border-gray-100 dark:border-gray-700">
             <span className="text-xs font-black uppercase tracking-wider text-gray-400">
               Trạng thái kiểm duyệt
