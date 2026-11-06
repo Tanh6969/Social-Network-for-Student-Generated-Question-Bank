@@ -13,6 +13,7 @@ const MOCK_PAGE_DELAY_MS = 450;
 export function useFeedPages(
   orderedPosts: Post[],
   sentinelRef: RefObject<HTMLDivElement | null>,
+  resetKey?: string,
 ) {
   const [pageCount, setPageCount] = useState(1);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -21,6 +22,14 @@ export function useFeedPages(
   const visibleCount = pageCount * FEED_PAGE_SIZE;
   const visiblePosts = orderedPosts.slice(0, visibleCount);
   const hasMore = visibleCount < orderedPosts.length;
+
+  useEffect(() => {
+    if (timerRef.current !== null) clearTimeout(timerRef.current);
+    timerRef.current = null;
+    fetchRequested.current = false;
+    setPageCount(1);
+    setIsLoadingMore(false);
+  }, [resetKey]);
 
   useEffect(
     () => () => {
