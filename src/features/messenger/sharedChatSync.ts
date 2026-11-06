@@ -31,7 +31,7 @@ export function isConversationSnapshot(
         'participantIds' in conversation &&
         Array.isArray(conversation.participantIds) &&
         conversation.participantIds.every(
-          (participantId) => typeof participantId === 'string',
+          (participantId: unknown) => typeof participantId === 'string',
         ) &&
         'messages' in conversation &&
         Array.isArray(conversation.messages),

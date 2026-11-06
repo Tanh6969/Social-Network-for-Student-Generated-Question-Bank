@@ -41,6 +41,7 @@ export const ProfileView: React.FC = () => {
     currentUser,
     role,
     viewingUserId,
+    setViewingUserId,
     getUserById,
     getFriendsOfUser,
     posts,

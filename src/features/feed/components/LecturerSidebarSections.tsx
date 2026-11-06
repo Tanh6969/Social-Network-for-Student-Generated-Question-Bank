@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useApp } from '../../demo/context/AppContext';
 import { reviewApi, examsApi, CourseClassResponse } from '../../../api';
 import { ClassStudentsModal } from '../../lecturer/components/ClassStudentsModal';
-import { ChevronRight, ClipboardCheck } from 'lucide-react';
+import { ChevronRight, ClipboardCheck, Gamepad2 } from 'lucide-react';
 
 // limit tối đa của GET /sessions/pending
 const PENDING_LIMIT = 50;
@@ -61,6 +61,22 @@ export const LecturerSidebarSections: React.FC = () => {
             {pendingCount}
           </span>
         )}
+      </button>
+
+      {/* Điều hành 6 Minigame */}
+      <button
+        onClick={() => setActiveTab('game')}
+        className="w-full group flex items-center justify-between px-3 py-2 rounded-lg hover:bg-fb-btn-hover/60 transition text-left cursor-pointer mt-1"
+      >
+        <span className="flex items-center gap-3">
+          <span className="w-9 h-9 rounded-full bg-fb-blue-soft text-fb-blue flex items-center justify-center">
+            <Gamepad2 className="w-5 h-5" />
+          </span>
+          Điều hành 6 Minigame
+        </span>
+        <span className="text-[11px] font-bold text-fb-blue bg-fb-blue-soft px-2 py-0.5 rounded-full">
+          Vận hành
+        </span>
       </button>
 
       {/* Lớp phụ trách — GET /lecturer/course-classes/my-classes */}
