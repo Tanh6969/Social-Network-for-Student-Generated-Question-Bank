@@ -27,7 +27,6 @@ import {
   Clock,
   CheckCircle,
   Send,
-  RefreshCw,
   Ban,
 } from 'lucide-react';
 
@@ -63,7 +62,6 @@ export const FeedView: React.FC = () => {
   const unavailablePost =
     new URLSearchParams(location.search).has('post') && !activePostDetail;
 
-  const [hasNewPostsBanner, setHasNewPostsBanner] = useState(true);
   const [activeMenuPostId, setActiveMenuPostId] = useState<string | null>(null);
   const feedSentinelRef = useRef<HTMLDivElement>(null);
 
@@ -131,22 +129,6 @@ export const FeedView: React.FC = () => {
       {/* ================= CỘT GIỮA (cuộn nội dung, có khoảng trống 2 bên) ================= */}
       <main className="flex-1 min-w-0 max-w-[760px] mx-auto space-y-4">
         <PostComposerCard />
-
-        {/* Polling Banner: "Có bài viết mới" */}
-        {hasNewPostsBanner && (
-          <div
-            onClick={() => {
-              setHasNewPostsBanner(false);
-              showToast('Đã cập nhật bảng tin mới nhất!', 'info');
-            }}
-            className="bg-fb-blue-soft hover:bg-fb-blue/20 border border-fb-blue/30 rounded-lg p-3 text-center text-xs font-semibold text-fb-blue cursor-pointer shadow-xs transition flex items-center justify-center gap-2"
-          >
-            <RefreshCw className="w-4 h-4 animate-spin text-fb-blue" />
-            <span>
-              Có 2 bài viết và câu hỏi thi mới được cập nhật – Nhấn để làm mới
-            </span>
-          </div>
-        )}
 
         {/* Feed Posts */}
         {unavailablePost && (
