@@ -138,3 +138,55 @@ describe('Official 6 Minigames Specification (Slide 3.1)', () => {
   });
 });
 
+import { gamesApi } from '../src/api/games';
+
+describe('Gamification & Minigames OpenAPI 21 Endpoints', () => {
+  it('POST /questions/{questionId}/ratings/{ratingUserId}/review-error audits report properly', async () => {
+    const res = await gamesApi.reviewError(107, 101, {
+      is_comfirmed: true,
+      notes: 'Đã thẩm định lỗi',
+    });
+    expect(res.success).toBe(true);
+    expect(res.message).toContain('Đã xác nhận lỗi');
+  });
+
+  it('POST /admin/leaderboards/rebuild triggers Redis ZSet recalculation', async () => {
+    const res = await gamesApi.rebuildLeaderboard({ type: 'SEMESTER' });
+    expect(res.success).toBe(true);
+    expect(res.message).toContain('Redis');
+  });
+
+  it('POST /admin/semesters/finalize-semester locks semester and releases bounties', async () => {
+    const res = await gamesApi.finalizeSemester();
+    expect(res.success).toBe(true);
+    expect(res.message).toContain('chốt sổ');
+  });
+
+  it('GET /games/leaderboard returns ranked entries', async () => {
+    const res = await gamesApi.getLeaderboard({ period: 'SEMESTER' });
+    expect(res.entries).toBeDefined();
+    expect(res.entries?.length).toBeGreaterThan(0);
+    expect(res.entries?.[0].rank).toBe(1);
+    expect(res.entries?.[0].total_points).toBeGreaterThan(0);
+  });
+
+  it('GET /games/prediction/game-1/classes returns course classes for Game 1', async () => {
+    const classes = await gamesApi.getGame1Classes();
+    expect(classes.length).toBeGreaterThan(0);
+    expect(classes[0].course_class_id).toBeDefined();
+    expect(classes[0].class_code).toBeDefined();
+  });
+
+  it('GET /games/prediction/active-session returns active Saturday session with >= 7 questions', async () => {
+    const session = await gamesApi.getGame6ActiveSession();
+    expect(session.session_id).toBeDefined();
+    expect(session.questions?.length).toBeGreaterThanOrEqual(7);
+  });
+
+  it('GET /games/check-in returns daily streak status', async () => {
+    const checkIn = await gamesApi.getCheckInStatus();
+    expect(checkIn.current_streak).toBeGreaterThanOrEqual(0);
+  });
+});
+
+

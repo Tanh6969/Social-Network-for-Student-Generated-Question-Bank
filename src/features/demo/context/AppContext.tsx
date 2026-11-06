@@ -7,6 +7,14 @@ import React, {
   ReactNode,
 } from 'react';
 import { useAuthSession } from '../../auth/useAuthSession';
+import {
+  usersApi,
+  socialApi,
+  chatApi,
+  academicApi,
+  rewardsApi,
+  gamesApi,
+} from '../../../api';
 import { useLocation, useNavigate } from 'react-router';
 import { tabFromPath, tabPaths } from '../../../app/routes';
 import {
@@ -790,6 +798,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
           existing.actor?.id !== currentUser.id,
       ),
     ]);
+    const numericTargetId = Number(userId.replace(/\D/g, ''));
+    if (numericTargetId > 0) {
+      void usersApi.sendFriendRequest({ addressee_id: numericTargetId }).catch(() => {});
+    }
     showToast(`Đã gửi lời mời kết bạn tới ${target.name}!`, 'success');
   };
 
@@ -797,6 +809,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     const target = findRawUserById(userId);
     updateFriendStatusesForBothAccounts(userId, 'NONE', 'NONE');
     removeFriendRequestNotification(userId, currentUser.id);
+    const numericTargetId = Number(userId.replace(/\D/g, ''));
+    if (numericTargetId > 0) {
+      void usersApi.declineFriendRequest({ requester_id: numericTargetId }).catch(() => {});
+    }
     showToast(`Đã hủy lời mời kết bạn với ${target.name}.`, 'info');
   };
 
@@ -808,6 +824,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     const target = findRawUserById(userId);
     updateFriendStatusesForBothAccounts(userId, 'FRIEND', 'FRIEND');
     removeFriendRequestNotification(currentUser.id, userId);
+    const numericTargetId = Number(userId.replace(/\D/g, ''));
+    if (numericTargetId > 0) {
+      void usersApi.acceptFriendRequest({ requester_id: numericTargetId }).catch(() => {});
+    }
     showToast(`Bạn và ${target.name} đã trở thành bạn bè!`, 'success');
   };
 
@@ -815,12 +835,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     const target = findRawUserById(userId);
     updateFriendStatusesForBothAccounts(userId, 'NONE', 'NONE');
     removeFriendRequestNotification(currentUser.id, userId);
+    const numericTargetId = Number(userId.replace(/\D/g, ''));
+    if (numericTargetId > 0) {
+      void usersApi.declineFriendRequest({ requester_id: numericTargetId }).catch(() => {});
+    }
     showToast(`Đã xóa lời mời kết bạn từ ${target.name}.`, 'info');
   };
 
   const unfriendUser = (userId: string) => {
     const target = findRawUserById(userId);
     updateFriendStatusesForBothAccounts(userId, 'NONE', 'NONE');
+    const numericTargetId = Number(userId.replace(/\D/g, ''));
+    if (numericTargetId > 0) {
+      void usersApi.unfriend(numericTargetId).catch(() => {});
+    }
     showToast(`Đã hủy kết bạn với ${target.name}.`, 'info');
   };
 
@@ -830,12 +858,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
     const target = findRawUserById(userId);
+    const numericTargetId = Number(userId.replace(/\D/g, ''));
     setFollowingIds((prev) => {
       const exists = prev.includes(userId);
       if (exists) {
+        if (numericTargetId > 0) void usersApi.unfollowUser(numericTargetId).catch(() => {});
         showToast(`Đã bỏ theo dõi ${target.name}.`, 'info');
         return prev.filter((id) => id !== userId);
       } else {
+        if (numericTargetId > 0) void usersApi.followUser(numericTargetId).catch(() => {});
         showToast(`Đang theo dõi ${target.name}!`, 'success');
         return [...prev, userId];
       }
@@ -882,6 +913,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       ];
     });
 
+    const numericTargetId = Number(userId.replace(/\D/g, ''));
+    if (numericTargetId > 0) {
+      void usersApi.blockUser(numericTargetId).catch(() => {});
+    }
+
     showToast(
       wasFriend
         ? `Đã chặn ${target.name} và hủy kết bạn. Hai người sẽ không thể nhắn tin hoặc xem trang cá nhân của nhau.`
@@ -893,6 +929,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   const unblockUser = (userId: string) => {
     const target = findRawUserById(userId);
     setBlockedUsers((prev) => prev.filter((item) => item.userId !== userId));
+    const numericTargetId = Number(userId.replace(/\D/g, ''));
+    if (numericTargetId > 0) {
+      void usersApi.unblockUser(numericTargetId).catch(() => {});
+    }
     showToast(
       `Đã bỏ chặn ${target.name}. Bạn có thể xem lại trang cá nhân, nhắn tin hoặc chặn lại bất cứ lúc nào (không giới hạn thời gian).`,
       'success',
@@ -1855,6 +1895,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         return g;
       }),
     );
+    if (gameId === 'game_01') {
+      void gamesApi.predictGame1({ course_class_id: 101, predicted_count: guess }).catch(() => {});
+    } else if (gameId === 'game_02') {
+      void gamesApi.predictGame2({ session_id: 12, predicted_human_count: guess, predicted_llm_count: 0 }).catch(() => {});
+    } else if (gameId === 'game_03') {
+      void gamesApi.predictGame4({ subject_id: 1, predicted_bank_size: guess }).catch(() => {});
+    }
     showToast(
       `Đã xác nhận dự đoán: ${guess}. Chờ công bố kết quả vào Chủ Nhật!`,
       'success',
@@ -1865,6 +1912,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   const equipCosmetic = (itemId: string) => {
     const item = cosmetics.find((c) => c.id === itemId);
     if (!item) return;
+
+    const numericId = Number(itemId.replace(/\D/g, ''));
+    if (numericId > 0) {
+      void rewardsApi.equipCosmetic({ cosmetic_id: numericId }).catch(() => {});
+    }
 
     setCosmetics((prev) =>
       prev.map((c) => {
@@ -1887,6 +1939,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   const unequipCosmetic = (itemId: string) => {
     const item = cosmetics.find((c) => c.id === itemId);
     if (!item) return;
+
+    const numericId = Number(itemId.replace(/\D/g, ''));
+    if (numericId > 0) {
+      void rewardsApi.unequipCosmetic({ cosmetic_id: numericId }).catch(() => {});
+    }
 
     setCosmetics((prev) =>
       prev.map((c) => (c.id === itemId ? { ...c, isEquipped: false } : c)),
@@ -2050,12 +2107,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   // Notifications
   const markNotificationAsRead = (id: string) => {
+    const numericId = Number(id.replace(/\D/g, ''));
+    if (numericId > 0) {
+      void chatApi.markNotificationAsRead(numericId).catch(() => {});
+    }
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
     );
   };
 
   const markAllNotificationsAsRead = () => {
+    void chatApi.markAllNotificationsAsRead().catch(() => {});
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     showToast('Đã đánh dấu tất cả thông báo là đã đọc', 'info');
   };

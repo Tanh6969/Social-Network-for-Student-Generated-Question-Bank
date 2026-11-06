@@ -1,6 +1,21 @@
 import createClient from 'openapi-fetch';
-import type { paths } from './generated/openapi';
+import type { paths, operations } from './generated/openapi';
 import { tokenStore } from './token';
+
+export type OpQuery<K extends keyof operations> =
+  operations[K]['parameters']['query'];
+export type OpPath<K extends keyof operations> =
+  operations[K]['parameters']['path'];
+export type OpBody<K extends keyof operations> =
+  NonNullable<operations[K]['requestBody']> extends {
+    content: { 'application/json': infer B };
+  }
+    ? B
+    : NonNullable<operations[K]['requestBody']> extends {
+          content: { 'multipart/form-data': infer M };
+        }
+      ? M
+      : never;
 
 const baseUrl = (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(
   /\/$/,

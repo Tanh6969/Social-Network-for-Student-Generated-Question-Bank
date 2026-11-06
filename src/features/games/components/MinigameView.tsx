@@ -1,6 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../demo/context/AppContext';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
+import {
+  gamesApi,
+  type CheckInStatusResponse,
+  type GamePredictionResponse,
+} from '../../../api';
 import {
   Gamepad2,
   Trophy,
@@ -42,6 +47,42 @@ export const MinigameView: React.FC = () => {
     game_02: 135,
     game_03: 3520,
   });
+  const [checkInStatus, setCheckInStatus] = useState<CheckInStatusResponse | null>(null);
+  const [isCheckingIn, setIsCheckingIn] = useState(false);
+  const [myPredictions, setMyPredictions] = useState<GamePredictionResponse[]>([]);
+
+  useEffect(() => {
+    if (role !== 'STUDENT') return;
+    let cancelled = false;
+    gamesApi
+      .getCheckInStatus()
+      .then((res) => !cancelled && setCheckInStatus(res))
+      .catch(() => {});
+    gamesApi
+      .getMyPredictions({ limit: 10 })
+      .then((res) => !cancelled && setMyPredictions(res.contents ?? []))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [role]);
+
+  const handleDailyCheckIn = async () => {
+    setIsCheckingIn(true);
+    try {
+      const res = await gamesApi.checkIn();
+      setCheckInStatus((prev) => ({
+        ...prev,
+        has_checked_in_today: true,
+        current_streak: res.current_streak ?? (prev?.current_streak ?? 0) + 1,
+      }));
+      showToast(res.message || 'Điểm danh chuyên cần hàng ngày thành công!', 'success');
+    } catch {
+      showToast('Không thể điểm danh lúc này.', 'error');
+    } finally {
+      setIsCheckingIn(false);
+    }
+  };
 
   const handleGuessSubmit = (gameId: string) => {
     const val = guessInputs[gameId];
@@ -87,6 +128,22 @@ export const MinigameView: React.FC = () => {
               <span className="text-xs text-fb-text-2 block">Huy hiệu đạt được</span>
               <span className="text-xl font-bold text-fb-text">4 / 8</span>
             </div>
+          </div>
+
+          <div className="mt-3 pt-3 border-t border-fb-divider flex items-center justify-between gap-2">
+            <div className="text-xs">
+              <span className="text-fb-text-2 block">Chuỗi điểm danh</span>
+              <strong className="text-fb-text">
+                {checkInStatus?.current_streak ?? 5} ngày liên tiếp
+              </strong>
+            </div>
+            <button
+              onClick={handleDailyCheckIn}
+              disabled={isCheckingIn || Boolean(checkInStatus?.has_checked_in_today)}
+              className="px-3 py-1.5 rounded-lg bg-fb-blue hover:bg-fb-blue-hover disabled:bg-fb-input disabled:text-fb-text-2 text-white text-xs font-semibold transition cursor-pointer disabled:cursor-default"
+            >
+              {checkInStatus?.has_checked_in_today ? 'Đã điểm danh' : 'Điểm danh (+Coin)'}
+            </button>
           </div>
         </div>
 
@@ -412,6 +469,37 @@ export const MinigameView: React.FC = () => {
                   +200 điểm (Gần đúng)
                 </span>
               </div>
+              {myPredictions.map((pred) => (
+                <div
+                  key={pred.prediction_id}
+                  className="p-3 bg-fb-input rounded-lg flex items-center justify-between border"
+                >
+                  <div>
+                    <p className="font-bold text-fb-text">
+                      {pred.game_type} #{pred.target_id}
+                    </p>
+                    <span className="text-fb-text-2">
+                      Trạng thái: {pred.status} · Ngày đặt:{' '}
+                      {pred.created_at
+                        ? new Date(pred.created_at).toLocaleDateString('vi-VN')
+                        : 'Gần đây'}
+                    </span>
+                  </div>
+                  <span
+                    className={`font-bold px-2 py-0.5 rounded-full ${
+                      pred.is_correct
+                        ? 'bg-fb-success-soft text-fb-success'
+                        : 'bg-fb-blue-soft text-fb-blue'
+                    }`}
+                  >
+                    {pred.status === 'RESOLVED'
+                      ? pred.is_correct
+                        ? 'Dự đoán đúng'
+                        : 'Chưa trúng'
+                      : 'Đang chờ chốt'}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         )}

@@ -2,15 +2,21 @@ import { api, expectEnvelope } from './client';
 import type { components } from './generated/openapi';
 
 export type SubjectResponse = components['schemas']['SubjectResponse'];
+export type CourseClassOptionResponse = components['schemas']['CourseClassOptionResponse'];
 export type SubmissionSessionSummary =
   components['schemas']['SubmissionSessionSummaryDto'];
 export type SubmissionsResponse = components['schemas']['SubmissionsResponse'];
 export type MySubmissionDetail =
   components['schemas']['MySubmissionDetailResponse'];
-export type ProposeSessionRequest =
-  components['schemas']['ProposeSessionRequest'];
+export type ProposeSessionRequest = Omit<
+  components['schemas']['ProposeSessionRequest'],
+  'course_class_id'
+> & {
+  course_class_id?: number;
+  subject_id?: number;
+};
 export type UpdateSubmissionSessionRequest =
-  components['schemas']['UpdateSubmissionSessionRequest'];
+  components['schemas']['UpdateSubmissionSessionRequest'] & { subject_id?: number };
 export type QuestionProposeDto = components['schemas']['QuestionProposeDto'];
 export type QuestionOption = components['schemas']['QuestionOption'];
 
@@ -23,15 +29,47 @@ export interface MySubmissionsParams {
 
 export const sessionsApi = {
   /**
-   * Lấy danh sách môn học người dùng đang tham gia
+   * GET /sessions/my-enrolled-course-classes
+   * Lấy danh sách lớp học phần người dùng đang tham gia
    */
-  async getMyEnrolledSubjects(): Promise<SubjectResponse[]> {
-    const result = await api.GET('/sessions/my-enrolled-subjects');
+  async getMyEnrolledCourseClasses(): Promise<CourseClassOptionResponse[]> {
+    const result = await api.GET('/sessions/my-enrolled-course-classes');
     const envelope = expectEnvelope(result);
     return envelope.data ?? [];
   },
 
   /**
+   * Lấy danh sách môn học người dùng đang tham gia (ánh xạ từ lớp học phần hoặc danh mục môn học)
+   */
+  async getMyEnrolledSubjects(): Promise<SubjectResponse[]> {
+    try {
+      const classes = await this.getMyEnrolledCourseClasses();
+      if (classes.length > 0) {
+        const seen = new Set<number>();
+        const subjects: SubjectResponse[] = [];
+        for (const cls of classes) {
+          const sid = cls.subject_id ?? cls.course_class_id;
+          if (sid !== undefined && !seen.has(sid)) {
+            seen.add(sid);
+            subjects.push({
+              subject_id: sid,
+              code: cls.subject_code,
+              name: cls.subject_name,
+            });
+          }
+        }
+        return subjects;
+      }
+    } catch {
+      // Fallback to /subjects
+    }
+    const result = await api.GET('/subjects');
+    const envelope = expectEnvelope(result);
+    return envelope.data ?? [];
+  },
+
+  /**
+   * GET /sessions/my-submissions
    * Lấy danh sách phiên đề xuất của chính mình kèm phân trang và lọc
    */
   async getMySubmissions(
@@ -64,6 +102,7 @@ export const sessionsApi = {
   },
 
   /**
+   * GET /sessions/my-submissions/{sessionId}
    * Xem chi tiết phiên đề xuất của chính mình
    */
   async getMySubmissionDetail(sessionId: number): Promise<MySubmissionDetail> {
@@ -80,17 +119,22 @@ export const sessionsApi = {
   },
 
   /**
+   * POST /sessions/propose
    * Đề xuất phiên câu hỏi mới
    */
   async proposeSession(body: ProposeSessionRequest) {
     const result = await api.POST('/sessions/propose', {
-      body,
+      body: {
+        ...body,
+        course_class_id: body.course_class_id ?? body.subject_id ?? 100,
+      },
     });
     const envelope = expectEnvelope(result);
     return envelope.data;
   },
 
   /**
+   * PUT /sessions/my-submissions/{sessionId}
    * Cập nhật phiên đề xuất (chỉ áp dụng khi PENDING)
    */
   async updateMySubmission(
@@ -101,12 +145,16 @@ export const sessionsApi = {
       params: {
         path: { sessionId },
       },
-      body,
+      body: {
+        ...body,
+        course_class_id: body.course_class_id ?? body.subject_id,
+      },
     });
     expectEnvelope(result);
   },
 
   /**
+   * DELETE /sessions/my-submissions/{sessionId}
    * Xóa/hủy phiên đề xuất (chỉ áp dụng khi PENDING)
    */
   async deleteMySubmission(sessionId: number): Promise<void> {

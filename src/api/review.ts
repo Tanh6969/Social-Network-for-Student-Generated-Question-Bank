@@ -8,8 +8,10 @@ import {
   saveStoredMockDetails,
 } from '../features/lecturer/mockReviewData';
 
-export type PendingSessionsResponse = components['schemas']['PendingSessionsResponse'];
-export type PendingSessionItemDto = components['schemas']['PendingSessionItemDto'];
+export type ReviewableSessionsResponse = components['schemas']['ReviewableSessionsResponse'];
+export type ReviewableSessionItemDto = components['schemas']['ReviewableSessionItemDto'];
+export type PendingSessionsResponse = ReviewableSessionsResponse;
+export type PendingSessionItemDto = ReviewableSessionItemDto;
 export type SessionDetailReviewResponse = components['schemas']['SessionDetailReviewResponse'];
 export type SessionQuestionReviewDto = components['schemas']['SessionQuestionReviewDto'];
 export type DuplicateWarning = components['schemas']['DuplicateWarning'];
@@ -25,19 +27,19 @@ export interface GetPendingSessionsParams {
   after?: number;
   limit?: number;
   subject_id?: number;
+  course_class_id?: number;
   sort_by?: string;
 }
 
 export const reviewApi = {
   /**
    * Lấy danh sách các phiên đề xuất chờ duyệt (PENDING/REVIEWING)
-   * Tự động dự phòng dữ liệu mẫu nếu máy chủ chưa kết nối hoặc danh sách trống
+   * GET /lecturer/sessions/reviewable
    */
   async getPendingSessions(params?: GetPendingSessionsParams): Promise<PendingSessionsResponse> {
     const mockItems = loadStoredMockSessions();
     const token = tokenStore.get();
 
-    // Trong môi trường demo / chưa đăng nhập token thật, trả về ngay dữ liệu mock để UI hiển thị tức thì
     if (!token) {
       return { items: mockItems };
     }
@@ -50,14 +52,16 @@ export const reviewApi = {
       if (params?.after !== undefined) query.after = params.after;
       if (params?.limit !== undefined) query.limit = params.limit;
       if (params?.subject_id !== undefined) query.subject_id = params.subject_id;
+      if (params?.course_class_id !== undefined) query.course_class_id = params.course_class_id;
       if (params?.sort_by !== undefined) query.sort_by = params.sort_by;
 
-      const result = await api.GET('/sessions/pending', {
+      const result = await api.GET('/lecturer/sessions/reviewable', {
         params: {
           query: query as {
             after?: number;
             limit?: number;
             subject_id?: number;
+            course_class_id?: number;
             sort_by?: string;
           },
         },
@@ -80,6 +84,7 @@ export const reviewApi = {
 
   /**
    * Giảng viên mở xem chi tiết phiên đề xuất để duyệt (chuyển sang REVIEWING)
+   * GET /lecturer/sessions/{sessionId}
    */
   async getSessionDetailForReview(sessionId: number): Promise<SessionDetailReviewResponse> {
     const token = tokenStore.get();
@@ -88,7 +93,7 @@ export const reviewApi = {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 2500);
 
-        const result = await api.GET('/sessions/{sessionId}', {
+        const result = await api.GET('/lecturer/sessions/{sessionId}', {
           params: {
             path: { sessionId },
           },
@@ -110,7 +115,6 @@ export const reviewApi = {
       return mockDetails[sessionId];
     }
 
-    // Default fallback question set if sessionId is not in pre-seeded map
     return {
       items: [
         {
@@ -154,12 +158,13 @@ export const reviewApi = {
 
   /**
    * Phê duyệt danh sách câu hỏi
+   * POST /lecturer/sessions/approve
    */
   async approveQuestions(questionIds: number[]): Promise<ApproveQuestionsResponse> {
     const token = tokenStore.get();
     if (token) {
       try {
-        const result = await api.POST('/sessions/approve', {
+        const result = await api.POST('/lecturer/sessions/approve', {
           body: {
             question_ids: questionIds,
           },
@@ -171,7 +176,6 @@ export const reviewApi = {
       }
     }
 
-    // Update mock storage
     const details = loadStoredMockDetails();
     Object.keys(details).forEach((sessId) => {
       const d = details[Number(sessId)];
@@ -192,12 +196,13 @@ export const reviewApi = {
 
   /**
    * Từ chối danh sách câu hỏi
+   * POST /lecturer/sessions/reject
    */
   async rejectQuestions(questionIds: number[], reason?: string): Promise<void> {
     const token = tokenStore.get();
     if (token) {
       try {
-        const result = await api.POST('/sessions/reject', {
+        const result = await api.POST('/lecturer/sessions/reject', {
           body: {
             question_ids: questionIds,
             reason: reason?.trim() || undefined,
@@ -210,7 +215,6 @@ export const reviewApi = {
       }
     }
 
-    // Update mock storage
     const details = loadStoredMockDetails();
     Object.keys(details).forEach((sessId) => {
       const d = details[Number(sessId)];
@@ -227,6 +231,7 @@ export const reviewApi = {
 
   /**
    * Giảng viên chỉnh sửa câu hỏi
+   * PUT /lecturer/questions/{questionId}
    */
   async editQuestion(
     questionId: number,
@@ -235,7 +240,7 @@ export const reviewApi = {
     const token = tokenStore.get();
     if (token) {
       try {
-        const result = await api.PUT('/questions/{questionId}', {
+        const result = await api.PUT('/lecturer/questions/{questionId}', {
           params: {
             path: { questionId },
           },
@@ -248,7 +253,6 @@ export const reviewApi = {
       }
     }
 
-    // Update mock storage
     const details = loadStoredMockDetails();
     Object.keys(details).forEach((sessId) => {
       const d = details[Number(sessId)];
@@ -277,12 +281,13 @@ export const reviewApi = {
 
   /**
    * Chốt hoàn tất duyệt phiên đề xuất
+   * POST /lecturer/sessions/{sessionId}/complete-review
    */
   async completeSessionReview(sessionId: number): Promise<void> {
     const token = tokenStore.get();
     if (token) {
       try {
-        const result = await api.POST('/sessions/{sessionId}/complete-review', {
+        const result = await api.POST('/lecturer/sessions/{sessionId}/complete-review', {
           params: {
             path: { sessionId },
           },
@@ -294,7 +299,6 @@ export const reviewApi = {
       }
     }
 
-    // Update mock sessions
     const sessions = loadStoredMockSessions();
     const updated = sessions.map((s) =>
       s.session_id === sessionId ? { ...s, status: 'RESOLVED' } : s
