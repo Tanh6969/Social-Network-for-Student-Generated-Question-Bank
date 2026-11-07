@@ -75,11 +75,11 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-bold text-base text-fb-text truncate">
+                <h3 className="text-xl font-bold text-fb-text truncate">
                   Chi tiết phiên đề xuất
                 </h3>
               </div>
-              <p className="text-xs text-fb-text-2 truncate">
+              <p className="text-sm text-fb-text-2 truncate">
                 Môn:{' '}
                 <span className="font-semibold text-fb-text">
                   {detail?.subject_name || 'Đang tải...'} ({detail?.subject_code || ''})
@@ -101,7 +101,7 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
           {loading && (
             <div className="flex flex-col items-center justify-center py-16 text-fb-text-2">
               <div className="w-8 h-8 border-3 border-fb-blue border-t-transparent rounded-full animate-spin mb-3" />
-              <p className="text-sm">Đang tải dữ liệu phiên đề xuất...</p>
+              <p className="text-body">Đang tải dữ liệu phiên đề xuất...</p>
             </div>
           )}
 
@@ -109,8 +109,8 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
             <div className="p-4 rounded-lg bg-fb-danger-soft border border-fb-danger/30 text-fb-danger flex items-start gap-3">
               <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold text-sm">Lỗi tải dữ liệu</p>
-                <p className="text-xs mt-1">{error}</p>
+                <p className="font-semibold text-body">Lỗi tải dữ liệu</p>
+                <p className="text-sm mt-1">{error}</p>
               </div>
             </div>
           )}
@@ -119,16 +119,16 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
             <>
               {/* Meta information card */}
               <div className="bg-fb-input rounded-lg p-4 border border-fb-divider space-y-3">
-                <h4 className="font-bold text-lg text-fb-text">
+                <h4 className="text-card-title font-semibold text-fb-text">
                   {detail.title}
                 </h4>
                 {detail.content && (
-                  <p className="text-sm text-fb-text-2 whitespace-pre-line">
+                  <p className="text-body text-fb-text-2 whitespace-pre-line">
                     {detail.content}
                   </p>
                 )}
 
-                <div className="flex flex-wrap items-center gap-4 text-xs text-fb-text-2 pt-2 border-t border-fb-divider">
+                <div className="flex flex-wrap items-center gap-4 text-sm text-fb-text-2 pt-2 border-t border-fb-divider">
                   <div className="flex items-center gap-1.5">
                     <Calendar className="w-4 h-4 text-fb-text-3" />
                     <span>
@@ -165,7 +165,7 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
               {/* Questions list */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-sm text-fb-text">
+                  <h4 className="text-card-title font-semibold text-fb-text">
                     Danh sách câu hỏi ({detail.questions?.length || 0})
                   </h4>
                 </div>
@@ -178,10 +178,10 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-2">
-                          <span className="w-6 h-6 rounded-full bg-fb-blue text-white font-bold text-xs flex items-center justify-center shrink-0">
+                          <span className="w-6 h-6 rounded-full bg-fb-blue text-white font-semibold text-xs flex items-center justify-center shrink-0">
                             {qIndex + 1}
                           </span>
-                          <span className="font-semibold text-sm text-fb-text">
+                          <span className="font-semibold text-body text-fb-text">
                             Câu hỏi {qIndex + 1}
                           </span>
                         </div>
@@ -195,7 +195,7 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
                       </div>
 
                       {/* Question content */}
-                      <p className="text-sm sm:text-base text-fb-text leading-relaxed font-medium">
+                      <p className="text-body text-fb-text leading-relaxed font-medium">
                         {q.content}
                       </p>
 
@@ -218,14 +218,14 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
                         {q.options?.map((opt) => (
                           <div
                             key={opt.key}
-                            className={`p-3 rounded-lg border text-xs sm:text-sm flex items-start gap-2.5 transition ${
+                            className={`p-3 rounded-lg border text-body flex items-start gap-2.5 transition ${
                               opt.is_correct
                                 ? 'border-fb-success bg-fb-success-soft/70 text-fb-success font-semibold'
                                 : 'border-fb-divider bg-fb-inset/60 text-fb-text'
                             }`}
                           >
                             <span
-                              className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                              className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ${
                                 opt.is_correct
                                   ? 'bg-fb-success text-white'
                                   : 'bg-fb-btn text-fb-text'
@@ -252,7 +252,7 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
 
                       {/* Explanation */}
                       {q.explanation && (
-                        <div className="mt-3 p-3 rounded-lg bg-fb-blue-soft/70 border border-fb-blue/30 text-xs text-fb-blue flex items-start gap-2">
+                        <div className="mt-3 p-3 rounded-lg bg-fb-blue-soft/70 border border-fb-blue/30 text-sm text-fb-blue flex items-start gap-2">
                           <HelpCircle className="w-4 h-4 text-fb-blue shrink-0 mt-0.5" />
                           <div>
                             <span className="font-semibold block mb-0.5">Giải thích đáp án:</span>
@@ -263,7 +263,7 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
                     </div>
                   ))
                 ) : (
-                  <p className="text-xs text-fb-text-2 text-center py-4">
+                  <p className="text-sm text-fb-text-2 text-center py-4">
                     Phiên chưa có câu hỏi nào.
                   </p>
                 )}
@@ -276,7 +276,7 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
         <div className="p-4 border-t border-fb-divider flex justify-end bg-fb-input">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-semibold rounded-lg bg-fb-btn text-fb-text hover:bg-fb-btn-hover transition cursor-pointer"
+            className="px-4 py-2 text-body font-semibold rounded-lg bg-fb-btn text-fb-text hover:bg-fb-btn-hover transition cursor-pointer"
           >
             Đóng
           </button>

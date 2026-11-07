@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { useApp } from '../../demo/context/AppContext';
-import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
 import {
+  BadgeCheck,
   Users,
   UserPlus,
-  UserCheck,
   Shield,
   Search,
   MessageCircle,
@@ -13,27 +12,56 @@ import {
   Ban,
   Unlock,
   CheckCircle2,
+  ChevronRight,
+  GraduationCap,
+  Home,
   X,
   Clock,
   Sparkles,
-  AlertTriangle,
   EyeOff,
 } from 'lucide-react';
 import { User } from '../../demo/types';
 
 type FriendsMenuTab =
-  | 'ALL'
-  | 'REQUESTS'
-  | 'SUGGESTIONS'
-  | 'FOLLOWING'
-  | 'BLOCKED';
+  'HOME' | 'ALL' | 'REQUESTS' | 'SUGGESTIONS' | 'FOLLOWING' | 'BLOCKED';
+
+const HOME_REQUEST_LIMIT = 6;
+const HOME_SUGGESTION_LIMIT = 12;
+
+const GRID_CLASS =
+  'grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2 sm:gap-3';
+const BTN_BASE =
+  'w-full h-9 rounded-md text-sm font-semibold transition flex items-center justify-center gap-1.5';
+const BTN_WIDE = `${BTN_BASE} px-2 sm:flex-1 sm:min-w-0`;
+const BTN_COMPACT = `${BTN_BASE} px-3 sm:w-auto sm:shrink-0`;
+const COLOR_SOFT = 'bg-fb-blue-soft hover:bg-fb-blue/20 text-fb-blue';
+const COLOR_NEUTRAL = 'bg-fb-btn hover:bg-fb-btn-hover text-fb-text';
+const BTN_PRIMARY = `${BTN_WIDE} bg-fb-blue hover:bg-fb-blue-hover text-white`;
+const BTN_SOFT = `${BTN_WIDE} ${COLOR_SOFT}`;
+const BTN_NEUTRAL = `${BTN_WIDE} ${COLOR_NEUTRAL}`;
+const MENU_ITEM =
+  'w-full px-3 py-2 text-left flex items-center gap-2 rounded-md transition';
+
+const EmptyState: React.FC<{
+  icon: React.ElementType;
+  title: string;
+  children?: React.ReactNode;
+}> = ({ icon: Icon, title, children }) => (
+  <div className="py-16 px-4 text-center space-y-3">
+    <div className="w-20 h-20 mx-auto rounded-full bg-fb-btn flex items-center justify-center">
+      <Icon className="w-9 h-9 text-fb-text-3" />
+    </div>
+    <p className="font-semibold text-body text-fb-text-2">{title}</p>
+    {children}
+  </div>
+);
 
 export const FriendsView: React.FC = () => {
   const {
-    currentUser,
     allUsers,
     friendsList,
     friendStatuses,
+    getFriendsOfUser,
     getMutualFriendsCount,
     sendFriendRequest,
     cancelFriendRequest,
@@ -58,7 +86,7 @@ export const FriendsView: React.FC = () => {
     openReportModal,
   } = useApp();
 
-  const [activeMenu, setActiveMenu] = useState<FriendsMenuTab>('ALL');
+  const [activeMenu, setActiveMenu] = useState<FriendsMenuTab>('HOME');
   const [searchTerm, setSearchTerm] = useState('');
   const [openMenuUserId, setOpenMenuUserId] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<{
@@ -101,175 +129,192 @@ export const FriendsView: React.FC = () => {
   const filteredLecturers = lecturersList.filter(matchSearch);
   const filteredSuggestions = suggestionsList.filter(matchSearch);
 
+  const trimmedSearch = searchTerm.trim();
+  const noSearchResult = `Không tìm thấy kết quả cho "${trimmedSearch}"`;
+
   const handleOpenProfile = (userId: string) => {
     setViewingUserId(userId);
     setActiveTab('profile');
   };
 
-  const renderUserCard = (user: User) => {
+  const selectMenu = (menu: FriendsMenuTab) => {
+    setActiveMenu(menu);
+    setOpenMenuUserId(null);
+    window.scrollTo({ top: 0 });
+  };
+
+  const renderCardActions = (user: User) => {
     const status = friendStatuses[user.id] || 'NONE';
-    const mutualCount = getMutualFriendsCount(user.id);
-    const isFollowing = followingIds.includes(user.id);
+
+    if (user.role === 'LECTURER') {
+      const isFollowing = followingIds.includes(user.id);
+      return (
+        <>
+          <button
+            type="button"
+            onClick={() => toggleFollowUser(user.id)}
+            className={isFollowing ? BTN_NEUTRAL : BTN_PRIMARY}
+          >
+            {isFollowing ? 'Đang theo dõi' : 'Theo dõi'}
+          </button>
+          <button
+            type="button"
+            onClick={() => openChatDock(user.id)}
+            aria-label={`Nhắn tin cho ${user.name}`}
+            title="Nhắn tin"
+            className={`${BTN_COMPACT} ${COLOR_SOFT}`}
+          >
+            <MessageCircle className="w-4 h-4" />
+            <span className="sm:hidden">Nhắn tin</span>
+          </button>
+        </>
+      );
+    }
+
+    if (status === 'REQUEST_RECEIVED') {
+      return (
+        <>
+          <button
+            type="button"
+            onClick={() => acceptFriendRequest(user.id)}
+            className={BTN_PRIMARY}
+          >
+            Xác nhận
+          </button>
+          <button
+            type="button"
+            onClick={() => declineFriendRequest(user.id)}
+            className={BTN_NEUTRAL}
+          >
+            Xóa
+          </button>
+        </>
+      );
+    }
+
+    if (status === 'FRIEND') {
+      return (
+        <button
+          type="button"
+          onClick={() => openChatDock(user.id)}
+          className={BTN_SOFT}
+        >
+          <MessageCircle className="w-4 h-4" /> Nhắn tin
+        </button>
+      );
+    }
+
+    if (status === 'REQUEST_SENT') {
+      return (
+        <button
+          type="button"
+          onClick={() => cancelFriendRequest(user.id)}
+          className={BTN_NEUTRAL}
+        >
+          Hủy lời mời
+        </button>
+      );
+    }
 
     return (
-      <div
+      <>
+        <button
+          type="button"
+          onClick={() => sendFriendRequest(user.id)}
+          className={BTN_SOFT}
+        >
+          <UserPlus className="w-4 h-4" /> Thêm bạn bè
+        </button>
+        <button
+          type="button"
+          onClick={() => dismissSuggestion(user.id)}
+          className={`${BTN_COMPACT} ${COLOR_NEUTRAL}`}
+        >
+          Gỡ
+        </button>
+      </>
+    );
+  };
+
+  const renderUserCard = (user: User) => {
+    const isFriend = friendStatuses[user.id] === 'FRIEND';
+    const mutualCount = getMutualFriendsCount(user.id);
+    const mutualFriendIds = new Set(friendsList.map((f) => f.id));
+    const mutualPreview = getFriendsOfUser(user.id)
+      .filter((f) => mutualFriendIds.has(f.id))
+      .slice(0, 2);
+    const isMenuOpen = openMenuUserId === user.id;
+
+    return (
+      <article
         key={user.id}
-        className="flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3 hover:bg-fb-hover/50 transition first:rounded-t-lg last:rounded-b-lg"
+        className="relative flex flex-col bg-fb-card rounded-lg shadow-fb-card"
       >
-        {/* Avatar + tên + chức danh */}
-        <div className="flex items-center gap-3 min-w-0 flex-[3]">
-          <div className="relative shrink-0">
-            <AvatarWithFrame
-              user={user}
-              size="md"
-              onClick={() => handleOpenProfile(user.id)}
+        <button
+          type="button"
+          onClick={() => handleOpenProfile(user.id)}
+          aria-label={`Xem trang cá nhân của ${user.name}`}
+          className="relative block aspect-[4/3] w-full overflow-hidden rounded-t-lg bg-fb-input hover:opacity-90 transition-opacity"
+        >
+          <img
+            src={user.avatar}
+            alt=""
+            loading="lazy"
+            className="h-full w-full object-cover"
+            style={{
+              objectPosition: `${user.avatarCrop?.x ?? 50}% ${user.avatarCrop?.y ?? 25}%`,
+              transform: `scale(${user.avatarCrop?.zoom ?? 1})`,
+            }}
+          />
+          {user.isOnline && (
+            <span
+              className="absolute bottom-2 right-2 w-3.5 h-3.5 bg-fb-success ring-2 ring-fb-card rounded-full"
+              title="Đang trực tuyến"
             />
-            {user.isOnline && (
-              <span
-                className="absolute bottom-0 right-0 w-3 h-3 bg-fb-success border-2 border-fb-card rounded-full"
-                title="Đang trực tuyến"
+          )}
+        </button>
+
+        {/* Menu tùy chọn */}
+        <div className="absolute top-2 right-2">
+          <button
+            type="button"
+            onClick={() => setOpenMenuUserId(isMenuOpen ? null : user.id)}
+            aria-label={`Tùy chọn cho ${user.name}`}
+            aria-expanded={isMenuOpen}
+            className="w-8 h-8 rounded-full bg-fb-card/90 hover:bg-fb-card text-fb-text shadow-fb-card flex items-center justify-center transition"
+          >
+            <MoreHorizontal className="w-4 h-4" />
+          </button>
+
+          {isMenuOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-10"
+                onClick={() => setOpenMenuUserId(null)}
               />
-            )}
-          </div>
-          <div className="min-w-0">
-            <h4
-              onClick={() => handleOpenProfile(user.id)}
-              className="font-bold text-sm text-fb-text hover:underline cursor-pointer truncate"
-            >
-              {user.name}
-            </h4>
-            <p className="text-xs text-fb-text-2 truncate">
-              {user.classOrTitle}
-              <span className="lg:hidden"> · {user.faculty}</span>
-            </p>
-          </div>
-        </div>
-
-        {/* Khoa + bạn chung (màn hình rộng) */}
-        <div className="hidden lg:block min-w-0 flex-[2] text-xs">
-          <p className="text-fb-text-2 truncate">{user.faculty}</p>
-          {mutualCount > 0 && (
-            <p className="mt-0.5 flex items-center gap-1 text-fb-text-3">
-              <Users className="w-3 h-3 shrink-0" /> {mutualCount} bạn chung
-            </p>
-          )}
-        </div>
-
-        {/* Hành động */}
-        <div className="flex items-center justify-end gap-1.5 shrink-0 lg:w-60">
-          {user.role === 'LECTURER' ? (
-            <>
-              <button
-                type="button"
-                onClick={() => toggleFollowUser(user.id)}
-                className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                  isFollowing
-                    ? 'bg-fb-blue-soft text-fb-blue hover:bg-fb-blue/20'
-                    : 'bg-fb-blue hover:bg-fb-blue-hover text-white'
-                }`}
-              >
-                {isFollowing ? '✓ Đang theo dõi' : '+ Theo dõi GV'}
-              </button>
-              <button
-                type="button"
-                onClick={() => openChatDock(user.id)}
-                className="px-2.5 py-1.5 bg-fb-input hover:bg-fb-btn-hover text-fb-text rounded-lg text-xs font-semibold"
-                title="Nhắn tin cho Giảng viên"
-              >
-                <MessageCircle className="w-4 h-4" />
-              </button>
-            </>
-          ) : status === 'REQUEST_RECEIVED' ? (
-            <>
-              <button
-                type="button"
-                onClick={() => acceptFriendRequest(user.id)}
-                className="flex-1 sm:flex-none px-3 py-1.5 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg text-xs font-bold transition"
-              >
-                Xác nhận
-              </button>
-              <button
-                type="button"
-                onClick={() => declineFriendRequest(user.id)}
-                className="flex-1 sm:flex-none px-3 py-1.5 bg-fb-input hover:bg-fb-btn-hover text-fb-text rounded-lg text-xs font-semibold transition"
-              >
-                Xóa
-              </button>
-            </>
-          ) : status === 'FRIEND' ? (
-            <button
-              type="button"
-              onClick={() => openChatDock(user.id)}
-              className="flex-1 sm:flex-none px-3 py-1.5 bg-fb-blue-soft hover:bg-fb-blue/20 text-fb-blue rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition"
-            >
-              <MessageCircle className="w-3.5 h-3.5" /> Nhắn tin
-            </button>
-          ) : status === 'REQUEST_SENT' ? (
-            <button
-              type="button"
-              onClick={() => cancelFriendRequest(user.id)}
-              className="flex-1 sm:flex-none px-3 py-1.5 bg-fb-input hover:bg-fb-btn-hover text-fb-text rounded-lg text-xs font-semibold transition"
-            >
-              Hủy lời mời đã gửi
-            </button>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => sendFriendRequest(user.id)}
-                className="flex-1 sm:flex-none px-3 py-1.5 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1"
-              >
-                <UserPlus className="w-3.5 h-3.5" /> Thêm bạn bè
-              </button>
-              {activeMenu === 'SUGGESTIONS' && (
-                <button
-                  type="button"
-                  onClick={() => dismissSuggestion(user.id)}
-                  className="px-2.5 py-1.5 bg-fb-input hover:bg-fb-btn-hover text-fb-text-2 rounded-lg text-xs font-semibold"
-                  title="Ẩn gợi ý này"
-                >
-                  Gỡ
-                </button>
-              )}
-            </>
-          )}
-
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() =>
-                setOpenMenuUserId(openMenuUserId === user.id ? null : user.id)
-              }
-              className="p-1.5 rounded-lg bg-fb-input hover:bg-fb-btn-hover text-fb-text-2 transition"
-              title="Tùy chọn"
-            >
-              <MoreHorizontal className="w-4 h-4" />
-            </button>
-
-            {openMenuUserId === user.id && (
-              <div className="absolute right-0 top-full mt-1 w-48 bg-fb-card rounded-lg shadow-xl border border-fb-divider py-1 z-20 text-xs font-medium">
+              <div className="absolute right-0 top-full mt-1 w-40 sm:w-52 bg-fb-card rounded-lg shadow-xl border border-fb-divider p-1 z-20 text-xs sm:text-sm font-medium">
                 <button
                   type="button"
                   onClick={() => {
                     setOpenMenuUserId(null);
                     handleOpenProfile(user.id);
                   }}
-                  className="w-full px-3 py-2 text-left hover:bg-fb-hover text-fb-text flex items-center gap-2"
+                  className={`${MENU_ITEM} hover:bg-fb-hover text-fb-text`}
                 >
-                  <Users className="w-3.5 h-3.5 text-fb-text-2" />
+                  <Users className="w-4 h-4 shrink-0 text-fb-text-2" />
                   <span>Xem trang cá nhân</span>
                 </button>
 
-                {status === 'FRIEND' && (
+                {isFriend && (
                   <button
                     type="button"
                     onClick={() => {
                       setOpenMenuUserId(null);
                       setConfirmAction({ type: 'UNFRIEND', user });
                     }}
-                    className="w-full px-3 py-2 text-left hover:bg-fb-warning-soft text-fb-warning flex items-center gap-2"
+                    className={`${MENU_ITEM} hover:bg-fb-hover text-fb-text`}
                   >
-                    <UserMinus className="w-3.5 h-3.5" />
+                    <UserMinus className="w-4 h-4 shrink-0 text-fb-text-2" />
                     <span>Hủy kết bạn</span>
                   </button>
                 )}
@@ -280,10 +325,10 @@ export const FriendsView: React.FC = () => {
                     setOpenMenuUserId(null);
                     openReportModal('NGƯỜI DÙNG', user.id, user.name);
                   }}
-                  className="w-full px-3 py-2 text-left hover:bg-fb-hover text-fb-text flex items-center gap-2"
+                  className={`${MENU_ITEM} hover:bg-fb-hover text-fb-text`}
                 >
-                  <Shield className="w-3.5 h-3.5 text-fb-text-2" />
-                  <span>Báo cáo trang cá nhân</span>
+                  <Shield className="w-4 h-4 shrink-0 text-fb-text-2" />
+                  <span>Báo cáo</span>
                 </button>
 
                 <button
@@ -293,270 +338,349 @@ export const FriendsView: React.FC = () => {
                     setBlockReason('');
                     setConfirmAction({ type: 'BLOCK', user });
                   }}
-                  className="w-full px-3 py-2 text-left hover:bg-fb-danger-soft text-fb-danger font-semibold flex items-center gap-2 border-t border-fb-divider"
+                  className={`${MENU_ITEM} hover:bg-fb-danger-soft text-fb-danger`}
                 >
-                  <Ban className="w-3.5 h-3.5" />
+                  <Ban className="w-4 h-4 shrink-0" />
                   <span>Chặn {user.name.split(' ').slice(-1)[0]}</span>
                 </button>
               </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 flex flex-col lg:flex-row gap-4 lg:gap-6 items-start">
-      {/* ================= CỘT TRÁI: Menu điều hướng Bạn bè & Chặn ================= */}
-      <aside className="w-full lg:w-[300px] xl:w-[320px] shrink-0 space-y-3 select-none lg:sticky lg:top-18">
-        <div className="bg-fb-card rounded-lg shadow-fb-card p-3">
-          <h2 className="font-bold text-base text-fb-text px-2 mb-2">
-            Bạn bè & Mối quan hệ
-          </h2>
-
-          <div className="space-y-1 text-xs font-semibold text-fb-text">
-            <button
-              type="button"
-              onClick={() => setActiveMenu('ALL')}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition text-left ${
-                activeMenu === 'ALL'
-                  ? 'bg-fb-blue-soft text-fb-blue font-bold'
-                  : 'hover:bg-fb-hover'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Users className="w-4 h-4 text-fb-blue" />
-                <span>Tất cả bạn bè</span>
-              </div>
-              <span className="bg-fb-input text-fb-text text-xs px-2 py-0.5 rounded-full font-bold">
-                {currentUser.friendsCount}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveMenu('REQUESTS')}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition text-left ${
-                activeMenu === 'REQUESTS'
-                  ? 'bg-fb-blue-soft text-fb-blue font-bold'
-                  : 'hover:bg-fb-hover'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <UserPlus className="w-4 h-4 text-fb-success" />
-                <span>Lời mời kết bạn</span>
-              </div>
-              {incomingRequests.length > 0 ? (
-                <span className="bg-fb-blue text-white text-xs px-2 py-0.5 rounded-full font-bold">
-                  {incomingRequests.length}
-                </span>
-              ) : (
-                <span className="text-xs text-fb-text-3">0</span>
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveMenu('SUGGESTIONS')}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition text-left ${
-                activeMenu === 'SUGGESTIONS'
-                  ? 'bg-fb-blue-soft text-fb-blue font-bold'
-                  : 'hover:bg-fb-hover'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Sparkles className="w-4 h-4 text-fb-warning" />
-                <span>Gợi ý cùng khoa / lớp</span>
-              </div>
-              <span className="text-xs text-fb-text-3">
-                {suggestionsList.length}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveMenu('FOLLOWING')}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition text-left ${
-                activeMenu === 'FOLLOWING'
-                  ? 'bg-fb-blue-soft text-fb-blue font-bold'
-                  : 'hover:bg-fb-hover'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <UserCheck className="w-4 h-4 text-fb-blue" />
-                <span>Đang theo dõi Giảng viên</span>
-              </div>
-              <span className="text-xs text-fb-text-3">
-                {
-                  lecturersList.filter((u) => followingIds.includes(u.id))
-                    .length
-                }
-              </span>
-            </button>
-
-            <div className="pt-1 mt-1 border-t border-fb-divider">
-              <button
-                type="button"
-                onClick={() => setActiveMenu('BLOCKED')}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition text-left ${
-                  activeMenu === 'BLOCKED'
-                    ? 'bg-fb-danger-soft text-fb-danger font-bold'
-                    : 'hover:bg-fb-hover text-fb-text'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <Ban className="w-4 h-4 text-fb-danger" />
-                  <span>Danh sách đã chặn</span>
-                </div>
-                <span
-                  className={`text-xs px-2 py-0.5 rounded-full font-bold ${
-                    blockedUsers.length > 0
-                      ? 'bg-fb-danger text-white'
-                      : 'bg-fb-input text-fb-text-2'
-                  }`}
-                >
-                  {blockedUsers.length}
-                </span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* ================= CỘT PHẢI: Nội dung chính ================= */}
-      <main className="flex-1 min-w-0 space-y-4 w-full">
-        {/* Thanh tìm kiếm & tổng quan */}
-        <div className="bg-fb-card rounded-lg shadow-fb-card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h3 className="font-bold text-sm text-fb-text">
-              {activeMenu === 'ALL' &&
-                `Tất cả bạn bè (${currentUser.friendsCount} người bạn)`}
-              {activeMenu === 'REQUESTS' &&
-                `Lời mời kết bạn (${incomingRequests.length} chờ xác nhận · ${sentRequests.length} đã gửi)`}
-              {activeMenu === 'SUGGESTIONS' &&
-                `Những người bạn có thể biết (${suggestionsList.length})`}
-              {activeMenu === 'FOLLOWING' &&
-                `Danh sách Giảng viên (${lecturersList.length})`}
-              {activeMenu === 'BLOCKED' &&
-                `Quản lý danh sách chặn (${blockedUsers.length} người đang bị chặn)`}
-            </h3>
-            <p className="text-xs text-fb-text-2 mt-0.5">
-              {activeMenu === 'BLOCKED'
-                ? 'Chặn và bỏ chặn bất kỳ ai không giới hạn thời gian chờ (chuẩn đặc tả Slide 24).'
-                : 'Kết nối bạn bè cùng lớp, trao đổi câu hỏi ôn tập và theo dõi giảng viên bộ môn.'}
-            </p>
-          </div>
-
-          {activeMenu !== 'BLOCKED' && (
-            <div className="relative w-full sm:w-72">
-              <Search className="w-4 h-4 text-fb-text-3 absolute left-3 top-2.5" />
-              <input
-                type="text"
-                placeholder="Tìm theo tên, lớp, khoa..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 bg-fb-input text-xs rounded-full border border-fb-divider text-fb-text"
-              />
-            </div>
+            </>
           )}
         </div>
 
-        {/* ================= TAB 1: TẤT CẢ BẠN BÈ ================= */}
-        {activeMenu === 'ALL' && (
-          <>
-            {filteredFriends.length > 0 ? (
-              <div className="bg-fb-card rounded-lg shadow-fb-card divide-y divide-fb-divider">
-                {filteredFriends.map(renderUserCard)}
-              </div>
-            ) : (
-              <div className="bg-fb-card rounded-lg border border-fb-divider p-10 text-center space-y-3">
-                <Users className="w-10 h-10 text-fb-text-3 mx-auto" />
-                <p className="font-bold text-sm text-fb-text">
-                  {searchTerm
-                    ? `Không tìm thấy người bạn nào khớp với "${searchTerm}"`
-                    : 'Bạn chưa có người bạn nào trong danh sách'}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setActiveMenu('SUGGESTIONS')}
-                  className="px-4 py-2 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg text-xs font-bold"
-                >
-                  Tìm bạn bè gợi ý
-                </button>
-              </div>
+        <div className="flex flex-col flex-1 p-3">
+          <h3 className="flex items-center gap-1 text-body sm:text-card-title leading-tight font-semibold text-fb-text">
+            <button
+              type="button"
+              onClick={() => handleOpenProfile(user.id)}
+              title={user.name}
+              className="truncate hover:underline"
+            >
+              {user.name}
+            </button>
+            {user.role === 'LECTURER' && (
+              <span title="Giảng viên đã xác thực" className="shrink-0">
+                <BadgeCheck className="w-4 h-4 text-fb-blue" />
+              </span>
             )}
-          </>
-        )}
+          </h3>
+          <p
+            className="mt-1 text-sm text-fb-text-2 truncate"
+            title={`${user.classOrTitle} · ${user.faculty}`}
+          >
+            {user.classOrTitle} · {user.faculty}
+          </p>
 
-        {/* ================= TAB 2: LỜI MỜI KẾT BẠN ================= */}
-        {activeMenu === 'REQUESTS' && (
-          <div className="space-y-6">
-            <div className="space-y-3">
-              <h4 className="font-bold text-xs text-fb-text-2 px-1">
-                Lời mời kết bạn nhận được ({filteredIncoming.length})
-              </h4>
-              {filteredIncoming.length > 0 ? (
-                <div className="bg-fb-card rounded-lg shadow-fb-card divide-y divide-fb-divider">
-                  {filteredIncoming.map(renderUserCard)}
-                </div>
-              ) : (
-                <div className="bg-fb-card rounded-lg border border-fb-divider p-6 text-center text-xs text-fb-text-2">
-                  Không có lời mời kết bạn nào đang chờ xác nhận.
-                </div>
-              )}
-            </div>
+          <div className="mt-1 h-5 flex items-center gap-1.5 text-sm text-fb-text-2 min-w-0">
+            {mutualCount > 0 && (
+              <>
+                <span className="flex -space-x-1.5 shrink-0">
+                  {mutualPreview.map((friend) => (
+                    <img
+                      key={friend.id}
+                      src={friend.avatar}
+                      alt=""
+                      loading="lazy"
+                      className="w-4 h-4 rounded-full object-cover ring-1 ring-fb-card"
+                    />
+                  ))}
+                </span>
+                <span className="truncate">{mutualCount} bạn chung</span>
+              </>
+            )}
+          </div>
 
-            <div className="space-y-3">
-              <h4 className="font-bold text-xs text-fb-text-2 px-1">
-                Lời mời bạn đã gửi ({filteredSent.length})
-              </h4>
-              {filteredSent.length > 0 ? (
-                <div className="bg-fb-card rounded-lg shadow-fb-card divide-y divide-fb-divider">
-                  {filteredSent.map(renderUserCard)}
-                </div>
-              ) : (
-                <div className="bg-fb-card rounded-lg border border-fb-divider p-6 text-center text-xs text-fb-text-2">
-                  Bạn chưa gửi lời mời kết bạn mới nào.
-                </div>
-              )}
-            </div>
+          <div className="mt-auto pt-3 flex flex-col sm:flex-row gap-1.5">
+            {renderCardActions(user)}
+          </div>
+        </div>
+      </article>
+    );
+  };
+
+  const renderSectionHeader = (
+    title: string,
+    count: number,
+    onSeeAll?: () => void,
+  ) => (
+    <div className="flex items-center justify-between gap-3 mb-3">
+      <h2 className="text-lg sm:text-xl font-bold text-fb-text">
+        {title}
+        <span className="ml-2 font-normal text-fb-text-2 text-base">
+          {count}
+        </span>
+      </h2>
+      {onSeeAll && (
+        <button
+          type="button"
+          onClick={onSeeAll}
+          className="shrink-0 px-2 py-1 -mr-2 rounded-md text-body text-fb-blue hover:bg-fb-hover transition"
+        >
+          Xem tất cả
+        </button>
+      )}
+    </div>
+  );
+
+  const menuItems: {
+    id: FriendsMenuTab;
+    label: string;
+    icon: React.ElementType;
+    badge?: number;
+  }[] = [
+    { id: 'HOME', label: 'Trang chủ', icon: Home },
+    {
+      id: 'REQUESTS',
+      label: 'Lời mời kết bạn',
+      icon: UserPlus,
+      badge: incomingRequests.length,
+    },
+    { id: 'SUGGESTIONS', label: 'Gợi ý', icon: Sparkles },
+    { id: 'ALL', label: 'Tất cả bạn bè', icon: Users },
+    { id: 'FOLLOWING', label: 'Giảng viên', icon: GraduationCap },
+    { id: 'BLOCKED', label: 'Danh sách đã chặn', icon: Ban },
+  ];
+
+  return (
+    <div className="w-full flex flex-col lg:flex-row items-start">
+      {/* ================= CỘT TRÁI: Menu điều hướng ================= */}
+      <aside className="w-full lg:w-[320px] xl:w-[360px] shrink-0 select-none bg-fb-card shadow-fb-card lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)] lg:overflow-y-auto p-3 lg:p-2">
+        <h1 className="hidden lg:block px-2 pt-2 pb-3 text-2xl font-bold text-fb-text">
+          Bạn bè
+        </h1>
+
+        {activeMenu !== 'BLOCKED' && (
+          <div className="relative mb-2 lg:mx-2">
+            <Search className="w-4 h-4 text-fb-text-2 absolute left-3 top-2.5" />
+            <input
+              type="text"
+              aria-label="Tìm bạn bè"
+              placeholder="Tìm theo tên, lớp, khoa..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full h-9 pl-9 pr-3 bg-fb-input text-body rounded-full text-fb-text placeholder:text-fb-text-2 outline-none focus:ring-2 focus:ring-fb-blue/40"
+            />
           </div>
         )}
 
-        {/* ================= TAB 3: GỢI Ý KẾT BẠN ================= */}
-        {activeMenu === 'SUGGESTIONS' && (
+        <nav
+          aria-label="Mục bạn bè"
+          className="flex lg:flex-col gap-1.5 lg:gap-0.5 overflow-x-auto [scrollbar-width:none]"
+        >
+          {menuItems.map(({ id, label, icon: Icon, badge }) => {
+            const isActive = activeMenu === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => selectMenu(id)}
+                aria-current={isActive ? 'page' : undefined}
+                className={`shrink-0 lg:w-full flex items-center gap-2 lg:gap-3 p-1.5 pr-3 lg:p-2 rounded-full lg:rounded-lg text-left transition ${
+                  isActive
+                    ? 'bg-fb-blue-soft lg:bg-fb-hover'
+                    : 'hover:bg-fb-hover'
+                }`}
+              >
+                <span
+                  className={`w-7 h-7 lg:w-9 lg:h-9 rounded-full flex items-center justify-center shrink-0 ${
+                    isActive
+                      ? 'bg-fb-blue text-white'
+                      : 'bg-fb-btn text-fb-text'
+                  }`}
+                >
+                  <Icon className="w-4 h-4 lg:w-5 lg:h-5" />
+                </span>
+                <span className="lg:flex-1 text-sm lg:text-body font-semibold text-fb-text whitespace-nowrap">
+                  {label}
+                </span>
+                {!!badge && (
+                  <span className="min-w-5 h-5 px-1.5 rounded-full bg-fb-danger text-white text-xs font-bold flex items-center justify-center">
+                    {badge}
+                  </span>
+                )}
+                {id !== 'HOME' && (
+                  <ChevronRight className="hidden lg:block w-5 h-5 text-fb-text-2 shrink-0" />
+                )}
+              </button>
+            );
+          })}
+        </nav>
+      </aside>
+
+      {/* ================= CỘT PHẢI: Nội dung chính ================= */}
+      <main className="flex-1 min-w-0 w-full max-w-[1560px] px-3 sm:px-6 lg:px-8 py-4 space-y-6">
+        {/* ================= TRANG CHỦ: LỜI MỜI + GỢI Ý ================= */}
+        {activeMenu === 'HOME' && (
           <>
-            {filteredSuggestions.length > 0 ? (
-              <div className="bg-fb-card rounded-lg shadow-fb-card divide-y divide-fb-divider">
-                {filteredSuggestions.map(renderUserCard)}
+            {filteredIncoming.length > 0 && (
+              <section>
+                {renderSectionHeader(
+                  'Lời mời kết bạn',
+                  filteredIncoming.length,
+                  () => selectMenu('REQUESTS'),
+                )}
+                <div className={GRID_CLASS}>
+                  {filteredIncoming
+                    .slice(0, HOME_REQUEST_LIMIT)
+                    .map(renderUserCard)}
+                </div>
+              </section>
+            )}
+
+            {filteredIncoming.length > 0 && filteredSuggestions.length > 0 && (
+              <hr className="border-fb-divider" />
+            )}
+
+            {filteredSuggestions.length > 0 && (
+              <section>
+                {renderSectionHeader(
+                  'Những người bạn có thể biết',
+                  filteredSuggestions.length,
+                  () => selectMenu('SUGGESTIONS'),
+                )}
+                <div className={GRID_CLASS}>
+                  {filteredSuggestions
+                    .slice(0, HOME_SUGGESTION_LIMIT)
+                    .map(renderUserCard)}
+                </div>
+              </section>
+            )}
+
+            {filteredIncoming.length === 0 &&
+              filteredSuggestions.length === 0 && (
+                <EmptyState
+                  icon={Users}
+                  title={
+                    trimmedSearch
+                      ? noSearchResult
+                      : 'Hiện chưa có lời mời hay gợi ý kết bạn mới'
+                  }
+                />
+              )}
+          </>
+        )}
+
+        {/* ================= TẤT CẢ BẠN BÈ ================= */}
+        {activeMenu === 'ALL' && (
+          <section>
+            {renderSectionHeader('Tất cả bạn bè', friendsList.length)}
+            {filteredFriends.length > 0 ? (
+              <div className={GRID_CLASS}>
+                {filteredFriends.map(renderUserCard)}
               </div>
             ) : (
-              <div className="bg-fb-card rounded-lg border border-fb-divider p-10 text-center text-xs text-fb-text-2">
-                Hiện không còn gợi ý kết bạn mới.
-              </div>
+              <EmptyState
+                icon={Users}
+                title={
+                  trimmedSearch
+                    ? noSearchResult
+                    : 'Bạn chưa có người bạn nào trong danh sách'
+                }
+              >
+                {!trimmedSearch && (
+                  <button
+                    type="button"
+                    onClick={() => selectMenu('SUGGESTIONS')}
+                    className="px-4 h-9 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-md text-sm font-semibold"
+                  >
+                    Tìm bạn bè gợi ý
+                  </button>
+                )}
+              </EmptyState>
+            )}
+          </section>
+        )}
+
+        {/* ================= LỜI MỜI KẾT BẠN ================= */}
+        {activeMenu === 'REQUESTS' && (
+          <>
+            <section>
+              {renderSectionHeader('Lời mời kết bạn', filteredIncoming.length)}
+              {filteredIncoming.length > 0 ? (
+                <div className={GRID_CLASS}>
+                  {filteredIncoming.map(renderUserCard)}
+                </div>
+              ) : (
+                <EmptyState
+                  icon={UserPlus}
+                  title={
+                    trimmedSearch
+                      ? noSearchResult
+                      : 'Không có lời mời kết bạn nào đang chờ xác nhận'
+                  }
+                />
+              )}
+            </section>
+
+            {filteredSent.length > 0 && (
+              <>
+                <hr className="border-fb-divider" />
+                <section>
+                  {renderSectionHeader('Lời mời đã gửi', filteredSent.length)}
+                  <div className={GRID_CLASS}>
+                    {filteredSent.map(renderUserCard)}
+                  </div>
+                </section>
+              </>
             )}
           </>
         )}
 
-        {/* ================= TAB 4: ĐANG THEO DÕI GIẢNG VIÊN ================= */}
+        {/* ================= GỢI Ý KẾT BẠN ================= */}
+        {activeMenu === 'SUGGESTIONS' && (
+          <section>
+            {renderSectionHeader(
+              'Những người bạn có thể biết',
+              filteredSuggestions.length,
+            )}
+            {filteredSuggestions.length > 0 ? (
+              <div className={GRID_CLASS}>
+                {filteredSuggestions.map(renderUserCard)}
+              </div>
+            ) : (
+              <EmptyState
+                icon={Sparkles}
+                title={
+                  trimmedSearch
+                    ? noSearchResult
+                    : 'Hiện không còn gợi ý kết bạn mới'
+                }
+              />
+            )}
+          </section>
+        )}
+
+        {/* ================= GIẢNG VIÊN ================= */}
         {activeMenu === 'FOLLOWING' && (
-          <>
+          <section>
+            {renderSectionHeader('Giảng viên', filteredLecturers.length)}
             {filteredLecturers.length > 0 ? (
-              <div className="bg-fb-card rounded-lg shadow-fb-card divide-y divide-fb-divider">
+              <div className={GRID_CLASS}>
                 {filteredLecturers.map(renderUserCard)}
               </div>
             ) : (
-              <div className="bg-fb-card rounded-lg border border-fb-divider p-10 text-center text-xs text-fb-text-2">
-                Không tìm thấy giảng viên nào.
-              </div>
+              <EmptyState
+                icon={GraduationCap}
+                title={
+                  trimmedSearch
+                    ? noSearchResult
+                    : 'Không tìm thấy giảng viên nào'
+                }
+              />
             )}
-          </>
+          </section>
         )}
 
         {/* ================= TAB 5: QUẢN LÝ DANH SÁCH ĐÃ CHẶN (SLIDE 24) ================= */}
         {activeMenu === 'BLOCKED' && (
-          <div className="space-y-4">
+          <div className="space-y-4 max-w-4xl">
+            <h2 className="text-lg sm:text-xl font-bold text-fb-text">
+              Danh sách đã chặn
+              <span className="ml-2 font-normal text-fb-text-2 text-base">
+                {blockedUsers.length}
+              </span>
+            </h2>
+
             {/* Thêm nhanh người vào danh sách chặn */}
             <div className="bg-fb-card rounded-lg border border-fb-divider p-4 space-y-3">
               <h4 className="font-bold text-xs text-fb-text flex items-center gap-2">
@@ -789,13 +913,12 @@ export const FriendsView: React.FC = () => {
                     (tự động hủy kết bạn).
                   </li>
                   <li>
-                    Hai người sẽ{' '}
-                    <strong>không thể trao đổi tin nhắn</strong> với nhau được
-                    nữa.
+                    Hai người sẽ <strong>không thể trao đổi tin nhắn</strong>{' '}
+                    với nhau được nữa.
                   </li>
                   <li>
-                    Hai người sẽ{' '}
-                    <strong>không xem được trang cá nhân</strong> của nhau.
+                    Hai người sẽ <strong>không xem được trang cá nhân</strong>{' '}
+                    của nhau.
                   </li>
                   <li>
                     Bình luận và lượt thích của họ trên trang cá nhân của bạn{' '}

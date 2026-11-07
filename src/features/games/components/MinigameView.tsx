@@ -61,37 +61,37 @@ export const MinigameView: React.FC = () => {
 
   // Giao diện dành cho Sinh viên
   return (
-    <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4">
+    <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 py-4">
       <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 items-start">
       {/* ================= CỘT TRÁI (sticky sát lề trái) ================= */}
-      <aside className="w-full lg:w-[300px] xl:w-[320px] shrink-0 space-y-4 select-none lg:sticky lg:top-18">
+      <aside className="w-full lg:w-[280px] xl:w-[300px] shrink-0 space-y-3 select-none lg:sticky lg:top-18">
         {/* Personal Points & Rank Card - Tối giản */}
-        <div className="bg-fb-card rounded-lg shadow-fb-card p-5">
+        <div className="bg-fb-card rounded-lg shadow-fb-card p-4">
           <div className="flex items-center gap-3">
             <AvatarWithFrame user={currentUser} size="lg" />
             <div>
-              <p className="font-bold text-sm text-fb-text">{currentUser.name}</p>
+              <p className="font-semibold text-body text-fb-text">{currentUser.name}</p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <Crown className="w-3.5 h-3.5 text-fb-blue" />
-                <span className="text-xs font-medium text-fb-text-2">Hạng 3 Tuần này</span>
+                <span className="text-sm text-fb-text-2">Hạng 3 Tuần này</span>
               </div>
             </div>
           </div>
 
           <div className="mt-4 pt-3 border-t border-fb-divider flex items-center justify-between">
             <div>
-              <span className="text-xs text-fb-text-2 block">Điểm cống hiến</span>
+              <span className="text-sm text-fb-text-2 block">Điểm cống hiến</span>
               <span className="text-xl font-bold text-fb-blue">{currentUser.points} đ</span>
             </div>
             <div className="text-right">
-              <span className="text-xs text-fb-text-2 block">Huy hiệu đạt được</span>
+              <span className="text-sm text-fb-text-2 block">Huy hiệu đạt được</span>
               <span className="text-xl font-bold text-fb-text">4 / 8</span>
             </div>
           </div>
         </div>
 
         {/* Menu Navigation */}
-        <div className="bg-fb-card rounded-lg shadow-fb-card p-2 space-y-1 text-xs font-medium text-fb-text">
+        <div className="bg-fb-card rounded-lg shadow-fb-card p-2 space-y-1 text-body font-medium text-fb-text">
           <button
             onClick={() => setActiveGameMenu('CENTER')}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition text-left ${
@@ -142,8 +142,8 @@ export const MinigameView: React.FC = () => {
         </div>
 
         {/* Rule notes */}
-        <div className="bg-fb-card rounded-lg shadow-fb-card p-4 text-xs text-fb-text-2 space-y-2">
-          <h4 className="font-semibold text-fb-text flex items-center gap-1.5">
+        <div className="bg-fb-card rounded-lg shadow-fb-card p-4 text-sm text-fb-text-2 space-y-2">
+          <h4 className="text-body font-semibold text-fb-text flex items-center gap-1.5">
             <Info className="w-4 h-4 text-fb-blue" />
             Luật chơi Minigame
           </h4>
@@ -160,12 +160,12 @@ export const MinigameView: React.FC = () => {
       <main className="flex-1 min-w-0 w-full space-y-4">
         {activeGameMenu === 'CENTER' && (
           <div className="space-y-4">
-            <div className="bg-fb-card rounded-lg shadow-fb-card p-5">
-              <h2 className="text-lg font-bold text-fb-text flex items-center gap-2">
+            <div className="bg-fb-card rounded-lg shadow-fb-card p-4">
+              <h2 className="text-xl font-bold text-fb-text flex items-center gap-2">
                 <Gamepad2 className="w-6 h-6 text-fb-warning" />
                 Các Minigame Đang Mở Bình Chọn
               </h2>
-              <p className="text-xs text-fb-text-2 mt-1">
+              <p className="text-sm text-fb-text-2 mt-1">
                 Đặt dự đoán trước thời gian đóng cổng để nhận điểm thưởng và leo bảng xếp hạng!
               </p>
             </div>
@@ -175,17 +175,17 @@ export const MinigameView: React.FC = () => {
               {minigames.map((game) => (
                 <div
                   key={game.id}
-                  className="bg-fb-card rounded-lg shadow-fb-card p-5 space-y-3"
+                  className="bg-fb-card rounded-lg shadow-fb-card p-4 space-y-3"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <span className="text-xs font-medium bg-fb-input text-fb-text px-2.5 py-0.5 rounded-md">
                         Minigame Tuần #{game.id.split('_')[1]}
                       </span>
-                      <h3 className="font-bold text-sm sm:text-base text-fb-text mt-1">
+                      <h3 className="text-card-title font-semibold leading-snug text-fb-text mt-1.5">
                         {game.title}
                       </h3>
-                      <p className="text-xs text-fb-text-2">{game.description}</p>
+                      <p className="text-body text-fb-text-2 mt-0.5">{game.description}</p>
                     </div>
 
                     <span className="text-xs font-medium text-fb-text-2 bg-fb-input px-2.5 py-1 rounded-md flex items-center gap-1 shrink-0">
@@ -195,16 +195,16 @@ export const MinigameView: React.FC = () => {
                   </div>
 
                   {/* Benchmark Comparison */}
-                  <div className="grid grid-cols-2 gap-3 p-3 bg-fb-input rounded-lg text-xs">
+                  <div className="grid grid-cols-2 gap-3 p-3 bg-fb-input rounded-lg text-sm">
                     <div>
                       <span className="text-fb-text-2 block">Kỳ trước đạt được:</span>
-                      <strong className="text-fb-text text-sm">
+                      <strong className="text-fb-text text-body font-semibold">
                         {game.previousValue}
                       </strong>
                     </div>
                     <div>
                       <span className="text-fb-text-2 block">Hiện tại đang ghi nhận:</span>
-                      <strong className="text-fb-blue text-sm">
+                      <strong className="text-fb-blue text-body font-semibold">
                         {game.currentValue}
                       </strong>
                     </div>
@@ -213,7 +213,7 @@ export const MinigameView: React.FC = () => {
                   {/* Submit Guess input */}
                   <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
                     <div className="flex items-center gap-2 w-full sm:w-auto">
-                      <label className="text-xs font-semibold text-fb-text shrink-0">
+                      <label className="text-body font-semibold text-fb-text shrink-0">
                         Con số dự đoán:
                       </label>
                       <input
@@ -226,26 +226,26 @@ export const MinigameView: React.FC = () => {
                             [game.id]: Number(e.target.value)
                           }))
                         }
-                        className="w-28 px-3 py-1.5 text-xs font-bold border border-fb-divider rounded-lg bg-fb-card text-fb-text"
+                        className="w-28 h-9 px-3 text-body font-semibold border border-fb-divider rounded-lg bg-fb-card text-fb-text"
                       />
                     </div>
 
                     <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-                      <span className="text-xs font-semibold text-fb-text-2">
+                      <span className="text-sm text-fb-text-2">
                         Thưởng: +{game.rewardPoints} điểm
                       </span>
 
                       {game.hasUserGuessed ? (
-                        <span className="px-4 py-2 bg-fb-input text-fb-text font-semibold text-xs rounded-lg flex items-center gap-1.5">
+                        <span className="h-9 px-4 bg-fb-input text-fb-text font-semibold text-body rounded-md flex items-center gap-1.5">
                           <CheckCircle2 className="w-4 h-4 text-fb-blue" />
                           Đã đặt: {game.userGuess}
                         </span>
                       ) : (
                         <button
                           onClick={() => handleGuessSubmit(game.id)}
-                          className="px-5 py-2 bg-fb-blue hover:bg-fb-blue-hover text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center gap-1.5"
+                          className="h-9 px-4 bg-fb-blue hover:bg-fb-blue-hover text-white font-semibold text-body rounded-md transition-colors flex items-center gap-1.5"
                         >
-                          <Send className="w-3.5 h-3.5" />
+                          <Send className="w-4 h-4" />
                           <span>Gửi dự đoán</span>
                         </button>
                       )}
@@ -260,12 +260,12 @@ export const MinigameView: React.FC = () => {
         {/* LEADERBOARD VIEW (GAME.07) */}
         {activeGameMenu === 'LEADERBOARD' && (
           <div className="space-y-4">
-            <div className="bg-fb-card rounded-lg shadow-fb-card p-5">
-              <h2 className="text-lg font-bold text-fb-text flex items-center gap-2">
+            <div className="bg-fb-card rounded-lg shadow-fb-card p-4">
+              <h2 className="text-xl font-bold text-fb-text flex items-center gap-2">
                 <Trophy className="w-6 h-6 text-fb-warning" />
                 Bảng Vàng Cống Hiến Tri Thức Toàn Trường
               </h2>
-              <p className="text-xs text-fb-text-2 mt-1">
+              <p className="text-sm text-fb-text-2 mt-1">
                 Tôn vinh các sinh viên và giảng viên có đóng góp nhiều câu hỏi đạt chuẩn nhất!
               </p>
             </div>
@@ -279,8 +279,8 @@ export const MinigameView: React.FC = () => {
                   <div className="relative mb-2">
                     <AvatarWithFrame user={leaderboard[1].user} size="lg" />
                   </div>
-                  <p className="font-semibold text-xs truncate max-w-[90px] text-fb-text">{leaderboard[1].user.name}</p>
-                  <span className="text-xs text-fb-text-2 font-medium">{leaderboard[1].score} đ</span>
+                  <p className="font-semibold text-sm truncate w-full text-fb-text">{leaderboard[1].user.name}</p>
+                  <span className="text-sm text-fb-text-2">{leaderboard[1].score} đ</span>
                   <div className="w-full h-16 bg-fb-input rounded-t-xl mt-2 flex items-center justify-center font-bold text-base text-fb-text-2">
                     2
                   </div>
@@ -288,17 +288,17 @@ export const MinigameView: React.FC = () => {
 
                 {/* 1st Place */}
                 <div className="flex flex-col items-center -mt-3">
-                  <div className="flex items-center gap-1 text-xs font-bold text-fb-blue mb-1">
+                  <div className="flex items-center gap-1 text-sm font-semibold text-fb-blue mb-1">
                     <Crown className="w-4 h-4" />
                     <span>Quán quân</span>
                   </div>
                   <div className="relative mb-2">
                     <AvatarWithFrame user={leaderboard[0].user} size="xl" />
                   </div>
-                  <p className="font-bold text-sm truncate max-w-[110px] text-fb-text">
+                  <p className="font-semibold text-body truncate w-full text-fb-text">
                     {leaderboard[0].user.name}
                   </p>
-                  <span className="text-xs text-fb-blue font-bold">{leaderboard[0].score} đ</span>
+                  <span className="text-sm text-fb-blue font-semibold">{leaderboard[0].score} đ</span>
                   <div className="w-full h-22 bg-fb-blue-soft border-t-2 border-fb-blue rounded-t-xl mt-2 flex items-center justify-center font-bold text-xl text-fb-blue">
                     1
                   </div>
@@ -310,8 +310,8 @@ export const MinigameView: React.FC = () => {
                   <div className="relative mb-2">
                     <AvatarWithFrame user={leaderboard[2].user} size="lg" />
                   </div>
-                  <p className="font-semibold text-xs truncate max-w-[90px] text-fb-text">{leaderboard[2].user.name}</p>
-                  <span className="text-xs text-fb-text-2 font-medium">{leaderboard[2].score} đ</span>
+                  <p className="font-semibold text-sm truncate w-full text-fb-text">{leaderboard[2].user.name}</p>
+                  <span className="text-sm text-fb-text-2">{leaderboard[2].score} đ</span>
                   <div className="w-full h-12 bg-fb-input rounded-t-xl mt-2 flex items-center justify-center font-bold text-sm text-fb-text-3">
                     3
                   </div>
@@ -331,19 +331,19 @@ export const MinigameView: React.FC = () => {
                   className="p-3 flex items-center justify-between hover:bg-fb-hover cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="w-6 font-bold text-xs text-fb-text-2 text-center">
+                    <span className="w-6 font-semibold text-sm text-fb-text-2 text-center">
                       #{lead.rank}
                     </span>
                     <AvatarWithFrame user={lead.user} size="md" />
                     <div>
-                      <p className="font-bold text-xs text-fb-text">
+                      <p className="font-semibold text-body text-fb-text">
                         {lead.user.name}
                       </p>
-                      <p className="text-xs text-fb-text-3">{lead.badgeTitle}</p>
+                      <p className="text-sm text-fb-text-3">{lead.badgeTitle}</p>
                     </div>
                   </div>
 
-                  <span className="font-bold text-xs text-fb-blue">
+                  <span className="font-semibold text-body text-fb-blue">
                     {lead.score} điểm
                   </span>
                 </div>
@@ -354,8 +354,8 @@ export const MinigameView: React.FC = () => {
 
         {/* BADGES VIEW (GAME.08) */}
         {activeGameMenu === 'BADGES' && (
-          <div className="bg-fb-card rounded-lg shadow-fb-card p-5 space-y-4">
-            <h2 className="text-lg font-bold text-fb-text flex items-center gap-2">
+          <div className="bg-fb-card rounded-lg shadow-fb-card p-4 space-y-4">
+            <h2 className="text-xl font-bold text-fb-text flex items-center gap-2">
               <Award className="w-6 h-6 text-fb-blue" />
               Bộ Sưu Tập Huy Hiệu Cống Hiến
             </h2>
@@ -377,11 +377,11 @@ export const MinigameView: React.FC = () => {
                 >
                   <badge.icon className="w-6 h-6 shrink-0 text-fb-blue" />
                   <div>
-                    <h4 className="font-bold text-xs text-fb-text">
+                    <h4 className="font-semibold text-body text-fb-text">
                       {badge.title}
                     </h4>
-                    <p className="text-xs text-fb-text-2">{badge.desc}</p>
-                    <span className="text-xs font-bold mt-1 inline-flex items-center gap-1 text-fb-blue">
+                    <p className="text-sm text-fb-text-2">{badge.desc}</p>
+                    <span className="text-sm font-semibold mt-1 inline-flex items-center gap-1 text-fb-blue">
                       {badge.unlocked ? <Check className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
                       {badge.unlocked ? 'Đã đạt được' : 'Đang tiến hành'}
                     </span>
@@ -394,21 +394,21 @@ export const MinigameView: React.FC = () => {
 
         {/* HISTORY VIEW */}
         {activeGameMenu === 'HISTORY' && (
-          <div className="bg-fb-card rounded-lg shadow-fb-card p-5 space-y-3">
-            <h2 className="text-lg font-bold text-fb-text flex items-center gap-2">
+          <div className="bg-fb-card rounded-lg shadow-fb-card p-4 space-y-3">
+            <h2 className="text-xl font-bold text-fb-text flex items-center gap-2">
               <History className="w-6 h-6 text-fb-blue" />
               Lịch Sử Dự Đoán Minigame (GAME.06)
             </h2>
 
-            <div className="space-y-2 text-xs">
-              <div className="p-3 bg-fb-input rounded-lg flex items-center justify-between border">
+            <div className="space-y-2 text-sm">
+              <div className="p-3 bg-fb-input rounded-lg flex items-center justify-between gap-3 border border-fb-divider">
                 <div>
-                  <p className="font-bold text-fb-text">
+                  <p className="text-body font-semibold text-fb-text">
                     Dự đoán số Sinh viên tham gia tuần trước
                   </p>
                   <span className="text-fb-text-2">Bạn đã đoán: 310 · Kết quả thực: 312</span>
                 </div>
-                <span className="bg-fb-success-soft text-fb-success font-bold px-2 py-0.5 rounded-full">
+                <span className="shrink-0 bg-fb-success-soft text-fb-success text-xs font-semibold px-2.5 py-1 rounded-full">
                   +200 điểm (Gần đúng)
                 </span>
               </div>

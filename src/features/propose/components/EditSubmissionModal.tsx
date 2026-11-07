@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import {
   X,
   Plus,
@@ -24,6 +24,37 @@ interface EditSubmissionModalProps {
   onSuccess: () => void;
   showToast: (msg: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
 }
+
+/** Ô nhập tự cao theo nội dung, kể cả khi đổi giá trị hoặc đổi chiều rộng. */
+const AutoGrowTextarea: React.FC<
+  React.TextareaHTMLAttributes<HTMLTextAreaElement>
+> = (props) => {
+  const ref = useRef<HTMLTextAreaElement>(null);
+
+  const fitContent = () => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  };
+
+  useLayoutEffect(fitContent, [props.value]);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let lastWidth = el.offsetWidth;
+    const observer = new ResizeObserver(() => {
+      if (el.offsetWidth === lastWidth) return;
+      lastWidth = el.offsetWidth;
+      fitContent();
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return <textarea ref={ref} {...props} />;
+};
 
 interface EditQuestionItem {
   question_id?: number;
@@ -258,10 +289,10 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
         {/* Header */}
         <div className="p-4 border-b border-fb-divider flex items-center justify-between bg-fb-input">
           <div>
-            <h3 className="font-bold text-base text-fb-text">
+            <h3 className="text-xl font-bold text-fb-text">
               Chỉnh sửa phiên đề xuất
             </h3>
-            <p className="text-xs text-fb-text-2">
+            <p className="text-sm text-fb-text-2">
               Chỉ có thể chỉnh sửa khi phiên đang ở trạng thái Chờ duyệt
             </p>
           </div>
@@ -277,7 +308,7 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
         {loading ? (
           <div className="flex-1 flex items-center justify-center py-20 text-fb-text-2">
             <div className="w-8 h-8 border-3 border-fb-blue border-t-transparent rounded-full animate-spin mb-3" />
-            <p className="text-sm">Đang tải dữ liệu để chỉnh sửa...</p>
+            <p className="text-body">Đang tải dữ liệu để chỉnh sửa...</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="flex-1 overflow-hidden flex flex-col">
@@ -285,7 +316,7 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
               {/* Top fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-fb-text mb-1">
+                  <label className="block text-body font-semibold text-fb-text mb-1">
                     Tiêu đề phiên đề xuất *
                   </label>
                   <input
@@ -293,18 +324,18 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     required
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-fb-divider bg-fb-card text-fb-text focus:outline-hidden focus:ring-2 focus:ring-fb-blue"
+                    className="w-full px-3 py-2 text-body rounded-lg border border-fb-divider bg-fb-card text-fb-text focus:outline-hidden focus:ring-2 focus:ring-fb-blue"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-fb-text mb-1">
+                  <label className="block text-body font-semibold text-fb-text mb-1">
                     Môn học *
                   </label>
                   <select
                     value={subjectId}
                     onChange={(e) => setSubjectId(Number(e.target.value))}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-fb-divider bg-fb-card text-fb-text focus:outline-hidden focus:ring-2 focus:ring-fb-blue"
+                    className="w-full px-3 py-2 text-body rounded-lg border border-fb-divider bg-fb-card text-fb-text focus:outline-hidden focus:ring-2 focus:ring-fb-blue"
                   >
                     {enrolledSubjects.map((sub) => (
                       <option key={sub.subject_id} value={sub.subject_id}>
@@ -317,7 +348,7 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-fb-text mb-1">
+                  <label className="block text-body font-semibold text-fb-text mb-1">
                     Mô tả / ghi chú nội dung
                   </label>
                   <input
@@ -325,12 +356,12 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     placeholder="Mô tả tóm tắt nội dung câu hỏi..."
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-fb-divider bg-fb-card text-fb-text focus:outline-hidden focus:ring-2 focus:ring-fb-blue"
+                    className="w-full px-3 py-2 text-body rounded-lg border border-fb-divider bg-fb-card text-fb-text focus:outline-hidden focus:ring-2 focus:ring-fb-blue"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-fb-text mb-1">
+                  <label className="block text-body font-semibold text-fb-text mb-1">
                     URL tài liệu tham khảo (source_url)
                   </label>
                   <input
@@ -338,7 +369,7 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
                     value={sourceUrl}
                     onChange={(e) => setSourceUrl(e.target.value)}
                     placeholder="https://..."
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-fb-divider bg-fb-card text-fb-text focus:outline-hidden focus:ring-2 focus:ring-fb-blue"
+                    className="w-full px-3 py-2 text-body rounded-lg border border-fb-divider bg-fb-card text-fb-text focus:outline-hidden focus:ring-2 focus:ring-fb-blue"
                   />
                 </div>
               </div>
@@ -352,7 +383,7 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
                         key={idx}
                         type="button"
                         onClick={() => setActiveIdx(idx)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-lg text-sm font-semibold whitespace-nowrap transition cursor-pointer ${
                           idx === activeIdx
                             ? 'bg-fb-blue text-white'
                             : 'bg-fb-input text-fb-text hover:bg-fb-btn-hover'
@@ -366,7 +397,7 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
                   <button
                     type="button"
                     onClick={handleAddQuestion}
-                    className="px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-fb-success-soft text-fb-success border border-fb-success/30 hover:bg-fb-success/20 flex items-center gap-1 shrink-0 cursor-pointer"
+                    className="px-2.5 py-1.5 text-sm font-semibold rounded-lg bg-fb-success-soft text-fb-success border border-fb-success/30 hover:bg-fb-success/20 flex items-center gap-1 shrink-0 cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Thêm câu</span>
@@ -377,14 +408,14 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
                 {currentQ && (
                   <div className="p-4 rounded-lg border border-fb-divider bg-fb-inset/70 space-y-4">
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-sm text-fb-text">
+                      <span className="text-card-title font-semibold text-fb-text">
                         Nội dung Câu hỏi {activeIdx + 1}
                       </span>
                       {questions.length > 1 && (
                         <button
                           type="button"
                           onClick={() => handleDeleteQuestion(activeIdx)}
-                          className="text-xs text-fb-danger hover:text-fb-danger flex items-center gap-1 cursor-pointer"
+                          className="text-sm text-fb-danger hover:text-fb-danger flex items-center gap-1 cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                           <span>Xóa câu hỏi này</span>
@@ -397,12 +428,12 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
                       value={currentQ.content}
                       onChange={(e) => handleUpdateQuestion({ content: e.target.value })}
                       placeholder="Nhập nội dung đề bài câu hỏi trắc nghiệm..."
-                      className="w-full p-3 text-sm rounded-lg border border-fb-divider bg-fb-card text-fb-text focus:outline-hidden focus:ring-2 focus:ring-fb-blue"
+                      className="w-full p-3 text-body rounded-lg border border-fb-divider bg-fb-card text-fb-text focus:outline-hidden focus:ring-2 focus:ring-fb-blue"
                     />
 
                     {/* Options A, B, C, D */}
                     <div className="space-y-2">
-                      <label className="block text-xs font-bold text-fb-text-2">
+                      <label className="block text-body font-semibold text-fb-text-2">
                         Đáp án lựa chọn (bấm nút tròn để đánh dấu đáp án đúng, tự động xuống dòng khi nhập dài):
                       </label>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -418,7 +449,7 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
                             <button
                               type="button"
                               onClick={() => handleSetCorrectOption(opt.key)}
-                              className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 cursor-pointer mt-0.5 transition ${
+                              className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 cursor-pointer mt-0.5 transition ${
                                 opt.is_correct
                                   ? 'bg-fb-success text-white shadow-xs scale-105'
                                   : 'bg-fb-btn text-fb-text hover:bg-fb-btn-hover'
@@ -427,12 +458,12 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
                             >
                               {opt.key}
                             </button>
-                            <textarea
+                            <AutoGrowTextarea
                               rows={2}
                               value={opt.text}
                               onChange={(e) => handleUpdateOption(opt.key, e.target.value)}
                               placeholder={`Nội dung phương án ${opt.key}...`}
-                              className="flex-1 bg-transparent text-xs sm:text-sm text-fb-text focus:outline-hidden resize-y min-h-[44px] break-words leading-relaxed"
+                              className="flex-1 min-w-0 bg-transparent text-body text-fb-text focus:outline-hidden resize-none overflow-hidden min-h-[44px] break-words leading-relaxed"
                             />
                             {opt.is_correct && (
                               <CheckCircle2 className="w-4 h-4 text-fb-success shrink-0 mt-1" />
@@ -444,7 +475,7 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
 
                     {/* Explanation */}
                     <div>
-                      <label className="block text-xs font-bold text-fb-text-2 mb-1">
+                      <label className="block text-body font-semibold text-fb-text-2 mb-1">
                         Giải thích chi tiết đáp án
                       </label>
                       <textarea
@@ -454,12 +485,12 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
                           handleUpdateQuestion({ explanation: e.target.value })
                         }
                         placeholder="Giải thích vì sao đáp án này đúng..."
-                        className="w-full p-2.5 text-xs sm:text-sm rounded-lg border border-fb-divider bg-fb-card text-fb-text focus:outline-hidden"
+                        className="w-full p-2.5 text-body rounded-lg border border-fb-divider bg-fb-card text-fb-text focus:outline-hidden"
                       />
                     </div>
 
                     {/* Additional attributes */}
-                    <div className="flex flex-wrap items-center justify-between gap-4 pt-1 text-xs">
+                    <div className="flex flex-wrap items-center justify-between gap-4 pt-1 text-sm">
                       <label className="flex items-center gap-2 cursor-pointer select-none">
                         <input
                           type="checkbox"
@@ -481,7 +512,7 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
                           onChange={(e) =>
                             handleUpdateQuestion({ confidence: Number(e.target.value) })
                           }
-                          className="px-2 py-1 rounded-lg border border-fb-divider bg-fb-card text-xs font-semibold"
+                          className="px-2 py-1 rounded-lg border border-fb-divider bg-fb-card text-sm font-semibold"
                         >
                           <option value={4}>4.0 - Câu hỏi hay</option>
                           <option value={3.5}>3.5 - Cơ bản / Tốt</option>
@@ -500,14 +531,14 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-sm font-semibold rounded-lg bg-fb-btn text-fb-text hover:bg-fb-btn-hover transition cursor-pointer"
+                className="px-4 py-2 text-body font-semibold rounded-lg bg-fb-btn text-fb-text hover:bg-fb-btn-hover transition cursor-pointer"
               >
                 Hủy
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-5 py-2 text-sm font-semibold rounded-lg bg-fb-blue text-white hover:bg-fb-blue-hover transition flex items-center gap-2 shadow-xs cursor-pointer disabled:opacity-50"
+                className="px-5 py-2 text-body font-semibold rounded-lg bg-fb-blue text-white hover:bg-fb-blue-hover transition flex items-center gap-2 shadow-xs cursor-pointer disabled:opacity-50"
               >
                 {submitting ? (
                   <>

@@ -51,7 +51,7 @@ export const ExamSetCard: React.FC<ExamSetCardProps> = ({
         onClick={() => onSelectExam(exam)}
         className="block w-full text-left mt-3 cursor-pointer group"
       >
-        <h3 className="text-[17px] font-semibold leading-snug text-fb-text group-hover:text-fb-blue transition-colors line-clamp-2">
+        <h3 className="text-card-title font-semibold leading-snug text-fb-text group-hover:text-fb-blue transition-colors line-clamp-2">
           {exam.title}
         </h3>
         <p className="text-sm text-fb-text-2 mt-0.5">{exam.chapter}</p>

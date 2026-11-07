@@ -337,7 +337,7 @@ export const BankView: React.FC = () => {
                   className="w-10 h-10 text-fb-text-2 mx-auto"
                   aria-hidden="true"
                 />
-                <p className="mt-2 text-[17px] font-semibold text-fb-text">
+                <p className="mt-2 text-card-title font-semibold text-fb-text">
                   Chưa có bộ đề phù hợp
                 </p>
                 <p className="text-body text-fb-text-2">
@@ -358,7 +358,7 @@ export const BankView: React.FC = () => {
       {/* ================= CỘT PHẢI: NỔI BẬT & NGƯỜI ĐÓNG GÓP ================= */}
       <aside className="hidden xl:block w-[300px] shrink-0 sticky top-18 max-h-[calc(100vh-5rem)] overflow-y-auto space-y-3">
         <section className="bg-fb-card rounded-lg shadow-fb-card p-3">
-          <h2 className="px-1 mb-1 text-[17px] font-semibold text-fb-text">
+          <h2 className="px-1 mb-1 text-card-title font-semibold text-fb-text">
             Được đánh giá cao
           </h2>
           {featuredExams.map((exam) => (
@@ -389,7 +389,7 @@ export const BankView: React.FC = () => {
         </section>
 
         <section className="bg-fb-card rounded-lg shadow-fb-card p-3">
-          <h2 className="px-1 mb-1 text-[17px] font-semibold text-fb-text">
+          <h2 className="px-1 mb-1 text-card-title font-semibold text-fb-text">
             Đóng góp nhiều nhất
           </h2>
           {topContributors.map(({ user, count }, index) => (

@@ -385,7 +385,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   // Chat dock
   const [activeDockIdsByAccount, setActiveDockIdsByAccount] = useState<
     Record<string, string[]>
-  >({ [mockCurrentUserStudent.id]: ['conv_01'] });
+  >({});
   const [minimizedDockIdsByAccount, setMinimizedDockIdsByAccount] = useState<
     Record<string, string[]>
   >({});
