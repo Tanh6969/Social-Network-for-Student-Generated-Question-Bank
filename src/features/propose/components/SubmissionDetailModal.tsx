@@ -119,11 +119,11 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
             <>
               {/* Meta information card */}
               <div className="bg-fb-input rounded-lg p-4 border border-fb-divider space-y-3">
-                <h4 className="text-card-title font-semibold text-fb-text">
+                <h4 className="text-card-title font-semibold text-fb-text [overflow-wrap:anywhere]">
                   {detail.title}
                 </h4>
                 {detail.content && (
-                  <p className="text-body text-fb-text-2 whitespace-pre-line">
+                  <p className="text-body text-fb-text-2 whitespace-pre-line [overflow-wrap:anywhere]">
                     {detail.content}
                   </p>
                 )}
@@ -195,7 +195,7 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
                       </div>
 
                       {/* Question content */}
-                      <p className="text-body text-fb-text leading-relaxed font-medium">
+                      <p className="text-body text-fb-text leading-relaxed font-medium [overflow-wrap:anywhere]">
                         {q.content}
                       </p>
 
@@ -234,7 +234,7 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
                               {opt.key}
                             </span>
                             <div className="flex-1 min-w-0">
-                              <span className="break-words whitespace-pre-wrap leading-relaxed">{opt.text}</span>
+                              <span className="[overflow-wrap:anywhere] whitespace-pre-wrap leading-relaxed">{opt.text}</span>
                               {opt.media_url && (
                                 <img
                                   src={opt.media_url}
@@ -254,7 +254,7 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
                       {q.explanation && (
                         <div className="mt-3 p-3 rounded-lg bg-fb-blue-soft/70 border border-fb-blue/30 text-sm text-fb-blue flex items-start gap-2">
                           <HelpCircle className="w-4 h-4 text-fb-blue shrink-0 mt-0.5" />
-                          <div>
+                          <div className="min-w-0 [overflow-wrap:anywhere]">
                             <span className="font-semibold block mb-0.5">Giải thích đáp án:</span>
                             <span>{q.explanation}</span>
                           </div>

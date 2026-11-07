@@ -159,6 +159,7 @@ interface AppContextType {
   isBlockedByMe: (userId: string) => boolean;
   isBlockingMe: (userId: string) => boolean;
   isBlockedEitherWay: (userId: string) => boolean;
+  isPresenceVisible: (userId: string) => boolean;
   filterVisibleComments: (comments?: CommentItem[]) => CommentItem[];
 
   // Questions & Bank
@@ -632,6 +633,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   const isBlockingMe = (userId: string) => blockedByOtherSet.has(userId);
   const isBlockedEitherWay = (userId: string) =>
     blockedByMeSet.has(userId) || blockedByOtherSet.has(userId);
+
+  // Backend chưa có API trạng thái online (không có is_online/last_seen/presence),
+  // nên chỉ hiển thị dữ liệu mô phỏng trong phiên demo, và chỉ với bạn bè như Facebook.
+  const isPresenceVisible = (userId: string) => {
+    if (userId === rawCurrentUser.id) return true;
+    return (
+      sessionKind === 'demo' &&
+      friendStatuses[userId] === 'FRIEND' &&
+      !isBlockedEitherWay(userId)
+    );
+  };
 
   const allUsers: User[] = [
     ...mockOtherUsers,
@@ -2142,6 +2154,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         isBlockedByMe,
         isBlockingMe,
         isBlockedEitherWay,
+        isPresenceVisible,
         filterVisibleComments,
         questions,
         answerQuestion,

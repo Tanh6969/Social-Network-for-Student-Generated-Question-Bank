@@ -14,7 +14,6 @@ import {
   CheckCircle2,
   ChevronRight,
   GraduationCap,
-  Home,
   X,
   Clock,
   Sparkles,
@@ -23,10 +22,9 @@ import {
 import { User } from '../../demo/types';
 
 type FriendsMenuTab =
-  'HOME' | 'ALL' | 'REQUESTS' | 'SUGGESTIONS' | 'FOLLOWING' | 'BLOCKED';
+  'ALL' | 'REQUESTS' | 'SUGGESTIONS' | 'FOLLOWING' | 'BLOCKED';
 
-const HOME_REQUEST_LIMIT = 6;
-const HOME_SUGGESTION_LIMIT = 12;
+const BLOCK_SEARCH_LIMIT = 6;
 
 const GRID_CLASS =
   'grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2 sm:gap-3';
@@ -80,13 +78,14 @@ export const FriendsView: React.FC = () => {
     isBlockedByMe,
     isBlockingMe,
     isBlockedEitherWay,
+    isPresenceVisible,
     setViewingUserId,
     setActiveTab,
     openChatDock,
     openReportModal,
   } = useApp();
 
-  const [activeMenu, setActiveMenu] = useState<FriendsMenuTab>('HOME');
+  const [activeMenu, setActiveMenu] = useState<FriendsMenuTab>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [openMenuUserId, setOpenMenuUserId] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<{
@@ -94,7 +93,7 @@ export const FriendsView: React.FC = () => {
     user: User;
   } | null>(null);
   const [blockReason, setBlockReason] = useState('');
-  const [quickBlockUserId, setQuickBlockUserId] = useState('');
+  const [blockSearch, setBlockSearch] = useState('');
 
   // Các danh sách người dùng thực tế (loại trừ những người đang trong trạng thái chặn)
   const unblockedUsers = allUsers.filter((u) => !isBlockedEitherWay(u.id));
@@ -113,8 +112,8 @@ export const FriendsView: React.FC = () => {
       !dismissedSuggestionIds.includes(u.id),
   );
 
-  const matchSearch = (u: User) => {
-    const q = searchTerm.trim().toLowerCase();
+  const userMatches = (u: User, query: string) => {
+    const q = query.trim().toLowerCase();
     if (!q) return true;
     return (
       u.name.toLowerCase().includes(q) ||
@@ -122,6 +121,14 @@ export const FriendsView: React.FC = () => {
       u.faculty.toLowerCase().includes(q)
     );
   };
+  const matchSearch = (u: User) => userMatches(u, searchTerm);
+
+  const blockSearchTerm = blockSearch.trim();
+  const blockCandidates = blockSearchTerm
+    ? allUsers.filter(
+        (u) => !isBlockedByMe(u.id) && userMatches(u, blockSearchTerm),
+      )
+    : [];
 
   const filteredFriends = friendsList.filter(matchSearch);
   const filteredIncoming = incomingRequests.filter(matchSearch);
@@ -266,7 +273,7 @@ export const FriendsView: React.FC = () => {
               transform: `scale(${user.avatarCrop?.zoom ?? 1})`,
             }}
           />
-          {user.isOnline && (
+          {user.isOnline && isPresenceVisible(user.id) && (
             <span
               className="absolute bottom-2 right-2 w-3.5 h-3.5 bg-fb-success ring-2 ring-fb-card rounded-full"
               title="Đang trực tuyến"
@@ -398,11 +405,7 @@ export const FriendsView: React.FC = () => {
     );
   };
 
-  const renderSectionHeader = (
-    title: string,
-    count: number,
-    onSeeAll?: () => void,
-  ) => (
+  const renderSectionHeader = (title: string, count: number) => (
     <div className="flex items-center justify-between gap-3 mb-3">
       <h2 className="text-lg sm:text-xl font-bold text-fb-text">
         {title}
@@ -410,15 +413,6 @@ export const FriendsView: React.FC = () => {
           {count}
         </span>
       </h2>
-      {onSeeAll && (
-        <button
-          type="button"
-          onClick={onSeeAll}
-          className="shrink-0 px-2 py-1 -mr-2 rounded-md text-body text-fb-blue hover:bg-fb-hover transition"
-        >
-          Xem tất cả
-        </button>
-      )}
     </div>
   );
 
@@ -428,7 +422,7 @@ export const FriendsView: React.FC = () => {
     icon: React.ElementType;
     badge?: number;
   }[] = [
-    { id: 'HOME', label: 'Trang chủ', icon: Home },
+    { id: 'ALL', label: 'Tất cả bạn bè', icon: Users },
     {
       id: 'REQUESTS',
       label: 'Lời mời kết bạn',
@@ -436,7 +430,6 @@ export const FriendsView: React.FC = () => {
       badge: incomingRequests.length,
     },
     { id: 'SUGGESTIONS', label: 'Gợi ý', icon: Sparkles },
-    { id: 'ALL', label: 'Tất cả bạn bè', icon: Users },
     { id: 'FOLLOWING', label: 'Giảng viên', icon: GraduationCap },
     { id: 'BLOCKED', label: 'Danh sách đã chặn', icon: Ban },
   ];
@@ -498,9 +491,7 @@ export const FriendsView: React.FC = () => {
                     {badge}
                   </span>
                 )}
-                {id !== 'HOME' && (
-                  <ChevronRight className="hidden lg:block w-5 h-5 text-fb-text-2 shrink-0" />
-                )}
+                <ChevronRight className="hidden lg:block w-5 h-5 text-fb-text-2 shrink-0" />
               </button>
             );
           })}
@@ -509,57 +500,6 @@ export const FriendsView: React.FC = () => {
 
       {/* ================= CỘT PHẢI: Nội dung chính ================= */}
       <main className="flex-1 min-w-0 w-full max-w-[1560px] px-3 sm:px-6 lg:px-8 py-4 space-y-6">
-        {/* ================= TRANG CHỦ: LỜI MỜI + GỢI Ý ================= */}
-        {activeMenu === 'HOME' && (
-          <>
-            {filteredIncoming.length > 0 && (
-              <section>
-                {renderSectionHeader(
-                  'Lời mời kết bạn',
-                  filteredIncoming.length,
-                  () => selectMenu('REQUESTS'),
-                )}
-                <div className={GRID_CLASS}>
-                  {filteredIncoming
-                    .slice(0, HOME_REQUEST_LIMIT)
-                    .map(renderUserCard)}
-                </div>
-              </section>
-            )}
-
-            {filteredIncoming.length > 0 && filteredSuggestions.length > 0 && (
-              <hr className="border-fb-divider" />
-            )}
-
-            {filteredSuggestions.length > 0 && (
-              <section>
-                {renderSectionHeader(
-                  'Những người bạn có thể biết',
-                  filteredSuggestions.length,
-                  () => selectMenu('SUGGESTIONS'),
-                )}
-                <div className={GRID_CLASS}>
-                  {filteredSuggestions
-                    .slice(0, HOME_SUGGESTION_LIMIT)
-                    .map(renderUserCard)}
-                </div>
-              </section>
-            )}
-
-            {filteredIncoming.length === 0 &&
-              filteredSuggestions.length === 0 && (
-                <EmptyState
-                  icon={Users}
-                  title={
-                    trimmedSearch
-                      ? noSearchResult
-                      : 'Hiện chưa có lời mời hay gợi ý kết bạn mới'
-                  }
-                />
-              )}
-          </>
-        )}
-
         {/* ================= TẤT CẢ BẠN BÈ ================= */}
         {activeMenu === 'ALL' && (
           <section>
@@ -683,57 +623,76 @@ export const FriendsView: React.FC = () => {
 
             {/* Thêm nhanh người vào danh sách chặn */}
             <div className="bg-fb-card rounded-lg border border-fb-divider p-4 space-y-3">
-              <h4 className="font-bold text-xs text-fb-text flex items-center gap-2">
-                <Ban className="w-4 h-4 text-fb-danger" />
-                <span>Thêm người dùng vào danh sách chặn</span>
-              </h4>
-              <p className="text-xs text-fb-text-2">
-                Khi bạn chặn một người: hai người sẽ tự động hủy kết bạn, không
-                thể nhắn tin, không thể xem trang cá nhân của nhau, và bạn sẽ
-                không nhìn thấy bình luận của người đó (nhưng bình luận & lượt
-                thích cũ không bị xóa khỏi bài viết). Việc chặn lại sau khi bỏ
-                chặn không bị giới hạn thời gian.
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-2">
-                <select
-                  value={quickBlockUserId}
-                  onChange={(e) => setQuickBlockUserId(e.target.value)}
-                  className="flex-1 bg-fb-input border border-fb-divider rounded-lg px-3 py-2 text-xs text-fb-text"
-                >
-                  <option value="">
-                    -- Chọn người dùng để chặn ngay lập tức --
-                  </option>
-                  {allUsers
-                    .filter((u) => !isBlockedByMe(u.id))
-                    .map((u) => (
-                      <option key={u.id} value={u.id}>
-                        {u.name} ({u.classOrTitle} ·{' '}
-                        {friendStatuses[u.id] === 'FRIEND'
-                          ? 'Đang là Bạn bè'
-                          : 'Chưa kết bạn'}
-                        )
-                      </option>
-                    ))}
-                </select>
-                <button
-                  type="button"
-                  disabled={!quickBlockUserId}
-                  onClick={() => {
-                    const target = allUsers.find(
-                      (u) => u.id === quickBlockUserId,
-                    );
-                    if (target) {
-                      setBlockReason('');
-                      setConfirmAction({ type: 'BLOCK', user: target });
-                      setQuickBlockUserId('');
-                    }
-                  }}
-                  className="px-4 py-2 bg-fb-danger hover:bg-fb-danger/90 disabled:bg-fb-divider text-white rounded-lg text-xs font-bold transition shrink-0"
-                >
+              <div>
+                <h4 className="text-card-title font-semibold text-fb-text">
                   Chặn người dùng
-                </button>
+                </h4>
+                <p className="mt-0.5 text-sm text-fb-text-2">
+                  Hai người sẽ tự động hủy kết bạn, không thể nhắn tin hay xem
+                  trang cá nhân của nhau. Bình luận cũ của họ được ẩn với bạn
+                  chứ không bị xóa.
+                </p>
               </div>
+
+              <div className="relative">
+                <Search className="w-4 h-4 text-fb-text-2 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="search"
+                  aria-label="Tìm người dùng để chặn"
+                  placeholder="Nhập tên, lớp hoặc khoa..."
+                  value={blockSearch}
+                  onChange={(e) => setBlockSearch(e.target.value)}
+                  className="w-full h-10 pl-9 pr-3 bg-fb-input text-body rounded-full text-fb-text placeholder:text-fb-text-2 outline-none focus:ring-2 focus:ring-fb-blue/40"
+                />
+              </div>
+
+              {blockSearchTerm &&
+                (blockCandidates.length > 0 ? (
+                  <ul className="divide-y divide-fb-divider -mx-1">
+                    {blockCandidates.slice(0, BLOCK_SEARCH_LIMIT).map((u) => (
+                      <li
+                        key={u.id}
+                        className="flex items-center gap-3 px-1 py-2"
+                      >
+                        <img
+                          src={u.avatar}
+                          alt=""
+                          className="w-10 h-10 rounded-full object-cover shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-body font-semibold text-fb-text truncate">
+                            {u.name}
+                          </p>
+                          <p className="text-sm text-fb-text-2 truncate">
+                            {friendStatuses[u.id] === 'FRIEND' && 'Bạn bè · '}
+                            {u.classOrTitle} · {u.faculty}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBlockReason('');
+                            setConfirmAction({ type: 'BLOCK', user: u });
+                            setBlockSearch('');
+                          }}
+                          className="h-9 px-4 rounded-md bg-fb-danger-soft hover:bg-fb-danger hover:text-white text-fb-danger text-sm font-semibold transition shrink-0"
+                        >
+                          Chặn
+                        </button>
+                      </li>
+                    ))}
+                    {blockCandidates.length > BLOCK_SEARCH_LIMIT && (
+                      <li className="px-1 pt-2 text-sm text-fb-text-2">
+                        Còn {blockCandidates.length - BLOCK_SEARCH_LIMIT} người
+                        khác, nhập cụ thể hơn để thu hẹp kết quả.
+                      </li>
+                    )}
+                  </ul>
+                ) : (
+                  <p className="py-3 text-center text-sm text-fb-text-2">
+                    Không tìm thấy người dùng nào khớp với “{blockSearchTerm}”.
+                  </p>
+                ))}
             </div>
 
             {/* Danh sách các đối tượng đang bị bạn chặn */}

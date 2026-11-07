@@ -735,12 +735,12 @@ export const ProposeView: React.FC = () => {
                   {/* Preview Box */}
                   <div className="space-y-3.5">
                     <div className="p-3.5 rounded-lg bg-fb-blue-soft/50 border border-fb-blue/30">
-                      <span className="text-sm font-semibold text-fb-blue block mb-1">
+                      <span className="text-sm font-semibold text-fb-blue block mb-1 [overflow-wrap:anywhere]">
                         {enrolledSubjects.find((s) => s.subject_id === selectedSubjectId)?.name ||
                           'Môn học chưa chọn'}{' '}
                         - {title || 'Chưa nhập tiêu đề'}
                       </span>
-                      <p className="font-semibold text-body text-fb-text leading-relaxed">
+                      <p className="font-semibold text-body text-fb-text leading-relaxed [overflow-wrap:anywhere]">
                         {currentQ?.content || 'Nội dung câu hỏi sẽ hiển thị ở đây...'}
                       </p>
                     </div>
@@ -763,7 +763,7 @@ export const ProposeView: React.FC = () => {
                           >
                             {opt.key}
                           </span>
-                          <span className="flex-1 break-words whitespace-pre-wrap leading-relaxed">
+                          <span className="flex-1 min-w-0 [overflow-wrap:anywhere] whitespace-pre-wrap leading-relaxed">
                             {opt.text || `Nội dung phương án ${opt.key}`}
                           </span>
                           {opt.is_correct && (
@@ -782,7 +782,7 @@ export const ProposeView: React.FC = () => {
                           <Sparkles className="w-3.5 h-3.5 text-fb-warning" />
                           <span>Giải thích chi tiết:</span>
                         </div>
-                        <p className="text-fb-text">
+                        <p className="text-fb-text [overflow-wrap:anywhere]">
                           {currentQ.explanation}
                         </p>
                       </div>
@@ -927,14 +927,14 @@ export const ProposeView: React.FC = () => {
                             </div>
 
                             <h4
-                              className="text-card-title font-semibold text-fb-text hover:text-fb-blue cursor-pointer"
+                              className="text-card-title font-semibold text-fb-text hover:text-fb-blue cursor-pointer [overflow-wrap:anywhere]"
                               onClick={() => setSelectedDetailId(sub.session_id || null)}
                             >
                               {sub.title}
                             </h4>
 
                             {sub.content && (
-                              <p className="text-sm text-fb-text-2 line-clamp-2">
+                              <p className="text-sm text-fb-text-2 line-clamp-2 [overflow-wrap:anywhere]">
                                 {sub.content}
                               </p>
                             )}

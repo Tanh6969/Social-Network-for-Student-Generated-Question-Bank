@@ -144,7 +144,7 @@ export const ExamTestFullscreenModal: React.FC<
       : 0;
 
   return (
-    <div className="fixed inset-0 z-[1000] bg-fb-input flex flex-col text-fb-text select-none overflow-hidden animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[1000] bg-fb-canvas flex flex-col text-fb-text select-none overflow-hidden animate-in fade-in duration-200">
       {/* ================= TOP BAR (CỐ ĐỊNH, KHÔNG CHO OUT RA) ================= */}
       <header className="h-16 px-4 sm:px-6 bg-fb-card border-b border-fb-divider flex items-center justify-between shrink-0 shadow-xs">
         {/* Left: Info */}
@@ -209,13 +209,13 @@ export const ExamTestFullscreenModal: React.FC<
             <div className="max-w-3xl mx-auto w-full space-y-4">
               {/* Question header */}
               <div className="flex items-center justify-between pb-3 border-b border-fb-divider">
-                <span className="font-bold text-sm px-3 py-1 rounded-lg bg-fb-blue text-white shadow-xs">
+                <span className="font-semibold text-sm px-3 py-1 rounded-full bg-fb-blue-soft text-fb-blue">
                   Câu {currentQuestionIndex + 1} / {exam.questions.length}
                 </span>
               </div>
 
               {/* Question text */}
-              <h3 className="text-base sm:text-lg font-semibold text-fb-text leading-relaxed py-2">
+              <h3 className="text-lg sm:text-xl font-semibold text-fb-text leading-relaxed py-2 [overflow-wrap:anywhere]">
                 {currentQuestion.content}
               </h3>
 
@@ -230,22 +230,22 @@ export const ExamTestFullscreenModal: React.FC<
                       onClick={() =>
                         handleSelectOption(currentQuestion.id, opt.id)
                       }
-                      className={`p-4 rounded-lg border text-sm font-medium transition cursor-pointer flex items-center gap-3.5 ${
+                      className={`p-4 rounded-lg border text-body transition cursor-pointer flex items-center gap-3.5 ${
                         isSelected
-                          ? 'border-fb-blue bg-fb-blue-soft/80 text-fb-blue shadow-xs'
-                          : 'border-fb-divider hover:bg-fb-card text-fb-text'
+                          ? 'border-fb-blue bg-fb-blue-soft text-fb-text font-semibold ring-1 ring-fb-blue'
+                          : 'border-fb-divider bg-fb-card hover:border-fb-blue/60 hover:bg-fb-hover text-fb-text'
                       }`}
                     >
                       <span
-                        className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${
+                        className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm shrink-0 transition-colors ${
                           isSelected
                             ? 'bg-fb-blue text-white'
-                            : 'bg-fb-input text-fb-text'
+                            : 'bg-fb-btn text-fb-text'
                         }`}
                       >
                         {opt.id}
                       </span>
-                      <span className="leading-snug">{opt.text}</span>
+                      <span className="leading-snug [overflow-wrap:anywhere]">{opt.text}</span>
                     </div>
                   );
                 })}
@@ -260,14 +260,14 @@ export const ExamTestFullscreenModal: React.FC<
                 onClick={() =>
                   setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))
                 }
-                className="px-4 py-2 rounded-lg text-xs font-bold border border-fb-divider text-fb-text hover:bg-fb-btn-hover disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1.5 cursor-pointer"
+                className="px-4 h-9 rounded-md text-sm font-semibold bg-fb-btn text-fb-text hover:bg-fb-btn-hover disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1.5 cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4" />
                 <span>Câu trước</span>
               </button>
 
-              <span className="text-xs text-fb-text-3 tabular-nums">
-                {currentQuestionIndex + 1} of {exam.questions.length}
+              <span className="text-sm text-fb-text-2 tabular-nums">
+                {currentQuestionIndex + 1} / {exam.questions.length}
               </span>
 
               <button
@@ -278,7 +278,7 @@ export const ExamTestFullscreenModal: React.FC<
                     Math.min(exam.questions.length - 1, prev + 1),
                   )
                 }
-                className="px-4 py-2 rounded-lg text-xs font-bold bg-fb-blue hover:bg-fb-blue-hover disabled:opacity-30 disabled:cursor-not-allowed text-white transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                className="px-4 h-9 rounded-md text-sm font-semibold bg-fb-blue hover:bg-fb-blue-hover disabled:opacity-30 disabled:cursor-not-allowed text-white transition flex items-center gap-1.5 cursor-pointer shadow-xs"
               >
                 <span>Câu tiếp theo</span>
                 <ChevronRight className="w-4 h-4" />
@@ -290,10 +290,10 @@ export const ExamTestFullscreenModal: React.FC<
           <aside className="w-full lg:w-72 bg-fb-card border-t lg:border-t-0 lg:border-l border-fb-divider p-4 flex flex-col justify-between shrink-0">
             <div>
               <div className="flex items-center justify-between mb-3 pb-2 border-b border-fb-divider">
-                <h4 className="font-bold text-xs text-fb-text-2">
+                <h4 className="font-semibold text-body text-fb-text">
                   Danh sách câu hỏi
                 </h4>
-                <span className="text-xs tabular-nums font-bold text-fb-blue">
+                <span className="text-sm tabular-nums font-semibold text-fb-blue">
                   {answeredCount}/{exam.questions.length}
                 </span>
               </div>
@@ -309,12 +309,12 @@ export const ExamTestFullscreenModal: React.FC<
                       key={q.id}
                       type="button"
                       onClick={() => setCurrentQuestionIndex(idx)}
-                      className={`h-9 rounded-lg font-bold text-xs transition flex items-center justify-center cursor-pointer ${
+                      className={`h-9 rounded-md font-semibold text-sm tabular-nums transition flex items-center justify-center cursor-pointer ${
                         isCurrent
-                          ? 'ring-2 ring-fb-blue bg-fb-blue text-white shadow-xs'
+                          ? 'bg-fb-blue text-white ring-2 ring-fb-blue ring-offset-2 ring-offset-fb-card'
                           : isAnswered
-                          ? 'bg-fb-blue-soft text-fb-blue font-bold'
-                          : 'bg-fb-input text-fb-text-2 hover:bg-fb-btn-hover'
+                          ? 'bg-fb-blue-soft text-fb-blue ring-1 ring-inset ring-fb-blue/50'
+                          : 'bg-fb-btn text-fb-text-2 hover:bg-fb-btn-hover'
                       }`}
                     >
                       {idx + 1}
@@ -324,13 +324,13 @@ export const ExamTestFullscreenModal: React.FC<
               </div>
 
               {/* Chú thích màu */}
-              <div className="flex items-center gap-4 mt-4 pt-3 border-t border-fb-divider text-xs text-fb-text-2">
+              <div className="flex items-center gap-4 mt-4 pt-3 border-t border-fb-divider text-sm text-fb-text-2">
                 <div className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-sm bg-fb-blue-soft text-fb-blue border border-fb-blue/30" />
+                  <span className="w-3.5 h-3.5 rounded bg-fb-blue-soft ring-1 ring-inset ring-fb-blue/50" />
                   <span>Đã làm</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-sm bg-fb-input border border-fb-divider" />
+                  <span className="w-3.5 h-3.5 rounded bg-fb-btn" />
                   <span>Chưa làm</span>
                 </div>
               </div>
@@ -340,7 +340,7 @@ export const ExamTestFullscreenModal: React.FC<
               <button
                 type="button"
                 onClick={() => setShowConfirmSubmit(true)}
-                className="w-full py-2.5 bg-fb-success hover:bg-fb-success/90 text-white font-bold text-xs rounded-lg shadow-xs transition cursor-pointer"
+                className="w-full h-10 bg-fb-success hover:bg-fb-success/90 text-white font-semibold text-body rounded-md transition cursor-pointer"
               >
                 Nộp bài thi
               </button>
@@ -485,12 +485,12 @@ export const ExamTestFullscreenModal: React.FC<
                                   ? 'bg-fb-success text-white'
                                   : isUserChoice
                                   ? 'bg-fb-danger text-white'
-                                  : 'bg-fb-input text-fb-text'
+                                  : 'bg-fb-btn text-fb-text'
                               }`}
                             >
                               {opt.id}
                             </span>
-                            <span className="leading-snug">{opt.text}</span>
+                            <span className="leading-snug [overflow-wrap:anywhere]">{opt.text}</span>
                           </div>
                         );
                       })}

@@ -29,6 +29,7 @@ export const MessengerFullView: React.FC = () => {
     isBlockedByMe,
     isBlockingMe,
     isBlockedEitherWay,
+    isPresenceVisible,
     setViewingUserId,
     setActiveTab,
   } = useApp();
@@ -185,11 +186,12 @@ export const MessengerFullView: React.FC = () => {
                         Không thể liên lạc (Đang chặn)
                       </span>
                     ) : (
-                      <span className="text-xs text-fb-success font-medium">
-                        {activeConv.partner.isOnline
-                          ? 'Đang hoạt động'
-                          : 'Hoạt động 10 phút trước'}
-                      </span>
+                      activeConv.partner.isOnline &&
+                      isPresenceVisible(activeConv.partner.id) && (
+                        <span className="text-xs text-fb-success font-medium">
+                          Đang hoạt động
+                        </span>
+                      )
                     )}
                   </div>
                 </div>

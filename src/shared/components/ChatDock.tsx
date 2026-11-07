@@ -26,6 +26,7 @@ export const ChatDock: React.FC = () => {
     unblockUser,
     isBlockedByMe,
     isBlockedEitherWay,
+    isPresenceVisible,
     setViewingUserId,
     setActiveTab,
   } = useApp();
@@ -112,11 +113,12 @@ export const ChatDock: React.FC = () => {
                       Không thể nhắn tin
                     </span>
                   ) : (
-                    <span className="text-xs text-fb-success font-medium">
-                      {conv.partner.isOnline
-                        ? 'Đang hoạt động'
-                        : 'Hoạt động 10 phút trước'}
-                    </span>
+                    conv.partner.isOnline &&
+                    isPresenceVisible(conv.partner.id) && (
+                      <span className="text-xs text-fb-success font-medium">
+                        Đang hoạt động
+                      </span>
+                    )
                   )}
                 </div>
               </div>

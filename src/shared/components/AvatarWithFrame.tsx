@@ -1,6 +1,7 @@
 import React from 'react';
 import { User } from '../../features/demo/types';
 import { BadgeCheck } from 'lucide-react';
+import { useApp } from '../../features/demo/context/AppContext';
 
 interface AvatarWithFrameProps {
   user: User;
@@ -19,6 +20,7 @@ export const AvatarWithFrame: React.FC<AvatarWithFrameProps> = ({
   onClick,
   className = '',
 }) => {
+  const { isPresenceVisible } = useApp();
   const sizeMap = {
     xs: 'w-6 h-6',
     sm: 'w-8 h-8',
@@ -65,7 +67,7 @@ export const AvatarWithFrame: React.FC<AvatarWithFrameProps> = ({
       </span>
 
       {/* Online indicator dot */}
-      {showOnline && user.isOnline && (
+      {showOnline && user.isOnline && isPresenceVisible(user.id) && (
         <span
           className={`absolute bottom-0 right-0 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#242526] ${
             size === 'xs' || size === 'sm'

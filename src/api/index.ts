@@ -4,6 +4,12 @@ export { realtimeDestinations } from './realtime-contract';
 export { sessionsApi } from './sessions';
 export { reviewApi } from './review';
 export { examsApi } from './exams';
+export { questionsApi } from './questions';
+export type {
+  RatingItemDto,
+  QuestionRatingsResponse,
+  GetQuestionRatingsParams,
+} from './questions';
 export type {
   SubjectResponse,
   SubmissionSessionSummary,
