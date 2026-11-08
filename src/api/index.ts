@@ -1,5 +1,6 @@
 export { api, ApiError, expectEnvelope } from './client';
 export { multipartBody } from './multipart';
+export { isApiSession, errorMessage } from './session-mode';
 export { realtimeDestinations } from './realtime-contract';
 export { sessionsApi } from './sessions';
 export { reviewApi } from './review';

@@ -1,18 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router';
 import { useApp } from '../../demo/context/AppContext';
-import {
-  sessionsApi,
-  SubjectResponse,
-  SubmissionSessionSummary,
-  ProposeSessionRequest,
-} from '../../../api';
-import {
-  getStoredSubmissions,
-  saveNewStoredSubmission,
-  deleteStoredSubmission,
-  StoredSubmissionSummary,
-} from '../mockSessions';
+import { errorMessage, SubjectResponse, ProposeSessionRequest } from '../../../api';
+import { proposalGateway } from '../../proposals/proposalGateway';
+import type { SubmissionWithStatus } from '../../proposals/types';
 import { SubmissionDetailModal } from './SubmissionDetailModal';
 import { EditSubmissionModal } from './EditSubmissionModal';
 import {
@@ -54,7 +45,8 @@ export const ProposeView: React.FC = () => {
   const [loadingSubjects, setLoadingSubjects] = useState(false);
 
   // My Submissions state
-  const [submissions, setSubmissions] = useState<StoredSubmissionSummary[]>([]);
+  const [submissions, setSubmissions] = useState<SubmissionWithStatus[]>([]);
+  const [submissionsError, setSubmissionsError] = useState<string | null>(null);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [filterSubjectId, setFilterSubjectId] = useState<number | undefined>(undefined);
   const [filterStatus, setFilterStatus] = useState<'PENDING' | 'REVIEWING' | 'RESOLVED' | undefined>(
@@ -64,11 +56,6 @@ export const ProposeView: React.FC = () => {
   );
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
-  const [paginationCursor, setPaginationCursor] = useState<{
-    after?: number;
-    has_next?: boolean;
-    has_prev?: boolean;
-  }>({});
 
   // Active modals
   const [selectedDetailId, setSelectedDetailId] = useState<number | null>(null);
@@ -107,59 +94,40 @@ export const ProposeView: React.FC = () => {
   ]);
   const [activeQIndex, setActiveQIndex] = useState(0);
 
-  // Load Enrolled Subjects
+  // Load Enrolled Subjects (GET /sessions/my-enrolled-subjects hoặc dữ liệu demo)
   const fetchEnrolledSubjects = useCallback(async () => {
     setLoadingSubjects(true);
     try {
-      const data = await sessionsApi.getMyEnrolledSubjects();
+      const data = await proposalGateway.getEnrolledSubjects();
       setEnrolledSubjects(data);
-      if (data.length > 0 && selectedSubjectId === 0) {
-        setSelectedSubjectId(data[0].subject_id || 0);
+      if (data.length > 0) {
+        setSelectedSubjectId((current) => current || data[0].subject_id || 0);
       }
-    } catch {
-      // Fallback mock môn học đang tham gia nếu backend chưa sẵn sàng hoặc offline
-      const mockSubjects: SubjectResponse[] = [
-        { subject_id: 10, code: 'IT3180', name: 'Nhập môn Công nghệ phần mềm' },
-        { subject_id: 11, code: 'IT3080', name: 'Mạng máy tính & Truyền thông' },
-        { subject_id: 12, code: 'IT3011', name: 'Cấu trúc dữ liệu và giải thuật' },
-        { subject_id: 13, code: 'IT3040', name: 'Kiến trúc máy tính & Hệ điều hành' },
-      ];
-      setEnrolledSubjects(mockSubjects);
-      if (selectedSubjectId === 0) {
-        setSelectedSubjectId(mockSubjects[0].subject_id || 0);
-      }
+    } catch (err: unknown) {
+      setEnrolledSubjects([]);
+      showToast(errorMessage(err, 'Không tải được danh sách môn học đang tham gia'), 'error');
     } finally {
       setLoadingSubjects(false);
     }
-  }, [selectedSubjectId]);
+  }, [showToast]);
 
-  // Load My Submissions
-  const fetchMySubmissions = useCallback(
-    async (cursorAfter?: number) => {
-      setLoadingSubmissions(true);
-      try {
-        const res = await sessionsApi.getMySubmissions({
-          subject_id: filterSubjectId,
-          status: filterStatus,
-          limit: 10,
-          after: cursorAfter,
-        });
-        setSubmissions(res.contents || []);
-        setPaginationCursor(res.pagination || {});
-      } catch {
-        // Fallback stored mock submissions
-        let list = getStoredSubmissions();
-        if (filterSubjectId) {
-          list = list.filter((s) => s.subject_id === filterSubjectId);
-        }
-        setSubmissions(list);
-        setPaginationCursor({ has_next: false, has_prev: false });
-      } finally {
-        setLoadingSubmissions(false);
-      }
-    },
-    [filterSubjectId, filterStatus]
-  );
+  // Load My Submissions (mọi trang, kèm trạng thái — xem proposalGateway)
+  const fetchMySubmissions = useCallback(async () => {
+    setLoadingSubmissions(true);
+    setSubmissionsError(null);
+    try {
+      const list = await proposalGateway.getMySubmissions({
+        subject_id: filterSubjectId,
+        status: filterStatus,
+      });
+      setSubmissions(list);
+    } catch (err: unknown) {
+      setSubmissions([]);
+      setSubmissionsError(errorMessage(err, 'Không tải được danh sách phiên đề xuất'));
+    } finally {
+      setLoadingSubmissions(false);
+    }
+  }, [filterSubjectId, filterStatus]);
 
   useEffect(() => {
     const timer = setTimeout(() => void fetchEnrolledSubjects(), 0);
@@ -264,7 +232,6 @@ export const ProposeView: React.FC = () => {
     }
 
     setIsSubmitting(true);
-    const selectedSubject = enrolledSubjects.find((s) => s.subject_id === selectedSubjectId);
     try {
       const payload: ProposeSessionRequest = {
         title: title.trim(),
@@ -286,17 +253,8 @@ export const ProposeView: React.FC = () => {
         })),
       };
 
-      try {
-        await sessionsApi.proposeSession(payload);
-      } catch {
-        // Fallback save in local stored sessions
-        const { summary } = saveNewStoredSubmission(
-          payload,
-          selectedSubject?.name,
-          selectedSubject?.code
-        );
-        setSubmissions((prev) => [summary, ...prev]);
-      }
+      // Lỗi (sai dữ liệu, chưa vào lớp, hết phiên…) rơi xuống catch bên dưới.
+      await proposalGateway.proposeSession(payload);
 
       showToast(`Đã gửi phiên đề xuất "${title}" tới giảng viên duyệt!`, 'success');
 
@@ -322,11 +280,10 @@ export const ProposeView: React.FC = () => {
       setActiveQIndex(0);
 
       // Switch to my-submissions tab to review
-      fetchMySubmissions();
+      void fetchMySubmissions();
       setActiveTab('my-submissions');
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Lỗi gửi đề xuất câu hỏi';
-      showToast(msg, 'error');
+      showToast(errorMessage(err, 'Lỗi gửi đề xuất câu hỏi'), 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -343,17 +300,11 @@ export const ProposeView: React.FC = () => {
     }
 
     try {
-      try {
-        await sessionsApi.deleteMySubmission(sessionId);
-      } catch {
-        // Fallback ignore API error for mock/offline session
-      }
-      deleteStoredSubmission(sessionId);
+      await proposalGateway.deleteMySubmission(sessionId);
       showToast('Đã xóa phiên đề xuất thành công', 'success');
       setSubmissions((prev) => prev.filter((s) => s.session_id !== sessionId));
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Không thể xóa phiên đề xuất';
-      showToast(msg, 'error');
+      showToast(errorMessage(err, 'Không thể xóa phiên đề xuất'), 'error');
     }
   };
 
@@ -871,6 +822,16 @@ export const ProposeView: React.FC = () => {
               <div className="py-20 flex flex-col items-center justify-center text-fb-text-2">
                 <div className="w-8 h-8 border-3 border-fb-blue border-t-transparent rounded-full animate-spin mb-3" />
                 <p className="text-body">Đang tải danh sách phiên đề xuất...</p>
+              </div>
+            ) : submissionsError ? (
+              <div className="bg-fb-card rounded-lg border border-fb-divider p-8 text-center space-y-3">
+                <p className="text-body text-fb-danger">{submissionsError}</p>
+                <button
+                  onClick={() => void fetchMySubmissions()}
+                  className="px-4 py-2 bg-fb-blue text-white rounded-lg text-sm font-semibold hover:bg-fb-blue-hover transition cursor-pointer"
+                >
+                  Thử lại
+                </button>
               </div>
             ) : submissions.length === 0 ? (
               <div className="bg-fb-card rounded-lg border border-fb-divider p-12 text-center space-y-3">

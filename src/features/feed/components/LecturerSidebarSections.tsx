@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../../demo/context/AppContext';
-import { reviewApi, examsApi, CourseClassResponse } from '../../../api';
+import { examsApi, CourseClassResponse } from '../../../api';
+import { proposalGateway } from '../../proposals/proposalGateway';
 import { ClassStudentsModal } from '../../lecturer/components/ClassStudentsModal';
 import { ChevronRight, ClipboardCheck, Gamepad2 } from 'lucide-react';
-
-// limit tối đa của GET /sessions/pending
-const PENDING_LIMIT = 50;
 
 // Màu nhận diện theo môn học, xoay vòng theo subject_id
 const SUBJECT_COLORS = [
@@ -25,13 +23,11 @@ export const LecturerSidebarSections: React.FC = () => {
 
   useEffect(() => {
     let cancelled = false;
-    // Các wrapper API đã tự fallback sang mock khi backend chưa sẵn sàng
-    reviewApi
-      .getPendingSessions({ limit: PENDING_LIMIT })
-      .then((res) => {
-        if (cancelled) return;
-        const count = (res.items ?? []).filter((s) => s.status !== 'RESOLVED').length;
-        setPendingCount(`${count}${res.pagination?.has_next ? '+' : ''}`);
+    // Phiên PENDING/REVIEWING (đọc hết các trang; phiên demo dùng kho demo)
+    proposalGateway
+      .getPendingSessions()
+      .then((items) => {
+        if (!cancelled) setPendingCount(String(items.length));
       })
       .catch(() => !cancelled && setPendingCount(null));
     examsApi

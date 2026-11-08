@@ -24,7 +24,7 @@ import {
   Database
 } from 'lucide-react';
 import { MainTab } from '../../features/demo/types';
-import { loadStoredMockSessions } from '../../features/lecturer/mockReviewData';
+import { proposalGateway } from '../../features/proposals/proposalGateway';
 
 export const Navbar: React.FC = () => {
   const {
@@ -89,7 +89,8 @@ export const Navbar: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const mockPendingCount = loadStoredMockSessions().filter((s) => s.status === 'PENDING').length;
+  // Phiên demo: đếm từ kho demo dùng chung; phiên thật: chưa có số liệu → 0.
+  const mockPendingCount = proposalGateway.countPendingSessions() ?? 0;
   const pendingSessionsCount = Math.max(sessions.filter((s) => s.status === 'PENDING').length, mockPendingCount);
   const needEditCount = questions.filter((q) => q.status === 'NEED_EDIT').length;
   const unreadMessagesCount = conversations.reduce((acc, c) => acc + c.unreadCount, 0);

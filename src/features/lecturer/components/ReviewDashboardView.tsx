@@ -21,14 +21,9 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { useApp } from '../../demo/context/AppContext';
-import {
-  reviewApi,
-  sessionsApi,
-  PendingSessionItemDto,
-  SubjectResponse,
-} from '../../../api';
+import { errorMessage, PendingSessionItemDto, SubjectResponse } from '../../../api';
+import { proposalGateway } from '../../proposals/proposalGateway';
 import { SessionReviewDetail } from './SessionReviewDetail';
-import { loadStoredMockSessions } from '../mockReviewData';
 
 type ReviewSidebarTab = 'PENDING' | 'REVIEWING' | 'HISTORY';
 
@@ -41,12 +36,12 @@ export const ReviewDashboardView: React.FC = () => {
   // Currently selected session to inspect / review in detail
   const [selectedSession, setSelectedSession] = useState<PendingSessionItemDto | null>(null);
 
-  // Raw sessions fetched from API (pre-populated with mock sessions so UI renders instantly)
-  const [rawSessions, setRawSessions] = useState<PendingSessionItemDto[]>(() => loadStoredMockSessions());
+  // Phiên PENDING/REVIEWING (GET /sessions/pending, đọc hết các trang) + lịch sử nếu có
+  const [rawSessions, setRawSessions] = useState<PendingSessionItemDto[]>([]);
   // Completed sessions in current review workflow (for history view)
   const [completedSessions, setCompletedSessions] = useState<PendingSessionItemDto[]>([]);
 
-  // Enrolled subjects for filtering
+  // Danh mục môn học cho bộ lọc (GET /subjects)
   const [subjects, setSubjects] = useState<SubjectResponse[]>([]);
 
   // Loading & Error states
@@ -68,10 +63,13 @@ export const ReviewDashboardView: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await reviewApi.getPendingSessions();
-      setRawSessions(response.items || []);
+      const [pending, history] = await Promise.all([
+        proposalGateway.getPendingSessions(),
+        proposalGateway.getReviewHistory(),
+      ]);
+      setRawSessions([...pending, ...history]);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Không thể tải danh sách phiên kiểm duyệt.';
+      const msg = errorMessage(err, 'Không thể tải danh sách phiên kiểm duyệt.');
       setError(msg);
       showToast(msg, 'error');
     } finally {
@@ -82,7 +80,8 @@ export const ReviewDashboardView: React.FC = () => {
   // Fetch subjects for subject filter
   const fetchSubjects = useCallback(async () => {
     try {
-      const subs = await sessionsApi.getMyEnrolledSubjects();
+      // /sessions/my-enrolled-subjects chỉ dành cho sinh viên; giảng viên dùng /subjects.
+      const subs = await proposalGateway.getAllSubjects();
       setSubjects(subs);
     } catch {
       // Non-critical, filter can fall back to topics extracted from sessions

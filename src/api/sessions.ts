@@ -22,8 +22,14 @@ export interface MySubmissionsParams {
 }
 
 export const sessionsApi = {
+  /** GET /subjects — toàn bộ môn học (mọi vai trò đã đăng nhập). */
+  async getAllSubjects(): Promise<SubjectResponse[]> {
+    const result = await api.GET('/subjects');
+    return expectEnvelope(result).data ?? [];
+  },
+
   /**
-   * Lấy danh sách môn học người dùng đang tham gia
+   * Lấy danh sách môn học sinh viên đang tham gia (theo lớp học phần đã vào)
    */
   async getMyEnrolledSubjects(): Promise<SubjectResponse[]> {
     const result = await api.GET('/sessions/my-enrolled-subjects');

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Edit3, HelpCircle, CheckCircle2 } from 'lucide-react';
-import { SessionQuestionReviewDto, EditQuestionRequest, EditQuestionResponse, reviewApi } from '../../../api';
+import { SessionQuestionReviewDto, EditQuestionRequest, EditQuestionResponse } from '../../../api';
+import { proposalGateway } from '../../proposals/proposalGateway';
 
 interface EditQuestionModalProps {
   question: any;
@@ -123,7 +124,7 @@ export const EditQuestionModal: React.FC<EditQuestionModalProps> = ({
         auto_approve: autoApprove,
       };
 
-      const res = await reviewApi.editQuestion(qId, payload);
+      const res = await proposalGateway.editQuestion(qId, payload);
       showToast?.('Đã lưu chỉnh sửa câu hỏi thành công', 'success');
       onSaved?.(res, {
         content: payload.content || '',

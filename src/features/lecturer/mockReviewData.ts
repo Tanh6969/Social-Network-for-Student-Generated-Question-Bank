@@ -1,11 +1,6 @@
-import {
+import type {
   PendingSessionItemDto,
   SessionDetailReviewResponse,
-  SessionQuestionReviewDto,
-  DuplicateWarning,
-  EditQuestionRequest,
-  EditQuestionResponse,
-  ApproveQuestionsResponse,
 } from '../../api';
 
 // Initial Mock Pending / Reviewing / Resolved Sessions for Lecturer Review
@@ -546,43 +541,3 @@ export const INITIAL_MOCK_SESSION_DETAILS: Record<number, SessionDetailReviewRes
     duplicate_warnings: [],
   },
 };
-
-// Storage keys for local persistence in mock mode (v2)
-const MOCK_STORAGE_KEY_SESSIONS = 'sqb_mock_review_sessions_v2';
-const MOCK_STORAGE_KEY_DETAILS = 'sqb_mock_review_details_v2';
-
-export function loadStoredMockSessions(): PendingSessionItemDto[] {
-  try {
-    const raw = localStorage.getItem(MOCK_STORAGE_KEY_SESSIONS);
-    if (raw) return JSON.parse(raw);
-  } catch {
-    // fallback
-  }
-  return [...INITIAL_MOCK_REVIEW_SESSIONS];
-}
-
-export function saveStoredMockSessions(sessions: PendingSessionItemDto[]) {
-  try {
-    localStorage.setItem(MOCK_STORAGE_KEY_SESSIONS, JSON.stringify(sessions));
-  } catch {
-    // fallback
-  }
-}
-
-export function loadStoredMockDetails(): Record<number, SessionDetailReviewResponse> {
-  try {
-    const raw = localStorage.getItem(MOCK_STORAGE_KEY_DETAILS);
-    if (raw) return JSON.parse(raw);
-  } catch {
-    // fallback
-  }
-  return { ...INITIAL_MOCK_SESSION_DETAILS };
-}
-
-export function saveStoredMockDetails(details: Record<number, SessionDetailReviewResponse>) {
-  try {
-    localStorage.setItem(MOCK_STORAGE_KEY_DETAILS, JSON.stringify(details));
-  } catch {
-    // fallback
-  }
-}

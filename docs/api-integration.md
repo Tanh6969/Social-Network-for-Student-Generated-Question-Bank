@@ -7,10 +7,13 @@ The pinned Swagger snapshot has **128 REST paths, 146 operations and 312 schemas
 | Auth login and logout                                                                                                                | Yes                                      | Yes                                    |
 | Auth refresh and change password                                                                                                     | Yes                                      | No                                     |
 | Admin APIs                                                                                                                           | Yes, because they are in Swagger         | No; the frontend does not invoke them  |
-| Social, question bank, review, exams, games, relations, chat, notifications, search, media, devices, cosmetics and other REST groups | Yes                                      | No; current screens remain demo driven |
+| Question proposals and lecturer review (`/sessions/*`, `PUT /questions/{id}`, `GET /subjects`)                                       | Yes                                      | Yes, in signed-in sessions (see below) |
+| Social, question bank, exams, games, relations, chat, notifications, search, media, devices, cosmetics and other REST groups        | Yes                                      | No; current screens remain demo driven |
 | STOMP chat destinations                                                                                                              | Listed in `src/api/realtime-contract.ts` | No                                     |
 
 The STOMP destinations and DTO names are written in OpenAPI `info.description`, not as machine-readable operations or component schemas. The documented publish fields are represented in `realtime-contract.ts`; broadcast payloads remain `unknown` until the backend publishes schemas. This avoids inventing fields and does not imply a working WebSocket connection.
+
+Proposal and review screens go through `src/features/proposals/proposalGateway.ts`. A signed-in (API) session calls only the REST endpoints and shows backend errors as they are; it never falls back to demo data or reports a failed action as successful. A demo session uses only `src/features/proposals/demoStore.ts`, one store shared by the student and lecturer screens, so a demo proposal reaches the lecturer queue and approved questions appear in the student bank. Swagger has no endpoint for resolved-session history or for listing bank questions, so in API sessions the history tab only keeps sessions completed while it is open, and the student bank is still demo data. `src/api/exams.ts` still falls back to mock data on errors and has not been migrated yet.
 
 `src/features/demo/components/modals/ApiReferenceModal.tsx` is an older UI demo map. It is not an API contract or a list of completed integrations.
 

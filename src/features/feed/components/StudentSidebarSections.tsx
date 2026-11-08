@@ -2,14 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useApp } from '../../demo/context/AppContext';
 import { tabPaths } from '../../../app/routes';
-import { sessionsApi, SubjectResponse } from '../../../api';
-import { getStoredSubmissions } from '../../propose/mockSessions';
+import type { SubjectResponse } from '../../../api';
+import { proposalGateway } from '../../proposals/proposalGateway';
 import { BookOpen, CheckCircle, Clock, Eye } from 'lucide-react';
 
 type SessionStatus = 'PENDING' | 'REVIEWING' | 'RESOLVED';
-
-// limit tối đa của GET /sessions/my-submissions
-const COUNT_LIMIT = 50;
 
 const STATUS_ITEMS: {
   status: SessionStatus;
@@ -22,64 +19,44 @@ const STATUS_ITEMS: {
   { status: 'RESOLVED', label: 'Đã xử lý', icon: CheckCircle, color: 'text-fb-success' },
 ];
 
-// Fallback môn học khi backend chưa sẵn sàng (giống ProposeView)
-const MOCK_SUBJECTS: SubjectResponse[] = [
-  { subject_id: 10, code: 'IT3180', name: 'Nhập môn Công nghệ phần mềm' },
-  { subject_id: 11, code: 'IT3080', name: 'Mạng máy tính & Truyền thông' },
-  { subject_id: 12, code: 'IT3011', name: 'Cấu trúc dữ liệu và giải thuật' },
-  { subject_id: 13, code: 'IT3040', name: 'Kiến trúc máy tính & Hệ điều hành' },
-];
+type StatusCounts = Record<SessionStatus, number>;
 
-type StatusCount = { count: number; hasMore: boolean };
-
-async function fetchStatusCounts(): Promise<Record<SessionStatus, StatusCount>> {
+/** Đếm phiên theo trạng thái (gateway đọc hết các trang của từng trạng thái). */
+async function fetchStatusCounts(): Promise<StatusCounts | null> {
   try {
-    const results = await Promise.all(
-      STATUS_ITEMS.map(({ status }) =>
-        sessionsApi.getMySubmissions({ status, limit: COUNT_LIMIT }),
-      ),
-    );
-    return Object.fromEntries(
-      STATUS_ITEMS.map(({ status }, i) => [
-        status,
-        {
-          count: results[i].contents?.length ?? 0,
-          hasMore: results[i].pagination?.has_next ?? false,
-        },
-      ]),
-    ) as Record<SessionStatus, StatusCount>;
-  } catch {
-    // Fallback mock submissions đã lưu cục bộ
-    const stored = getStoredSubmissions();
+    const list = await proposalGateway.getMySubmissions({});
     return Object.fromEntries(
       STATUS_ITEMS.map(({ status }) => [
         status,
-        {
-          count: stored.filter((s) => (s.status ?? 'PENDING') === status).length,
-          hasMore: false,
-        },
+        list.filter((s) => s.status === status).length,
       ]),
-    ) as Record<SessionStatus, StatusCount>;
+    ) as StatusCounts;
+  } catch {
+    return null; // hiển thị "–" thay vì một con số sai
   }
 }
 
 export const StudentSidebarSections: React.FC = () => {
   const { setSelectedSubject, setActiveTab } = useApp();
   const navigate = useNavigate();
-  const [statusCounts, setStatusCounts] =
-    useState<Record<SessionStatus, StatusCount> | null>(null);
+  const [statusCounts, setStatusCounts] = useState<
+    StatusCounts | null | 'loading'
+  >('loading');
   const [subjects, setSubjects] = useState<SubjectResponse[] | null>(null);
+  const [subjectsFailed, setSubjectsFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     void fetchStatusCounts().then((counts) => {
       if (!cancelled) setStatusCounts(counts);
     });
-    sessionsApi
-      .getMyEnrolledSubjects()
-      .catch(() => MOCK_SUBJECTS)
+    proposalGateway
+      .getEnrolledSubjects()
       .then((data) => {
         if (!cancelled) setSubjects(data);
+      })
+      .catch(() => {
+        if (!cancelled) setSubjectsFailed(true);
       });
     return () => {
       cancelled = true;
@@ -103,7 +80,8 @@ export const StudentSidebarSections: React.FC = () => {
         </h4>
         <div className="space-y-0.5 text-sm font-medium text-fb-text">
           {STATUS_ITEMS.map(({ status, label, icon: Icon, color }) => {
-            const item = statusCounts?.[status];
+            const count =
+              statusCounts === 'loading' ? '…' : (statusCounts?.[status] ?? '–');
             return (
               <button
                 key={status}
@@ -115,9 +93,7 @@ export const StudentSidebarSections: React.FC = () => {
                   {label}
                 </span>
                 <span className="text-xs font-bold text-fb-text-2 bg-fb-input px-2 py-0.5 rounded-full min-w-6 text-center">
-                  {item
-                    ? `${item.count}${item.hasMore ? '+' : ''}`
-                    : '…'}
+                  {count}
                 </span>
               </button>
             );
@@ -132,7 +108,9 @@ export const StudentSidebarSections: React.FC = () => {
         </h4>
         <div className="space-y-0.5 text-sm font-medium text-fb-text">
           {subjects === null && (
-            <p className="px-3 py-2 text-xs text-fb-text-3">Đang tải...</p>
+            <p className="px-3 py-2 text-xs text-fb-text-3">
+              {subjectsFailed ? 'Không tải được danh sách môn học.' : 'Đang tải...'}
+            </p>
           )}
           {subjects?.length === 0 && (
             <p className="px-3 py-2 text-xs text-fb-text-3">

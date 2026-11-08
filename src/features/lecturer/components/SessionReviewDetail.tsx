@@ -25,8 +25,8 @@ import {
   SessionQuestionReviewDto,
   DuplicateWarning,
   EditQuestionResponse,
-  reviewApi,
 } from '../../../api';
+import { proposalGateway } from '../../proposals/proposalGateway';
 import { RejectReasonModal } from './RejectReasonModal';
 import { CompleteReviewModal } from './CompleteReviewModal';
 import { EditQuestionModal } from './EditQuestionModal';
@@ -80,7 +80,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const res = await reviewApi.getSessionDetailForReview(session.session_id);
+      const res = await proposalGateway.getSessionDetailForReview(session.session_id);
       setQuestions(res.items || []);
       setDuplicateWarnings(res.duplicate_warnings || []);
     } catch (err: unknown) {
@@ -125,7 +125,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
     if (ids.length === 0) return;
     setIsApproving(true);
     try {
-      const res = await reviewApi.approveQuestions(ids);
+      const res = await proposalGateway.approveQuestions(ids);
       const pointsMsg =
         res.points_earned !== undefined ? ` (Đã cộng ${res.points_earned} điểm thưởng cho tác giả)` : '';
       showToast(`Đã phê duyệt thành công ${ids.length} câu hỏi${pointsMsg}`, 'success');
@@ -150,7 +150,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
     if (!rejectingIds || rejectingIds.length === 0) return;
     setIsRejecting(true);
     try {
-      await reviewApi.rejectQuestions(rejectingIds, reason);
+      await proposalGateway.rejectQuestions(rejectingIds, reason);
       showToast(`Đã từ chối ${rejectingIds.length} câu hỏi`, 'success');
 
       // Update question statuses in state
@@ -197,7 +197,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
     if (!session.session_id) return;
     setIsCompleting(true);
     try {
-      await reviewApi.completeSessionReview(session.session_id);
+      await proposalGateway.completeSessionReview(session.session_id);
       showToast('Đã hoàn tất kiểm duyệt phiên thành công!', 'success');
       setIsCompleteModalOpen(false);
       onSessionCompleted(session.session_id);

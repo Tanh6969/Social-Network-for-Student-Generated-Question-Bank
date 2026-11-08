@@ -72,6 +72,12 @@ import {
   arePostSnapshotsEqual,
   isSharedFeedMessage,
 } from '../../feed/sharedFeedSync';
+import {
+  buildDemoBank,
+  DEMO_BANK_QUESTION_PREFIX,
+  DEMO_BANK_SESSION_PREFIX,
+  mergeDemoBank,
+} from '../../proposals/demoBank';
 
 export interface Toast {
   id: string;
@@ -483,6 +489,44 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     switchRole,
     updateCurrentUser: updateAuthCurrentUser,
   } = useAuthSession(showToast);
+
+  // Phiên demo: mỗi lần mở Ngân hàng, nạp các câu hỏi đã được duyệt từ kho
+  // đề xuất dùng chung (SV nộp → GV duyệt → xuất hiện ở đây). Phiên khác thì
+  // gỡ dữ liệu demo đó ra để không lẫn với dữ liệu thật.
+  useEffect(() => {
+    const isDemoBankItem = (prefix: string) => (item: { id: string }) =>
+      item.id.startsWith(prefix);
+    if (sessionKind !== 'demo') {
+      setSessions((prev) =>
+        prev.some(isDemoBankItem(DEMO_BANK_SESSION_PREFIX))
+          ? prev.filter((s) => !isDemoBankItem(DEMO_BANK_SESSION_PREFIX)(s))
+          : prev,
+      );
+      setQuestions((prev) =>
+        prev.some(isDemoBankItem(DEMO_BANK_QUESTION_PREFIX))
+          ? prev.filter((q) => !isDemoBankItem(DEMO_BANK_QUESTION_PREFIX)(q))
+          : prev,
+      );
+      return;
+    }
+    if (activeTab !== 'bank') return;
+    const bank = buildDemoBank();
+    setSessions((prev) =>
+      mergeDemoBank(prev, bank.sessions, DEMO_BANK_SESSION_PREFIX),
+    );
+    setQuestions((prev) =>
+      mergeDemoBank(prev, bank.questions, DEMO_BANK_QUESTION_PREFIX, (old, next) => ({
+        ...next,
+        ratingAverage: old.ratingAverage,
+        ratingCount: old.ratingCount,
+        totalAttempts: old.totalAttempts,
+        correctAttempts: old.correctAttempts,
+        optionDistribution: old.optionDistribution,
+        userRatedStars: old.userRatedStars,
+        userComment: old.userComment,
+      })),
+    );
+  }, [sessionKind, activeTab]);
 
   useEffect(() => {
     postsRef.current = posts;

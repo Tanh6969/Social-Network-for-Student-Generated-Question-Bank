@@ -10,12 +10,12 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import {
-  sessionsApi,
+  errorMessage,
   SubjectResponse,
   UpdateSubmissionSessionRequest,
   MySubmissionDetail,
 } from '../../../api';
-import { getStoredSubmissionDetail, updateStoredSubmission } from '../mockSessions';
+import { proposalGateway } from '../../proposals/proposalGateway';
 
 interface EditSubmissionModalProps {
   sessionId: number | null;
@@ -140,20 +140,14 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
       }
     };
 
-    sessionsApi
+    proposalGateway
       .getMySubmissionDetail(sessionId)
       .then((detail: MySubmissionDetail) => {
         applyDetail(detail);
       })
-      .catch(() => {
-        // Fallback to local stored session detail
-        const stored = getStoredSubmissionDetail(sessionId);
-        if (stored) {
-          applyDetail(stored);
-        } else {
-          showToast('Không tìm thấy dữ liệu phiên cần sửa', 'warning');
-          onClose();
-        }
+      .catch((err: unknown) => {
+        showToast(errorMessage(err, 'Không tải được dữ liệu phiên cần sửa'), 'error');
+        onClose();
       })
       .finally(() => setLoading(false));
   }, [sessionId, enrolledSubjects]);
@@ -237,7 +231,6 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
     }
 
     setSubmitting(true);
-    const selectedSubject = enrolledSubjects.find((s) => s.subject_id === subjectId);
     try {
       const payload: UpdateSubmissionSessionRequest = {
         title: title.trim(),
@@ -260,24 +253,14 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
         })),
       };
 
-      try {
-        await sessionsApi.updateMySubmission(sessionId, payload);
-      } catch {
-        // Fallback update in local stored sessions
-        updateStoredSubmission(
-          sessionId,
-          payload,
-          selectedSubject?.name,
-          selectedSubject?.code
-        );
-      }
+      // Backend từ chối (ví dụ phiên đã chuyển sang REVIEWING) → rơi xuống catch.
+      await proposalGateway.updateMySubmission(sessionId, payload);
 
       showToast('Cập nhật phiên đề xuất thành công!', 'success');
       onSuccess();
       onClose();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Lỗi cập nhật phiên đề xuất';
-      showToast(msg, 'error');
+      showToast(errorMessage(err, 'Lỗi cập nhật phiên đề xuất'), 'error');
     } finally {
       setSubmitting(false);
     }

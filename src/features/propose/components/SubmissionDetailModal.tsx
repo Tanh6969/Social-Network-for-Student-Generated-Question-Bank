@@ -13,8 +13,8 @@ import {
   AlertCircle,
   ExternalLink,
 } from 'lucide-react';
-import { sessionsApi, MySubmissionDetail } from '../../../api';
-import { getStoredSubmissionDetail } from '../mockSessions';
+import { errorMessage, MySubmissionDetail } from '../../../api';
+import { proposalGateway } from '../../proposals/proposalGateway';
 
 interface SubmissionDetailModalProps {
   sessionId: number | null;
@@ -39,20 +39,14 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
 
   useEffect(() => {
     let isMounted = true;
-    sessionsApi
+    proposalGateway
       .getMySubmissionDetail(sessionId)
       .then((data) => {
         if (isMounted) setDetail(data);
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         if (isMounted) {
-          // Fallback to local stored/mock session details
-          const fallback = getStoredSubmissionDetail(sessionId);
-          if (fallback) {
-            setDetail(fallback);
-          } else {
-            setError(err?.message || 'Không thể tải thông tin chi tiết phiên đề xuất.');
-          }
+          setError(errorMessage(err, 'Không thể tải thông tin chi tiết phiên đề xuất.'));
         }
       })
       .finally(() => {

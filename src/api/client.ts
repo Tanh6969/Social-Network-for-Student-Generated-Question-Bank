@@ -47,10 +47,23 @@ export function expectEnvelope<T>(result: {
   const envelope = result.data ?? result.error;
   if (!result.response.ok || envelope?.code !== '0000') {
     throw new ApiError(
-      envelope?.message || `Yêu cầu thất bại (${result.response.status}).`,
+      failureMessage(result.response.status, envelope),
       result.response.status,
       envelope?.code,
     );
   }
   return envelope as Envelope<T>;
+}
+
+// Mã 9998 là lỗi "Full authentication is required" của backend.
+const AUTH_REQUIRED_CODE = '9998';
+
+function failureMessage(status: number, envelope?: Envelope<unknown>): string {
+  if (status === 401 || envelope?.code === AUTH_REQUIRED_CODE) {
+    return 'Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại.';
+  }
+  if (status === 403) {
+    return envelope?.message || 'Bạn không có quyền thực hiện thao tác này.';
+  }
+  return envelope?.message || `Yêu cầu thất bại (${status}).`;
 }
