@@ -14,6 +14,7 @@ import {
   User,
 } from 'lucide-react';
 import { Conversation } from '../../demo/types';
+import { AutoScrollArea } from '../../../shared/components/AutoScrollArea';
 
 export const MessengerFullView: React.FC = () => {
   const {
@@ -219,7 +220,12 @@ export const MessengerFullView: React.FC = () => {
               </div>
 
               {/* Messages Body */}
-              <div className="flex-1 p-4 overflow-y-auto space-y-3 text-xs">
+              <AutoScrollArea
+                scrollKey={activeConv.id}
+                latestKey={activeConv.messages[activeConv.messages.length - 1]?.id}
+                followLatest={activeConv.messages[activeConv.messages.length - 1]?.senderId === currentUser.id}
+                className="flex-1 p-4 overflow-y-auto space-y-3 text-xs"
+              >
                 {activeConv.messages.map((msg) => {
                   const isMine = msg.senderId === currentUser.id;
 
@@ -261,7 +267,7 @@ export const MessengerFullView: React.FC = () => {
                     </div>
                   );
                 })}
-              </div>
+              </AutoScrollArea>
 
               {/* Input Footer hoặc Thông báo bị chặn (Slide 24: hai người không thể trao đổi tin nhắn với nhau được nữa) */}
               {isPartnerBlocked ? (

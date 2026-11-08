@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../features/demo/context/AppContext';
 import { AvatarWithFrame } from './AvatarWithFrame';
+import { AutoScrollArea } from './AutoScrollArea';
 import {
   X,
   Minus,
@@ -153,7 +154,12 @@ export const ChatDock: React.FC = () => {
             </div>
 
             {/* Message Body */}
-            <div className="flex-1 p-3 overflow-y-auto space-y-2.5 text-xs bg-fb-inset">
+            <AutoScrollArea
+              scrollKey={conv.id}
+              latestKey={conv.messages[conv.messages.length - 1]?.id}
+              followLatest={conv.messages[conv.messages.length - 1]?.senderId === currentUser.id}
+              className="flex-1 p-3 overflow-y-auto space-y-2.5 text-xs bg-fb-inset"
+            >
               {conv.messages.map((msg) => {
                 const isMine = msg.senderId === currentUser.id;
                 return (
@@ -214,7 +220,7 @@ export const ChatDock: React.FC = () => {
                   </div>
                 );
               })}
-            </div>
+            </AutoScrollArea>
 
             {/* Input Bar hoặc Thông báo bị chặn (Slide 24) */}
             {isBlocked ? (

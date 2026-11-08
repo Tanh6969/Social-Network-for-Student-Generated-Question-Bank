@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import type { CommentItem } from '../../demo/types';
 import { useApp } from '../../demo/context/AppContext';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
@@ -17,13 +18,47 @@ export function CommentList({
   const visibleComments = limit
     ? unblockedComments.slice(-limit)
     : unblockedComments;
+  const listRef = useScrollToNewComment(visibleComments);
   return (
-    <div className="space-y-3">
+    <div ref={listRef} className="space-y-3">
       {visibleComments.map((comment) => (
         <CommentRow key={comment.id} comment={comment} onReply={onReply} />
       ))}
     </div>
   );
+}
+
+function collectIds(comments: CommentItem[]): string[] {
+  return comments.flatMap((c) => [c.id, ...(c.replies ?? []).map((r) => r.id)]);
+}
+
+/**
+ * Khi có bình luận/trả lời mới (kể cả trả lời nằm giữa danh sách), cuộn khung
+ * chứa tới đúng bình luận đó. Lần hiển thị đầu không cuộn để người dùng đọc
+ * nội dung bài viết trước.
+ */
+function useScrollToNewComment(comments: CommentItem[]) {
+  const listRef = useRef<HTMLDivElement>(null);
+  const knownIds = useRef<Set<string> | null>(null);
+  const ids = collectIds(comments);
+  const idsKey = ids.join('|');
+
+  useEffect(() => {
+    const previous = knownIds.current;
+    knownIds.current = new Set(ids);
+    if (!previous) return;
+    const added = ids.filter((id) => !previous.has(id));
+    const newest = added[added.length - 1];
+    if (!newest) return;
+    const row = Array.from(
+      listRef.current?.querySelectorAll<HTMLElement>('[data-comment-id]') ?? [],
+    ).find((el) => el.dataset.commentId === newest);
+    row?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    // idsKey đại diện cho danh sách ids
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idsKey]);
+
+  return listRef;
 }
 
 function CommentRow({
@@ -43,6 +78,7 @@ function CommentRow({
 
   return (
     <div
+      data-comment-id={comment.id}
       className={`flex items-start gap-2.5 text-xs ${isReply ? 'mt-2 ml-4' : ''}`}
     >
       <AvatarWithFrame
