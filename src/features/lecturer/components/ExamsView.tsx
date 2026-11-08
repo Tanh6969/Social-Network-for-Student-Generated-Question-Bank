@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { useApp } from '../../demo/context/AppContext';
 import {
   FileCode,
@@ -22,8 +23,12 @@ export type ExamViewTab = 'LIST' | 'GENERATE' | 'EXPORT_BANK';
 export const ExamsView: React.FC = () => {
   const { role, switchRole, setActiveTab, showToast } = useApp();
 
-  // Active sub-tab
-  const [activeSubTab, setActiveSubTab] = useState<ExamViewTab>('LIST');
+  // Active sub-tab (mở thẳng được qua /exams?view=GENERATE | EXPORT_BANK)
+  const [searchParams] = useSearchParams();
+  const [activeSubTab, setActiveSubTab] = useState<ExamViewTab>(() => {
+    const view = searchParams.get('view');
+    return view === 'GENERATE' || view === 'EXPORT_BANK' ? view : 'LIST';
+  });
 
   // Currently viewing exam detail (null = show tab views)
   const [viewingExamId, setViewingExamId] = useState<number | null>(null);

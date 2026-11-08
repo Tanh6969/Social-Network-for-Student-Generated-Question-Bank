@@ -18,6 +18,16 @@ export type {
 } from '../../api';
 
 export type AuthorDto = components['schemas']['AuthorDto'];
+export type SessionQuestionsResponse =
+  components['schemas']['SessionQuestionsResponse'];
+export type PracticeQuestionDto = components['schemas']['PracticeQuestionDto'];
+export type AnswerQuestionResponse =
+  components['schemas']['AnswerQuestionResponse'];
+export type RateQuestionRequest = components['schemas']['RateQuestionRequest'];
+export type RateQuestionResponse =
+  components['schemas']['RateQuestionResponse'];
+export type AiRefineResponse = components['schemas']['AiRefineResponse'];
+export type AiApplyResponse = components['schemas']['AiApplyResponse'];
 
 /** Trạng thái phiên theo Swagger (tham số `status` của GET /sessions/my-submissions). */
 export type SessionStatus = 'PENDING' | 'REVIEWING' | 'RESOLVED';

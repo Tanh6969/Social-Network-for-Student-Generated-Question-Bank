@@ -14,9 +14,9 @@ const STATUS_ITEMS: {
   icon: React.ElementType;
   color: string;
 }[] = [
-  { status: 'PENDING', label: 'Chờ duyệt', icon: Clock, color: 'text-fb-warning' },
-  { status: 'REVIEWING', label: 'Đang duyệt', icon: Eye, color: 'text-fb-blue' },
-  { status: 'RESOLVED', label: 'Đã xử lý', icon: CheckCircle, color: 'text-fb-success' },
+  { status: 'PENDING', label: 'Chờ xem xét', icon: Clock, color: 'text-fb-warning' },
+  { status: 'REVIEWING', label: 'Đang xem xét', icon: Eye, color: 'text-fb-blue' },
+  { status: 'RESOLVED', label: 'Đã xem xét xong', icon: CheckCircle, color: 'text-fb-success' },
 ];
 
 type StatusCounts = Record<SessionStatus, number>;

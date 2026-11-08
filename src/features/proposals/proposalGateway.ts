@@ -8,8 +8,11 @@
 import { isApiSession } from '../../api/session-mode';
 import { reviewApi } from '../../api/review';
 import { sessionsApi } from '../../api/sessions';
-import { demoProposalStore } from './demoStore';
+import { questionsApi } from '../../api/questions';
+import { demoProposalStore, type DemoBankQuestion } from './demoStore';
 import type {
+  AiApplyResponse,
+  AiRefineResponse,
   ApproveQuestionsResponse,
   EditQuestionRequest,
   EditQuestionResponse,
@@ -198,5 +201,36 @@ export const proposalGateway = {
   async completeSessionReview(sessionId: number): Promise<void> {
     if (isApiSession()) await reviewApi.completeSessionReview(sessionId);
     else demoProposalStore.completeReview(sessionId);
+  },
+
+  /** AI đề xuất bản tinh chỉnh câu hỏi (chưa ghi đè cho tới khi aiApply). */
+  async aiRefine(
+    questionId: number,
+    prompt: string,
+  ): Promise<AiRefineResponse> {
+    return isApiSession()
+      ? questionsApi.aiRefine(questionId, prompt)
+      : demoProposalStore.aiRefine(questionId, prompt);
+  },
+
+  /** Áp dụng (approve = true) hoặc loại bỏ bản AI đã đề xuất. */
+  async aiApply(
+    questionId: number,
+    editLogId: number,
+    approve: boolean,
+  ): Promise<AiApplyResponse> {
+    return isApiSession()
+      ? questionsApi.aiApply(questionId, editLogId, approve)
+      : demoProposalStore.aiApply(questionId, editLogId, approve);
+  },
+
+  /**
+   * Câu hỏi trong ngân hàng đề của môn. Swagger KHÔNG có endpoint liệt kê
+   * dạng JSON (chỉ xuất file), nên phiên thật trả null = không xem được.
+   */
+  listBankQuestions(subjectId?: number): DemoBankQuestion[] | null {
+    return isApiSession()
+      ? null
+      : demoProposalStore.listBankQuestions(subjectId);
   },
 };

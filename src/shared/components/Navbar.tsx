@@ -306,7 +306,7 @@ export const Navbar: React.FC = () => {
                   ? 'h-full text-fb-blue border-b-[3px] border-fb-blue'
                   : 'h-12 my-1 rounded-lg text-fb-text-2 hover:bg-fb-hover'
               }`}
-              title="Kiểm duyệt câu hỏi"
+              title="Chọn câu vào ngân hàng đề"
             >
               <CheckSquare className={`w-6 h-6 ${activeTab === 'review' ? 'stroke-[2.5]' : ''}`} />
               {pendingSessionsCount > 0 && (
@@ -453,7 +453,7 @@ export const Navbar: React.FC = () => {
                       className="p-2.5 rounded-lg bg-fb-blue-soft hover:bg-fb-blue/20 text-left transition"
                     >
                       <CheckSquare className="w-5 h-5 text-fb-blue mb-1" />
-                      <span className="font-semibold block text-fb-blue">Kiểm duyệt</span>
+                      <span className="font-semibold block text-fb-blue">Chọn câu vào ngân hàng đề</span>
                       <span className="text-xs text-fb-text-2">Thẩm định phiên</span>
                     </button>
 

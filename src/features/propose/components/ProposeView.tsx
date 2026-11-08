@@ -256,7 +256,7 @@ export const ProposeView: React.FC = () => {
       // Lỗi (sai dữ liệu, chưa vào lớp, hết phiên…) rơi xuống catch bên dưới.
       await proposalGateway.proposeSession(payload);
 
-      showToast(`Đã gửi phiên đề xuất "${title}" tới giảng viên duyệt!`, 'success');
+      showToast(`Đã đăng bộ câu hỏi "${title}". Giảng viên sẽ xem xét và chọn câu vào ngân hàng đề.`, 'success');
 
       // Reset form
       setTitle('');
@@ -345,7 +345,7 @@ export const ProposeView: React.FC = () => {
                 <div className="min-w-0">
                   <span className="text-body block truncate">Soạn phiên mới</span>
                   <span className="text-sm text-fb-text-2 font-normal block truncate">
-                    Tạo câu hỏi & nộp duyệt
+                    Tạo & đăng bộ câu hỏi
                   </span>
                 </div>
               </div>
@@ -785,9 +785,9 @@ export const ProposeView: React.FC = () => {
                   className="px-3 py-1.5 rounded-lg border border-fb-divider bg-fb-input text-sm font-medium text-fb-text focus:outline-hidden"
                 >
                   <option value="">Tất cả trạng thái</option>
-                  <option value="PENDING">Chờ duyệt</option>
-                  <option value="REVIEWING">Đang thẩm định</option>
-                  <option value="RESOLVED">Đã duyệt</option>
+                  <option value="PENDING">Chờ xem xét</option>
+                  <option value="REVIEWING">Giảng viên đang xem xét</option>
+                  <option value="RESOLVED">Đã xem xét xong</option>
                 </select>
               </div>
 
@@ -805,15 +805,15 @@ export const ProposeView: React.FC = () => {
               </div>
             </div>
 
-            {/* Dòng hướng dẫn sinh viên: Chỉ sửa & xóa khi Chờ duyệt */}
+            {/* Dòng hướng dẫn sinh viên: Chỉ sửa & xóa khi Chờ xem xét */}
             <div className="flex items-start gap-2.5 p-3.5 sm:px-4 sm:py-3 rounded-lg bg-fb-warning-soft border border-fb-warning/30 text-sm text-fb-text">
               <Info className="w-4 h-4 text-fb-warning shrink-0 mt-px" />
               <p className="leading-relaxed">
                 <span className="font-semibold">Lưu ý sinh viên:</span> Bạn chỉ có thể{' '}
                 <span className="font-semibold">Chỉnh sửa</span> và{' '}
                 <span className="font-semibold">Xóa</span> phiên đề xuất khi đang ở trạng thái{' '}
-                <span className="font-semibold text-fb-warning">Chờ duyệt</span>
-                . Khi phiên ở trạng thái khác (đang thẩm định hoặc đã duyệt), các nút thao tác này sẽ tự động được làm mờ và khóa lại.
+                <span className="font-semibold text-fb-warning">Chờ xem xét</span>
+                . Khi giảng viên đã bắt đầu hoặc đã xem xét xong, các nút thao tác này sẽ tự động được làm mờ và khóa lại.
               </p>
             </div>
 
@@ -872,17 +872,17 @@ export const ProposeView: React.FC = () => {
                               {status === 'RESOLVED' ? (
                                 <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-fb-success-soft text-fb-success border border-fb-success/30 flex items-center gap-1">
                                   <CheckCircle2 className="w-3 h-3" />
-                                  <span>Đã duyệt</span>
+                                  <span>Đã xem xét xong</span>
                                 </span>
                               ) : status === 'REVIEWING' ? (
                                 <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-fb-blue-soft text-fb-blue border border-fb-blue/30 flex items-center gap-1">
                                   <Clock className="w-3 h-3" />
-                                  <span>Đang thẩm định</span>
+                                  <span>Giảng viên đang xem xét</span>
                                 </span>
                               ) : (
                                 <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-fb-warning-soft text-fb-warning border border-fb-warning/30 flex items-center gap-1">
                                   <Clock className="w-3 h-3" />
-                                  <span>Chờ duyệt</span>
+                                  <span>Chờ xem xét</span>
                                 </span>
                               )}
                             </div>
@@ -922,7 +922,7 @@ export const ProposeView: React.FC = () => {
                               title={
                                 isPending
                                   ? 'Chỉnh sửa phiên đề xuất'
-                                  : 'Chỉ có thể chỉnh sửa khi ở trạng thái Chờ duyệt'
+                                  : 'Chỉ có thể chỉnh sửa khi bộ câu hỏi đang chờ xem xét'
                               }
                             >
                               <Edit3 className="w-3.5 h-3.5" />
@@ -942,7 +942,7 @@ export const ProposeView: React.FC = () => {
                               title={
                                 isPending
                                   ? 'Hủy & xóa phiên đề xuất'
-                                  : 'Chỉ có thể xóa khi ở trạng thái Chờ duyệt'
+                                  : 'Chỉ có thể xóa khi bộ câu hỏi đang chờ xem xét'
                               }
                             >
                               <Trash2 className="w-4 h-4" />

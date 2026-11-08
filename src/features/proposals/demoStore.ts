@@ -26,7 +26,15 @@ import type {
   SubmissionsResponse,
   UpdateSubmissionSessionRequest,
 } from './types';
-import type { SessionStatus } from './types';
+import type {
+  AiApplyResponse,
+  AiRefineResponse,
+  AnswerQuestionResponse,
+  RateQuestionRequest,
+  RateQuestionResponse,
+  SessionQuestionsResponse,
+  SessionStatus,
+} from './types';
 import {
   INITIAL_MOCK_REVIEW_SESSIONS,
   INITIAL_MOCK_SESSION_DETAILS,
@@ -50,6 +58,13 @@ export interface DemoQuestion {
   status: DemoQuestionStatus;
   reject_reason?: string;
   edited_by_lecturer?: boolean;
+  updated_at?: string;
+  /** Đáp án sinh viên demo đã chọn khi luyện tập. */
+  my_answer?: string;
+  /** Đánh giá của sinh viên demo (0..4) và các đánh giá khác đã có. */
+  my_rating?: { rating: number; is_error: boolean; comment?: string };
+  others_rating_sum?: number;
+  others_rating_count?: number;
 }
 
 export interface DemoSession {
@@ -101,6 +116,16 @@ const LEGACY_KEYS = [
   'sqb_mock_review_details_v2',
   'sn_propose_submissions_summaries_v2',
 ];
+
+/**
+ * Id duy nhất, luôn tăng (theo thời gian): hai thao tác trong cùng một mili-giây
+ * (ví dụ bấm gửi hai lần) không bị trùng id.
+ */
+let lastDemoId = 0;
+function nextDemoId(): number {
+  lastDemoId = Math.max(Date.now(), lastDemoId + 1);
+  return lastDemoId;
+}
 
 function subjectOf(subjectId: number | undefined): SubjectResponse {
   return (
@@ -429,7 +454,7 @@ export const demoProposalStore = {
     if (!body.title?.trim()) throw new ApiError('Vui lòng nhập tiêu đề.', 400);
     assertEnrolled(body.subject_id);
     assertValidQuestions(body.questions);
-    const id = Date.now();
+    const id = nextDemoId();
     const subject = subjectOf(body.subject_id);
     const session: DemoSession = {
       session_id: id,
@@ -449,7 +474,8 @@ export const demoProposalStore = {
       react_count: 0,
       comment_count: 0,
       questions: (body.questions ?? []).map((q, i) => ({
-        question_id: id * 10 + i + 1,
+        // Tối đa 999 câu/bộ mà không trùng id với bộ tạo ngay sau.
+        question_id: id * 1000 + i + 1,
         content: q.content ?? '',
         image_urls: q.media_urls ?? [],
         options: q.options ?? [],
@@ -475,7 +501,7 @@ export const demoProposalStore = {
     if (!body.title?.trim()) throw new ApiError('Vui lòng nhập tiêu đề.', 400);
     assertEnrolled(body.subject_id);
     assertValidQuestions(body.questions);
-    const newIdBase = Date.now() * 10;
+    const newIdBase = nextDemoId() * 1000;
     update((all) =>
       all.map((s) =>
         s.session_id !== sessionId
@@ -667,4 +693,268 @@ export const demoProposalStore = {
       ),
     );
   },
+
+  // -------------------------------------------------------------------------
+  // Luyện tập (không bao giờ để lộ câu nào được chọn vào ngân hàng đề)
+  // -------------------------------------------------------------------------
+
+  /** Mô phỏng GET /users/{userId}/sessions: người khác chỉ thấy phiên RESOLVED. */
+  listUserSessions(user: { name: string }, isMe: boolean): SubmissionsResponse {
+    const items = loadDemoSessions()
+      .filter((s) =>
+        isMe
+          ? s.mine
+          : !s.mine &&
+            s.author.full_name === user.name &&
+            s.status === 'RESOLVED',
+      )
+      .sort(newestFirst);
+    return {
+      contents: items.map(toSummary),
+      pagination: { has_next: false, has_prev: false },
+    };
+  },
+
+  /** Mô phỏng GET /sessions/{sessionId}/questions. */
+  getSessionQuestions(sessionId: number): SessionQuestionsResponse {
+    const s = findSession(sessionId);
+    if (!s.mine && s.status !== 'RESOLVED') {
+      throw new ApiError(
+        'Bộ câu hỏi này chưa được giảng viên xem xét xong.',
+        403,
+      );
+    }
+    const subject = subjectOf(s.subject_id);
+    return {
+      session_id: s.session_id,
+      session_code: s.session_code,
+      title: s.title,
+      content: s.content,
+      subject_id: s.subject_id,
+      subject_name: subject.name,
+      subject_code: subject.code,
+      created_at: s.created_at,
+      total_questions: s.questions.length,
+      questions: s.questions.map((q) => {
+        const answered = q.my_answer !== undefined;
+        return {
+          question_id: q.question_id,
+          content: q.content,
+          image_urls: q.image_urls,
+          // Ẩn đáp án đúng cho tới khi đã trả lời (giống backend).
+          options: q.options.map((o) =>
+            answered ? o : { key: o.key, text: o.text, media_url: o.media_url },
+          ),
+          updated_at: q.updated_at ?? s.created_at,
+          my_interaction: { answered, rated: q.my_rating !== undefined },
+          hidden_fields: answered
+            ? {
+                correct_answer: correctKey(q.options),
+                explanation: q.explanation,
+              }
+            : undefined,
+          rating_count: (q.others_rating_count ?? 0) + (q.my_rating ? 1 : 0),
+        };
+      }),
+    };
+  },
+
+  /** Mô phỏng POST /questions/{questionId}/answer. */
+  answer(questionId: number, selected: string[]): AnswerQuestionResponse {
+    const { question } = findQuestion(questionId);
+    if (question.my_answer !== undefined) {
+      throw new ApiError('Bạn đã trả lời câu hỏi này rồi.', 409);
+    }
+    const choice = selected[0];
+    if (!choice) throw new ApiError('Vui lòng chọn một đáp án.', 400);
+    updateQuestion(questionId, (q) => ({ ...q, my_answer: choice }));
+    const correct = correctKey(question.options);
+    return {
+      is_correct: choice === correct,
+      correct_answer: correct,
+      explanation: question.explanation,
+    };
+  },
+
+  /** Mô phỏng POST /questions/{questionId}/rate (is_error ⇒ điểm 0). */
+  rate(questionId: number, body: RateQuestionRequest): RateQuestionResponse {
+    const { question } = findQuestion(questionId);
+    const isError = Boolean(body.is_error);
+    const rating = isError ? 0 : Math.round(body.rating ?? -1);
+    if (rating < 0 || rating > 4) {
+      throw new ApiError('Điểm đánh giá phải từ 0 đến 4.', 400);
+    }
+    updateQuestion(questionId, (q) => ({
+      ...q,
+      my_rating: {
+        rating,
+        is_error: isError,
+        comment: body.comment?.trim() || undefined,
+      },
+    }));
+    const othersCount = question.others_rating_count ?? 0;
+    const othersSum = question.others_rating_sum ?? 0;
+    return {
+      new_avg_rating: Number(
+        ((othersSum + rating) / (othersCount + 1)).toFixed(2),
+      ),
+      new_rating_count: othersCount + 1,
+    };
+  },
+
+  // -------------------------------------------------------------------------
+  // Ngân hàng đề & AI tinh chỉnh (giảng viên)
+  // -------------------------------------------------------------------------
+
+  /** Chỉ có ở demo: Swagger không có endpoint liệt kê ngân hàng dạng JSON. */
+  listBankQuestions(subjectId?: number): DemoBankQuestion[] {
+    return loadDemoSessions()
+      .filter((s) => !subjectId || s.subject_id === subjectId)
+      .sort(newestFirst)
+      .flatMap((s) =>
+        s.questions
+          .filter((q) => q.status === 'APPROVED')
+          .map((q) => ({
+            question_id: q.question_id,
+            content: q.content,
+            options: q.options,
+            explanation: q.explanation,
+            subject_id: s.subject_id,
+            subject_name: subjectOf(s.subject_id).name,
+            session_id: s.session_id,
+            session_title: s.title,
+            author_name: s.author.full_name ?? 'Sinh viên',
+            edited_by_lecturer: Boolean(q.edited_by_lecturer),
+          })),
+      );
+  },
+
+  /** Mô phỏng POST /questions/{questionId}/ai-refine (đề xuất cố định, không gọi LLM). */
+  aiRefine(questionId: number, prompt: string): AiRefineResponse {
+    const { question } = findQuestion(questionId);
+    if (!prompt.trim())
+      throw new ApiError('Vui lòng nhập yêu cầu cho AI.', 400);
+    const editLogId = nextDemoId();
+    const wantsExplanation = /giải thích|lời giải/i.test(prompt);
+    const wantsOptions = /phương án|nhiễu|đáp án/i.test(prompt);
+    const suggested = {
+      content: question.content
+        .trim()
+        .replace(/\s+/g, ' ')
+        .replace(/([^.?!:])$/, '$1?'),
+      options: question.options.map((o) => ({
+        ...o,
+        text:
+          wantsOptions && !o.is_correct
+            ? `${(o.text ?? '').trim()} (đã điều chỉnh để gây nhiễu hợp lý hơn)`
+            : (o.text ?? '').trim(),
+      })),
+      explanation:
+        wantsExplanation || !question.explanation
+          ? `${question.explanation ?? ''}\nPhân tích từng phương án: đáp án ${correctKey(question.options) ?? '?'} đúng vì thỏa yêu cầu đề bài; các phương án còn lại sai ở giả thiết hoặc kết luận.`.trim()
+          : question.explanation,
+    };
+    pendingAiEdits.set(editLogId, { questionId, suggested });
+    return {
+      edit_log_id: editLogId,
+      suggested_question: suggested,
+      hallucination_audit: {
+        is_hallucinated: false,
+        confidence_score: 0.86,
+        belief_tree_depth: 3,
+        violations: [],
+      },
+      ai_metadata: {
+        model: 'Mô phỏng (demo, không gọi AI thật)',
+        tokens_used: 0,
+        processing_time_ms: 0,
+      },
+    };
+  },
+
+  /** Mô phỏng POST /questions/{questionId}/ai-apply. */
+  aiApply(
+    questionId: number,
+    editLogId: number,
+    approve: boolean,
+  ): AiApplyResponse {
+    const edit = pendingAiEdits.get(editLogId);
+    if (!edit || edit.questionId !== questionId) {
+      throw new ApiError('Không tìm thấy đề xuất AI cần xử lý.', 404);
+    }
+    pendingAiEdits.delete(editLogId);
+    if (approve) {
+      updateQuestion(questionId, (q) => ({
+        ...q,
+        content: edit.suggested.content,
+        options: edit.suggested.options,
+        explanation: edit.suggested.explanation,
+        edited_by_lecturer: true,
+        updated_at: new Date().toISOString(),
+      }));
+    }
+    return {
+      question_id: questionId,
+      status: approve ? 'APPLIED' : 'DISCARDED',
+      confidence_score: 0.86,
+      hallucination: false,
+    };
+  },
 };
+
+export interface DemoBankQuestion {
+  question_id: number;
+  content: string;
+  options: QuestionOption[];
+  explanation?: string;
+  subject_id: number;
+  subject_name?: string;
+  session_id: number;
+  session_title: string;
+  author_name: string;
+  edited_by_lecturer: boolean;
+}
+
+/** Đề xuất AI đang chờ giảng viên quyết định (chỉ giữ trong bộ nhớ). */
+const pendingAiEdits = new Map<
+  number,
+  {
+    questionId: number;
+    suggested: {
+      content: string;
+      options: QuestionOption[];
+      explanation?: string;
+    };
+  }
+>();
+
+function findQuestion(questionId: number): {
+  session: DemoSession;
+  question: DemoQuestion;
+} {
+  for (const session of loadDemoSessions()) {
+    const question = session.questions.find(
+      (q) => q.question_id === questionId,
+    );
+    if (question) return { session, question };
+  }
+  throw new ApiError('Không tìm thấy câu hỏi.', 404);
+}
+
+function updateQuestion(
+  questionId: number,
+  change: (q: DemoQuestion) => DemoQuestion,
+) {
+  update((all) =>
+    all.map((s) =>
+      s.questions.some((q) => q.question_id === questionId)
+        ? {
+            ...s,
+            questions: s.questions.map((q) =>
+              q.question_id === questionId ? change(q) : q,
+            ),
+          }
+        : s,
+    ),
+  );
+}

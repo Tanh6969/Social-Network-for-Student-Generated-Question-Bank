@@ -31,7 +31,7 @@ export const CompleteReviewModal: React.FC<CompleteReviewModalProps> = ({
             </span>
             <div>
               <h3 className="font-bold text-base text-fb-text">
-                Hoàn tất phiên kiểm duyệt
+                Hoàn tất xem xét bộ câu hỏi
               </h3>
               {sessionTitle && (
                 <p className="text-xs text-fb-text-2 truncate max-w-xs">
@@ -55,14 +55,14 @@ export const CompleteReviewModal: React.FC<CompleteReviewModalProps> = ({
           <div className="flex items-start gap-3 p-3.5 rounded-lg bg-fb-warning-soft/80 border border-fb-warning/30 text-fb-warning text-xs">
             <AlertCircle className="w-5 h-5 text-fb-warning shrink-0 mt-0.5" />
             <p className="leading-relaxed">
-              Bạn có chắc chắn muốn hoàn tất kiểm duyệt phiên này? Các câu hỏi vẫn còn ở
-              trạng thái chờ xử lý sẽ bị từ chối. Hành động này có thể không hoàn tác
-              được.
+              Bạn có chắc chắn muốn hoàn tất xem xét bộ câu hỏi này? Các câu hỏi chưa
+              được chọn sẽ được tính là không chọn vào ngân hàng đề. Hành động này có thể
+              không hoàn tác được.
             </p>
           </div>
 
           <p className="text-xs text-fb-text-2">
-            Hệ thống sẽ chuyển trạng thái phiên sang <span className="font-semibold text-fb-text">Đã giải quyết (RESOLVED)</span> và tự động gửi thông báo kết quả kiểm duyệt tới tác giả.
+            Hệ thống sẽ chuyển trạng thái phiên sang <span className="font-semibold text-fb-text">Đã xem xét xong (RESOLVED)</span> và gửi thông báo tới tác giả. Bộ câu hỏi sẽ xuất hiện trong mục luyện tập.
           </p>
 
           {/* Footer */}

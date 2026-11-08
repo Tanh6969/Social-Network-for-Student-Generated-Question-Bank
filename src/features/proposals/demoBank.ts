@@ -1,7 +1,10 @@
 /**
- * Chuyển các câu hỏi ĐÃ DUYỆT trong kho demo dùng chung sang kiểu dữ liệu của
- * màn hình Ngân hàng câu hỏi (ProposeSession/Question). Nhờ vậy trong phiên
- * demo, câu hỏi giảng viên vừa duyệt xuất hiện ngay ở ngân hàng của sinh viên.
+ * Đưa các bộ câu hỏi ĐÃ ĐƯỢC GIẢNG VIÊN XEM XÉT XONG (RESOLVED) trong kho demo
+ * vào màn hình luyện tập của sinh viên (ProposeSession/Question).
+ *
+ * Quan trọng: lấy TOÀN BỘ câu của bộ, không lọc theo câu được chọn vào ngân
+ * hàng đề — sinh viên không được biết câu nào được chọn (giữ bí mật đề thi và
+ * phục vụ minigame). Mọi câu đều mang cùng một trạng thái hiển thị.
  */
 import type { ProposeSession, Question, User } from '../demo/types';
 import { mockCurrentUserStudent } from '../../mocks/mockData';
@@ -46,8 +49,8 @@ export function buildDemoBank(): {
   const questions: Question[] = [];
 
   loadDemoSessions().forEach((s) => {
-    const approved = s.questions.filter((q) => q.status === 'APPROVED');
-    if (approved.length === 0) return;
+    if (s.status !== 'RESOLVED' || s.questions.length === 0) return;
+    const practiceQuestions = s.questions;
 
     const subject =
       DEMO_SUBJECTS.find((x) => x.subject_id === s.subject_id)?.name ??
@@ -55,7 +58,7 @@ export function buildDemoBank(): {
     const creator = toUser(s);
     const sessionId = `${DEMO_BANK_SESSION_PREFIX}${s.session_id}`;
 
-    approved.forEach((q) => {
+    practiceQuestions.forEach((q) => {
       // Ngân hàng hiện chỉ hiển thị câu 4 phương án A–D.
       const options = q.options
         .map((o) => ({ id: asOptionId(o.key), text: o.text ?? '' }))
@@ -73,11 +76,11 @@ export function buildDemoBank(): {
         correctAnswer: correct,
         explanation: q.explanation ?? '',
         difficulty: 'MEDIUM',
+        // Trạng thái giống nhau cho mọi câu để không lộ câu nào được chọn.
         status: 'APPROVED',
         creatorId: creator.id,
         creatorName: creator.name,
         creatorAvatar: creator.avatar,
-        isEditedByLecturer: q.edited_by_lecturer,
         ratingAverage: 0,
         ratingCount: 0,
         totalAttempts: 0,
@@ -91,10 +94,7 @@ export function buildDemoBank(): {
       subject,
       chapter: s.title,
       creator,
-      status:
-        approved.length === s.questions.length
-          ? 'APPROVED'
-          : 'PARTIAL_APPROVED',
+      status: 'COMPLETED',
       questions: [], // BankView lấy câu hỏi theo sessionId từ danh sách questions
       submittedAt: s.created_at,
       reviewedAt: s.reviewed_at,

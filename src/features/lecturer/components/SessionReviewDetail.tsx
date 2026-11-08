@@ -30,6 +30,8 @@ import { proposalGateway } from '../../proposals/proposalGateway';
 import { RejectReasonModal } from './RejectReasonModal';
 import { CompleteReviewModal } from './CompleteReviewModal';
 import { EditQuestionModal } from './EditQuestionModal';
+import { QuestionAiRefineModal, type RefinedContent } from './QuestionAiRefineModal';
+import type { BasketItem } from './ReviewBasketBar';
 
 interface SessionReviewDetailProps {
   session: PendingSessionItemDto;
@@ -37,6 +39,14 @@ interface SessionReviewDetailProps {
   onSessionCompleted: (sessionId: number) => void;
   showToast: (message: string, type: 'success' | 'info' | 'warning' | 'error') => void;
   readOnly?: boolean;
+  /** Id các câu đang nằm trong giỏ câu hỏi chung của trang kiểm duyệt. */
+  basketIds: number[];
+  onToggleBasket: (item: BasketItem) => void;
+  onAddToBasket: (items: BasketItem[]) => void;
+  /** Báo cho giỏ biết các câu đã được quyết định (chọn/không chọn) để gỡ khỏi giỏ. */
+  onQuestionsDecided: (questionIds: number[]) => void;
+  /** Tăng giá trị để tải lại phiên (ví dụ sau khi xử lý từ giỏ). */
+  refreshKey?: number;
 }
 
 export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
@@ -45,18 +55,22 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
   onSessionCompleted,
   showToast,
   readOnly = false,
+  basketIds,
+  onToggleBasket,
+  onAddToBasket,
+  onQuestionsDecided,
+  refreshKey = 0,
 }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [questions, setQuestions] = useState<SessionQuestionReviewDto[]>([]);
   const [duplicateWarnings, setDuplicateWarnings] = useState<DuplicateWarning[]>([]);
 
-  // Selection for bulk actions
-  const [selectedQuestionIds, setSelectedQuestionIds] = useState<number[]>([]);
 
   // Action modals
   const [rejectingIds, setRejectingIds] = useState<number[] | null>(null);
   const [editingQuestion, setEditingQuestion] = useState<SessionQuestionReviewDto | null>(null);
+  const [aiQuestion, setAiQuestion] = useState<SessionQuestionReviewDto | null>(null);
   const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
 
   // Question filtering & pagination state
@@ -94,29 +108,28 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
 
   useEffect(() => {
     fetchSessionDetail();
-  }, [fetchSessionDetail]);
+  }, [fetchSessionDetail, refreshKey]);
 
-  // Bulk selection helpers
+  // Giỏ câu hỏi: tích chọn câu ở nhiều bộ khác nhau rồi xử lý một lần
   const pendingQuestions = questions.filter((q) => q.status === 'PENDING');
-  const allPendingSelected =
-    pendingQuestions.length > 0 &&
-    pendingQuestions.every((q) => q.question_id && selectedQuestionIds.includes(q.question_id));
+  const toBasketItem = (q: SessionQuestionReviewDto): BasketItem => ({
+    question_id: q.question_id!,
+    content: q.content || '',
+    session_id: session.session_id!,
+    session_title: session.title || `Bộ câu hỏi #${session.session_id}`,
+    topic: session.topic,
+  });
+  const pendingInBasket = pendingQuestions.filter(
+    (q) => q.question_id && basketIds.includes(q.question_id),
+  );
+  const allPendingInBasket =
+    pendingQuestions.length > 0 && pendingInBasket.length === pendingQuestions.length;
 
-  const handleToggleSelectAllPending = () => {
-    if (allPendingSelected) {
-      setSelectedQuestionIds([]);
-    } else {
-      const ids = pendingQuestions
-        .map((q) => q.question_id)
-        .filter((id): id is number => id !== undefined);
-      setSelectedQuestionIds(ids);
-    }
-  };
-
-  const handleToggleSelectQuestion = (qId?: number) => {
-    if (!qId) return;
-    setSelectedQuestionIds((prev) =>
-      prev.includes(qId) ? prev.filter((id) => id !== qId) : [...prev, qId],
+  const handleAddAllPendingToBasket = () => {
+    onAddToBasket(
+      pendingQuestions
+        .filter((q) => q.question_id && !basketIds.includes(q.question_id))
+        .map(toBasketItem),
     );
   };
 
@@ -128,7 +141,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
       const res = await proposalGateway.approveQuestions(ids);
       const pointsMsg =
         res.points_earned !== undefined ? ` (Đã cộng ${res.points_earned} điểm thưởng cho tác giả)` : '';
-      showToast(`Đã phê duyệt thành công ${ids.length} câu hỏi${pointsMsg}`, 'success');
+      showToast(`Đã chọn ${ids.length} câu hỏi vào ngân hàng đề${pointsMsg}`, 'success');
 
       // Update question statuses in state
       setQuestions((prev) =>
@@ -136,9 +149,9 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
           q.question_id && ids.includes(q.question_id) ? { ...q, status: 'APPROVED' } : q,
         ),
       );
-      setSelectedQuestionIds((prev) => prev.filter((id) => !ids.includes(id)));
+      onQuestionsDecided(ids);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Lỗi khi phê duyệt câu hỏi.';
+      const msg = err instanceof Error ? err.message : 'Lỗi khi chọn câu hỏi vào ngân hàng đề.';
       showToast(msg, 'error');
     } finally {
       setIsApproving(false);
@@ -151,7 +164,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
     setIsRejecting(true);
     try {
       await proposalGateway.rejectQuestions(rejectingIds, reason);
-      showToast(`Đã từ chối ${rejectingIds.length} câu hỏi`, 'success');
+      showToast(`Đã đánh dấu không chọn ${rejectingIds.length} câu hỏi`, 'success');
 
       // Update question statuses in state
       setQuestions((prev) =>
@@ -161,10 +174,10 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
             : q,
         ),
       );
-      setSelectedQuestionIds((prev) => prev.filter((id) => !rejectingIds.includes(id)));
+      onQuestionsDecided(rejectingIds);
       setRejectingIds(null);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Lỗi khi từ chối câu hỏi.';
+      const msg = err instanceof Error ? err.message : 'Lỗi khi đánh dấu không chọn câu hỏi.';
       showToast(msg, 'error');
     } finally {
       setIsRejecting(false);
@@ -192,17 +205,33 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
     );
   };
 
+  // Áp dụng bản tinh chỉnh của AI vào câu hỏi đang hiển thị
+  const handleAiApplied = (questionId: number, updated: RefinedContent) => {
+    setQuestions((prev) =>
+      prev.map((q) =>
+        q.question_id === questionId
+          ? {
+              ...q,
+              content: updated.content,
+              options: updated.options,
+              explanation: updated.explanation,
+            }
+          : q,
+      ),
+    );
+  };
+
   // Complete session review
   const handleConfirmComplete = async () => {
     if (!session.session_id) return;
     setIsCompleting(true);
     try {
       await proposalGateway.completeSessionReview(session.session_id);
-      showToast('Đã hoàn tất kiểm duyệt phiên thành công!', 'success');
+      showToast('Đã hoàn tất xem xét bộ câu hỏi.', 'success');
       setIsCompleteModalOpen(false);
       onSessionCompleted(session.session_id);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Không thể hoàn tất phiên kiểm duyệt.';
+      const msg = err instanceof Error ? err.message : 'Không thể hoàn tất xem xét bộ câu hỏi.';
       showToast(msg, 'error');
     } finally {
       setIsCompleting(false);
@@ -245,7 +274,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-fb-success hover:bg-fb-success/90 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
           >
             <CheckCheck className="w-4 h-4" />
-            <span>Hoàn tất kiểm duyệt phiên</span>
+            <span>Hoàn tất xem xét bộ câu hỏi</span>
           </button>
         )}
       </div>
@@ -262,17 +291,17 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
               {session.status === 'REVIEWING' ? (
                 <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-fb-blue-soft text-fb-blue border border-fb-blue/30 flex items-center gap-1">
                   <Clock className="w-3 h-3" />
-                  <span>Đang kiểm duyệt</span>
+                  <span>Đang xem xét</span>
                 </span>
               ) : session.status === 'RESOLVED' ? (
                 <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-fb-success-soft text-fb-success border border-fb-success/30 flex items-center gap-1">
                   <CheckCircle2 className="w-3 h-3" />
-                  <span>Đã giải quyết</span>
+                  <span>Đã xem xét xong</span>
                 </span>
               ) : (
                 <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-fb-warning-soft text-fb-warning border border-fb-warning/30 flex items-center gap-1">
                   <Clock className="w-3 h-3" />
-                  <span>Chờ kiểm duyệt</span>
+                  <span>Chờ xem xét</span>
                 </span>
               )}
             </div>
@@ -291,9 +320,9 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
           {/* Counts statistics */}
           <div className="flex items-center gap-x-4 gap-y-1 flex-wrap bg-fb-input p-2.5 rounded-lg border border-fb-divider text-xs font-medium">
             <span className="text-fb-text-2">Tổng: <b>{questions.length}</b></span>
-            <span className="text-fb-warning">Chờ: <b>{pendingCount}</b></span>
-            <span className="text-fb-success">Đã duyệt: <b>{approvedCount}</b></span>
-            <span className="text-fb-danger">Từ chối: <b>{rejectedCount}</b></span>
+            <span className="text-fb-warning">Chưa xem xét: <b>{pendingCount}</b></span>
+            <span className="text-fb-success">Đã chọn vào ngân hàng: <b>{approvedCount}</b></span>
+            <span className="text-fb-danger">Không chọn: <b>{rejectedCount}</b></span>
           </div>
         </div>
 
@@ -387,7 +416,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                       : 'bg-fb-warning-soft text-fb-warning hover:bg-fb-warning/20'
                   }`}
                 >
-                  Chờ duyệt ({pendingCount})
+                  Chưa xem xét ({pendingCount})
                 </button>
                 <button
                   type="button"
@@ -398,7 +427,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                       : 'bg-fb-success-soft text-fb-success hover:bg-fb-success/20'
                   }`}
                 >
-                  Đã duyệt ({approvedCount})
+                  Đã chọn ({approvedCount})
                 </button>
                 <button
                   type="button"
@@ -409,7 +438,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                       : 'bg-fb-danger-soft text-fb-danger hover:bg-fb-danger/20'
                   }`}
                 >
-                  Từ chối ({rejectedCount})
+                  Không chọn ({rejectedCount})
                 </button>
               </div>
 
@@ -430,51 +459,29 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
             </div>
           )}
 
-          {/* Bulk Action Bar (only if not read-only and has pending questions) */}
+          {/* Thêm cả bộ vào giỏ câu hỏi chung (xử lý ở thanh giỏ phía trên) */}
           {!readOnly && pendingQuestions.length > 0 && (
             <div className="bg-fb-blue-soft/70 rounded-lg p-3.5 border border-fb-blue/30 flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   id="select-all-pending"
-                  checked={allPendingSelected}
-                  onChange={handleToggleSelectAllPending}
+                  checked={allPendingInBasket}
+                  disabled={allPendingInBasket}
+                  onChange={handleAddAllPendingToBasket}
                   className="w-4 h-4 text-fb-blue rounded border-fb-divider focus:ring-fb-blue cursor-pointer"
                 />
                 <label
                   htmlFor="select-all-pending"
                   className="font-semibold text-fb-text cursor-pointer select-none"
                 >
-                  Chọn tất cả ({pendingQuestions.length} câu chờ duyệt)
+                  Thêm tất cả {pendingQuestions.length} câu chưa xem xét của bộ này vào giỏ
                 </label>
-                {selectedQuestionIds.length > 0 && (
-                  <span className="text-fb-blue font-bold ml-1">
-                    (Đã chọn {selectedQuestionIds.length})
-                  </span>
-                )}
               </div>
-
-              {selectedQuestionIds.length > 0 && (
-                <div className="flex items-center gap-2 flex-wrap">
-                  <button
-                    onClick={() => handleApprove(selectedQuestionIds)}
-                    disabled={isApproving}
-                    className="px-3.5 py-1.5 rounded-lg bg-fb-success hover:bg-fb-success/90 text-white font-bold transition shadow-2xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Phê duyệt ({selectedQuestionIds.length}) câu đã chọn</span>
-                  </button>
-
-                  <button
-                    onClick={() => setRejectingIds(selectedQuestionIds)}
-                    disabled={isRejecting}
-                    className="px-3.5 py-1.5 rounded-lg bg-fb-danger hover:bg-fb-danger/90 text-white font-bold transition shadow-2xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
-                  >
-                    <XCircle className="w-3.5 h-3.5" />
-                    <span>Từ chối ({selectedQuestionIds.length}) câu đã chọn</span>
-                  </button>
-                </div>
-              )}
+              <span className="text-fb-text-2">
+                Đã có <b className="text-fb-blue">{pendingInBasket.length}</b> câu của bộ này
+                trong giỏ. Có thể chọn tiếp ở các bộ khác rồi xử lý một lần.
+              </span>
             </div>
           )}
 
@@ -488,7 +495,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
               <div className="space-y-4">
               {paginatedQuestions.map((q, localIdx) => {
                 const globalIdx = (currentQuestionPage - 1) * questionsPerPage + localIdx;
-                const isSelected = !!q.question_id && selectedQuestionIds.includes(q.question_id);
+                const isSelected = !!q.question_id && basketIds.includes(q.question_id);
                 const isPending = q.status === 'PENDING';
                 const isApproved = q.status === 'APPROVED';
                 const isRejected = q.status === 'REJECTED';
@@ -541,7 +548,8 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                             <input
                               type="checkbox"
                               checked={isSelected}
-                              onChange={() => handleToggleSelectQuestion(q.question_id)}
+                              onChange={() => onToggleBasket(toBasketItem(q))}
+                              title="Thêm / bỏ khỏi giỏ câu hỏi"
                               className="w-4 h-4 text-fb-blue rounded border-fb-divider focus:ring-fb-blue cursor-pointer"
                             />
                           )}
@@ -560,17 +568,17 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                           {isApproved ? (
                             <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-fb-success-soft text-fb-success border border-fb-success/30 flex items-center gap-1">
                               <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span>Đã phê duyệt</span>
+                              <span>Đã chọn vào ngân hàng đề</span>
                             </span>
                           ) : isRejected ? (
                             <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-fb-danger-soft text-fb-danger border border-fb-danger/30 flex items-center gap-1">
                               <XCircle className="w-3.5 h-3.5" />
-                              <span>Bị từ chối</span>
+                              <span>Không chọn</span>
                             </span>
                           ) : (
                             <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-fb-warning-soft text-fb-warning border border-fb-warning/30 flex items-center gap-1">
                               <Clock className="w-3.5 h-3.5" />
-                              <span>Chờ duyệt</span>
+                              <span>Chưa xem xét</span>
                             </span>
                           )}
                         </div>
@@ -675,6 +683,16 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                       {/* Question Single Actions */}
                       {!readOnly && (
                         <div className="pt-3 border-t border-fb-divider flex flex-wrap items-center justify-end gap-2 text-xs">
+                          {q.question_id && (
+                            <button
+                              type="button"
+                              onClick={() => setAiQuestion(q)}
+                              className="px-3 py-1.5 rounded-lg border border-fb-blue/30 bg-fb-card text-fb-blue font-semibold hover:bg-fb-blue-soft transition cursor-pointer flex items-center gap-1.5"
+                            >
+                              <Sparkles className="w-3.5 h-3.5" />
+                              <span>AI tinh chỉnh</span>
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() => setEditingQuestion(q)}
@@ -693,7 +711,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                                 className="px-3 py-1.5 rounded-lg border border-fb-danger/30 bg-fb-danger-soft text-fb-danger font-semibold hover:bg-fb-danger/20 transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
                               >
                                 <XCircle className="w-3.5 h-3.5" />
-                                <span>Từ chối</span>
+                                <span>Không chọn</span>
                               </button>
 
                               <button
@@ -703,7 +721,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                                 className="px-3.5 py-1.5 rounded-lg bg-fb-success hover:bg-fb-success/90 text-white font-bold transition shadow-2xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
                               >
                                 <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>Phê duyệt</span>
+                                <span>Chọn vào ngân hàng đề</span>
                               </button>
                             </>
                           )}
@@ -794,6 +812,21 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
         onSaved={handleQuestionEdited}
         showToast={showToast}
       />
+
+      {/* AI tinh chỉnh câu hỏi */}
+      {aiQuestion?.question_id && (
+        <QuestionAiRefineModal
+          question={{
+            question_id: aiQuestion.question_id,
+            content: aiQuestion.content || '',
+            options: aiQuestion.options || [],
+            explanation: aiQuestion.explanation,
+          }}
+          onClose={() => setAiQuestion(null)}
+          onApplied={(updated) => handleAiApplied(aiQuestion.question_id!, updated)}
+          showToast={showToast}
+        />
+      )}
 
       {/* Complete Review Modal */}
       <CompleteReviewModal

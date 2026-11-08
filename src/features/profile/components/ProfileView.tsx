@@ -35,6 +35,7 @@ import {
   Mail,
 } from 'lucide-react';
 import type { User } from '../../demo/types';
+import { ProfileQuestionSets } from './ProfileQuestionSets';
 
 export const ProfileView: React.FC = () => {
   const {
@@ -69,7 +70,7 @@ export const ProfileView: React.FC = () => {
   } = useApp();
 
   const [activeTab, setActiveTabLocal] = useState<
-    'POSTS' | 'ABOUT' | 'PHOTOS' | 'FRIENDS'
+    'POSTS' | 'ABOUT' | 'PHOTOS' | 'FRIENDS' | 'QUESTION_SETS'
   >('POSTS');
   const [activeMenuPostId, setActiveMenuPostId] = useState<string | null>(null);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -391,6 +392,10 @@ export const ProfileView: React.FC = () => {
               { id: 'ABOUT', label: 'Giới thiệu' },
               { id: 'PHOTOS', label: 'Ảnh' },
               { id: 'FRIENDS', label: `Bạn bè (${targetUser.friendsCount})` },
+              // Bộ câu hỏi chỉ có ở sinh viên (GET /users/{userId}/sessions)
+              ...(targetUser.role === 'STUDENT'
+                ? [{ id: 'QUESTION_SETS', label: 'Bộ câu hỏi' }]
+                : []),
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -429,7 +434,15 @@ export const ProfileView: React.FC = () => {
       )}
 
       {/* ================= 2 CỘT DƯỚI ================= */}
-      {activeTab !== 'PHOTOS' && (
+      {activeTab === 'QUESTION_SETS' && targetUser.role === 'STUDENT' && (
+        <ProfileQuestionSets
+          owner={targetUser}
+          isMe={isMe}
+          showToast={showToast}
+        />
+      )}
+
+      {activeTab !== 'PHOTOS' && activeTab !== 'QUESTION_SETS' && (
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mt-4 px-2 sm:px-0">
           {/* CỘT TRÁI (360px): Giới thiệu & Bạn bè (5 cols) */}
           <div className="md:col-span-5 space-y-4 md:sticky md:top-18 md:self-start">

@@ -147,7 +147,7 @@ const SubmissionDetailContent: React.FC<{ sessionId: number; onClose: () => void
                     <div className="flex items-center gap-1.5 text-fb-success font-medium">
                       <UserCheck className="w-4 h-4" />
                       <span>
-                        Duyệt bởi: {detail.reviewed_by_lecturer}
+                        Đã xem xét bởi: {detail.reviewed_by_lecturer}
                         {detail.reviewed_at &&
                           ` (${new Date(detail.reviewed_at).toLocaleDateString('vi-VN')})`}
                       </span>

@@ -276,7 +276,7 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
               Chỉnh sửa phiên đề xuất
             </h3>
             <p className="text-sm text-fb-text-2">
-              Chỉ có thể chỉnh sửa khi phiên đang ở trạng thái Chờ duyệt
+              Chỉ có thể chỉnh sửa khi bộ câu hỏi đang chờ giảng viên xem xét
             </p>
           </div>
 

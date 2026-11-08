@@ -32,7 +32,7 @@ export const RejectReasonModal: React.FC<RejectReasonModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reason.trim()) return;
+    // Swagger: reason là tùy chọn.
     await onConfirm(reason.trim());
   };
 
@@ -47,10 +47,10 @@ export const RejectReasonModal: React.FC<RejectReasonModalProps> = ({
             </span>
             <div>
               <h3 className="font-bold text-base text-fb-text">
-                Từ chối phê duyệt ({questionIds.length} câu hỏi)
+                Không chọn vào ngân hàng đề ({questionIds.length} câu hỏi)
               </h3>
               <p className="text-xs text-fb-text-2">
-                Nhập lý do từ chối để phản hồi cho người đề xuất
+                Câu hỏi vẫn thuộc bộ câu hỏi của sinh viên, chỉ không đưa vào ngân hàng đề
               </p>
             </div>
           </div>
@@ -90,13 +90,13 @@ export const RejectReasonModal: React.FC<RejectReasonModalProps> = ({
 
           <div>
             <label className="block text-xs font-bold text-fb-text mb-1.5">
-              Lý do từ chối cụ thể <span className="text-fb-danger">*</span>:
+              Lý do (không bắt buộc):
             </label>
             <textarea
               rows={3}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="Nhập lý do câu hỏi chưa đạt yêu cầu..."
+              placeholder="Ghi chú lý do không chọn câu hỏi..."
               required
               className="w-full px-3.5 py-2.5 rounded-lg border border-fb-divider bg-fb-card text-sm text-fb-text focus:border-fb-danger focus:outline-hidden resize-y"
             />
@@ -114,13 +114,13 @@ export const RejectReasonModal: React.FC<RejectReasonModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || !reason.trim()}
+              disabled={isSubmitting}
               className="px-4 py-2 rounded-lg bg-fb-danger hover:bg-fb-danger/90 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
             >
               {isSubmitting && (
                 <div className="w-3.5 h-3.5 border-2 border-fb-card border-t-transparent rounded-full animate-spin" />
               )}
-              <span>Xác nhận từ chối</span>
+              <span>Xác nhận không chọn</span>
             </button>
           </div>
         </form>

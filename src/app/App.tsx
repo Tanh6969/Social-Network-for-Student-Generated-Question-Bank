@@ -81,7 +81,6 @@ import { CreatePostModal } from '../features/feed/components/CreatePostModal';
 import { PostDetailModal } from '../features/feed/components/PostDetailModal';
 import { ProposeSessionModal } from '../features/bank/components/ProposeSessionModal';
 import { QuestionQuizModal } from '../features/bank/components/QuestionQuizModal';
-import { AIRefineModal } from '../features/lecturer/components/AIRefineModal';
 import { ExamGeneratorWizard } from '../features/lecturer/components/ExamGeneratorWizard';
 import { ExportQuestionsModal } from '../features/lecturer/components/ExportQuestionsModal';
 import { ReportModal } from '../features/demo/components/modals/ReportModal';
@@ -164,7 +163,6 @@ const MainContent: React.FC = () => {
       <PostDetailModal />
       <ProposeSessionModal />
       <QuestionQuizModal />
-      <AIRefineModal />
       <ExamGeneratorWizard />
       <ExportQuestionsModal />
       <ReportModal />

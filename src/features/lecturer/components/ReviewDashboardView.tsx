@@ -24,6 +24,8 @@ import { useApp } from '../../demo/context/AppContext';
 import { errorMessage, PendingSessionItemDto, SubjectResponse } from '../../../api';
 import { proposalGateway } from '../../proposals/proposalGateway';
 import { SessionReviewDetail } from './SessionReviewDetail';
+import { ReviewBasketBar, type BasketItem } from './ReviewBasketBar';
+import { RejectReasonModal } from './RejectReasonModal';
 
 type ReviewSidebarTab = 'PENDING' | 'REVIEWING' | 'HISTORY';
 
@@ -43,6 +45,63 @@ export const ReviewDashboardView: React.FC = () => {
 
   // Danh mục môn học cho bộ lọc (GET /subjects)
   const [subjects, setSubjects] = useState<SubjectResponse[]>([]);
+
+  // Giỏ câu hỏi chung: câu được tích chọn từ nhiều bộ của nhiều sinh viên
+  const [basket, setBasket] = useState<BasketItem[]>([]);
+  const [basketBusy, setBasketBusy] = useState(false);
+  const [isRejectingBasket, setIsRejectingBasket] = useState(false);
+  const [detailRefreshKey, setDetailRefreshKey] = useState(0);
+  const basketIds = useMemo(() => basket.map((i) => i.question_id), [basket]);
+
+  const toggleBasketItem = (item: BasketItem) =>
+    setBasket((prev) =>
+      prev.some((i) => i.question_id === item.question_id)
+        ? prev.filter((i) => i.question_id !== item.question_id)
+        : [...prev, item],
+    );
+  const addBasketItems = (items: BasketItem[]) =>
+    setBasket((prev) => [
+      ...prev,
+      ...items.filter((item) => !prev.some((i) => i.question_id === item.question_id)),
+    ]);
+  const removeFromBasket = (questionIds: number[]) =>
+    setBasket((prev) => prev.filter((i) => !questionIds.includes(i.question_id)));
+
+  const approveBasket = async () => {
+    const ids = basket.map((i) => i.question_id);
+    if (ids.length === 0) return;
+    setBasketBusy(true);
+    try {
+      const res = await proposalGateway.approveQuestions(ids);
+      const points =
+        res.points_earned !== undefined ? ` (cộng ${res.points_earned} điểm cho tác giả)` : '';
+      showToast(`Đã chọn ${ids.length} câu vào ngân hàng đề${points}`, 'success');
+      removeFromBasket(ids);
+      setDetailRefreshKey((k) => k + 1);
+      void fetchSessions();
+    } catch (err: unknown) {
+      showToast(errorMessage(err, 'Không thể chọn các câu hỏi vào ngân hàng đề.'), 'error');
+    } finally {
+      setBasketBusy(false);
+    }
+  };
+
+  const rejectBasket = async (reason: string) => {
+    const ids = basket.map((i) => i.question_id);
+    if (ids.length === 0) return;
+    setBasketBusy(true);
+    try {
+      await proposalGateway.rejectQuestions(ids, reason);
+      showToast(`Đã đánh dấu không chọn ${ids.length} câu hỏi`, 'success');
+      removeFromBasket(ids);
+      setIsRejectingBasket(false);
+      setDetailRefreshKey((k) => k + 1);
+    } catch (err: unknown) {
+      showToast(errorMessage(err, 'Không thể đánh dấu không chọn các câu hỏi.'), 'error');
+    } finally {
+      setBasketBusy(false);
+    }
+  };
 
   // Loading & Error states
   const [loading, setLoading] = useState<boolean>(false);
@@ -69,7 +128,7 @@ export const ReviewDashboardView: React.FC = () => {
       ]);
       setRawSessions([...pending, ...history]);
     } catch (err: unknown) {
-      const msg = errorMessage(err, 'Không thể tải danh sách phiên kiểm duyệt.');
+      const msg = errorMessage(err, 'Không thể tải danh sách bộ câu hỏi cần xem xét.');
       setError(msg);
       showToast(msg, 'error');
     } finally {
@@ -137,10 +196,11 @@ export const ReviewDashboardView: React.FC = () => {
       setCompletedSessions((prev) => [resolvedSession, ...prev.filter((s) => s.session_id !== sessionId)]);
     }
 
-    // Remove from rawSessions
+    // Remove from rawSessions; câu của bộ này không còn chờ nên gỡ khỏi giỏ
     setRawSessions((prev) => prev.filter((s) => s.session_id !== sessionId));
+    setBasket((prev) => prev.filter((i) => i.session_id !== sessionId));
     setSelectedSession(null);
-    showToast('Phiên kiểm duyệt đã được lưu vào lịch sử.', 'info');
+    showToast('Bộ câu hỏi đã chuyển sang mục "Đã xem xét xong".', 'info');
   };
 
   // Determine current dataset based on active tab
@@ -233,14 +293,14 @@ export const ReviewDashboardView: React.FC = () => {
                 <CheckSquare className="w-5 h-5" />
               </span>
               <h1 className="text-xl sm:text-2xl font-bold text-fb-text tracking-tight">
-                Kiểm duyệt câu hỏi
+                Chọn câu vào ngân hàng đề
               </h1>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-fb-blue-soft text-fb-blue">
                 Dành cho Giảng viên
               </span>
             </div>
             <p className="text-xs text-fb-text-2">
-              Thẩm định các phiên đề xuất câu hỏi từ sinh viên, phê chuẩn vào ngân hàng đề thi hoặc gửi phản hồi từ chối.
+              Xem các bộ câu hỏi sinh viên đăng, chọn những câu đạt chuẩn vào ngân hàng đề của môn học. Có thể gom câu từ nhiều bộ vào giỏ rồi chọn một lần.
             </p>
           </div>
 
@@ -270,12 +330,12 @@ export const ReviewDashboardView: React.FC = () => {
       {/* Main Container: Left Sidebar + Right Content Area */}
       <div className="flex flex-col lg:flex-row gap-4 items-start">
         {/* =========================================================================
-            LEFT SIDEBAR (EXACTLY 3 ITEMS: Chờ kiểm duyệt, Đang kiểm duyệt, Lịch sử kiểm duyệt)
+            LEFT SIDEBAR (3 mục: Chờ xem xét, Đang xem xét, Đã xem xét xong)
             ========================================================================= */}
         <aside className="w-full lg:w-64 xl:w-72 shrink-0 bg-fb-card rounded-lg shadow-fb-card p-3 sm:p-4 space-y-2 lg:sticky lg:top-18 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto">
           <div className="hidden lg:block pb-2 mb-2 border-b border-fb-divider">
             <span className="text-xs font-bold text-fb-text-3">
-              Trạng thái kiểm duyệt
+              Trạng thái bộ câu hỏi
             </span>
           </div>
 
@@ -295,7 +355,7 @@ export const ReviewDashboardView: React.FC = () => {
             >
               <div className="flex items-center gap-2.5">
                 <Clock className={`w-4 h-4 ${activeTab === 'PENDING' ? 'text-white' : 'text-fb-warning'}`} />
-                <span>Chờ kiểm duyệt</span>
+                <span>Chờ xem xét</span>
               </div>
               <span
                 className={`px-2 py-0.5 rounded-full text-xs font-bold ${
@@ -322,7 +382,7 @@ export const ReviewDashboardView: React.FC = () => {
             >
               <div className="flex items-center gap-2.5">
                 <Layers className={`w-4 h-4 ${activeTab === 'REVIEWING' ? 'text-white' : 'text-fb-blue'}`} />
-                <span>Đang kiểm duyệt</span>
+                <span>Đang xem xét</span>
               </div>
               <span
                 className={`px-2 py-0.5 rounded-full text-xs font-bold ${
@@ -349,7 +409,7 @@ export const ReviewDashboardView: React.FC = () => {
             >
               <div className="flex items-center gap-2.5">
                 <RotateCcw className={`w-4 h-4 ${activeTab === 'HISTORY' ? 'text-white' : 'text-fb-success'}`} />
-                <span>Lịch sử kiểm duyệt</span>
+                <span>Đã xem xét xong</span>
               </div>
               <span
                 className={`px-2 py-0.5 rounded-full text-xs font-bold ${
@@ -367,11 +427,11 @@ export const ReviewDashboardView: React.FC = () => {
           <div className="hidden lg:block mt-4 p-3 bg-fb-input rounded-lg border border-fb-divider text-xs text-fb-text-2 space-y-1">
             <p className="font-semibold text-fb-text flex items-center gap-1">
               <Info className="w-3.5 h-3.5 text-fb-blue shrink-0" />
-              Quy trình kiểm duyệt:
+              Quy trình:
             </p>
-            <p>1. Chọn phiên Chờ kiểm duyệt để bắt đầu thẩm định.</p>
-            <p>2. Phê duyệt, từ chối hoặc chỉnh sửa từng câu hỏi.</p>
-            <p>3. Chốt hoàn tất để lưu vào Ngân hàng đề thi trường.</p>
+            <p>1. Mở một bộ câu hỏi đang chờ xem xét.</p>
+            <p>2. Chọn câu vào ngân hàng đề (hoặc tích vào giỏ để gom từ nhiều bộ). Có thể sửa hoặc nhờ AI tinh chỉnh trước.</p>
+            <p>3. Hoàn tất xem xét: câu chưa chọn được tính là không chọn. Sinh viên không biết câu nào được chọn.</p>
           </div>
         </aside>
 
@@ -379,6 +439,15 @@ export const ReviewDashboardView: React.FC = () => {
             RIGHT MAIN CONTENT AREA
             ========================================================================= */}
         <main className="flex-1 min-w-0 w-full space-y-4">
+          <ReviewBasketBar
+            items={basket}
+            busy={basketBusy}
+            onApproveAll={() => void approveBasket()}
+            onRejectAll={() => setIsRejectingBasket(true)}
+            onRemove={(id) => removeFromBasket([id])}
+            onClear={() => setBasket([])}
+          />
+
           {/* If a session is actively opened in detail view, render SessionReviewDetail */}
           {selectedSession ? (
             <SessionReviewDetail
@@ -390,6 +459,11 @@ export const ReviewDashboardView: React.FC = () => {
               onSessionCompleted={handleSessionCompleted}
               showToast={showToast}
               readOnly={activeTab === 'HISTORY'}
+              basketIds={basketIds}
+              onToggleBasket={toggleBasketItem}
+              onAddToBasket={addBasketItems}
+              onQuestionsDecided={removeFromBasket}
+              refreshKey={detailRefreshKey}
             />
           ) : (
             <>
@@ -399,13 +473,13 @@ export const ReviewDashboardView: React.FC = () => {
                   <Info className="w-5 h-5 text-fb-blue shrink-0 mt-0.5" />
                   <div className="space-y-1">
                     <p className="font-bold">
-                      Thông tin tra cứu lịch sử kiểm duyệt
+                      Về mục "Đã xem xét xong"
                     </p>
                     <p className="leading-relaxed">
                       Hiện tại đặc tả OpenAPI/Swagger của hệ thống chưa cung cấp endpoint chuyên biệt để tra cứu toàn bộ lịch sử các phiên đã hoàn tất (Đề xuất backend bổ sung endpoint <code className="tabular-nums bg-fb-blue-soft px-1 py-0.5 rounded">GET /sessions/history</code> hoặc tham số lọc <code className="tabular-nums bg-fb-blue-soft px-1 py-0.5 rounded">status=RESOLVED</code> trong API <code className="tabular-nums bg-fb-blue-soft px-1 py-0.5 rounded">GET /sessions/pending</code>).
                     </p>
                     <p className="leading-relaxed text-fb-blue">
-                      Dưới đây hiển thị các phiên đã được chốt duyệt thành công trong phiên làm việc hiện tại ở chế độ chỉ xem.
+                      Dưới đây là các bộ câu hỏi đã hoàn tất xem xét, ở chế độ chỉ xem.
                     </p>
                   </div>
                 </div>
@@ -442,19 +516,6 @@ export const ReviewDashboardView: React.FC = () => {
                     </select>
                     <Filter className="w-3.5 h-3.5 text-fb-text-3 absolute right-2.5 top-3 pointer-events-none" />
                   </div>
-
-                  {/* History Filter */}
-                  {activeTab === 'HISTORY' && (
-                    <select
-                      value={historyResultFilter}
-                      onChange={(e) => setHistoryResultFilter(e.target.value as 'ALL' | 'RESOLVED' | 'REJECTED')}
-                      className="pl-3 pr-8 py-2 rounded-lg bg-fb-input border border-fb-divider text-fb-text font-semibold focus:ring-2 focus:ring-fb-blue focus:outline-hidden cursor-pointer"
-                    >
-                      <option value="ALL">Tất cả trạng thái</option>
-                      <option value="RESOLVED">Đã phê chuẩn (RESOLVED)</option>
-                      <option value="REJECTED">Đã từ chối (REJECTED)</option>
-                    </select>
-                  )}
 
                   {/* Sort Order */}
                   <div className="relative shrink-0">
@@ -496,7 +557,7 @@ export const ReviewDashboardView: React.FC = () => {
                 <div className="bg-fb-card rounded-lg p-8 border border-fb-danger/30 text-center space-y-3">
                   <AlertCircle className="w-10 h-10 text-fb-danger mx-auto" />
                   <h3 className="font-bold text-sm text-fb-text">
-                    Không thể tải dữ liệu phiên kiểm duyệt
+                    Không thể tải danh sách bộ câu hỏi
                   </h3>
                   <p className="text-xs text-fb-danger max-w-md mx-auto">
                     {error}
@@ -523,16 +584,16 @@ export const ReviewDashboardView: React.FC = () => {
                   </div>
                   <h3 className="font-bold text-sm text-fb-text">
                     {activeTab === 'PENDING'
-                      ? 'Không có phiên nào đang chờ kiểm duyệt'
+                      ? 'Không có bộ câu hỏi nào đang chờ xem xét'
                       : activeTab === 'REVIEWING'
-                      ? 'Không có phiên nào đang trong quá trình kiểm duyệt'
-                      : 'Chưa có lịch sử phiên kiểm duyệt nào'}
+                      ? 'Không có bộ câu hỏi nào đang được xem xét'
+                      : 'Chưa có bộ câu hỏi nào đã xem xét xong'}
                   </h3>
                   <p className="text-xs text-fb-text-2 max-w-sm mx-auto">
                     {activeTab === 'PENDING'
                       ? 'Tất cả các đề xuất câu hỏi từ sinh viên đã được tiếp nhận và xử lý đầy đủ.'
                       : activeTab === 'REVIEWING'
-                      ? 'Chọn một phiên từ mục "Chờ kiểm duyệt" để bắt đầu quy trình thẩm định.'
+                      ? 'Khi sinh viên đăng bộ câu hỏi mới, bộ đó sẽ xuất hiện ở đây.'
                       : 'Các phiên sau khi giảng viên chốt hoàn tất sẽ được lưu trữ tại đây.'}
                   </p>
                 </div>
@@ -568,10 +629,10 @@ export const ReviewDashboardView: React.FC = () => {
                               }`}
                             >
                               {isPending
-                                ? 'Chờ kiểm duyệt'
+                                ? 'Chờ xem xét'
                                 : isReviewing
-                                ? 'Đang kiểm duyệt'
-                                : 'Đã hoàn tất'}
+                                ? 'Đang xem xét'
+                                : 'Đã xem xét xong'}
                             </span>
                           </div>
 
@@ -634,7 +695,7 @@ export const ReviewDashboardView: React.FC = () => {
                               onClick={() => handleStartReview(session)}
                               className="px-3.5 py-2 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-xs"
                             >
-                              <span>Bắt đầu kiểm duyệt</span>
+                              <span>Bắt đầu xem xét</span>
                               <ChevronRight className="w-3.5 h-3.5" />
                             </button>
                           )}
@@ -644,7 +705,7 @@ export const ReviewDashboardView: React.FC = () => {
                               onClick={() => handleStartReview(session)}
                               className="px-3.5 py-2 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-xs"
                             >
-                              <span>Tiếp tục kiểm duyệt</span>
+                              <span>Tiếp tục xem xét</span>
                               <ChevronRight className="w-3.5 h-3.5" />
                             </button>
                           )}
@@ -745,6 +806,13 @@ export const ReviewDashboardView: React.FC = () => {
           )}
         </main>
       </div>
+      <RejectReasonModal
+        isOpen={isRejectingBasket}
+        questionIds={basketIds}
+        onClose={() => setIsRejectingBasket(false)}
+        onConfirm={rejectBasket}
+        isSubmitting={basketBusy}
+      />
     </div>
   );
 };
