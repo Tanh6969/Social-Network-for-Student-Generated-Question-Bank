@@ -28,10 +28,10 @@ const comment = (id: string, authorId = 'me'): CommentItem =>
 
 describe('feed interactions', () => {
   it('keeps over-limit words visible for correction and blocks publishing', () => {
-    const input = Array.from({ length: 501 }, (_, index) => `từ${index}`).join(
+    const input = Array.from({ length: 401 }, (_, index) => `từ${index}`).join(
       ' ',
     );
-    expect(countWords(input)).toBe(501);
+    expect(countWords(input)).toBe(401);
     const result = limitPostContent(input);
     expect(result.content).toBe(input);
     expect(result.issue).toBe('words');
@@ -40,11 +40,11 @@ describe('feed interactions', () => {
   });
 
   it('bounds the final word and reports the reason when a pasted post is too long', () => {
-    const firstWords = Array.from({ length: 499 }, () => 'a').join(' ');
+    const firstWords = Array.from({ length: 399 }, () => 'a').join(' ');
     const longFinalWord = 'b'.repeat(MAX_POST_WORD_CHARACTERS + 20);
     const result = limitPostContent(`${firstWords} ${longFinalWord}`);
     expect(result.issue).toBe('wordLength');
-    expect(countWords(result.content)).toBe(500);
+    expect(countWords(result.content)).toBe(400);
     expect(result.content.split(' ').at(-1)).toHaveLength(
       MAX_POST_WORD_CHARACTERS,
     );
@@ -54,7 +54,7 @@ describe('feed interactions', () => {
 
   it('caps the total length and reports a character overflow', () => {
     const input =
-      Array.from({ length: 499 }, () => 'a').join(' ') +
+      Array.from({ length: 399 }, () => 'a').join(' ') +
       ' ' +
       'b'.repeat(40) +
       ' '.repeat(MAX_POST_CHARACTERS);

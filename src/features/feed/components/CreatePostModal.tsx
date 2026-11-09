@@ -306,7 +306,7 @@ function PostComposer({
               className="text-xs font-medium text-fb-danger"
             >
               {contentIssue === 'words'
-                ? 'Bài viết vượt giới hạn 500 từ. Hãy rút ngắn để đăng.'
+                ? `Bài viết vượt giới hạn ${MAX_POST_WORDS} từ. Hãy rút ngắn để đăng.`
                 : contentIssue === 'wordLength' || limitIssue === 'wordLength'
                   ? 'Một từ quá dài. Phần vượt giới hạn đã được cắt.'
                   : 'Bài viết quá dài. Phần vượt giới hạn đã được cắt.'}

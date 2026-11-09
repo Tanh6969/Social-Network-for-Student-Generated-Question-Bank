@@ -1,3 +1,4 @@
+import { createId } from '../../../shared/createId';
 import React, {
   createContext,
   useContext,
@@ -485,10 +486,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     setCurrentUser,
     role,
     loginWithCredentials,
-    logout,
+    logout: logoutSession,
     switchRole,
     updateCurrentUser: updateAuthCurrentUser,
   } = useAuthSession(showToast);
+
+  // Đăng xuất luôn đưa về trang chủ MXH, để lần đăng nhập sau không mở lại
+  // trang cuối cùng của phiên trước.
+  const logout = async () => {
+    setViewingUserId(null);
+    navigate(tabPaths.feed, { replace: true });
+    await logoutSession();
+  };
 
   // Phiên demo: mỗi lần mở Ngân hàng, nạp các câu hỏi đã được duyệt từ kho
   // đề xuất dùng chung (SV nộp → GV duyệt → xuất hiện ở đây). Phiên khác thì
@@ -1044,7 +1053,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     if (previousUrl !== url) {
       setProfilePhotoHistory((history) => [
         {
-          id: crypto.randomUUID(),
+          id: createId(),
           userId: currentUser.id,
           kind,
           url: previousUrl,
@@ -1112,7 +1121,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     )
       return;
     const newPost: Post = {
-      id: crypto.randomUUID(),
+      id: createId(),
       author: currentUser,
       type: postData.type || 'KNOWLEDGE',
       content: postData.content || '',
@@ -1204,7 +1213,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     )
       return;
     const newComment: CommentItem = {
-      id: crypto.randomUUID(),
+      id: createId(),
       author: currentUser,
       content: text.trim(),
       createdAt: new Date().toISOString(),

@@ -1,6 +1,6 @@
 import type { CommentItem, Post } from '../demo/types';
 
-export const MAX_POST_WORDS = 500;
+export const MAX_POST_WORDS = 400;
 export const MAX_POST_CHARACTERS = 5_000;
 export const MAX_POST_WORD_CHARACTERS = 64;
 
