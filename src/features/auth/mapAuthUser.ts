@@ -1,4 +1,5 @@
 import type { AuthResponse } from '../../api/auth';
+import type { ProfileResponse } from '../../api/posts';
 import type { User } from '../demo/types';
 
 export function mapAuthUser(account: AuthResponse): User {
@@ -25,5 +26,25 @@ export function mapAuthUser(account: AuthResponse): User {
     followersCount: 0,
     isOnline: true,
     verifiedLecturer: account.role === 'LECTURER' && account.verified === true,
+  };
+}
+
+/** Bổ sung thông tin hồ sơ đầy đủ (GET /users/me) vào người dùng đăng nhập. */
+export function applyProfile(
+  user: User,
+  profile: ProfileResponse | null,
+): User {
+  if (!profile) return user;
+  return {
+    ...user,
+    name: profile.full_name?.trim() || user.name,
+    avatar: profile.avatar_url || user.avatar,
+    coverImage: profile.cover_url || user.coverImage,
+    bio: profile.bio ?? user.bio,
+    faculty: profile.school_faculty || user.faculty,
+    classOrTitle: profile.class_name || user.classOrTitle,
+    points: profile.gamification_points ?? user.points,
+    friendsCount: profile.friends_count ?? user.friendsCount,
+    followersCount: profile.followers_count ?? user.followersCount,
   };
 }

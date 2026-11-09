@@ -71,6 +71,25 @@ export interface Post {
     createdAt: string;
   };
   comments?: CommentItem[];
+  /**
+   * Chỉ có ở phiên thật: đối tượng phía backend để thả cảm xúc / bình luận.
+   * Không có (ví dụ thẻ huy hiệu) thì tương tác chỉ diễn ra trên giao diện.
+   */
+  apiTarget?: { type: 'POST' | 'SESSION'; id: number };
+  /** Media gốc từ backend, gửi lại nguyên vẹn khi sửa bài (PUT thay thế toàn bộ). */
+  apiMedia?: {
+    key?: string;
+    url?: string;
+    type?: 'IMAGE' | 'VIDEO' | 'DOCUMENT';
+    name?: string;
+    size?: number;
+    width?: number;
+    height?: number;
+    duration?: number;
+    thumbnail_url?: string;
+  }[];
+  /** Thẻ hoạt động (huy hiệu, phiên được duyệt…) — không sửa/xoá như bài viết. */
+  isActivity?: boolean;
 }
 
 export interface CommentItem {

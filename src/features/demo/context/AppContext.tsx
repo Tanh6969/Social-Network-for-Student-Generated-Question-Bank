@@ -39,6 +39,14 @@ import {
   updateOwnedPost,
 } from '../../feed/postUtils';
 import { revokeMediaUrl } from '../../feed/mediaUtils';
+import { errorMessage, isApiSession } from '../../../api';
+import { postsApi } from '../../../api/posts';
+import {
+  buildMediaItems,
+  commentFromApi,
+  loadApiFeed,
+  postFromApi,
+} from '../../feed/apiPosts';
 import {
   mockCurrentUserStudent,
   mockCurrentUserLecturer,
@@ -126,16 +134,31 @@ interface AppContextType {
 
   // Posts & Social
   posts: Post[];
-  createPost: (postData: Partial<Post>) => void;
+  /** Phiên thật đang tải bảng tin từ máy chủ. */
+  isFeedLoading: boolean;
+  /** Lỗi tải bảng tin của phiên thật (null nếu không lỗi). */
+  feedError: string | null;
+  reloadFeed: () => void;
+  /**
+   * `files` ánh xạ blob URL (trong mediaUrls/documents) → tệp gốc để tải lên
+   * máy chủ ở phiên thật. Trả về true khi đăng thành công.
+   */
+  createPost: (
+    postData: Partial<Post>,
+    files?: ReadonlyMap<string, File>,
+  ) => Promise<boolean>;
   updatePost: (
     postId: string,
     updates: Pick<
       Post,
       'content' | 'privacy' | 'mediaUrls' | 'documents' | 'type'
     >,
-  ) => void;
+    files?: ReadonlyMap<string, File>,
+  ) => Promise<boolean>;
   toggleLikePost: (postId: string) => void;
   addComment: (postId: string, text: string, parentCommentId?: string) => void;
+  /** Phiên thật: tải bình luận của bài khi mở chi tiết (demo: không làm gì). */
+  loadPostComments: (postId: string) => void;
   deletePost: (postId: string) => void;
   addLecturerNote: (postId: string, note: string) => void;
   friendStatuses: Record<string, FriendStatus>;
@@ -490,6 +513,56 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     updateCurrentUser: updateAuthCurrentUser,
   } = useAuthSession(showToast);
 
+<<<<<<< Updated upstream
+=======
+  // Việc đưa về trang chủ sau đăng xuất do MainContent (App.tsx) đảm nhận.
+  const logout = async () => {
+    setViewingUserId(null);
+    await logoutSession();
+  };
+
+  // Bảng tin: phiên thật lấy từ API, phiên demo dùng dữ liệu mẫu. Đổi phiên
+  // thì thay toàn bộ danh sách để không lẫn bài của tài khoản trước.
+  const postsSourceRef = useRef<'demo' | 'api'>('demo');
+  const [isFeedLoading, setIsFeedLoading] = useState(false);
+  const [feedError, setFeedError] = useState<string | null>(null);
+  const [feedReloadKey, setFeedReloadKey] = useState(0);
+  const apiFeedUserId = sessionKind === 'api' ? rawCurrentUser.id : null;
+  const rawCurrentUserRef = useRef(rawCurrentUser);
+  useEffect(() => {
+    rawCurrentUserRef.current = rawCurrentUser;
+  }, [rawCurrentUser]);
+  useEffect(() => {
+    if (!apiFeedUserId) {
+      if (postsSourceRef.current === 'api') {
+        postsSourceRef.current = 'demo';
+        setPosts(mockPosts);
+      }
+      return;
+    }
+    postsSourceRef.current = 'api';
+    let cancelled = false;
+    setPosts([]);
+    setFeedError(null);
+    setIsFeedLoading(true);
+    loadApiFeed(rawCurrentUserRef.current)
+      .then((loaded) => {
+        if (!cancelled) setPosts(loaded);
+      })
+      .catch((error: unknown) => {
+        if (!cancelled)
+          setFeedError(errorMessage(error, 'Không tải được bảng tin.'));
+      })
+      .finally(() => {
+        if (!cancelled) setIsFeedLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [apiFeedUserId, feedReloadKey]);
+  const reloadFeed = () => setFeedReloadKey((key) => key + 1);
+
+>>>>>>> Stashed changes
   // Phiên demo: mỗi lần mở Ngân hàng, nạp các câu hỏi đã được duyệt từ kho
   // đề xuất dùng chung (SV nộp → GV duyệt → xuất hiện ở đây). Phiên khác thì
   // gỡ dữ liệu demo đó ra để không lẫn với dữ liệu thật.
@@ -515,16 +588,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       mergeDemoBank(prev, bank.sessions, DEMO_BANK_SESSION_PREFIX),
     );
     setQuestions((prev) =>
-      mergeDemoBank(prev, bank.questions, DEMO_BANK_QUESTION_PREFIX, (old, next) => ({
-        ...next,
-        ratingAverage: old.ratingAverage,
-        ratingCount: old.ratingCount,
-        totalAttempts: old.totalAttempts,
-        correctAttempts: old.correctAttempts,
-        optionDistribution: old.optionDistribution,
-        userRatedStars: old.userRatedStars,
-        userComment: old.userComment,
-      })),
+      mergeDemoBank(
+        prev,
+        bank.questions,
+        DEMO_BANK_QUESTION_PREFIX,
+        (old, next) => ({
+          ...next,
+          ratingAverage: old.ratingAverage,
+          ratingCount: old.ratingCount,
+          totalAttempts: old.totalAttempts,
+          correctAttempts: old.correctAttempts,
+          optionDistribution: old.optionDistribution,
+          userRatedStars: old.userRatedStars,
+          userComment: old.userComment,
+        }),
+      ),
     );
   }, [sessionKind, activeTab]);
 
@@ -1103,14 +1181,51 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   // Posts
-  const createPost = (postData: Partial<Post>) => {
+  const createPost = async (
+    postData: Partial<Post>,
+    files: ReadonlyMap<string, File> = new Map(),
+  ): Promise<boolean> => {
     if (
       (!postData.content?.trim() &&
         !postData.mediaUrls?.length &&
         !postData.documents?.length) ||
       getPostContentIssue(postData.content ?? '')
     )
-      return;
+      return false;
+    if (isApiSession()) {
+      try {
+        const media = await buildMediaItems(
+          postData.mediaUrls ?? [],
+          postData.documents ?? [],
+          files,
+          [],
+          postData.type === 'VIDEO',
+        );
+        const dto = await postsApi.createPost({
+          content: postData.content?.trim() || undefined,
+          media_urls: media.length ? media : undefined,
+          visibility: postData.privacy || 'PUBLIC',
+          post_type: 'SOCIAL_POST',
+        });
+        if (dto?.post_id != null) {
+          const created = postFromApi(dto, currentUser);
+          setPosts((previous) => [
+            created,
+            ...previous.filter((post) => post.id !== created.id),
+          ]);
+        } else {
+          reloadFeed();
+        }
+        showToast('Đã đăng bài viết mới thành công!', 'success');
+        return true;
+      } catch (error: unknown) {
+        showToast(
+          errorMessage(error, 'Không đăng được bài viết. Vui lòng thử lại.'),
+          'error',
+        );
+        return false;
+      }
+    }
     const newPost: Post = {
       id: crypto.randomUUID(),
       author: currentUser,
@@ -1131,26 +1246,83 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     };
     setPosts((previous) => [newPost, ...previous]);
     showToast('Đã đăng bài viết mới thành công!', 'success');
+    return true;
   };
 
-  const updatePost = (
+  const updatePost = async (
     postId: string,
     updates: Pick<
       Post,
       'content' | 'privacy' | 'mediaUrls' | 'documents' | 'type'
     >,
-  ) => {
+    files: ReadonlyMap<string, File> = new Map(),
+  ): Promise<boolean> => {
     if (
       (!updates.content.trim() &&
         !updates.mediaUrls?.length &&
         !updates.documents?.length) ||
       getPostContentIssue(updates.content)
     )
-      return;
+      return false;
     const oldPost = posts.find(
       (post) => post.id === postId && post.author.id === currentUser.id,
     );
-    if (!oldPost) return;
+    if (!oldPost) return false;
+    if (isApiSession()) {
+      if (oldPost.apiTarget?.type !== 'POST') return false;
+      const apiId = oldPost.apiTarget.id;
+      try {
+        const media = await buildMediaItems(
+          updates.mediaUrls ?? [],
+          updates.documents ?? [],
+          files,
+          oldPost.apiMedia,
+          updates.type === 'VIDEO',
+        );
+        await postsApi.updatePost(apiId, {
+          content: updates.content.trim(),
+          media_urls: media,
+          visibility: updates.privacy,
+        });
+        const fresh = await postsApi.getPost(apiId).catch(() => null);
+        setPosts((previous) =>
+          previous.map((post) => {
+            if (post.id !== postId) return post;
+            if (fresh)
+              return {
+                ...postFromApi(fresh, currentUser),
+                comments: post.comments,
+              };
+            const edited = postFromApi(
+              {
+                post_id: apiId,
+                content: updates.content.trim(),
+                media_urls: media,
+                visibility: updates.privacy,
+                post_type: 'SOCIAL_POST',
+                created_at: post.createdAt,
+              },
+              currentUser,
+            );
+            return {
+              ...edited,
+              likesCount: post.likesCount,
+              isLiked: post.isLiked,
+              commentsCount: post.commentsCount,
+              comments: post.comments,
+            };
+          }),
+        );
+        showToast('Đã lưu thay đổi bài viết.', 'success');
+        return true;
+      } catch (error: unknown) {
+        showToast(
+          errorMessage(error, 'Không lưu được bài viết. Vui lòng thử lại.'),
+          'error',
+        );
+        return false;
+      }
+    }
     setPosts((previous) =>
       updateOwnedPost(previous, postId, currentUser.id, updates),
     );
@@ -1170,24 +1342,51 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       )
       .forEach((document) => revokeMediaUrl(document.url));
     showToast('Đã lưu thay đổi bài viết.', 'success');
+    return true;
   };
 
   const toggleLikePost = (postId: string) => {
-    setPosts((prev) =>
-      prev.map((p) => {
-        if (p.id === postId) {
-          const isLiked = !p.isLiked;
-          return {
-            ...p,
-            isLiked,
-            likesCount: isLiked
-              ? p.likesCount + 1
-              : Math.max(0, p.likesCount - 1),
-          };
-        }
-        return p;
-      }),
-    );
+    const flipLike = () =>
+      setPosts((prev) =>
+        prev.map((p) => {
+          if (p.id === postId) {
+            const isLiked = !p.isLiked;
+            return {
+              ...p,
+              isLiked,
+              likesCount: isLiked
+                ? p.likesCount + 1
+                : Math.max(0, p.likesCount - 1),
+            };
+          }
+          return p;
+        }),
+      );
+    flipLike();
+    const target = posts.find((post) => post.id === postId)?.apiTarget;
+    if (!isApiSession() || !target) return;
+    // POST /react là toggle: cập nhật lạc quan, lỗi thì hoàn tác.
+    postsApi
+      .react(target.type, target.id)
+      .then((result) => {
+        const total = result.total_count;
+        if (typeof total !== 'number') return;
+        setPosts((prev) =>
+          prev.map((p) =>
+            p.id === postId
+              ? {
+                  ...p,
+                  isLiked: Boolean(result.my_reaction),
+                  likesCount: total,
+                }
+              : p,
+          ),
+        );
+      })
+      .catch((error: unknown) => {
+        flipLike();
+        showToast(errorMessage(error, 'Không thả được cảm xúc.'), 'error');
+      });
   };
 
   const addComment = (
@@ -1203,6 +1402,36 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         !post.comments?.some((item) => item.id === parentCommentId))
     )
       return;
+    if (isApiSession()) {
+      const target = post.apiTarget;
+      if (!target) {
+        showToast('Hoạt động này chưa hỗ trợ bình luận.', 'info');
+        return;
+      }
+      postsApi
+        .createComment(
+          target.type,
+          target.id,
+          text.trim(),
+          parentCommentId ? Number(parentCommentId) : undefined,
+        )
+        .then((dto) => {
+          if (!dto) return;
+          setPosts((previous) =>
+            appendComment(
+              previous,
+              postId,
+              commentFromApi(dto, currentUser),
+              parentCommentId,
+            ),
+          );
+          showToast('Đã gửi bình luận!', 'success');
+        })
+        .catch((error: unknown) =>
+          showToast(errorMessage(error, 'Không gửi được bình luận.'), 'error'),
+        );
+      return;
+    }
     const newComment: CommentItem = {
       id: crypto.randomUUID(),
       author: currentUser,
@@ -1218,11 +1447,60 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     showToast('Đã gửi bình luận!', 'success');
   };
 
+  const loadingCommentsRef = useRef(new Set<string>());
+  const loadPostComments = (postId: string) => {
+    if (!isApiSession() || loadingCommentsRef.current.has(postId)) return;
+    const target = posts.find((post) => post.id === postId)?.apiTarget;
+    if (!target) return;
+    loadingCommentsRef.current.add(postId);
+    const collect = async () => {
+      const all: CommentItem[] = [];
+      let after: number | undefined;
+      // Tối đa 5 trang × 50 bình luận gốc cho một lần mở bài.
+      for (let page = 0; page < 5; page += 1) {
+        const res = await postsApi.getComments(target.type, target.id, after);
+        all.push(...res.items.map((dto) => commentFromApi(dto, currentUser)));
+        if (!res.hasNext || res.after == null) break;
+        after = res.after;
+      }
+      return all;
+    };
+    collect()
+      .then((comments) =>
+        setPosts((previous) =>
+          previous.map((post) =>
+            post.id === postId ? { ...post, comments } : post,
+          ),
+        ),
+      )
+      .catch((error: unknown) =>
+        showToast(errorMessage(error, 'Không tải được bình luận.'), 'error'),
+      )
+      .finally(() => loadingCommentsRef.current.delete(postId));
+  };
+
   const deletePost = (postId: string) => {
     const oldPost = posts.find(
       (post) => post.id === postId && post.author.id === currentUser.id,
     );
     if (!oldPost) return;
+    if (isApiSession()) {
+      if (oldPost.apiTarget?.type !== 'POST') return;
+      postsApi
+        .deletePost(oldPost.apiTarget.id)
+        .then(() => {
+          setPosts((previous) =>
+            removeOwnedPost(previous, postId, currentUser.id),
+          );
+          if (activePostDetailId === postId) setActivePostDetailId(null);
+          if (sharedPostId === postId) navigate('/feed', { replace: true });
+          showToast('Đã xóa bài viết thành công!', 'info');
+        })
+        .catch((error: unknown) =>
+          showToast(errorMessage(error, 'Không xoá được bài viết.'), 'error'),
+        );
+      return;
+    }
     setPosts((previous) => removeOwnedPost(previous, postId, currentUser.id));
     oldPost.mediaUrls
       ?.filter(
@@ -1646,7 +1924,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       setNotifications((prev) => [newNotif, ...prev]);
 
       if (autoPost) {
-        createPost({
+        void createPost({
           type: 'QUESTION_APPROVED',
           content: `🎉 Chúc mừng ${targetSession.creator.name} đã được Giảng viên phê duyệt ${selectedQuestionIds.length} câu hỏi môn ${targetSession.subject} ("${targetSession.title}") nạp thẳng vào ${targetBankName}!`,
           subjectTag: targetSession.subject,
@@ -2169,10 +2447,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         isDarkMode,
         toggleDarkMode,
         posts,
+        isFeedLoading,
+        feedError,
+        reloadFeed,
         createPost,
         updatePost,
         toggleLikePost,
         addComment,
+        loadPostComments,
         deletePost,
         addLecturerNote,
         friendStatuses,

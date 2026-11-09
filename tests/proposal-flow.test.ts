@@ -26,7 +26,8 @@ async function load(token: string | null) {
 const proposal = (subjectId = 10) => ({
   title: 'Phiên kiểm thử',
   content: 'Mô tả',
-  subject_id: subjectId,
+  // Demo: lớp học phần của môn X có course_class_id = 100 + X.
+  course_class_id: 100 + subjectId,
   questions: [1, 2].map((n) => ({
     content: `Câu ${n}`,
     media_urls: [],
@@ -172,13 +173,9 @@ describe('phiên demo: sinh viên nộp → giảng viên duyệt → ngân hàn
     const reopened = await p.getSessionQuestions(resolved.session_id!);
     expect(reopened.questions![0].hidden_fields?.correct_answer).toBe('A');
 
-    // Báo lỗi (Game 5): is_error ⇒ điểm 0
-    const rated = await p.rate(q.question_id!, {
-      rating: 4,
-      is_error: true,
-      comment: 'Sai đáp án',
-    });
-    expect(rated.new_avg_rating).toBe(0);
+    // Báo lỗi (Game 5) dùng endpoint riêng, mô tả là bắt buộc.
+    await expect(p.report(q.question_id!, '  ')).rejects.toThrow(/mô tả lỗi/);
+    await p.report(q.question_id!, 'Sai đáp án');
   });
 
   it('AI tinh chỉnh: áp dụng thì ghi đè câu hỏi, loại bỏ thì giữ nguyên', async () => {
@@ -300,7 +297,7 @@ describe('phiên thật: chỉ gọi API, lỗi được báo đúng', () => {
     });
     expect(requests[0].body).toMatchObject({
       title: 'Phiên kiểm thử',
-      subject_id: 10,
+      course_class_id: 110,
     });
     expect(store.loadDemoSessions()).toHaveLength(before);
   });
@@ -351,7 +348,7 @@ describe('phiên thật: chỉ gọi API, lỗi được báo đúng', () => {
     ).toEqual([9]);
     await p.getSessionQuestions(9);
     await p.answer(5, 'C', '2026-11-01T00:00:00Z');
-    await p.rate(5, { rating: 0, is_error: true, comment: 'Sai' });
+    await p.report(5, 'Sai');
     await g.aiRefine(5, 'Làm rõ đề');
     await g.aiApply(5, 77, true);
     expect(g.listBankQuestions(10)).toBeNull();
@@ -364,7 +361,7 @@ describe('phiên thật: chỉ gọi API, lỗi được báo đúng', () => {
       'GET /api/v1/users/42/sessions',
       'GET /api/v1/sessions/9/questions',
       'POST /api/v1/questions/5/answer',
-      'POST /api/v1/questions/5/rate',
+      'PUT /api/v1/questions/5/report',
       'POST /api/v1/questions/5/ai-refine',
       'POST /api/v1/questions/5/ai-apply',
     ]);
@@ -372,11 +369,7 @@ describe('phiên thật: chỉ gọi API, lỗi được báo đúng', () => {
       selected_options: ['C'],
       question_updated_at: '2026-11-01T00:00:00Z',
     });
-    expect(requests[3].body).toEqual({
-      rating: 0,
-      is_error: true,
-      comment: 'Sai',
-    });
+    expect(requests[3].body).toEqual({ description: 'Sai' });
     expect(requests[4].body).toEqual({ prompt: 'Làm rõ đề' });
     expect(requests[5].body).toEqual({ edit_log_id: 77, approve: true });
   });
@@ -386,12 +379,12 @@ describe('phiên thật: chỉ gọi API, lỗi được báo đúng', () => {
     const { proposalGateway: g } = await load('token');
     expect(await g.getPendingSessions()).toEqual([]);
     expect(await g.getReviewHistory()).toEqual([]);
-    expect(requests[0].path).toBe('/api/v1/sessions/pending?limit=50');
+    expect(requests[0].path).toBe('/api/v1/lecturer/sessions/reviewable?limit=50');
   });
 
   it('duyệt / từ chối / chốt gửi đúng endpoint và lỗi được ném ra', async () => {
     respond = (method, url) =>
-      url.pathname.endsWith('/sessions/approve')
+      url.pathname.endsWith('/lecturer/sessions/approve')
         ? envelope(null, 500, '9999', 'Lỗi máy chủ')
         : envelope(null);
     const { proposalGateway: g } = await load('token');
@@ -401,9 +394,9 @@ describe('phiên thật: chỉ gọi API, lỗi được báo đúng', () => {
     await g.completeSessionReview(5);
 
     expect(requests.map((r) => `${r.method} ${r.path}`)).toEqual([
-      'POST /api/v1/sessions/approve',
-      'POST /api/v1/sessions/reject',
-      'POST /api/v1/sessions/5/complete-review',
+      'POST /api/v1/lecturer/sessions/approve',
+      'POST /api/v1/lecturer/sessions/reject',
+      'POST /api/v1/lecturer/sessions/5/complete-review',
     ]);
     expect(requests[0].body).toEqual({ question_ids: [11, 12] });
     expect(requests[1].body).toEqual({

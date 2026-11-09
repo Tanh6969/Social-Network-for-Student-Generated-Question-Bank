@@ -39,13 +39,19 @@ export class ApiError extends Error {
 
 type Envelope<T> = { code?: string; message?: string; data?: T };
 
+/**
+ * Swagger ghi mã thành công là "0000", nhưng máy chủ thật trả "1000"
+ * (message "SUCCESS"). Chấp nhận cả hai để không coi phản hồi đúng là lỗi.
+ */
+const SUCCESS_CODES = new Set(['0000', '1000']);
+
 export function expectEnvelope<T>(result: {
   data?: Envelope<T>;
   error?: Envelope<unknown>;
   response: Response;
 }): Envelope<T> {
   const envelope = result.data ?? result.error;
-  if (!result.response.ok || envelope?.code !== '0000') {
+  if (!result.response.ok || !SUCCESS_CODES.has(envelope?.code ?? '')) {
     throw new ApiError(
       failureMessage(result.response.status, envelope),
       result.response.status,

@@ -71,6 +71,11 @@ export const practiceGateway = {
       : demoProposalStore.answer(questionId, [selectedOption]);
   },
 
+  async report(questionId: number, description: string): Promise<void> {
+    if (isApiSession()) await questionsApi.report(questionId, description);
+    else demoProposalStore.report(questionId, description);
+  },
+
   async rate(
     questionId: number,
     body: RateQuestionRequest,

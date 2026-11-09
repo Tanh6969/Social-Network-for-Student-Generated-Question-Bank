@@ -6,7 +6,8 @@ import {
   mockCurrentUserLecturer,
 } from '../../mocks/mockData';
 import type { Role, User } from '../demo/types';
-import { mapAuthUser } from './mapAuthUser';
+import { postsApi } from '../../api/posts';
+import { applyProfile, mapAuthUser } from './mapAuthUser';
 import { authenticateMockAccount } from './mockAuthentication';
 
 type Notify = (
@@ -46,6 +47,8 @@ export function useAuthSession(notify: Notify) {
     }
     accessToken.current = account.access_token!;
     tokenStore.set(account.access_token!);
+    // Tên thật, ảnh, điểm… nằm ở hồ sơ; lỗi thì vẫn đăng nhập với dữ liệu tối thiểu.
+    user = applyProfile(user, await postsApi.getMyProfile().catch(() => null));
     setCurrentUser(user);
     setRole(user.role);
     setSessionKind('api');

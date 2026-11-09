@@ -743,11 +743,14 @@ export const ProfileView: React.FC = () => {
                       const visibleComments = filterVisibleComments(
                         post.comments,
                       );
-                      const visibleCommentsCount = visibleComments.reduce(
-                        (sum, comment) =>
-                          sum + 1 + (comment.replies?.length ?? 0),
-                        0,
-                      );
+                      // Bình luận chưa tải (phiên thật) thì dùng số đếm từ máy chủ.
+                      const visibleCommentsCount = post.comments
+                        ? visibleComments.reduce(
+                            (sum, comment) =>
+                              sum + 1 + (comment.replies?.length ?? 0),
+                            0,
+                          )
+                        : post.commentsCount;
                       return (
                         <>
                           {(post.likesCount > 0 ||

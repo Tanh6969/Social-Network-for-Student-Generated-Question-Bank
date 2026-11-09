@@ -109,6 +109,6 @@ describe('fetchQuestionCommentsPage', () => {
       userAvatar: 'a.png',
     });
     expect(page.comments[0].createdAt).not.toBe('');
-    expect(page.comments[1]).toMatchObject({ comment: '', isError: true });
+    expect(page.comments[1]).toMatchObject({ comment: '', rating: 2 });
   });
 });

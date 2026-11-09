@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import {
   errorMessage,
-  SubjectResponse,
+  CourseClassOption,
   UpdateSubmissionSessionRequest,
   MySubmissionDetail,
 } from '../../../api';
@@ -19,7 +19,8 @@ import { proposalGateway } from '../../proposals/proposalGateway';
 
 interface EditSubmissionModalProps {
   sessionId: number | null;
-  enrolledSubjects: SubjectResponse[];
+  /** Lớp học phần được phép đề xuất (can_propose). */
+  courseClasses: CourseClassOption[];
   onClose: () => void;
   onSuccess: () => void;
   showToast: (msg: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
@@ -81,7 +82,7 @@ export const EditSubmissionModal: React.FC<EditSubmissionModalProps> = ({
 
 const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'> & { sessionId: number }> = ({
   sessionId,
-  enrolledSubjects,
+  courseClasses,
   onClose,
   onSuccess,
   showToast,
@@ -91,7 +92,7 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [sourceUrl, setSourceUrl] = useState('');
-  const [subjectId, setSubjectId] = useState<number>(0);
+  const [courseClassId, setCourseClassId] = useState<number>(0);
   const [questions, setQuestions] = useState<EditQuestionItem[]>([]);
   const [activeIdx, setActiveIdx] = useState(0);
 
@@ -103,7 +104,9 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
       setTitle(detail.title || '');
       setContent(detail.content || '');
       setSourceUrl((detail as { source_url?: string }).source_url || '');
-      setSubjectId(detail.subject_id || (enrolledSubjects[0]?.subject_id ?? 0));
+      setCourseClassId(
+        detail.course_class_id || (courseClasses[0]?.course_class_id ?? 0),
+      );
 
       if (detail.questions && detail.questions.length > 0) {
         const mapped: EditQuestionItem[] = detail.questions.map((q) => ({
@@ -150,7 +153,7 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
         onClose();
       })
       .finally(() => setLoading(false));
-  }, [sessionId, enrolledSubjects]);
+  }, [sessionId, courseClasses]);
 
   if (!sessionId) return null;
 
@@ -212,8 +215,8 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
       showToast('Vui lòng nhập tiêu đề cho phiên đề xuất', 'warning');
       return;
     }
-    if (!subjectId) {
-      showToast('Vui lòng chọn môn học hợp lệ', 'warning');
+    if (!courseClassId) {
+      showToast('Vui lòng chọn lớp học phần hợp lệ', 'warning');
       return;
     }
 
@@ -236,7 +239,7 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
         title: title.trim(),
         content: content.trim(),
         source_url: sourceUrl.trim() || undefined,
-        subject_id: subjectId,
+        course_class_id: courseClassId,
         questions: questions.map((q) => ({
           question_id: q.question_id,
           content: q.content,
@@ -313,16 +316,21 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
 
                 <div>
                   <label className="block text-body font-semibold text-fb-text mb-1">
-                    Môn học *
+                    Lớp học phần *
                   </label>
                   <select
-                    value={subjectId}
-                    onChange={(e) => setSubjectId(Number(e.target.value))}
+                    value={courseClassId}
+                    onChange={(e) => setCourseClassId(Number(e.target.value))}
                     className="w-full px-3 py-2 text-body rounded-lg border border-fb-divider bg-fb-card text-fb-text focus:outline-hidden focus:ring-2 focus:ring-fb-blue"
                   >
-                    {enrolledSubjects.map((sub) => (
-                      <option key={sub.subject_id} value={sub.subject_id}>
-                        {sub.name} ({sub.code})
+                    {courseClassId > 0 &&
+                      !courseClasses.some((c) => c.course_class_id === courseClassId) && (
+                        // Lớp cũ của phiên (ví dụ học kỳ trước) vẫn hiển thị để không đổi ngầm.
+                        <option value={courseClassId}>Lớp hiện tại của phiên</option>
+                      )}
+                    {courseClasses.map((c) => (
+                      <option key={c.course_class_id} value={c.course_class_id}>
+                        {c.subject_name} ({c.subject_code}) · Lớp {c.class_code}
                       </option>
                     ))}
                   </select>

@@ -13,6 +13,7 @@ export type {
 } from './questions';
 export type {
   SubjectResponse,
+  CourseClassOption,
   SubmissionSessionSummary,
   SubmissionsResponse,
   MySubmissionDetail,

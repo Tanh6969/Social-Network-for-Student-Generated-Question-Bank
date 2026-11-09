@@ -14,6 +14,7 @@ import type {
   AiApplyResponse,
   AiRefineResponse,
   ApproveQuestionsResponse,
+  CourseClassOption,
   EditQuestionRequest,
   EditQuestionResponse,
   MySubmissionDetail,
@@ -84,11 +85,38 @@ async function fetchSubmissionsByStatus(
   return items.map((item) => ({ ...item, status }));
 }
 
+export function subjectsOfCourseClasses(
+  classes: CourseClassOption[],
+): SubjectResponse[] {
+  const current = classes.filter((c) => c.active_semester !== false);
+  const source = current.length ? current : classes;
+  const subjects = new Map<number, SubjectResponse>();
+  for (const c of source) {
+    if (c.subject_id == null || subjects.has(c.subject_id)) continue;
+    subjects.set(c.subject_id, {
+      subject_id: c.subject_id,
+      code: c.subject_code,
+      name: c.subject_name,
+    });
+  }
+  return [...subjects.values()];
+}
+
 export const proposalGateway = {
-  async getEnrolledSubjects(): Promise<SubjectResponse[]> {
+  /** Lớp học phần đang/đã tham gia (GET /sessions/my-enrolled-course-classes). */
+  async getEnrolledCourseClasses(): Promise<CourseClassOption[]> {
     return isApiSession()
-      ? sessionsApi.getMyEnrolledSubjects()
-      : demoProposalStore.listEnrolledSubjects();
+      ? sessionsApi.getMyEnrolledCourseClasses()
+      : demoProposalStore.listEnrolledCourseClasses();
+  },
+
+  /**
+   * Môn học đang tham gia, suy ra từ các lớp học phần của học kỳ hiện tại
+   * (backend không còn endpoint trả trực tiếp danh sách môn).
+   */
+  async getEnrolledSubjects(): Promise<SubjectResponse[]> {
+    const classes = await proposalGateway.getEnrolledCourseClasses();
+    return subjectsOfCourseClasses(classes);
   },
 
   async getAllSubjects(): Promise<SubjectResponse[]> {
@@ -143,10 +171,14 @@ export const proposalGateway = {
     subjectId?: number,
   ): Promise<PendingSessionItemDto[]> {
     return collectAllPages(async (after) => {
-      const query = { subject_id: subjectId, limit: PAGE_LIMIT, after };
       const res = isApiSession()
-        ? await reviewApi.getPendingSessions(query)
-        : demoProposalStore.listPendingSessions(query);
+        ? // API mới lọc theo lớp học phần (course_class_id), không theo môn.
+          await reviewApi.getPendingSessions({ limit: PAGE_LIMIT, after })
+        : demoProposalStore.listPendingSessions({
+            subject_id: subjectId,
+            limit: PAGE_LIMIT,
+            after,
+          });
       return {
         items: res.items ?? [],
         hasNext: res.pagination?.has_next ?? false,

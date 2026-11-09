@@ -2,6 +2,7 @@ import type { components } from '../../api/generated/openapi';
 
 export type {
   ApproveQuestionsResponse,
+  CourseClassOption,
   DuplicateWarning,
   EditQuestionRequest,
   EditQuestionResponse,
