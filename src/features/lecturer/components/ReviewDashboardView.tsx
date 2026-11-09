@@ -24,7 +24,12 @@ import { useApp } from '../../demo/context/AppContext';
 import { errorMessage, PendingSessionItemDto, SubjectResponse } from '../../../api';
 import { proposalGateway } from '../../proposals/proposalGateway';
 import { SessionReviewDetail } from './SessionReviewDetail';
-import { ReviewBasketBar, type BasketItem } from './ReviewBasketBar';
+import {
+  describeBankGroups,
+  groupByBank,
+  ReviewBasketBar,
+  type BasketItem,
+} from './ReviewBasketBar';
 import { RejectReasonModal } from './RejectReasonModal';
 
 type ReviewSidebarTab = 'PENDING' | 'REVIEWING' | 'HISTORY';
@@ -70,12 +75,13 @@ export const ReviewDashboardView: React.FC = () => {
   const approveBasket = async () => {
     const ids = basket.map((i) => i.question_id);
     if (ids.length === 0) return;
+    const summary = describeBankGroups(groupByBank(basket));
     setBasketBusy(true);
     try {
       const res = await proposalGateway.approveQuestions(ids);
       const points =
         res.points_earned !== undefined ? ` (cộng ${res.points_earned} điểm cho tác giả)` : '';
-      showToast(`Đã chọn ${ids.length} câu vào ngân hàng đề${points}`, 'success');
+      showToast(`Đã thêm ${summary}${points}`, 'success');
       removeFromBasket(ids);
       setDetailRefreshKey((k) => k + 1);
       void fetchSessions();
