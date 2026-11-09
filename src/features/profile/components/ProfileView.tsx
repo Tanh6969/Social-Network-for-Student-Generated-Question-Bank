@@ -67,6 +67,7 @@ export const ProfileView: React.FC = () => {
     updateCurrentUser,
     profilePhotoHistory,
     saveProfilePhoto,
+    viewedProfileError,
   } = useApp();
 
   const [activeTab, setActiveTabLocal] = useState<
@@ -178,6 +179,28 @@ export const ProfileView: React.FC = () => {
       index,
     });
   };
+
+  if (!isMe && viewedProfileError)
+    return (
+      <div className="mx-auto max-w-[1000px] py-10">
+        <div
+          role="alert"
+          className="rounded-lg bg-fb-card p-6 text-center text-sm text-fb-text shadow-fb-card"
+        >
+          <p className="font-semibold">{viewedProfileError}</p>
+          <button
+            type="button"
+            onClick={() => {
+              setViewingUserId(null);
+              setActiveTab('feed');
+            }}
+            className="mt-3 font-semibold text-fb-blue hover:underline"
+          >
+            Về bảng tin
+          </button>
+        </div>
+      </div>
+    );
 
   return (
     <div className="max-w-[1000px] mx-auto pb-10">
