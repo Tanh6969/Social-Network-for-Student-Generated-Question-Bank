@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useState } from 'react';
 import { Navigate, useLocation } from 'react-router';
 import { canAccessTab, postLoginDestination, tabFromPath } from './routes';
 import { useApp } from '../features/demo/context/AppContext';
@@ -91,16 +91,29 @@ import { WifiOff } from 'lucide-react';
 const MainContent: React.FC = () => {
   const location = useLocation();
   const { isAuthenticated, activeTab, isOfflineSimulated, role } = useApp();
+  // Chỉ đăng xuất mới chuyển từ đã đăng nhập sang chưa đăng nhập. Khi đó không
+  // giữ trang cũ trong `next`, để lần đăng nhập sau (có thể là tài khoản khác)
+  // luôn mở trang chủ MXH.
+  const [prevAuthenticated, setPrevAuthenticated] = useState(isAuthenticated);
+  const [justLoggedOut, setJustLoggedOut] = useState(false);
+  if (prevAuthenticated !== isAuthenticated) {
+    setPrevAuthenticated(isAuthenticated);
+    setJustLoggedOut(!isAuthenticated);
+  }
 
   // Authentication and the local demo entry points share the login screen.
   if (!isAuthenticated) {
     return (
       <>
-        {location.pathname !== '/login' && (
-          <Navigate
-            to={`/login?next=${encodeURIComponent(`${location.pathname}${location.search}`)}`}
-            replace
-          />
+        {justLoggedOut ? (
+          location.pathname !== '/login' && <Navigate to="/login" replace />
+        ) : (
+          location.pathname !== '/login' && (
+            <Navigate
+              to={`/login?next=${encodeURIComponent(`${location.pathname}${location.search}`)}`}
+              replace
+            />
+          )
         )}
         <AuthPage />
         <ToastContainer />

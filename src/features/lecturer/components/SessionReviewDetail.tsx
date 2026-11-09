@@ -110,6 +110,10 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
     fetchSessionDetail();
   }, [fetchSessionDetail, refreshKey]);
 
+  // Ngân hàng đích = ngân hàng đề của môn mà sinh viên chọn khi đăng bộ (Swagger
+  // không cho đổi môn khi duyệt), nên mọi nút đều ghi rõ tên môn.
+  const bankName = session.topic || 'môn của bộ câu hỏi này';
+
   // Giỏ câu hỏi: tích chọn câu ở nhiều bộ khác nhau rồi xử lý một lần
   const pendingQuestions = questions.filter((q) => q.status === 'PENDING');
   const toBasketItem = (q: SessionQuestionReviewDto): BasketItem => ({
@@ -141,7 +145,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
       const res = await proposalGateway.approveQuestions(ids);
       const pointsMsg =
         res.points_earned !== undefined ? ` (Đã cộng ${res.points_earned} điểm thưởng cho tác giả)` : '';
-      showToast(`Đã chọn ${ids.length} câu hỏi vào ngân hàng đề${pointsMsg}`, 'success');
+      showToast(`Đã thêm ${ids.length} câu vào ngân hàng đề ${bankName}${pointsMsg}`, 'success');
 
       // Update question statuses in state
       setQuestions((prev) =>
@@ -721,7 +725,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                                 className="px-3.5 py-1.5 rounded-lg bg-fb-success hover:bg-fb-success/90 text-white font-bold transition shadow-2xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
                               >
                                 <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>Chọn vào ngân hàng đề</span>
+                                <span>Chọn vào ngân hàng đề {bankName}</span>
                               </button>
                             </>
                           )}

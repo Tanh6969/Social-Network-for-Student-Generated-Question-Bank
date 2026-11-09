@@ -1,3 +1,4 @@
+import { createId } from '../../../shared/createId';
 import React, {
   createContext,
   useContext,
@@ -508,13 +509,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     setCurrentUser,
     role,
     loginWithCredentials,
-    logout,
+    logout: logoutSession,
     switchRole,
     updateCurrentUser: updateAuthCurrentUser,
   } = useAuthSession(showToast);
 
-<<<<<<< Updated upstream
-=======
   // Việc đưa về trang chủ sau đăng xuất do MainContent (App.tsx) đảm nhận.
   const logout = async () => {
     setViewingUserId(null);
@@ -562,7 +561,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   }, [apiFeedUserId, feedReloadKey]);
   const reloadFeed = () => setFeedReloadKey((key) => key + 1);
 
->>>>>>> Stashed changes
   // Phiên demo: mỗi lần mở Ngân hàng, nạp các câu hỏi đã được duyệt từ kho
   // đề xuất dùng chung (SV nộp → GV duyệt → xuất hiện ở đây). Phiên khác thì
   // gỡ dữ liệu demo đó ra để không lẫn với dữ liệu thật.
@@ -1122,7 +1120,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     if (previousUrl !== url) {
       setProfilePhotoHistory((history) => [
         {
-          id: crypto.randomUUID(),
+          id: createId(),
           userId: currentUser.id,
           kind,
           url: previousUrl,
@@ -1227,7 +1225,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       }
     }
     const newPost: Post = {
-      id: crypto.randomUUID(),
+      id: createId(),
       author: currentUser,
       type: postData.type || 'KNOWLEDGE',
       content: postData.content || '',
@@ -1433,7 +1431,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
     const newComment: CommentItem = {
-      id: crypto.randomUUID(),
+      id: createId(),
       author: currentUser,
       content: text.trim(),
       createdAt: new Date().toISOString(),

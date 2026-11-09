@@ -1,3 +1,4 @@
+import { createId } from '../shared/createId';
 import { api, expectEnvelope } from './client';
 import type { components } from './generated/openapi';
 
@@ -13,7 +14,7 @@ function getDeviceId(): string {
   } catch {
     // Storage can be unavailable in private browsing.
   }
-  const id = `web-${crypto.randomUUID()}`;
+  const id = `web-${createId()}`;
   try {
     localStorage.setItem(deviceIdKey, id);
   } catch {

@@ -1,421 +1,258 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Award, Crown, Flame, Gamepad2, History, Trophy } from 'lucide-react';
 import { useApp } from '../../demo/context/AppContext';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
-import {
-  Gamepad2,
-  Trophy,
-  Award,
-  Crown,
-  Sparkles,
-  Clock,
-  Send,
-  CheckCircle2,
-  TrendingUp,
-  History,
-  ShieldCheck,
-  ChevronRight,
-  Info,
-  Star,
-  Globe,
-  Target,
-  Check,
-  Lock,
-} from 'lucide-react';
+import { errorMessage, isApiSession } from '../../../api';
+import type {
+  CheckInStatusResponse,
+  GamePredictionResponse,
+  LeaderboardEntryDto,
+  MyRankDto,
+  UserBadgeResponseDto,
+} from '../../../api/games';
+import { LecturerGameHub } from '../../lecturer/components/games/LecturerGameHub';
+import { demoProfileIdForUser } from '../demoGameStore';
+import { gamesGateway } from '../gamesGateway';
+import { LeaderboardPanel } from './LeaderboardPanel';
+import { PredictionHistory } from './PredictionHistory';
+import { StudentGameCenter } from './StudentGameCenter';
 
-import { OfficialTeacherGameHub } from '../../lecturer/components/games/OfficialTeacherGameHub';
+type StudentMenu = 'CENTER' | 'LEADERBOARD' | 'BADGES' | 'HISTORY';
 
+const MENU: { id: StudentMenu; label: string; icon: React.ElementType }[] = [
+  { id: 'CENTER', label: 'Trung tâm trò chơi', icon: Gamepad2 },
+  { id: 'LEADERBOARD', label: 'Bảng xếp hạng', icon: Trophy },
+  { id: 'BADGES', label: 'Huy hiệu của tôi', icon: Award },
+  { id: 'HISTORY', label: 'Lịch sử dự đoán', icon: History },
+];
+
+function BadgesPanel({
+  badges,
+  error,
+}: {
+  badges: UserBadgeResponseDto[] | null;
+  error: string | null;
+}) {
+  return (
+    <div className="space-y-3">
+      <h2 className="flex items-center gap-2 font-bold text-fb-text">
+        <Award className="h-5 w-5 text-fb-warning" /> Huy hiệu của tôi
+      </h2>
+      {error && <p className="text-sm text-fb-danger">{error}</p>}
+      {!badges && !error && (
+        <p className="py-6 text-center text-sm text-fb-text-2">Đang tải…</p>
+      )}
+      {badges?.length === 0 && (
+        <p className="rounded-lg bg-fb-card p-8 text-center text-sm text-fb-text-2 shadow-fb-card">
+          Bạn chưa có huy hiệu nào.
+        </p>
+      )}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {badges?.map((b) => (
+          <article
+            key={b.badge_id}
+            className="flex items-start gap-3 rounded-lg bg-fb-card p-4 shadow-fb-card"
+          >
+            {b.icon_url ? (
+              <img
+                src={b.icon_url}
+                alt=""
+                className="h-10 w-10 rounded-lg object-cover"
+              />
+            ) : (
+              <span className="rounded-lg bg-fb-warning-soft p-2.5 text-fb-warning">
+                <Award className="h-5 w-5" />
+              </span>
+            )}
+            <div>
+              <h3 className="font-semibold text-fb-text">
+                {b.name}
+                {b.badge_tier && (
+                  <span className="ml-2 text-xs text-fb-text-3">
+                    {b.badge_tier}
+                  </span>
+                )}
+              </h3>
+              <p className="text-sm text-fb-text-2">{b.description}</p>
+              {b.earned_at && (
+                <p className="text-xs text-fb-text-3">
+                  Đạt ngày {new Date(b.earned_at).toLocaleDateString('vi-VN')}
+                </p>
+              )}
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Trò chơi học tập. Sinh viên: điểm danh, Game 1/2/4/6, hướng dẫn Game 3/5,
+ * bảng xếp hạng, huy hiệu, lịch sử. Giảng viên: LecturerGameHub.
+ */
 export const MinigameView: React.FC = () => {
-  const {
-    role,
-    minigames,
-    submitGuess,
-    leaderboard,
-    currentUser,
-    setViewingUserId,
-    setActiveTab,
-    showToast,
-  } = useApp();
+  const { role, currentUser, setViewingUserId, setActiveTab, showToast } =
+    useApp();
+  const [menu, setMenu] = useState<StudentMenu>('CENTER');
+  const [predictions, setPredictions] = useState<
+    GamePredictionResponse[] | null
+  >(null);
+  const [predictionsError, setPredictionsError] = useState<string | null>(null);
+  const [badges, setBadges] = useState<UserBadgeResponseDto[] | null>(null);
+  const [badgesError, setBadgesError] = useState<string | null>(null);
+  const [myRank, setMyRank] = useState<MyRankDto | null>(null);
+  const [checkIn, setCheckIn] = useState<CheckInStatusResponse | null>(null);
+  const isStudent = role !== 'LECTURER';
 
-  const [activeGameMenu, setActiveGameMenu] = useState<'CENTER' | 'LEADERBOARD' | 'BADGES' | 'HISTORY'>('CENTER');
-  const [guessInputs, setGuessInputs] = useState<Record<string, number>>({
-    game_01: 365,
-    game_02: 135,
-    game_03: 3520,
-  });
+  const loadPredictions = useCallback(() => {
+    gamesGateway
+      .getMyPredictions()
+      .then((list) => {
+        setPredictions(list);
+        setPredictionsError(null);
+      })
+      .catch((err: unknown) => {
+        setPredictions([]);
+        setPredictionsError(
+          errorMessage(err, 'Không tải được lịch sử dự đoán.'),
+        );
+      });
+  }, []);
 
-  const handleGuessSubmit = (gameId: string) => {
-    const val = guessInputs[gameId];
-    if (val !== undefined) {
-      submitGuess(gameId, val);
-    }
-  };
+  useEffect(() => {
+    if (!isStudent) return;
+    loadPredictions();
+    gamesGateway
+      .getMyBadges()
+      .then(setBadges)
+      .catch((err: unknown) =>
+        setBadgesError(errorMessage(err, 'Không tải được huy hiệu.')),
+      );
+    gamesGateway
+      .getLeaderboard({ period: 'SEMESTER', limit: 1 })
+      .then((res) => setMyRank(res.my_rank ?? null))
+      .catch(() => setMyRank(null));
+    gamesGateway
+      .getCheckInStatus()
+      .then(setCheckIn)
+      .catch(() => setCheckIn(null));
+  }, [isStudent, loadPredictions]);
 
-  // Giảng viên trực tiếp điều hành 6 Minigame (không có đấu trường live hay xem trước sinh viên)
-  if (role === 'LECTURER') {
+  if (!isStudent) {
     return (
-      <div className="w-full max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 py-5">
-        <OfficialTeacherGameHub />
+      <div className="mx-auto w-full max-w-[1440px] px-3 py-5 sm:px-6 lg:px-8">
+        <LecturerGameHub />
       </div>
     );
   }
 
-  // Giao diện dành cho Sinh viên
+  // Mở hồ sơ từ bảng xếp hạng: demo ánh xạ sang người dùng mẫu; phiên thật chỉ
+  // mở được hồ sơ của chính mình (chưa có dữ liệu hồ sơ người khác trên giao diện).
+  const canOpenEntry = (e: LeaderboardEntryDto) =>
+    Boolean(e.is_current_user) ||
+    (!isApiSession() && demoProfileIdForUser(e.user_id) !== null);
+  const openEntry = (e: LeaderboardEntryDto) => {
+    setViewingUserId(
+      e.is_current_user ? null : demoProfileIdForUser(e.user_id),
+    );
+    setActiveTab('profile');
+  };
+
   return (
-    <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 py-4">
-      <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 items-start">
-      {/* ================= CỘT TRÁI (sticky sát lề trái) ================= */}
-      <aside className="w-full lg:w-[280px] xl:w-[300px] shrink-0 space-y-3 select-none lg:sticky lg:top-18">
-        {/* Personal Points & Rank Card - Tối giản */}
-        <div className="bg-fb-card rounded-lg shadow-fb-card p-4">
-          <div className="flex items-center gap-3">
-            <AvatarWithFrame user={currentUser} size="lg" />
-            <div>
-              <p className="font-semibold text-body text-fb-text">{currentUser.name}</p>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <Crown className="w-3.5 h-3.5 text-fb-blue" />
-                <span className="text-sm text-fb-text-2">Hạng 3 Tuần này</span>
+    <div className="mx-auto w-full max-w-[1920px] px-2 py-4 sm:px-4 lg:px-6">
+      <div className="flex flex-col items-start gap-4 lg:flex-row lg:gap-6">
+        <aside className="w-full shrink-0 space-y-3 lg:sticky lg:top-18 lg:w-[280px] xl:w-[300px]">
+          <div className="rounded-lg bg-fb-card p-4 shadow-fb-card">
+            <div className="flex items-center gap-3">
+              <AvatarWithFrame user={currentUser} size="lg" />
+              <div>
+                <p className="font-semibold text-fb-text">{currentUser.name}</p>
+                <p className="flex items-center gap-1.5 text-sm text-fb-text-2">
+                  <Crown className="h-3.5 w-3.5 text-fb-blue" />
+                  {myRank?.rank
+                    ? `Hạng #${myRank.rank} học kỳ`
+                    : 'Chưa có hạng'}
+                </p>
               </div>
             </div>
-          </div>
-
-          <div className="mt-4 pt-3 border-t border-fb-divider flex items-center justify-between">
-            <div>
-              <span className="text-sm text-fb-text-2 block">Điểm cống hiến</span>
-              <span className="text-xl font-bold text-fb-blue">{currentUser.points} đ</span>
-            </div>
-            <div className="text-right">
-              <span className="text-sm text-fb-text-2 block">Huy hiệu đạt được</span>
-              <span className="text-xl font-bold text-fb-text">4 / 8</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Menu Navigation */}
-        <div className="bg-fb-card rounded-lg shadow-fb-card p-2 space-y-1 text-body font-medium text-fb-text">
-          <button
-            onClick={() => setActiveGameMenu('CENTER')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition text-left ${
-              activeGameMenu === 'CENTER'
-                ? 'bg-fb-blue-soft text-fb-blue font-semibold'
-                : 'hover:bg-fb-hover'
-            }`}
-          >
-            <Gamepad2 className="w-4 h-4 text-fb-text-2" />
-            <span>Trung tâm Minigame dự đoán</span>
-          </button>
-
-          <button
-            onClick={() => setActiveGameMenu('LEADERBOARD')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition text-left ${
-              activeGameMenu === 'LEADERBOARD'
-                ? 'bg-fb-blue-soft text-fb-blue font-semibold'
-                : 'hover:bg-fb-hover'
-            }`}
-          >
-            <Trophy className="w-4 h-4 text-fb-text-2" />
-            <span>Bảng vàng vinh danh (Top cống hiến)</span>
-          </button>
-
-          <button
-            onClick={() => setActiveGameMenu('BADGES')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition text-left ${
-              activeGameMenu === 'BADGES'
-                ? 'bg-fb-blue-soft text-fb-blue font-semibold'
-                : 'hover:bg-fb-hover'
-            }`}
-          >
-            <Award className="w-4 h-4 text-fb-text-2" />
-            <span>Huy hiệu & Thành tích</span>
-          </button>
-
-          <button
-            onClick={() => setActiveGameMenu('HISTORY')}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition text-left ${
-              activeGameMenu === 'HISTORY'
-                ? 'bg-fb-blue-soft text-fb-blue font-semibold'
-                : 'hover:bg-fb-hover'
-            }`}
-          >
-            <History className="w-4 h-4 text-fb-text-2" />
-            <span>Lịch sử dự đoán của tôi</span>
-          </button>
-        </div>
-
-        {/* Rule notes */}
-        <div className="bg-fb-card rounded-lg shadow-fb-card p-4 text-sm text-fb-text-2 space-y-2">
-          <h4 className="text-body font-semibold text-fb-text flex items-center gap-1.5">
-            <Info className="w-4 h-4 text-fb-blue" />
-            Luật chơi Minigame
-          </h4>
-          <p>
-            • Mỗi tuần hệ thống mở 3 minigame dự đoán. Kết quả chốt lúc 23h59 Chủ nhật hàng tuần.
-          </p>
-          <p>
-            • Dự đoán chính xác nhất nhận +200 đến +500 điểm cống hiến và danh hiệu tuần!
-          </p>
-        </div>
-      </aside>
-
-      {/* ================= CỘT PHẢI: Nội dung chính ================= */}
-      <main className="flex-1 min-w-0 w-full space-y-4">
-        {activeGameMenu === 'CENTER' && (
-          <div className="space-y-4">
-            <div className="bg-fb-card rounded-lg shadow-fb-card p-4">
-              <h2 className="text-xl font-bold text-fb-text flex items-center gap-2">
-                <Gamepad2 className="w-6 h-6 text-fb-warning" />
-                Các Minigame Đang Mở Bình Chọn
-              </h2>
-              <p className="text-sm text-fb-text-2 mt-1">
-                Đặt dự đoán trước thời gian đóng cổng để nhận điểm thưởng và leo bảng xếp hạng!
-              </p>
-            </div>
-
-            {/* Minigame Cards */}
-            <div className="space-y-4">
-              {minigames.map((game) => (
-                <div
-                  key={game.id}
-                  className="bg-fb-card rounded-lg shadow-fb-card p-4 space-y-3"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <span className="text-xs font-medium bg-fb-input text-fb-text px-2.5 py-0.5 rounded-md">
-                        Minigame Tuần #{game.id.split('_')[1]}
-                      </span>
-                      <h3 className="text-card-title font-semibold leading-snug text-fb-text mt-1.5">
-                        {game.title}
-                      </h3>
-                      <p className="text-body text-fb-text-2 mt-0.5">{game.description}</p>
-                    </div>
-
-                    <span className="text-xs font-medium text-fb-text-2 bg-fb-input px-2.5 py-1 rounded-md flex items-center gap-1 shrink-0">
-                      <Clock className="w-3.5 h-3.5" />
-                      Còn {game.closesInHours} giờ
-                    </span>
-                  </div>
-
-                  {/* Benchmark Comparison */}
-                  <div className="grid grid-cols-2 gap-3 p-3 bg-fb-input rounded-lg text-sm">
-                    <div>
-                      <span className="text-fb-text-2 block">Kỳ trước đạt được:</span>
-                      <strong className="text-fb-text text-body font-semibold">
-                        {game.previousValue}
-                      </strong>
-                    </div>
-                    <div>
-                      <span className="text-fb-text-2 block">Hiện tại đang ghi nhận:</span>
-                      <strong className="text-fb-blue text-body font-semibold">
-                        {game.currentValue}
-                      </strong>
-                    </div>
-                  </div>
-
-                  {/* Submit Guess input */}
-                  <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
-                      <label className="text-body font-semibold text-fb-text shrink-0">
-                        Con số dự đoán:
-                      </label>
-                      <input
-                        type="number"
-                        disabled={game.hasUserGuessed}
-                        value={guessInputs[game.id] ?? game.currentValue}
-                        onChange={(e) =>
-                          setGuessInputs((prev) => ({
-                            ...prev,
-                            [game.id]: Number(e.target.value)
-                          }))
-                        }
-                        className="w-28 h-9 px-3 text-body font-semibold border border-fb-divider rounded-lg bg-fb-card text-fb-text"
-                      />
-                    </div>
-
-                    <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-                      <span className="text-sm text-fb-text-2">
-                        Thưởng: +{game.rewardPoints} điểm
-                      </span>
-
-                      {game.hasUserGuessed ? (
-                        <span className="h-9 px-4 bg-fb-input text-fb-text font-semibold text-body rounded-md flex items-center gap-1.5">
-                          <CheckCircle2 className="w-4 h-4 text-fb-blue" />
-                          Đã đặt: {game.userGuess}
-                        </span>
-                      ) : (
-                        <button
-                          onClick={() => handleGuessSubmit(game.id)}
-                          className="h-9 px-4 bg-fb-blue hover:bg-fb-blue-hover text-white font-semibold text-body rounded-md transition-colors flex items-center gap-1.5"
-                        >
-                          <Send className="w-4 h-4" />
-                          <span>Gửi dự đoán</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* LEADERBOARD VIEW (GAME.07) */}
-        {activeGameMenu === 'LEADERBOARD' && (
-          <div className="space-y-4">
-            <div className="bg-fb-card rounded-lg shadow-fb-card p-4">
-              <h2 className="text-xl font-bold text-fb-text flex items-center gap-2">
-                <Trophy className="w-6 h-6 text-fb-warning" />
-                Bảng Vàng Cống Hiến Tri Thức Toàn Trường
-              </h2>
-              <p className="text-sm text-fb-text-2 mt-1">
-                Tôn vinh các sinh viên và giảng viên có đóng góp nhiều câu hỏi đạt chuẩn nhất!
-              </p>
-            </div>
-
-            {/* PODIUM TOP 3 (GAME.07) - Thiết kế tối giản, dịu mắt */}
-            <div className="bg-fb-card rounded-lg shadow-fb-card p-6">
-              <div className="grid grid-cols-3 gap-2 sm:gap-4 items-end max-w-lg mx-auto text-center pt-3 pb-2">
-                {/* 2nd Place */}
-                <div className="flex flex-col items-center">
-                  <span className="text-xs font-semibold text-fb-text-2 mb-1">HẠNG 2</span>
-                  <div className="relative mb-2">
-                    <AvatarWithFrame user={leaderboard[1].user} size="lg" />
-                  </div>
-                  <p className="font-semibold text-sm truncate w-full text-fb-text">{leaderboard[1].user.name}</p>
-                  <span className="text-sm text-fb-text-2">{leaderboard[1].score} đ</span>
-                  <div className="w-full h-16 bg-fb-input rounded-t-xl mt-2 flex items-center justify-center font-bold text-base text-fb-text-2">
-                    2
-                  </div>
-                </div>
-
-                {/* 1st Place */}
-                <div className="flex flex-col items-center -mt-3">
-                  <div className="flex items-center gap-1 text-sm font-semibold text-fb-blue mb-1">
-                    <Crown className="w-4 h-4" />
-                    <span>Quán quân</span>
-                  </div>
-                  <div className="relative mb-2">
-                    <AvatarWithFrame user={leaderboard[0].user} size="xl" />
-                  </div>
-                  <p className="font-semibold text-body truncate w-full text-fb-text">
-                    {leaderboard[0].user.name}
-                  </p>
-                  <span className="text-sm text-fb-blue font-semibold">{leaderboard[0].score} đ</span>
-                  <div className="w-full h-22 bg-fb-blue-soft border-t-2 border-fb-blue rounded-t-xl mt-2 flex items-center justify-center font-bold text-xl text-fb-blue">
-                    1
-                  </div>
-                </div>
-
-                {/* 3rd Place */}
-                <div className="flex flex-col items-center">
-                  <span className="text-xs font-semibold text-fb-text-2 mb-1">HẠNG 3</span>
-                  <div className="relative mb-2">
-                    <AvatarWithFrame user={leaderboard[2].user} size="lg" />
-                  </div>
-                  <p className="font-semibold text-sm truncate w-full text-fb-text">{leaderboard[2].user.name}</p>
-                  <span className="text-sm text-fb-text-2">{leaderboard[2].score} đ</span>
-                  <div className="w-full h-12 bg-fb-input rounded-t-xl mt-2 flex items-center justify-center font-bold text-sm text-fb-text-3">
-                    3
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* List rank 4+ */}
-            <div className="bg-fb-card rounded-lg shadow-fb-card divide-y divide-fb-divider">
-              {leaderboard.slice(3).map((lead) => (
-                <div
-                  key={lead.user.id}
-                  onClick={() => {
-                    setViewingUserId(lead.user.id);
-                    setActiveTab('profile');
-                  }}
-                  className="p-3 flex items-center justify-between hover:bg-fb-hover cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="w-6 font-semibold text-sm text-fb-text-2 text-center">
-                      #{lead.rank}
-                    </span>
-                    <AvatarWithFrame user={lead.user} size="md" />
-                    <div>
-                      <p className="font-semibold text-body text-fb-text">
-                        {lead.user.name}
-                      </p>
-                      <p className="text-sm text-fb-text-3">{lead.badgeTitle}</p>
-                    </div>
-                  </div>
-
-                  <span className="font-semibold text-body text-fb-blue">
-                    {lead.score} điểm
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* BADGES VIEW (GAME.08) */}
-        {activeGameMenu === 'BADGES' && (
-          <div className="bg-fb-card rounded-lg shadow-fb-card p-4 space-y-4">
-            <h2 className="text-xl font-bold text-fb-text flex items-center gap-2">
-              <Award className="w-6 h-6 text-fb-blue" />
-              Bộ Sưu Tập Huy Hiệu Cống Hiến
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {[
-                { title: 'Tác giả Tích cực', desc: 'Có từ 10 câu hỏi được duyệt', unlocked: true, icon: Star },
-                { title: 'Chuyên gia Mạng máy tính', desc: 'Đạt tỉ lệ câu hỏi đúng > 90%', unlocked: true, icon: Globe },
-                { title: 'Chiến thần Minigame', desc: 'Dự đoán chính xác 3 tuần liên tiếp', unlocked: false, icon: Target },
-                { title: 'Thủ khoa Đóng góp', desc: 'Đạt mốc 2,000 điểm cống hiến', unlocked: false, icon: Crown },
-              ].map((badge, idx) => (
-                <div
-                  key={idx}
-                  className={`p-4 rounded-lg border flex items-start gap-3 ${
-                    badge.unlocked
-                      ? 'border-fb-blue/30 bg-fb-blue-soft/50'
-                      : 'border-fb-divider opacity-60'
-                  }`}
-                >
-                  <badge.icon className="w-6 h-6 shrink-0 text-fb-blue" />
-                  <div>
-                    <h4 className="font-semibold text-body text-fb-text">
-                      {badge.title}
-                    </h4>
-                    <p className="text-sm text-fb-text-2">{badge.desc}</p>
-                    <span className="text-sm font-semibold mt-1 inline-flex items-center gap-1 text-fb-blue">
-                      {badge.unlocked ? <Check className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
-                      {badge.unlocked ? 'Đã đạt được' : 'Đang tiến hành'}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* HISTORY VIEW */}
-        {activeGameMenu === 'HISTORY' && (
-          <div className="bg-fb-card rounded-lg shadow-fb-card p-4 space-y-3">
-            <h2 className="text-xl font-bold text-fb-text flex items-center gap-2">
-              <History className="w-6 h-6 text-fb-blue" />
-              Lịch Sử Dự Đoán Minigame (GAME.06)
-            </h2>
-
-            <div className="space-y-2 text-sm">
-              <div className="p-3 bg-fb-input rounded-lg flex items-center justify-between gap-3 border border-fb-divider">
-                <div>
-                  <p className="text-body font-semibold text-fb-text">
-                    Dự đoán số Sinh viên tham gia tuần trước
-                  </p>
-                  <span className="text-fb-text-2">Bạn đã đoán: 310 · Kết quả thực: 312</span>
-                </div>
-                <span className="shrink-0 bg-fb-success-soft text-fb-success text-xs font-semibold px-2.5 py-1 rounded-full">
-                  +200 điểm (Gần đúng)
+            <div className="mt-4 grid grid-cols-3 gap-2 border-t border-fb-divider pt-3 text-center">
+              <div>
+                <span className="block text-lg font-bold text-fb-blue">
+                  {myRank?.total_points ?? 0}
                 </span>
+                <span className="text-xs text-fb-text-2">Điểm</span>
+              </div>
+              <div>
+                <span className="flex items-center justify-center gap-1 text-lg font-bold text-fb-warning">
+                  <Flame className="h-4 w-4" />
+                  {checkIn?.current_streak ?? 0}
+                </span>
+                <span className="text-xs text-fb-text-2">Ngày liên tiếp</span>
+              </div>
+              <div>
+                <span className="block text-lg font-bold text-fb-text">
+                  {badges?.length ?? 0}
+                </span>
+                <span className="text-xs text-fb-text-2">Huy hiệu</span>
               </div>
             </div>
           </div>
-        )}
-      </main>
+
+          <nav className="space-y-1 rounded-lg bg-fb-card p-2 text-sm font-medium text-fb-text shadow-fb-card">
+            {MENU.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setMenu(id)}
+                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition ${
+                  menu === id
+                    ? 'bg-fb-blue-soft font-semibold text-fb-blue'
+                    : 'hover:bg-fb-hover'
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </button>
+            ))}
+          </nav>
+        </aside>
+
+        <main className="w-full min-w-0 flex-1">
+          {menu === 'CENTER' &&
+            (predictions === null ? (
+              <p className="py-10 text-center text-sm text-fb-text-2">
+                Đang tải…
+              </p>
+            ) : (
+              <StudentGameCenter
+                predictions={predictions}
+                onPredicted={loadPredictions}
+                showToast={showToast}
+                onCheckInChanged={setCheckIn}
+                onOpenPropose={() => setActiveTab('propose')}
+                onOpenMyQuestionSets={() => {
+                  setViewingUserId(null);
+                  setActiveTab('profile');
+                }}
+              />
+            ))}
+          {menu === 'LEADERBOARD' && (
+            <LeaderboardPanel
+              onOpenEntry={openEntry}
+              canOpenEntry={canOpenEntry}
+            />
+          )}
+          {menu === 'BADGES' && (
+            <BadgesPanel badges={badges} error={badgesError} />
+          )}
+          {menu === 'HISTORY' && (
+            <PredictionHistory
+              predictions={predictions}
+              error={predictionsError}
+            />
+          )}
+        </main>
       </div>
     </div>
   );
