@@ -491,11 +491,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     updateCurrentUser: updateAuthCurrentUser,
   } = useAuthSession(showToast);
 
-  // Đăng xuất luôn đưa về trang chủ MXH, để lần đăng nhập sau không mở lại
-  // trang cuối cùng của phiên trước.
+  // Việc đưa về trang chủ sau đăng xuất do MainContent (App.tsx) đảm nhận.
   const logout = async () => {
     setViewingUserId(null);
-    navigate(tabPaths.feed, { replace: true });
     await logoutSession();
   };
 
