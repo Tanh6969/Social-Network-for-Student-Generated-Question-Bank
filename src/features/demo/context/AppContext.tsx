@@ -89,6 +89,7 @@ export interface Toast {
 interface AppContextType {
   // Auth state
   isAuthenticated: boolean;
+  sessionKind: 'demo' | 'api' | null;
   loginWithCredentials: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 
@@ -485,14 +486,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     currentUser: rawCurrentUser,
     setCurrentUser,
     role,
-    loginWithCredentials,
+    loginWithCredentials: authenticate,
     logout: logoutSession,
     switchRole,
     updateCurrentUser: updateAuthCurrentUser,
   } = useAuthSession(showToast);
 
+  const loginWithCredentials = async (email: string, password: string) => {
+    await authenticate(email, password);
+    setActiveDockIdsByAccount({});
+    setMinimizedDockIdsByAccount({});
+  };
+
   // Việc đưa về trang chủ sau đăng xuất do MainContent (App.tsx) đảm nhận.
   const logout = async () => {
+    setActiveDockIdsByAccount({});
+    setMinimizedDockIdsByAccount({});
     setViewingUserId(null);
     await logoutSession();
   };
@@ -711,7 +720,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const currentUser: User = {
     ...rawCurrentUser,
-    friendsCount: friendsList.length,
+    friendsCount:
+      sessionKind === 'api' ? rawCurrentUser.friendsCount : friendsList.length,
   };
   const followingIds = followingIdsByAccount[rawCurrentUser.id] ?? [];
   const setFollowingIds: React.Dispatch<React.SetStateAction<string[]>> = (
@@ -2152,6 +2162,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     <AppContext.Provider
       value={{
         isAuthenticated,
+        sessionKind,
         loginWithCredentials,
         logout,
         currentUser,

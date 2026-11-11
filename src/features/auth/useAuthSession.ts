@@ -1,12 +1,13 @@
 import { useRef, useState } from 'react';
 import { authApi } from '../../api/auth';
+import { profileApi } from '../../api/profile';
 import { tokenStore } from '../../api/token';
 import {
   mockCurrentUserStudent,
   mockCurrentUserLecturer,
 } from '../../mocks/mockData';
 import type { Role, User } from '../demo/types';
-import { mapAuthUser } from './mapAuthUser';
+import { mapAuthUser, mapProfileUser } from './mapAuthUser';
 import { authenticateMockAccount } from './mockAuthentication';
 
 type Notify = (
@@ -38,14 +39,17 @@ export function useAuthSession(notify: Notify) {
     const account = await authApi.login(email, password);
     let user: User;
     try {
-      user = mapAuthUser(account);
+      mapAuthUser(account);
+      tokenStore.set(account.access_token!);
+      const profile = await profileApi.getMyProfile();
+      user = mapProfileUser(account, profile);
     } catch (error) {
       if (account.access_token)
         await authApi.logout(account.access_token).catch(() => undefined);
+      tokenStore.set(null);
       throw error;
     }
     accessToken.current = account.access_token!;
-    tokenStore.set(account.access_token!);
     setCurrentUser(user);
     setRole(user.role);
     setSessionKind('api');

@@ -1,17 +1,19 @@
 # API integration status
 
-The pinned Swagger snapshot has **128 REST paths, 146 operations and 312 schemas**. `npm run generate:api` creates `src/api/generated/openapi.ts` for every REST operation. `npm run check:api` fails if a path or method is missing from that generated file.
+The pinned Swagger snapshot has **128 REST paths, 146 operations and 312 schemas**. `npm run generate:api` creates `src/api/generated/openapi.ts` for every pinned REST operation. `npm run check:api` fails if a path or method is missing from that generated file. The live Swagger checked on 2026-11-10 has **139 paths, 158 operations and 331 schemas**. The pilot auth, `/users/me`, `/activity-feeds`, and `/posts/{id}` paths remain available. Other paths and schemas have changed; their adapters need a separate migration before regenerating the entire contract from the live file.
 
-| Area                                                                                                                                 | Generated contract                       | Connected to a real screen             |
-| ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------- | -------------------------------------- |
-| Auth login and logout                                                                                                                | Yes                                      | Yes                                    |
-| Auth refresh and change password                                                                                                     | Yes                                      | No                                     |
-| Admin APIs                                                                                                                           | Yes, because they are in Swagger         | No; the frontend does not invoke them  |
-| Question proposals and lecturer review (`/sessions/*`, `PUT /questions/{id}`, `GET /subjects`)                                       | Yes                                      | Yes, in signed-in sessions (see below) |
-| Practice by question set, answer, rate / report error, AI refine (`/users/{id}/sessions`, `/sessions/{id}/questions`, `/questions/{id}/answer|rate|ai-refine|ai-apply`) | Yes | Yes, in signed-in sessions (see below) |
-| Games (`/games/*`, review-error, `/badges/me`): check-in, Game 1/2/4/6 predictions, history, leaderboard, Game 5 lecturer review | Yes | Yes, in signed-in sessions; admin rebuild/finalize have no UI (no Admin role) |
-| Social, question bank, exams, relations, chat, notifications, search, media, devices, cosmetics and other REST groups        | Yes                                      | No; current screens remain demo driven |
-| STOMP chat destinations                                                                                                              | Listed in `src/api/realtime-contract.ts` | No                                     |
+| Area | Generated contract | Connected to a real screen |
+| --- | --- | --- |
+| Auth login, logout and own profile | Yes | Yes for non-demo accounts |
+| Activity feed and post detail | Yes | Read-only Feed for non-demo accounts |
+| Question proposals and lecturer review | Yes | Yes in API sessions; demo sessions use a separate store |
+| Practice by question set, answer, rate, report error and AI refine | Yes | Yes in API sessions |
+| Games and badges | Yes | Yes in API sessions, except admin operations |
+| Exams | Yes | Partly; existing code can fall back to demo data |
+| Auth refresh and change password | Yes | No |
+| Admin APIs | Yes, because they are in Swagger | No; the frontend does not invoke them |
+| Post writes, reactions, comments, relations, chat, notifications, search, media, devices and cosmetics | Yes | No; demo interactions remain local |
+| STOMP chat destinations | Listed in `src/api/realtime-contract.ts` | No |
 
 The STOMP destinations and DTO names are written in OpenAPI `info.description`, not as machine-readable operations or component schemas. The documented publish fields are represented in `realtime-contract.ts`; broadcast payloads remain `unknown` until the backend publishes schemas. This avoids inventing fields and does not imply a working WebSocket connection.
 
@@ -23,9 +25,9 @@ Games follow Swagger, not older written specs: Game 3 has no endpoint (it is the
 
 `src/features/demo/components/modals/ApiReferenceModal.tsx` is an older UI demo map. It is not an API contract or a list of completed integrations.
 
-The social Feed/Profile create, edit, delete, comment, reply, media preview and friend-first ordering are local demo interactions. They do not call the post, comment, friendship or activity-feed endpoints. The current `GET /activity-feeds` contract exposes cursor pagination but no friend-first sorting option; that ordering needs backend support before it can be guaranteed across all pages of real data.
+Demo Feed/Profile create, edit, delete, comment, reply, media preview and friend-first ordering remain local interactions. For a non-demo account, login loads `/users/me`; Feed reads `/activity-feeds` by cursor and resolves post events with `/posts/{id}`. That Feed has no local write actions. The current activity-feed contract has no friend-first sorting option, so the API Feed preserves the backend's order.
 
-Demo chat conversations are visible only to their listed participants, and demo messages are shared between those participants. Demo chat and feed changes synchronize between open same-origin browser tabs with `BroadcastChannel`; they are not persisted by a server and do not synchronize across devices. API chat and feed screens are still not connected. The documented STOMP chat destinations alone do not provide a working connection, and the current contract does not define a feed push destination.
+Demo chat conversations are visible only to their listed participants, and demo messages are shared between those participants. Demo chat and feed changes synchronize between open same-origin browser tabs with `BroadcastChannel`; they are not persisted by a server and do not synchronize across devices. API chat is not connected. The documented STOMP chat destinations alone do not provide a working connection, and the current contract does not define a feed push destination.
 
 The Push tab in Settings currently stores the six notification preferences in browser `localStorage` and an optional voice recording in IndexedDB. This is local-only configuration: it does not register a push subscription, send or receive system notifications, or synchronize settings between browsers/devices. Real push delivery, per-event server preferences, and delivery of a user's voice recording require backend API support.
 
