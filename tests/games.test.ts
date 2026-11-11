@@ -59,7 +59,7 @@ describe('trò chơi — phiên demo', () => {
     const { games, proposals } = await load(null);
     await proposals.proposeSession({
       title: 'Bộ Game 2',
-      subject_id: 10,
+      course_class_id: 110,
       questions: [true, false, false].map((llm, i) => ({
         content: `Câu ${i}`,
         options: [
@@ -115,11 +115,7 @@ describe('trò chơi — phiên demo', () => {
     const [resolved] = await proposals.getMySubmissions({ status: 'RESOLVED' });
     const set = await practice.getSessionQuestions(resolved.session_id!);
     const qid = set.questions![0].question_id!;
-    await practice.rate(qid, {
-      rating: 0,
-      is_error: true,
-      comment: 'Đáp án sai',
-    });
+    await practice.report(qid, 'Đáp án sai');
 
     const reports = await games.getErrorReports();
     const mine = reports.find((r) => r.question_id === qid)!;
@@ -223,7 +219,7 @@ describe('trò chơi — phiên thật gọi đúng Swagger', () => {
     await expect(games.getGame6ActiveSession()).rejects.toThrow('Lỗi máy chủ');
   });
 
-  it('lịch sử dự đoán đọc hết các trang; báo lỗi lọc is_error và lấy tên người báo', async () => {
+  it('lịch sử dự đoán đọc hết các trang; phiên thật chưa có API liệt kê báo lỗi', async () => {
     respond = (_m, url) => {
       if (url.pathname.endsWith('/games/my-predictions')) {
         return url.searchParams.get('after')
@@ -253,14 +249,9 @@ describe('trò chơi — phiên thật gọi đúng Swagger', () => {
     expect(
       (await games.getMyPredictions()).map((p) => p.prediction_id),
     ).toEqual([1, 2]);
-    expect(await games.getErrorReports()).toEqual([]); // phiên thật phải tra theo ID câu hỏi
-    const reports = await games.getErrorReports(7);
-    expect(reports).toEqual([
-      expect.objectContaining({
-        rating_user_id: 55,
-        reporter_name: 'Nguyễn Văn A',
-        comment: 'Sai đáp án',
-      }),
-    ]);
+    // Backend tách báo lỗi sang PUT /questions/{id}/report và chưa có API liệt kê.
+    expect(await games.getErrorReports()).toEqual([]);
+    expect(await games.getErrorReports(7)).toEqual([]);
+    expect(requests.some((r) => r.path.includes('/ratings'))).toBe(false);
   });
 });

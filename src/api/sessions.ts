@@ -2,6 +2,8 @@ import { api, expectEnvelope } from './client';
 import type { components } from './generated/openapi';
 
 export type SubjectResponse = components['schemas']['SubjectResponse'];
+export type CourseClassOption =
+  components['schemas']['CourseClassOptionResponse'];
 export type SubmissionSessionSummary =
   components['schemas']['SubmissionSessionSummaryDto'];
 export type SubmissionsResponse = components['schemas']['SubmissionsResponse'];
@@ -29,12 +31,12 @@ export const sessionsApi = {
   },
 
   /**
-   * Lấy danh sách môn học sinh viên đang tham gia (theo lớp học phần đã vào)
+   * GET /sessions/my-enrolled-course-classes — lớp học phần đang/đã tham gia.
+   * Chỉ lớp thuộc học kỳ hiện tại có can_propose=true.
    */
-  async getMyEnrolledSubjects(): Promise<SubjectResponse[]> {
-    const result = await api.GET('/sessions/my-enrolled-subjects');
-    const envelope = expectEnvelope(result);
-    return envelope.data ?? [];
+  async getMyEnrolledCourseClasses(): Promise<CourseClassOption[]> {
+    const result = await api.GET('/sessions/my-enrolled-course-classes');
+    return expectEnvelope(result).data ?? [];
   },
 
   /**

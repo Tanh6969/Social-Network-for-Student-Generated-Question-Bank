@@ -86,7 +86,19 @@ export const questionsApi = {
     return expectEnvelope(result).data ?? {};
   },
 
-  /** POST /questions/{questionId}/rate — rating 0..4; is_error = báo lỗi câu hỏi. */
+  /**
+   * PUT /questions/{questionId}/report — gửi/cập nhật báo lỗi câu hỏi
+   * (backend đã tách khỏi đánh giá sao; mô tả bắt buộc, tối đa 500 ký tự).
+   */
+  async report(questionId: number, description: string): Promise<void> {
+    const result = await api.PUT('/questions/{questionId}/report', {
+      params: { path: { questionId } },
+      body: { description },
+    });
+    expectEnvelope(result);
+  },
+
+  /** POST /questions/{questionId}/rate — rating 0..4 (tương ứng 1..5 sao). */
   async rate(
     questionId: number,
     body: RateQuestionRequest,

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { FileText, ImagePlus, Video, X } from 'lucide-react';
 import { useApp } from '../../demo/context/AppContext';
+import { isApiSession } from '../../../api';
 import type { Post, PostDocument } from '../../demo/types';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
 import { MediaLightbox } from '../../../shared/components/MediaLightbox';
@@ -50,6 +51,9 @@ function PostComposer({
   const videoInput = useRef<HTMLInputElement>(null);
   const documentInput = useRef<HTMLInputElement>(null);
   const newMediaUrls = useRef(new Set<string>());
+  // blob URL xem trước → tệp gốc, để phiên thật tải lên máy chủ khi đăng.
+  const mediaFiles = useRef(new Map<string, File>());
+  const [isSaving, setIsSaving] = useState(false);
   const composerClosed = useRef(false);
   const [content, setContent] = useState(editingPost?.content ?? '');
   const [limitIssue, setLimitIssue] = useState<PostContentIssue | null>(null);
@@ -151,12 +155,12 @@ function PostComposer({
     setIsReadingFiles(true);
     try {
       const results = await Promise.allSettled(selected.map(readMediaFile));
-      const nextUrls = results
-        .filter(
-          (result): result is PromiseFulfilledResult<string> =>
-            result.status === 'fulfilled',
-        )
-        .map((result) => result.value);
+      const nextUrls: string[] = [];
+      results.forEach((result, index) => {
+        if (result.status !== 'fulfilled') return;
+        nextUrls.push(result.value);
+        mediaFiles.current.set(result.value, selected[index]);
+      });
       if (composerClosed.current) {
         nextUrls.forEach(revokeMediaUrl);
         return;
@@ -194,6 +198,7 @@ function PostComposer({
       valid.forEach((file) => {
         const url = URL.createObjectURL(file);
         newMediaUrls.current.add(url);
+        mediaFiles.current.set(url, file);
         nextDocuments.push({
           name: file.name,
           url,
@@ -211,37 +216,54 @@ function PostComposer({
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (
       (!content.trim() && !mediaUrls.length && !documents.length) ||
       contentIssue ||
-      isReadingFiles
+      isReadingFiles ||
+      isSaving
     )
       return;
-    newMediaUrls.current.clear();
+    const apiSession = isApiSession();
+    // Demo giữ blob URL trong bài viết nên không được thu hồi khi đóng form;
+    // phiên thật dùng URL máy chủ nên blob được thu hồi bình thường.
+    if (!apiSession) newMediaUrls.current.clear();
+    setIsSaving(true);
+    let saved: boolean;
     if (editingPost) {
-      updatePost(editingPost.id, {
-        content: content.trim(),
-        privacy,
-        mediaUrls,
-        documents,
-        type:
-          editingPost.type === 'QUESTION_APPROVED'
-            ? editingPost.type
-            : mediaType === 'video' && mediaUrls.length
-              ? 'VIDEO'
-              : 'KNOWLEDGE',
-      });
+      saved = await updatePost(
+        editingPost.id,
+        {
+          content: content.trim(),
+          privacy,
+          mediaUrls,
+          documents,
+          type:
+            editingPost.type === 'QUESTION_APPROVED'
+              ? editingPost.type
+              : mediaType === 'video' && mediaUrls.length
+                ? 'VIDEO'
+                : 'KNOWLEDGE',
+        },
+        mediaFiles.current,
+      );
     } else {
-      createPost({
-        content: content.trim(),
-        privacy,
-        mediaUrls,
-        documents,
-        type: mediaType === 'video' && mediaUrls.length ? 'VIDEO' : 'KNOWLEDGE',
-      });
+      saved = await createPost(
+        {
+          content: content.trim(),
+          privacy,
+          mediaUrls,
+          documents,
+          type:
+            mediaType === 'video' && mediaUrls.length ? 'VIDEO' : 'KNOWLEDGE',
+        },
+        mediaFiles.current,
+      );
     }
-    closePostComposer();
+    if (composerClosed.current) return;
+    setIsSaving(false);
+    // Lỗi đã được báo bằng toast; giữ nguyên form để người dùng thử lại.
+    if (saved) closePostComposer();
   };
 
   return (
@@ -271,9 +293,7 @@ function PostComposer({
         <div className="max-h-[75vh] space-y-4 overflow-y-auto p-4">
           <div className="flex items-center gap-3">
             <AvatarWithFrame user={currentUser} size="md" />
-            <p className="text-sm font-bold text-fb-text">
-              {currentUser.name}
-            </p>
+            <p className="text-sm font-bold text-fb-text">{currentUser.name}</p>
           </div>
           <label htmlFor="post-content" className="sr-only">
             Nội dung bài viết
@@ -405,10 +425,7 @@ function PostComposer({
             )}
           </div>
           {fileError && (
-            <p
-              role="alert"
-              className="text-xs font-medium text-fb-danger"
-            >
+            <p role="alert" className="text-xs font-medium text-fb-danger">
               {fileError}
             </p>
           )}
@@ -416,15 +433,22 @@ function PostComposer({
         <div className="border-t border-fb-divider p-4">
           <button
             type="button"
-            onClick={handleSave}
+            onClick={() => void handleSave()}
             disabled={
               (!content.trim() && !mediaUrls.length && !documents.length) ||
               Boolean(contentIssue) ||
-              isReadingFiles
+              isReadingFiles ||
+              isSaving
             }
             className="w-full rounded-lg bg-fb-blue py-2.5 text-sm font-bold text-white hover:bg-fb-blue-hover disabled:bg-fb-btn disabled:text-fb-text-3"
           >
-            {editingPost ? 'Lưu thay đổi' : 'Đăng bài viết'}
+            {isSaving
+              ? editingPost
+                ? 'Đang lưu...'
+                : 'Đang đăng...'
+              : editingPost
+                ? 'Lưu thay đổi'
+                : 'Đăng bài viết'}
           </button>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import type { AuthResponse } from '../../api/auth';
-import type { ProfileResponse } from '../../api/profile';
+import type { ProfileResponse } from '../../api/posts';
 import type { User } from '../demo/types';
 
 export function mapAuthUser(account: AuthResponse): User {
@@ -29,30 +29,22 @@ export function mapAuthUser(account: AuthResponse): User {
   };
 }
 
-export function mapProfileUser(
-  account: AuthResponse,
-  profile: ProfileResponse,
+/** Bổ sung thông tin hồ sơ đầy đủ (GET /users/me) vào người dùng đăng nhập. */
+export function applyProfile(
+  user: User,
+  profile: ProfileResponse | null,
 ): User {
-  const user = mapAuthUser(account);
-  if (profile.user_id !== account.user_id) {
-    throw new Error('Hồ sơ trả về không khớp tài khoản đăng nhập.');
-  }
+  if (!profile) return user;
   return {
     ...user,
-    name: profile.full_name || user.name,
-    email: profile.email || user.email,
+    name: profile.full_name?.trim() || user.name,
     avatar: profile.avatar_url || user.avatar,
     coverImage: profile.cover_url || user.coverImage,
-    bio: profile.bio || '',
-    faculty: profile.school_faculty || '',
-    classOrTitle:
-      profile.class_name ||
-      profile.major ||
-      (user.role === 'LECTURER' ? 'Giảng viên' : 'Sinh viên'),
-    points: profile.gamification_points || 0,
-    approvedQuestionsCount: profile.total_proposed_questions || 0,
-    friendsCount: profile.friends_count || 0,
-    followersCount: profile.followers_count || 0,
-    verifiedLecturer: user.role === 'LECTURER' && profile.verified === true,
+    bio: profile.bio ?? user.bio,
+    faculty: profile.school_faculty || user.faculty,
+    classOrTitle: profile.class_name || user.classOrTitle,
+    points: profile.gamification_points ?? user.points,
+    friendsCount: profile.friends_count ?? user.friendsCount,
+    followersCount: profile.followers_count ?? user.followersCount,
   };
 }

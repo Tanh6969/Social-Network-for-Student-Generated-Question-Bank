@@ -15,11 +15,6 @@ const FeedView = React.lazy(() =>
     default: module.FeedView,
   })),
 );
-const ApiFeedView = React.lazy(() =>
-  import('../features/feed/components/ApiFeedView').then((module) => ({
-    default: module.ApiFeedView,
-  })),
-);
 const BankView = React.lazy(() =>
   import('../features/bank/components/BankView').then((module) => ({
     default: module.BankView,
@@ -60,11 +55,6 @@ const ProfileView = React.lazy(() =>
     default: module.ProfileView,
   })),
 );
-const ApiProfileView = React.lazy(() =>
-  import('../features/profile/components/ApiProfileView').then((module) => ({
-    default: module.ApiProfileView,
-  })),
-);
 const CosmeticsView = React.lazy(() =>
   import('../features/cosmetics/components/CosmeticsView').then((module) => ({
     default: module.CosmeticsView,
@@ -100,8 +90,7 @@ import { WifiOff } from 'lucide-react';
 
 const MainContent: React.FC = () => {
   const location = useLocation();
-  const { isAuthenticated, sessionKind, activeTab, isOfflineSimulated, role } =
-    useApp();
+  const { isAuthenticated, activeTab, isOfflineSimulated, role } = useApp();
   // Chỉ đăng xuất mới chuyển từ đã đăng nhập sang chưa đăng nhập. Khi đó không
   // giữ trang cũ trong `next`, để lần đăng nhập sau (có thể là tài khoản khác)
   // luôn mở trang chủ MXH.
@@ -116,14 +105,16 @@ const MainContent: React.FC = () => {
   if (!isAuthenticated) {
     return (
       <>
-        {justLoggedOut
-          ? location.pathname !== '/login' && <Navigate to="/login" replace />
-          : location.pathname !== '/login' && (
-              <Navigate
-                to={`/login?next=${encodeURIComponent(`${location.pathname}${location.search}`)}`}
-                replace
-              />
-            )}
+        {justLoggedOut ? (
+          location.pathname !== '/login' && <Navigate to="/login" replace />
+        ) : (
+          location.pathname !== '/login' && (
+            <Navigate
+              to={`/login?next=${encodeURIComponent(`${location.pathname}${location.search}`)}`}
+              replace
+            />
+          )
+        )}
         <AuthPage />
         <ToastContainer />
       </>
@@ -159,8 +150,7 @@ const MainContent: React.FC = () => {
         }
       >
         <div className="flex-1">
-          {activeTab === 'feed' &&
-            (sessionKind === 'api' ? <ApiFeedView /> : <FeedView />)}
+          {activeTab === 'feed' && <FeedView />}
           {activeTab === 'bank' && <BankView />}
           {activeTab === 'propose' && <ProposeView />}
           {activeTab === 'game' && <MinigameView />}
@@ -170,8 +160,7 @@ const MainContent: React.FC = () => {
           {activeTab === 'lecturer-bank' &&
             (role === 'LECTURER' ? <LecturerBankView /> : <FeedView />)}
           {activeTab === 'messenger' && <MessengerFullView />}
-          {activeTab === 'profile' &&
-            (sessionKind === 'api' ? <ApiProfileView /> : <ProfileView />)}
+          {activeTab === 'profile' && <ProfileView />}
           {activeTab === 'cosmetics' && <CosmeticsView />}
           {activeTab === 'settings' && <SettingsView />}
           {activeTab === 'exams' && <ExamsView />}
@@ -183,8 +172,8 @@ const MainContent: React.FC = () => {
       <ChatDock />
 
       {/* Modals */}
-      {sessionKind === 'demo' && <CreatePostModal />}
-      {sessionKind === 'demo' && <PostDetailModal />}
+      <CreatePostModal />
+      <PostDetailModal />
       <ProposeSessionModal />
       <QuestionQuizModal />
       <ExamGeneratorWizard />

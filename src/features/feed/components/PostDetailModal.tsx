@@ -41,10 +41,18 @@ function PostDetail({
     addComment,
     openReportModal,
     filterVisibleComments,
+    loadPostComments,
   } = useApp();
   const [commentInput, setCommentInput] = useState('');
   const [replyTarget, setReplyTarget] = useState<CommentItem | null>(null);
   const commentInputRef = useRef<HTMLInputElement>(null);
+
+  // Phiên thật: bình luận chỉ được tải khi mở chi tiết bài.
+  const commentsLoaded = Boolean(post.comments);
+  useEffect(() => {
+    if (!commentsLoaded) loadPostComments(post.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [post.id, commentsLoaded]);
 
   useEffect(() => {
     if (!focusComment) return;
@@ -53,10 +61,10 @@ function PostDetail({
   }, [focusComment]);
 
   const visibleComments = filterVisibleComments(post.comments);
-  const visibleCommentsCount = visibleComments.reduce(
-    (sum, c) => sum + 1 + (c.replies?.length ?? 0),
-    0,
-  );
+  // Bình luận chưa tải (phiên thật) thì dùng số đếm từ máy chủ.
+  const visibleCommentsCount = post.comments
+    ? visibleComments.reduce((sum, c) => sum + 1 + (c.replies?.length ?? 0), 0)
+    : post.commentsCount;
 
   const submitComment = () => {
     if (!commentInput.trim()) return;

@@ -22,6 +22,7 @@ import type {
   ProposeSessionRequest,
   QuestionOption,
   SessionDetailReviewResponse,
+  CourseClassOption,
   SubjectResponse,
   SubmissionsResponse,
   UpdateSubmissionSessionRequest,
@@ -102,8 +103,33 @@ export const DEMO_SUBJECTS: SubjectResponse[] = [
   { subject_id: 20, code: 'IT3190', name: 'Học máy (Machine Learning)' },
 ];
 
-/** Các môn sinh viên demo đang học (mô phỏng GET /sessions/my-enrolled-subjects). */
+/** Các môn sinh viên demo đang học. */
 const DEMO_ENROLLED_SUBJECT_IDS = [10, 11, 12, 13, 14];
+
+/** Mỗi môn demo có một lớp học phần: course_class_id = 100 + subject_id. */
+const DEMO_COURSE_CLASS_OFFSET = 100;
+
+/** Mô phỏng GET /sessions/my-enrolled-course-classes. */
+export const DEMO_ENROLLED_COURSE_CLASSES: CourseClassOption[] =
+  DEMO_SUBJECTS.filter((s) =>
+    DEMO_ENROLLED_SUBJECT_IDS.includes(s.subject_id!),
+  ).map((s) => ({
+    course_class_id: DEMO_COURSE_CLASS_OFFSET + s.subject_id!,
+    class_code: `${s.code}_01`,
+    subject_id: s.subject_id,
+    subject_code: s.code,
+    subject_name: s.name,
+    semester_id: 1,
+    semester_name: '20261',
+    active_semester: true,
+    can_propose: true,
+  }));
+
+function subjectIdOfCourseClass(courseClassId: number | undefined) {
+  return DEMO_ENROLLED_COURSE_CLASSES.find(
+    (c) => c.course_class_id === courseClassId,
+  )?.subject_id;
+}
 
 /** user_id số của sinh viên demo (AuthorDto yêu cầu số). */
 export const DEMO_STUDENT_USER_ID = 9001;
@@ -377,6 +403,8 @@ function toSummary(s: DemoSession) {
     subject_id: s.subject_id,
     subject_name: subject.name,
     subject_code: subject.code,
+    course_class_id: DEMO_COURSE_CLASS_OFFSET + (s.subject_id ?? 0),
+    class_code: `${subject.code}_01`,
     question_counts: s.questions.length,
     created_at: s.created_at,
     react_count: s.react_count,
@@ -408,6 +436,10 @@ export const demoProposalStore = {
     return DEMO_SUBJECTS.filter((s) =>
       DEMO_ENROLLED_SUBJECT_IDS.includes(s.subject_id!),
     );
+  },
+
+  listEnrolledCourseClasses(): CourseClassOption[] {
+    return DEMO_ENROLLED_COURSE_CLASSES;
   },
 
   listMySubmissions(params: {
@@ -452,17 +484,18 @@ export const demoProposalStore = {
 
   propose(body: ProposeSessionRequest): void {
     if (!body.title?.trim()) throw new ApiError('Vui lòng nhập tiêu đề.', 400);
-    assertEnrolled(body.subject_id);
+    const subjectId = subjectIdOfCourseClass(body.course_class_id);
+    assertEnrolled(subjectId);
     assertValidQuestions(body.questions);
     const id = nextDemoId();
-    const subject = subjectOf(body.subject_id);
+    const subject = subjectOf(subjectId);
     const session: DemoSession = {
       session_id: id,
       session_code: `${subject.code}_${id}`,
       title: body.title.trim(),
       content: body.content,
       source_url: body.source_url,
-      subject_id: body.subject_id!,
+      subject_id: subjectId!,
       mine: true,
       author: {
         user_id: DEMO_STUDENT_USER_ID,
@@ -499,7 +532,8 @@ export const demoProposalStore = {
     if (current.status !== 'PENDING')
       throw new ApiError('Chỉ được chỉnh sửa phiên khi đang chờ duyệt.', 400);
     if (!body.title?.trim()) throw new ApiError('Vui lòng nhập tiêu đề.', 400);
-    assertEnrolled(body.subject_id);
+    const subjectId = subjectIdOfCourseClass(body.course_class_id);
+    assertEnrolled(subjectId);
     assertValidQuestions(body.questions);
     const newIdBase = nextDemoId() * 1000;
     update((all) =>
@@ -511,7 +545,7 @@ export const demoProposalStore = {
               title: body.title!.trim(),
               content: body.content,
               source_url: body.source_url,
-              subject_id: body.subject_id!,
+              subject_id: subjectId!,
               questions: (body.questions ?? []).map((q, i) => ({
                 question_id: q.question_id ?? newIdBase + i,
                 content: q.content ?? '',
@@ -776,8 +810,22 @@ export const demoProposalStore = {
     };
   },
 
-  /** Mô phỏng POST /questions/{questionId}/rate (is_error ⇒ điểm 0). */
-  rate(questionId: number, body: RateQuestionRequest): RateQuestionResponse {
+  /** Mô phỏng PUT /questions/{questionId}/report (demo lưu như lượt đánh giá lỗi). */
+  report(questionId: number, description: string): void {
+    if (!description.trim())
+      throw new ApiError('Vui lòng mô tả lỗi của câu hỏi.', 400);
+    demoProposalStore.rate(questionId, {
+      rating: 0,
+      is_error: true,
+      comment: description,
+    });
+  },
+
+  /** Mô phỏng POST /questions/{questionId}/rate (báo lỗi nội bộ demo ⇒ điểm 0). */
+  rate(
+    questionId: number,
+    body: RateQuestionRequest & { is_error?: boolean },
+  ): RateQuestionResponse {
     const { question } = findQuestion(questionId);
     const isError = Boolean(body.is_error);
     const rating = isError ? 0 : Math.round(body.rating ?? -1);

@@ -40,6 +40,22 @@ import {
   updateOwnedPost,
 } from '../../feed/postUtils';
 import { revokeMediaUrl } from '../../feed/mediaUtils';
+import { errorMessage, isApiSession } from '../../../api';
+import { postsApi } from '../../../api/posts';
+import { relationshipsApi } from '../../../api/relationships';
+import {
+  basicUser,
+  friendStatusFromProfile,
+  loadApiRelationships,
+  userFromProfile,
+  userFromSearch,
+} from '../../friends/apiRelationships';
+import {
+  buildMediaItems,
+  commentFromApi,
+  loadApiFeed,
+  postFromApi,
+} from '../../feed/apiPosts';
 import {
   mockCurrentUserStudent,
   mockCurrentUserLecturer,
@@ -128,16 +144,31 @@ interface AppContextType {
 
   // Posts & Social
   posts: Post[];
-  createPost: (postData: Partial<Post>) => void;
+  /** Phiên thật đang tải bảng tin từ máy chủ. */
+  isFeedLoading: boolean;
+  /** Lỗi tải bảng tin của phiên thật (null nếu không lỗi). */
+  feedError: string | null;
+  reloadFeed: () => void;
+  /**
+   * `files` ánh xạ blob URL (trong mediaUrls/documents) → tệp gốc để tải lên
+   * máy chủ ở phiên thật. Trả về true khi đăng thành công.
+   */
+  createPost: (
+    postData: Partial<Post>,
+    files?: ReadonlyMap<string, File>,
+  ) => Promise<boolean>;
   updatePost: (
     postId: string,
     updates: Pick<
       Post,
       'content' | 'privacy' | 'mediaUrls' | 'documents' | 'type'
     >,
-  ) => void;
+    files?: ReadonlyMap<string, File>,
+  ) => Promise<boolean>;
   toggleLikePost: (postId: string) => void;
   addComment: (postId: string, text: string, parentCommentId?: string) => void;
+  /** Phiên thật: tải bình luận của bài khi mở chi tiết (demo: không làm gì). */
+  loadPostComments: (postId: string) => void;
   deletePost: (postId: string) => void;
   addLecturerNote: (postId: string, note: string) => void;
   friendStatuses: Record<string, FriendStatus>;
@@ -164,6 +195,9 @@ interface AppContextType {
   blockUser: (userId: string, reason?: string) => void;
   unblockUser: (userId: string) => void;
   toggleSimulatedBlockedByOther: (userId: string) => void;
+  /** Phiên thật: lỗi khi mở trang cá nhân người khác (bị chặn, không tồn tại…). */
+  viewedProfileError: string | null;
+  reloadRelationships: () => void;
   isBlockedByMe: (userId: string) => boolean;
   isBlockingMe: (userId: string) => boolean;
   isBlockedEitherWay: (userId: string) => boolean;
@@ -506,6 +540,78 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     await logoutSession();
   };
 
+  // Bảng tin: phiên thật lấy từ API, phiên demo dùng dữ liệu mẫu. Đổi phiên
+  // thì thay toàn bộ danh sách để không lẫn bài của tài khoản trước.
+  const postsSourceRef = useRef<'demo' | 'api'>('demo');
+  const [isFeedLoading, setIsFeedLoading] = useState(false);
+  const [feedError, setFeedError] = useState<string | null>(null);
+  const [feedReloadKey, setFeedReloadKey] = useState(0);
+  const apiFeedUserId = sessionKind === 'api' ? rawCurrentUser.id : null;
+  const rawCurrentUserRef = useRef(rawCurrentUser);
+  useEffect(() => {
+    rawCurrentUserRef.current = rawCurrentUser;
+  }, [rawCurrentUser]);
+  useEffect(() => {
+    if (!apiFeedUserId) {
+      if (postsSourceRef.current === 'api') {
+        postsSourceRef.current = 'demo';
+        setPosts(mockPosts);
+      }
+      return;
+    }
+    postsSourceRef.current = 'api';
+    let cancelled = false;
+    setPosts([]);
+    setFeedError(null);
+    setIsFeedLoading(true);
+    loadApiFeed(rawCurrentUserRef.current)
+      .then((loaded) => {
+        if (!cancelled) setPosts(loaded);
+      })
+      .catch((error: unknown) => {
+        if (!cancelled)
+          setFeedError(errorMessage(error, 'Không tải được bảng tin.'));
+      })
+      .finally(() => {
+        if (!cancelled) setIsFeedLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [apiFeedUserId, feedReloadKey]);
+  const reloadFeed = () => setFeedReloadKey((key) => key + 1);
+
+  // Người dùng đã biết trong phiên thật (bạn bè, tác giả bài, kết quả tìm,
+  // hồ sơ đã mở). Thay cho danh sách người dùng mẫu của phiên demo.
+  const [apiUsers, setApiUsers] = useState<Record<string, User>>({});
+  const [apiMutualCounts, setApiMutualCounts] = useState<
+    Record<string, number>
+  >({});
+  const relationsSourceRef = useRef<'demo' | 'api'>('demo');
+  /**
+   * Gộp người dùng vào bộ nhớ. `full` = hồ sơ đầy đủ (GET /users/{id});
+   * thông tin rút gọn (tác giả, danh sách) chỉ cập nhật tên/ảnh để không
+   * ghi đè vai trò, số bạn bè… đã biết từ hồ sơ.
+   */
+  const rememberApiUsers = (users: User[], full = false) =>
+    setApiUsers((previous) => {
+      let changed = false;
+      const next = { ...previous };
+      for (const user of users) {
+        if (!user.id || user.id === 'undefined' || user.id === 'unknown')
+          continue;
+        const old = previous[user.id];
+        if (old && !full) {
+          if (old.name === user.name && old.avatar === user.avatar) continue;
+          next[user.id] = { ...old, name: user.name, avatar: user.avatar };
+        } else {
+          next[user.id] = old ? { ...old, ...user } : user;
+        }
+        changed = true;
+      }
+      return changed ? next : previous;
+    });
+
   // Phiên demo: mỗi lần mở Ngân hàng, nạp các câu hỏi đã được duyệt từ kho
   // đề xuất dùng chung (SV nộp → GV duyệt → xuất hiện ở đây). Phiên khác thì
   // gỡ dữ liệu demo đó ra để không lẫn với dữ liệu thật.
@@ -531,16 +637,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       mergeDemoBank(prev, bank.sessions, DEMO_BANK_SESSION_PREFIX),
     );
     setQuestions((prev) =>
-      mergeDemoBank(prev, bank.questions, DEMO_BANK_QUESTION_PREFIX, (old, next) => ({
-        ...next,
-        ratingAverage: old.ratingAverage,
-        ratingCount: old.ratingCount,
-        totalAttempts: old.totalAttempts,
-        correctAttempts: old.correctAttempts,
-        optionDistribution: old.optionDistribution,
-        userRatedStars: old.userRatedStars,
-        userComment: old.userComment,
-      })),
+      mergeDemoBank(
+        prev,
+        bank.questions,
+        DEMO_BANK_QUESTION_PREFIX,
+        (old, next) => ({
+          ...next,
+          ratingAverage: old.ratingAverage,
+          ratingCount: old.ratingCount,
+          totalAttempts: old.totalAttempts,
+          correctAttempts: old.correctAttempts,
+          optionDistribution: old.optionDistribution,
+          userRatedStars: old.userRatedStars,
+          userComment: old.userComment,
+        }),
+      ),
     );
   }, [sessionKind, activeTab]);
 
@@ -705,14 +816,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     );
   };
 
-  const allUsers: User[] = [
-    ...mockOtherUsers,
-    role === 'STUDENT' ? mockCurrentUserLecturer : mockCurrentUserStudent,
-  ].filter(
-    (u, idx, arr) =>
-      u.id !== rawCurrentUser.id &&
-      arr.findIndex((item) => item.id === u.id) === idx,
-  );
+  const allUsers: User[] =
+    sessionKind === 'api'
+      ? Object.values(apiUsers).filter((u) => u.id !== rawCurrentUser.id)
+      : [
+          ...mockOtherUsers,
+          role === 'STUDENT' ? mockCurrentUserLecturer : mockCurrentUserStudent,
+        ].filter(
+          (u, idx, arr) =>
+            u.id !== rawCurrentUser.id &&
+            arr.findIndex((item) => item.id === u.id) === idx,
+        );
 
   const friendsList: User[] = allUsers.filter(
     (u) => friendStatuses[u.id] === 'FRIEND' && !isBlockedEitherWay(u.id),
@@ -775,6 +889,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   // Mạng lưới bạn bè mặc định của các sinh viên khác trong hệ thống
   const findRawUserById = (id: string): User => {
     if (id === rawCurrentUser.id) return rawCurrentUser;
+    if (sessionKind === 'api') {
+      // Không bao giờ trả người dùng mẫu cho id thật.
+      const known =
+        apiUsers[id] ?? posts.find((post) => post.author.id === id)?.author;
+      if (known) return known;
+      const numericId = Number(id);
+      return {
+        ...basicUser({ user_id: Number.isFinite(numericId) ? numericId : 0 }),
+        id,
+        name: 'Người dùng',
+      };
+    }
     if (id === mockCurrentUserStudent.id) return mockCurrentUserStudent;
     if (id === mockCurrentUserLecturer.id) return mockCurrentUserLecturer;
     const found = mockOtherUsers.find((u) => u.id === id);
@@ -797,6 +923,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const getFriendsOfUser = (userId: string): User[] => {
     if (userId === currentUser.id) return friendsList;
+    // Backend không có API liệt kê bạn bè của người khác.
+    if (sessionKind === 'api') return [];
     const peerIds = mockPeerFriendsMap[userId] || [];
     const peerUsers = peerIds
       .filter((pid) => pid !== userId)
@@ -812,6 +940,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const getMutualFriendsCount = (userId: string): number => {
     if (userId === currentUser.id) return 0;
+    if (sessionKind === 'api') return apiMutualCounts[userId] ?? 0;
     const myFriendIds = new Set(friendsList.map((f) => f.id));
     const theirFriendIds = (mockPeerFriendsMap[userId] || []).filter(
       (id) => id !== currentUser.id,
@@ -822,12 +951,184 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   const getUserById = (id: string): User => {
     if (id === currentUser.id) return currentUser;
     const raw = findRawUserById(id);
+    // Phiên thật: số bạn bè lấy từ hồ sơ (friends_count).
+    if (sessionKind === 'api') return raw;
     const theirFriends = getFriendsOfUser(id);
     return {
       ...raw,
       friendsCount: theirFriends.length,
     };
   };
+
+  // ---------------- Quan hệ trong phiên thật ----------------
+  const [apiRelationsReloadKey, setApiRelationsReloadKey] = useState(0);
+  useEffect(() => {
+    if (!apiFeedUserId) {
+      if (relationsSourceRef.current === 'api') {
+        relationsSourceRef.current = 'demo';
+        setApiUsers({});
+        setApiMutualCounts({});
+        setBlockedUsers([]);
+      }
+      return;
+    }
+    relationsSourceRef.current = 'api';
+    let cancelled = false;
+    loadApiRelationships()
+      .then((snapshot) => {
+        if (cancelled) return;
+        rememberApiUsers(snapshot.users);
+        setApiMutualCounts(snapshot.mutual);
+        setFriendStatusesByAccount((previous) => ({
+          ...previous,
+          [apiFeedUserId]: snapshot.statuses,
+        }));
+        setFollowingIdsByAccount((previous) => ({
+          ...previous,
+          [apiFeedUserId]: snapshot.following,
+        }));
+        setBlockedUsers(snapshot.blocked);
+      })
+      .catch((error: unknown) => {
+        if (!cancelled)
+          showToast(
+            errorMessage(error, 'Không tải được danh sách bạn bè.'),
+            'error',
+          );
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiFeedUserId, apiRelationsReloadKey]);
+
+  // Tác giả bài viết / bình luận trở thành người dùng đã biết (gợi ý kết bạn).
+  useEffect(() => {
+    if (sessionKind !== 'api') return;
+    rememberApiUsers(
+      posts.flatMap((post) => [
+        post.author,
+        ...(post.comments ?? []).flatMap((comment) => [
+          comment.author,
+          ...(comment.replies ?? []).map((reply) => reply.author),
+        ]),
+      ]),
+    );
+  }, [posts, sessionKind]);
+
+  // Tìm người dùng trên máy chủ (GET /search?type=USER).
+  useEffect(() => {
+    const text = searchQuery.trim();
+    if (sessionKind !== 'api' || !text) return;
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      relationshipsApi
+        .searchUsers(text)
+        .then((users) => {
+          if (!cancelled) rememberApiUsers(users.map(userFromSearch));
+        })
+        .catch(() => undefined);
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [searchQuery, sessionKind]);
+
+  // Mở trang cá nhân người khác: tải hồ sơ, quan hệ với tôi và bài viết.
+  const [viewedProfileError, setViewedProfileError] = useState<string | null>(
+    null,
+  );
+  useEffect(() => {
+    setViewedProfileError(null);
+    if (
+      sessionKind !== 'api' ||
+      !viewingUserId ||
+      viewingUserId === rawCurrentUser.id
+    )
+      return;
+    const userId = Number(viewingUserId);
+    if (!Number.isInteger(userId)) return;
+    const accountId = rawCurrentUser.id;
+    let cancelled = false;
+    relationshipsApi
+      .getUser(userId)
+      .then((profile) => {
+        if (cancelled || !profile) return;
+        rememberApiUsers([userFromProfile(profile)], true);
+        const status = friendStatusFromProfile(profile);
+        if (status)
+          setFriendStatusesByAccount((previous) => {
+            const current = getFriendStatusesForAccount(previous, accountId);
+            if ((current[viewingUserId] ?? 'NONE') === status) return previous;
+            return {
+              ...previous,
+              [accountId]: { ...current, [viewingUserId]: status },
+            };
+          });
+        const following = profile.relationships?.is_following;
+        if (typeof following === 'boolean')
+          setFollowingIdsByAccount((previous) => {
+            const current = previous[accountId] ?? [];
+            if (current.includes(viewingUserId) === following) return previous;
+            return {
+              ...previous,
+              [accountId]: following
+                ? [...current, viewingUserId]
+                : current.filter((id) => id !== viewingUserId),
+            };
+          });
+      })
+      .catch((error: unknown) => {
+        if (!cancelled)
+          setViewedProfileError(
+            errorMessage(error, 'Không xem được trang cá nhân này.'),
+          );
+      });
+    relationshipsApi
+      .getUserPosts(userId)
+      .then((page) => {
+        if (cancelled) return;
+        const loaded = page.items
+          .filter((dto) => dto.post_id != null)
+          .map((dto) => postFromApi(dto, rawCurrentUserRef.current));
+        if (!loaded.length) return;
+        setPosts((previous) => {
+          const byId = new Map(loaded.map((post) => [post.id, post]));
+          const merged = previous.map((post) => {
+            const fresh = byId.get(post.id);
+            if (!fresh) return post;
+            byId.delete(post.id);
+            return { ...fresh, comments: post.comments };
+          });
+          return [...merged, ...byId.values()];
+        });
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewingUserId, sessionKind]);
+
+  /** Gọi API quan hệ; thành công mới cập nhật giao diện, lỗi thì báo lỗi. */
+  const runRelationAction = (
+    request: () => Promise<void>,
+    onSuccess: () => void,
+    message: string,
+    type: 'success' | 'info' | 'warning' = 'success',
+  ) => {
+    request()
+      .then(() => {
+        onSuccess();
+        showToast(message, type);
+      })
+      .catch((error: unknown) =>
+        showToast(errorMessage(error, 'Thao tác không thành công.'), 'error'),
+      );
+  };
+  const setApiFriendStatus = (userId: string, status: FriendStatus) =>
+    setFriendStatuses((previous) => ({ ...previous, [userId]: status }));
 
   // Actions quản lý bạn bè như thật
   const sendFriendRequest = (userId: string) => {
@@ -840,6 +1141,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
     const target = findRawUserById(userId);
+    if (sessionKind === 'api') {
+      runRelationAction(
+        () => relationshipsApi.sendFriendRequest(Number(userId)),
+        () => setApiFriendStatus(userId, 'REQUEST_SENT'),
+        `Đã gửi lời mời kết bạn tới ${target.name}!`,
+      );
+      return;
+    }
     updateFriendStatusesForBothAccounts(
       userId,
       'REQUEST_SENT',
@@ -868,6 +1177,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const cancelFriendRequest = (userId: string) => {
     const target = findRawUserById(userId);
+    if (sessionKind === 'api') {
+      runRelationAction(
+        () => relationshipsApi.cancelFriendRequest(Number(userId)),
+        () => setApiFriendStatus(userId, 'NONE'),
+        `Đã hủy lời mời kết bạn với ${target.name}.`,
+        'info',
+      );
+      return;
+    }
     updateFriendStatusesForBothAccounts(userId, 'NONE', 'NONE');
     removeFriendRequestNotification(userId, currentUser.id);
     showToast(`Đã hủy lời mời kết bạn với ${target.name}.`, 'info');
@@ -879,6 +1197,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
     const target = findRawUserById(userId);
+    if (sessionKind === 'api') {
+      runRelationAction(
+        () => relationshipsApi.acceptFriendRequest(Number(userId)),
+        () => setApiFriendStatus(userId, 'FRIEND'),
+        `Bạn và ${target.name} đã trở thành bạn bè!`,
+      );
+      return;
+    }
     updateFriendStatusesForBothAccounts(userId, 'FRIEND', 'FRIEND');
     removeFriendRequestNotification(currentUser.id, userId);
     showToast(`Bạn và ${target.name} đã trở thành bạn bè!`, 'success');
@@ -886,6 +1212,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const declineFriendRequest = (userId: string) => {
     const target = findRawUserById(userId);
+    if (sessionKind === 'api') {
+      runRelationAction(
+        () => relationshipsApi.declineFriendRequest(Number(userId)),
+        () => setApiFriendStatus(userId, 'NONE'),
+        `Đã xóa lời mời kết bạn từ ${target.name}.`,
+        'info',
+      );
+      return;
+    }
     updateFriendStatusesForBothAccounts(userId, 'NONE', 'NONE');
     removeFriendRequestNotification(currentUser.id, userId);
     showToast(`Đã xóa lời mời kết bạn từ ${target.name}.`, 'info');
@@ -893,6 +1228,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const unfriendUser = (userId: string) => {
     const target = findRawUserById(userId);
+    if (sessionKind === 'api') {
+      runRelationAction(
+        () => relationshipsApi.unfriend(Number(userId)),
+        () => setApiFriendStatus(userId, 'NONE'),
+        `Đã hủy kết bạn với ${target.name}.`,
+        'info',
+      );
+      return;
+    }
     updateFriendStatusesForBothAccounts(userId, 'NONE', 'NONE');
     showToast(`Đã hủy kết bạn với ${target.name}.`, 'info');
   };
@@ -903,6 +1247,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
     const target = findRawUserById(userId);
+    if (sessionKind === 'api') {
+      const following = followingIds.includes(userId);
+      runRelationAction(
+        () =>
+          following
+            ? relationshipsApi.unfollow(Number(userId))
+            : relationshipsApi.follow(Number(userId)),
+        () =>
+          setFollowingIds((prev) =>
+            following
+              ? prev.filter((id) => id !== userId)
+              : [...prev.filter((id) => id !== userId), userId],
+          ),
+        following
+          ? `Đã bỏ theo dõi ${target.name}.`
+          : `Đang theo dõi ${target.name}!`,
+        following ? 'info' : 'success',
+      );
+      return;
+    }
     setFollowingIds((prev) => {
       const exists = prev.includes(userId);
       if (exists) {
@@ -931,6 +1295,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     if (userId === currentUser.id) return;
     const target = findRawUserById(userId);
     const wasFriend = friendStatuses[userId] === 'FRIEND';
+    if (sessionKind === 'api') {
+      runRelationAction(
+        () => relationshipsApi.block(Number(userId)),
+        () => {
+          setApiFriendStatus(userId, 'NONE');
+          setFollowingIds((prev) => prev.filter((id) => id !== userId));
+          setBlockedUsers((prev) => [
+            {
+              userId,
+              blockedAt: new Date().toLocaleString('vi-VN'),
+              reason: reason?.trim() || undefined,
+            },
+            ...prev.filter((item) => item.userId !== userId),
+          ]);
+        },
+        wasFriend
+          ? `Đã chặn ${target.name} và hủy kết bạn.`
+          : `Đã chặn ${target.name}.`,
+        'warning',
+      );
+      return;
+    }
 
     // 1. Hủy kết bạn / hủy lời mời kết bạn ngay lập tức
     updateFriendStatusesForBothAccounts(userId, 'NONE', 'NONE');
@@ -965,6 +1351,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const unblockUser = (userId: string) => {
     const target = findRawUserById(userId);
+    if (sessionKind === 'api') {
+      runRelationAction(
+        () => relationshipsApi.unblock(Number(userId)),
+        () =>
+          setBlockedUsers((prev) =>
+            prev.filter((item) => item.userId !== userId),
+          ),
+        `Đã bỏ chặn ${target.name}.`,
+      );
+      return;
+    }
     setBlockedUsers((prev) => prev.filter((item) => item.userId !== userId));
     showToast(
       `Đã bỏ chặn ${target.name}. Bạn có thể xem lại trang cá nhân, nhắn tin hoặc chặn lại bất cứ lúc nào (không giới hạn thời gian).`,
@@ -973,6 +1370,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const toggleSimulatedBlockedByOther = (userId: string) => {
+    // Chỉ là công cụ mô phỏng của phiên demo.
+    if (sessionKind === 'api') return;
     const target = findRawUserById(userId);
     setBlockedByOtherIds((prev) => {
       const exists = prev.includes(userId);
@@ -1120,14 +1519,51 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   // Posts
-  const createPost = (postData: Partial<Post>) => {
+  const createPost = async (
+    postData: Partial<Post>,
+    files: ReadonlyMap<string, File> = new Map(),
+  ): Promise<boolean> => {
     if (
       (!postData.content?.trim() &&
         !postData.mediaUrls?.length &&
         !postData.documents?.length) ||
       getPostContentIssue(postData.content ?? '')
     )
-      return;
+      return false;
+    if (isApiSession()) {
+      try {
+        const media = await buildMediaItems(
+          postData.mediaUrls ?? [],
+          postData.documents ?? [],
+          files,
+          [],
+          postData.type === 'VIDEO',
+        );
+        const dto = await postsApi.createPost({
+          content: postData.content?.trim() || undefined,
+          media_urls: media.length ? media : undefined,
+          visibility: postData.privacy || 'PUBLIC',
+          post_type: 'SOCIAL_POST',
+        });
+        if (dto?.post_id != null) {
+          const created = postFromApi(dto, currentUser);
+          setPosts((previous) => [
+            created,
+            ...previous.filter((post) => post.id !== created.id),
+          ]);
+        } else {
+          reloadFeed();
+        }
+        showToast('Đã đăng bài viết mới thành công!', 'success');
+        return true;
+      } catch (error: unknown) {
+        showToast(
+          errorMessage(error, 'Không đăng được bài viết. Vui lòng thử lại.'),
+          'error',
+        );
+        return false;
+      }
+    }
     const newPost: Post = {
       id: createId(),
       author: currentUser,
@@ -1148,26 +1584,83 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     };
     setPosts((previous) => [newPost, ...previous]);
     showToast('Đã đăng bài viết mới thành công!', 'success');
+    return true;
   };
 
-  const updatePost = (
+  const updatePost = async (
     postId: string,
     updates: Pick<
       Post,
       'content' | 'privacy' | 'mediaUrls' | 'documents' | 'type'
     >,
-  ) => {
+    files: ReadonlyMap<string, File> = new Map(),
+  ): Promise<boolean> => {
     if (
       (!updates.content.trim() &&
         !updates.mediaUrls?.length &&
         !updates.documents?.length) ||
       getPostContentIssue(updates.content)
     )
-      return;
+      return false;
     const oldPost = posts.find(
       (post) => post.id === postId && post.author.id === currentUser.id,
     );
-    if (!oldPost) return;
+    if (!oldPost) return false;
+    if (isApiSession()) {
+      if (oldPost.apiTarget?.type !== 'POST') return false;
+      const apiId = oldPost.apiTarget.id;
+      try {
+        const media = await buildMediaItems(
+          updates.mediaUrls ?? [],
+          updates.documents ?? [],
+          files,
+          oldPost.apiMedia,
+          updates.type === 'VIDEO',
+        );
+        await postsApi.updatePost(apiId, {
+          content: updates.content.trim(),
+          media_urls: media,
+          visibility: updates.privacy,
+        });
+        const fresh = await postsApi.getPost(apiId).catch(() => null);
+        setPosts((previous) =>
+          previous.map((post) => {
+            if (post.id !== postId) return post;
+            if (fresh)
+              return {
+                ...postFromApi(fresh, currentUser),
+                comments: post.comments,
+              };
+            const edited = postFromApi(
+              {
+                post_id: apiId,
+                content: updates.content.trim(),
+                media_urls: media,
+                visibility: updates.privacy,
+                post_type: 'SOCIAL_POST',
+                created_at: post.createdAt,
+              },
+              currentUser,
+            );
+            return {
+              ...edited,
+              likesCount: post.likesCount,
+              isLiked: post.isLiked,
+              commentsCount: post.commentsCount,
+              comments: post.comments,
+            };
+          }),
+        );
+        showToast('Đã lưu thay đổi bài viết.', 'success');
+        return true;
+      } catch (error: unknown) {
+        showToast(
+          errorMessage(error, 'Không lưu được bài viết. Vui lòng thử lại.'),
+          'error',
+        );
+        return false;
+      }
+    }
     setPosts((previous) =>
       updateOwnedPost(previous, postId, currentUser.id, updates),
     );
@@ -1187,24 +1680,51 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       )
       .forEach((document) => revokeMediaUrl(document.url));
     showToast('Đã lưu thay đổi bài viết.', 'success');
+    return true;
   };
 
   const toggleLikePost = (postId: string) => {
-    setPosts((prev) =>
-      prev.map((p) => {
-        if (p.id === postId) {
-          const isLiked = !p.isLiked;
-          return {
-            ...p,
-            isLiked,
-            likesCount: isLiked
-              ? p.likesCount + 1
-              : Math.max(0, p.likesCount - 1),
-          };
-        }
-        return p;
-      }),
-    );
+    const flipLike = () =>
+      setPosts((prev) =>
+        prev.map((p) => {
+          if (p.id === postId) {
+            const isLiked = !p.isLiked;
+            return {
+              ...p,
+              isLiked,
+              likesCount: isLiked
+                ? p.likesCount + 1
+                : Math.max(0, p.likesCount - 1),
+            };
+          }
+          return p;
+        }),
+      );
+    flipLike();
+    const target = posts.find((post) => post.id === postId)?.apiTarget;
+    if (!isApiSession() || !target) return;
+    // POST /react là toggle: cập nhật lạc quan, lỗi thì hoàn tác.
+    postsApi
+      .react(target.type, target.id)
+      .then((result) => {
+        const total = result.total_count;
+        if (typeof total !== 'number') return;
+        setPosts((prev) =>
+          prev.map((p) =>
+            p.id === postId
+              ? {
+                  ...p,
+                  isLiked: Boolean(result.my_reaction),
+                  likesCount: total,
+                }
+              : p,
+          ),
+        );
+      })
+      .catch((error: unknown) => {
+        flipLike();
+        showToast(errorMessage(error, 'Không thả được cảm xúc.'), 'error');
+      });
   };
 
   const addComment = (
@@ -1220,6 +1740,36 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         !post.comments?.some((item) => item.id === parentCommentId))
     )
       return;
+    if (isApiSession()) {
+      const target = post.apiTarget;
+      if (!target) {
+        showToast('Hoạt động này chưa hỗ trợ bình luận.', 'info');
+        return;
+      }
+      postsApi
+        .createComment(
+          target.type,
+          target.id,
+          text.trim(),
+          parentCommentId ? Number(parentCommentId) : undefined,
+        )
+        .then((dto) => {
+          if (!dto) return;
+          setPosts((previous) =>
+            appendComment(
+              previous,
+              postId,
+              commentFromApi(dto, currentUser),
+              parentCommentId,
+            ),
+          );
+          showToast('Đã gửi bình luận!', 'success');
+        })
+        .catch((error: unknown) =>
+          showToast(errorMessage(error, 'Không gửi được bình luận.'), 'error'),
+        );
+      return;
+    }
     const newComment: CommentItem = {
       id: createId(),
       author: currentUser,
@@ -1235,11 +1785,60 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     showToast('Đã gửi bình luận!', 'success');
   };
 
+  const loadingCommentsRef = useRef(new Set<string>());
+  const loadPostComments = (postId: string) => {
+    if (!isApiSession() || loadingCommentsRef.current.has(postId)) return;
+    const target = posts.find((post) => post.id === postId)?.apiTarget;
+    if (!target) return;
+    loadingCommentsRef.current.add(postId);
+    const collect = async () => {
+      const all: CommentItem[] = [];
+      let after: number | undefined;
+      // Tối đa 5 trang × 50 bình luận gốc cho một lần mở bài.
+      for (let page = 0; page < 5; page += 1) {
+        const res = await postsApi.getComments(target.type, target.id, after);
+        all.push(...res.items.map((dto) => commentFromApi(dto, currentUser)));
+        if (!res.hasNext || res.after == null) break;
+        after = res.after;
+      }
+      return all;
+    };
+    collect()
+      .then((comments) =>
+        setPosts((previous) =>
+          previous.map((post) =>
+            post.id === postId ? { ...post, comments } : post,
+          ),
+        ),
+      )
+      .catch((error: unknown) =>
+        showToast(errorMessage(error, 'Không tải được bình luận.'), 'error'),
+      )
+      .finally(() => loadingCommentsRef.current.delete(postId));
+  };
+
   const deletePost = (postId: string) => {
     const oldPost = posts.find(
       (post) => post.id === postId && post.author.id === currentUser.id,
     );
     if (!oldPost) return;
+    if (isApiSession()) {
+      if (oldPost.apiTarget?.type !== 'POST') return;
+      postsApi
+        .deletePost(oldPost.apiTarget.id)
+        .then(() => {
+          setPosts((previous) =>
+            removeOwnedPost(previous, postId, currentUser.id),
+          );
+          if (activePostDetailId === postId) setActivePostDetailId(null);
+          if (sharedPostId === postId) navigate('/feed', { replace: true });
+          showToast('Đã xóa bài viết thành công!', 'info');
+        })
+        .catch((error: unknown) =>
+          showToast(errorMessage(error, 'Không xoá được bài viết.'), 'error'),
+        );
+      return;
+    }
     setPosts((previous) => removeOwnedPost(previous, postId, currentUser.id));
     oldPost.mediaUrls
       ?.filter(
@@ -1663,7 +2262,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       setNotifications((prev) => [newNotif, ...prev]);
 
       if (autoPost) {
-        createPost({
+        void createPost({
           type: 'QUESTION_APPROVED',
           content: `🎉 Chúc mừng ${targetSession.creator.name} đã được Giảng viên phê duyệt ${selectedQuestionIds.length} câu hỏi môn ${targetSession.subject} ("${targetSession.title}") nạp thẳng vào ${targetBankName}!`,
           subjectTag: targetSession.subject,
@@ -2187,10 +2786,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         isDarkMode,
         toggleDarkMode,
         posts,
+        isFeedLoading,
+        feedError,
+        reloadFeed,
         createPost,
         updatePost,
         toggleLikePost,
         addComment,
+        loadPostComments,
         deletePost,
         addLecturerNote,
         friendStatuses,
@@ -2213,6 +2816,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         blockUser,
         unblockUser,
         toggleSimulatedBlockedByOther,
+        viewedProfileError,
+        reloadRelationships: () => setApiRelationsReloadKey((key) => key + 1),
         isBlockedByMe,
         isBlockingMe,
         isBlockedEitherWay,

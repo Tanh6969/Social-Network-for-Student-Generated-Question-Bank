@@ -146,7 +146,10 @@ export const gamesApi = {
   },
 
   /** POST /admin/leaderboards/rebuild — chỉ Quản trị viên (FE chưa có vai trò Admin). */
-  async rebuildLeaderboard(type?: LeaderboardPeriod, subjectId?: number) {
+  async rebuildLeaderboard(
+    type: LeaderboardPeriod = 'SEMESTER',
+    subjectId?: number,
+  ) {
     const result = await api.POST('/admin/leaderboards/rebuild', {
       body: { type, subject_id: subjectId },
     });

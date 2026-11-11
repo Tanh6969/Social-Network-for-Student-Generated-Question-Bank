@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router';
 import { useApp } from '../../demo/context/AppContext';
-import { errorMessage, SubjectResponse, ProposeSessionRequest } from '../../../api';
-import { proposalGateway } from '../../proposals/proposalGateway';
+import { errorMessage, CourseClassOption, ProposeSessionRequest } from '../../../api';
+import {
+  proposalGateway,
+  subjectsOfCourseClasses,
+} from '../../proposals/proposalGateway';
 import type { SubmissionWithStatus } from '../../proposals/types';
 import { SubmissionDetailModal } from './SubmissionDetailModal';
 import { EditSubmissionModal } from './EditSubmissionModal';
@@ -40,9 +43,17 @@ export const ProposeView: React.FC = () => {
     searchParams.get('view') === 'my-submissions' ? 'my-submissions' : 'create',
   );
 
-  // Enrolled subjects state
-  const [enrolledSubjects, setEnrolledSubjects] = useState<SubjectResponse[]>([]);
+  // Lớp học phần đang tham gia; chỉ lớp can_propose mới được đề xuất câu hỏi.
+  const [courseClasses, setCourseClasses] = useState<CourseClassOption[]>([]);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
+  const proposableClasses = useMemo(
+    () => courseClasses.filter((c) => c.can_propose),
+    [courseClasses],
+  );
+  const enrolledSubjects = useMemo(
+    () => subjectsOfCourseClasses(courseClasses),
+    [courseClasses],
+  );
 
   // My Submissions state
   const [submissions, setSubmissions] = useState<SubmissionWithStatus[]>([]);
@@ -65,7 +76,10 @@ export const ProposeView: React.FC = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [sourceUrl, setSourceUrl] = useState('');
-  const [selectedSubjectId, setSelectedSubjectId] = useState<number>(0);
+  const [selectedCourseClassId, setSelectedCourseClassId] = useState<number>(0);
+  const selectedCourseClass = courseClasses.find(
+    (c) => c.course_class_id === selectedCourseClassId,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   interface LocalQuestion {
@@ -94,17 +108,18 @@ export const ProposeView: React.FC = () => {
   ]);
   const [activeQIndex, setActiveQIndex] = useState(0);
 
-  // Load Enrolled Subjects (GET /sessions/my-enrolled-subjects hoặc dữ liệu demo)
+  // Load lớp học phần (GET /sessions/my-enrolled-course-classes hoặc dữ liệu demo)
   const fetchEnrolledSubjects = useCallback(async () => {
     setLoadingSubjects(true);
     try {
-      const data = await proposalGateway.getEnrolledSubjects();
-      setEnrolledSubjects(data);
-      if (data.length > 0) {
-        setSelectedSubjectId((current) => current || data[0].subject_id || 0);
-      }
+      const data = await proposalGateway.getEnrolledCourseClasses();
+      setCourseClasses(data);
+      const firstProposable = data.find((c) => c.can_propose);
+      setSelectedCourseClassId(
+        (current) => current || firstProposable?.course_class_id || 0,
+      );
     } catch (err: unknown) {
-      setEnrolledSubjects([]);
+      setCourseClasses([]);
       showToast(errorMessage(err, 'Không tải được danh sách môn học đang tham gia'), 'error');
     } finally {
       setLoadingSubjects(false);
@@ -213,8 +228,8 @@ export const ProposeView: React.FC = () => {
       showToast('Vui lòng nhập tiêu đề cho phiên đề xuất', 'warning');
       return;
     }
-    if (!selectedSubjectId) {
-      showToast('Vui lòng chọn môn học đang tham gia', 'warning');
+    if (!selectedCourseClassId) {
+      showToast('Vui lòng chọn lớp học phần đang tham gia', 'warning');
       return;
     }
 
@@ -237,7 +252,7 @@ export const ProposeView: React.FC = () => {
         title: title.trim(),
         content: content.trim(),
         source_url: sourceUrl.trim() || undefined,
-        subject_id: selectedSubjectId,
+        course_class_id: selectedCourseClassId,
         questions: questions.map((q) => ({
           content: q.content,
           media_urls: q.media_urls,
@@ -436,16 +451,23 @@ export const ProposeView: React.FC = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div>
                       <label className="block text-body font-semibold text-fb-text mb-1">
-                        Môn học tham gia *
+                        Lớp học phần *
                       </label>
                       <select
-                        value={selectedSubjectId}
-                        onChange={(e) => setSelectedSubjectId(Number(e.target.value))}
+                        value={selectedCourseClassId}
+                        onChange={(e) => setSelectedCourseClassId(Number(e.target.value))}
                         className="w-full px-3 py-2 text-body rounded-lg border border-fb-divider bg-fb-inset/50 text-fb-text focus:outline-hidden focus:ring-2 focus:ring-fb-blue transition font-medium"
                       >
-                        {enrolledSubjects.map((sub) => (
-                          <option key={sub.subject_id} value={sub.subject_id}>
-                            {sub.name} ({sub.code})
+                        {proposableClasses.length === 0 && (
+                          <option value={0}>
+                            {loadingSubjects
+                              ? 'Đang tải lớp học phần...'
+                              : 'Không có lớp nào đang mở đề xuất'}
+                          </option>
+                        )}
+                        {proposableClasses.map((c) => (
+                          <option key={c.course_class_id} value={c.course_class_id}>
+                            {c.subject_name} ({c.subject_code}) · Lớp {c.class_code}
                           </option>
                         ))}
                       </select>
@@ -687,8 +709,7 @@ export const ProposeView: React.FC = () => {
                   <div className="space-y-3.5">
                     <div className="p-3.5 rounded-lg bg-fb-blue-soft/50 border border-fb-blue/30">
                       <span className="text-sm font-semibold text-fb-blue block mb-1 [overflow-wrap:anywhere]">
-                        {enrolledSubjects.find((s) => s.subject_id === selectedSubjectId)?.name ||
-                          'Môn học chưa chọn'}{' '}
+                        {selectedCourseClass?.subject_name || 'Môn học chưa chọn'}{' '}
                         - {title || 'Chưa nhập tiêu đề'}
                       </span>
                       <p className="font-semibold text-body text-fb-text leading-relaxed [overflow-wrap:anywhere]">
@@ -1095,7 +1116,7 @@ export const ProposeView: React.FC = () => {
       {/* Modal Chỉnh sửa phiên đề xuất */}
       <EditSubmissionModal
         sessionId={selectedEditId}
-        enrolledSubjects={enrolledSubjects}
+        courseClasses={proposableClasses}
         onClose={() => setSelectedEditId(null)}
         onSuccess={() => fetchMySubmissions()}
         showToast={showToast}

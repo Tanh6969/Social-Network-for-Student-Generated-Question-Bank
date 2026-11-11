@@ -15,7 +15,6 @@ import type {
   LeaderboardResponse,
   UserBadgeResponseDto,
 } from '../../api/games';
-import { questionsApi } from '../../api/questions';
 import type { QuestionOption } from '../../api';
 import { collectAllPages } from '../proposals/proposalGateway';
 import { demoGameStore, type DemoErrorReport } from './demoGameStore';
@@ -33,6 +32,8 @@ export interface ErrorReport {
   /** Chỉ biết ở demo; Swagger không trả trạng thái đã thẩm định. */
   review?: DemoErrorReport['review'];
 }
+
+const NO_DATA_CODE = '9994';
 
 export const gamesGateway = {
   async getCheckInStatus(): Promise<CheckInStatusResponse> {
@@ -100,7 +101,12 @@ export const gamesGateway = {
     try {
       return await gamesApi.getGame6ActiveSession();
     } catch (err: unknown) {
-      if (err instanceof ApiError && err.status === 404) return null;
+      // Máy chủ thật báo "không có phiên" bằng HTTP 200 + mã 9994 (NO_DATA).
+      if (
+        err instanceof ApiError &&
+        (err.status === 404 || err.code === NO_DATA_CODE)
+      )
+        return null;
       throw err;
     }
   },
@@ -118,40 +124,14 @@ export const gamesGateway = {
   },
 
   /**
-   * Báo lỗi cần thẩm định. Swagger không có endpoint liệt kê toàn bộ báo lỗi,
-   * nên phiên thật tra theo từng câu hỏi (GET /questions/{id}/ratings, lọc is_error).
-   * Phiên demo trả toàn bộ danh sách khi không truyền questionId.
+   * Báo lỗi cần thẩm định. Backend đã tách báo lỗi khỏi đánh giá
+   * (PUT /questions/{id}/report) và chưa có endpoint liệt kê báo lỗi, nên phiên
+   * thật chưa lấy được danh sách. Phiên demo trả dữ liệu mô phỏng.
    */
   async getErrorReports(questionId?: number): Promise<ErrorReport[]> {
-    if (!isApiSession()) {
-      const all = demoGameStore.listErrorReports();
-      return questionId ? all.filter((r) => r.question_id === questionId) : all;
-    }
-    if (!questionId) return [];
-    const ratings = await collectAllPages(async (after) => {
-      const res = await questionsApi.getRatings(questionId, {
-        after,
-        limit: 50,
-      });
-      return {
-        items: res.items ?? [],
-        hasNext: res.pagination?.has_next ?? false,
-        after: res.pagination?.after,
-      };
-    });
-    const errors = ratings.filter((r) => r.is_error && r.user_id !== undefined);
-    return Promise.all(
-      errors.map(async (r) => {
-        const profile = await questionsApi.getUserProfile(r.user_id!);
-        return {
-          question_id: questionId,
-          rating_user_id: r.user_id!,
-          reporter_name: profile?.full_name ?? `Người dùng #${r.user_id}`,
-          comment: r.comment,
-          created_at: r.created_at,
-        };
-      }),
-    );
+    if (isApiSession()) return [];
+    const all = demoGameStore.listErrorReports();
+    return questionId ? all.filter((r) => r.question_id === questionId) : all;
   },
 
   async reviewError(

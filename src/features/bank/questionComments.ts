@@ -158,7 +158,6 @@ async function mapRatings(items: RatingItemDto[]): Promise<QuestionComment[]> {
       rating: item.rating ?? 0,
       comment: item.comment?.trim() ?? '',
       createdAt: formatRatingTime(item.created_at),
-      isError: item.is_error,
     };
   });
 }

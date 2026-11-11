@@ -56,6 +56,9 @@ export const FeedView: React.FC = () => {
     setViewingUserId,
     showToast,
     openReportModal,
+    isFeedLoading,
+    feedError,
+    reloadFeed,
   } = useApp();
   const location = useLocation();
   const navigate = useNavigate();
@@ -143,12 +146,45 @@ export const FeedView: React.FC = () => {
             </button>
           </div>
         )}
+        {feedError && (
+          <div
+            role="alert"
+            className="rounded-lg border border-fb-danger/40 bg-fb-card p-4 text-sm text-fb-text"
+          >
+            {feedError}
+            <button
+              type="button"
+              onClick={reloadFeed}
+              className="ml-2 font-semibold text-fb-blue hover:underline"
+            >
+              Thử lại
+            </button>
+          </div>
+        )}
+        {isFeedLoading && feedPages.visiblePosts.length === 0 && (
+          <div
+            role="status"
+            className="rounded-lg bg-fb-card p-6 text-center text-sm text-fb-text-2 shadow-fb-card"
+          >
+            Đang tải bảng tin...
+          </div>
+        )}
+        {!isFeedLoading &&
+          !feedError &&
+          feedPages.visiblePosts.length === 0 && (
+            <div className="rounded-lg bg-fb-card p-6 text-center text-sm text-fb-text-2 shadow-fb-card">
+              Chưa có bài viết nào. Hãy là người đầu tiên chia sẻ!
+            </div>
+          )}
         {feedPages.visiblePosts.map((post) => {
           const visibleComments = filterVisibleComments(post.comments);
-          const visibleCommentsCount = visibleComments.reduce(
-            (sum, c) => sum + 1 + (c.replies?.length ?? 0),
-            0,
-          );
+          // Bình luận chưa tải (phiên thật) thì dùng số đếm từ máy chủ.
+          const visibleCommentsCount = post.comments
+            ? visibleComments.reduce(
+                (sum, c) => sum + 1 + (c.replies?.length ?? 0),
+                0,
+              )
+            : post.commentsCount;
 
           return (
             <article
@@ -308,9 +344,7 @@ export const FeedView: React.FC = () => {
                 <button
                   onClick={() => toggleLikePost(post.id)}
                   className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-fb-hover transition ${
-                    post.isLiked
-                      ? 'text-fb-blue font-bold'
-                      : ''
+                    post.isLiked ? 'text-fb-blue font-bold' : ''
                   }`}
                 >
                   <ThumbsUp

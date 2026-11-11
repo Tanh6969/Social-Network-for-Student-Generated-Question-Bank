@@ -1,18 +1,19 @@
 # API integration status
 
-The pinned Swagger snapshot has **128 REST paths, 146 operations and 312 schemas**. `npm run generate:api` creates `src/api/generated/openapi.ts` for every pinned REST operation. `npm run check:api` fails if a path or method is missing from that generated file. The live Swagger checked on 2026-11-10 has **139 paths, 158 operations and 331 schemas**. The pilot auth, `/users/me`, `/activity-feeds`, and `/posts/{id}` paths remain available. Other paths and schemas have changed; their adapters need a separate migration before regenerating the entire contract from the live file.
+The pinned Swagger snapshot has **132 REST paths, 151 operations and 318 schemas**. `npm run generate:api` creates `src/api/generated/openapi.ts` for every pinned REST operation. `npm run check:api` fails if a path or method is missing from that generated file. The live Swagger checked on 2026-11-10 has **139 paths, 158 operations and 331 schemas**. The integrated auth, profile, feed, post and relationship paths remain available. Newer endpoints and schemas need a separate contract update.
 
 | Area | Generated contract | Connected to a real screen |
 | --- | --- | --- |
 | Auth login, logout and own profile | Yes | Yes for non-demo accounts |
-| Activity feed and post detail | Yes | Read-only Feed for non-demo accounts |
+| Activity feed, posts, reactions, comments and media upload | Yes | Yes for API accounts; Feed currently loads only the first backend page |
+| User profiles and relationships | Yes | Yes for API accounts |
 | Question proposals and lecturer review | Yes | Yes in API sessions; demo sessions use a separate store |
 | Practice by question set, answer, rate, report error and AI refine | Yes | Yes in API sessions |
 | Games and badges | Yes | Yes in API sessions, except admin operations |
 | Exams | Yes | Partly; existing code can fall back to demo data |
 | Auth refresh and change password | Yes | No |
 | Admin APIs | Yes, because they are in Swagger | No; the frontend does not invoke them |
-| Post writes, reactions, comments, relations, chat, notifications, search, media, devices and cosmetics | Yes | No; demo interactions remain local |
+| Chat, notifications, full search, devices and cosmetics | Yes | No; demo interactions remain local |
 | STOMP chat destinations | Listed in `src/api/realtime-contract.ts` | No |
 
 The STOMP destinations and DTO names are written in OpenAPI `info.description`, not as machine-readable operations or component schemas. The documented publish fields are represented in `realtime-contract.ts`; broadcast payloads remain `unknown` until the backend publishes schemas. This avoids inventing fields and does not imply a working WebSocket connection.
@@ -25,7 +26,7 @@ Games follow Swagger, not older written specs: Game 3 has no endpoint (it is the
 
 `src/features/demo/components/modals/ApiReferenceModal.tsx` is an older UI demo map. It is not an API contract or a list of completed integrations.
 
-Demo Feed/Profile create, edit, delete, comment, reply, media preview and friend-first ordering remain local interactions. For a non-demo account, login loads `/users/me`; Feed reads `/activity-feeds` by cursor and resolves post events with `/posts/{id}`. That Feed has no local write actions. The current activity-feed contract has no friend-first sorting option, so the API Feed preserves the backend's order.
+Demo Feed/Profile create, edit, delete, comment, reply, media preview and friend-first ordering remain local interactions. For an API account, login loads `/users/me`, Feed reads `/activity-feeds` and `/posts/me`, resolves post events with `/posts/{id}`, and post actions call backend endpoints. The current Feed adapter requests only the first backend page and the UI paginates that result locally; older backend pages are not yet available. The activity-feed contract has no friend-first sorting option, so ordering across all server pages needs further work.
 
 Demo chat conversations are visible only to their listed participants, and demo messages are shared between those participants. Demo chat and feed changes synchronize between open same-origin browser tabs with `BroadcastChannel`; they are not persisted by a server and do not synchronize across devices. API chat is not connected. The documented STOMP chat destinations alone do not provide a working connection, and the current contract does not define a feed push destination.
 

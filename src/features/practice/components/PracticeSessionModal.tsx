@@ -128,14 +128,15 @@ export const PracticeSessionModal: React.FC<PracticeSessionModalProps> = ({
   };
 
   const submitRating = async () => {
-    if (!qid || (stars === null && !isError)) return;
+    if (!qid || (isError ? !comment.trim() : stars === null)) return;
     setBusy(true);
     try {
-      await practiceGateway.rate(qid, {
-        rating: isError ? 0 : (stars ?? 0),
-        is_error: isError || undefined,
-        comment: comment.trim() || undefined,
-      });
+      if (isError) await practiceGateway.report(qid, comment.trim());
+      else
+        await practiceGateway.rate(qid, {
+          rating: stars ?? 0,
+          comment: comment.trim() || undefined,
+        });
       setRated((prev) => ({ ...prev, [qid]: true }));
       showToast(
         isError ? 'Đã gửi báo lỗi câu hỏi.' : 'Cảm ơn bạn đã đánh giá!',
@@ -327,7 +328,7 @@ export const PracticeSessionModal: React.FC<PracticeSessionModalProps> = ({
                             onChange={(e) => setIsError(e.target.checked)}
                           />
                           <Flag className="h-3.5 w-3.5" /> Báo lỗi: đề hoặc đáp
-                          án bị sai (tính 0 điểm)
+                          án bị sai
                         </label>
                         <textarea
                           value={comment}
@@ -335,7 +336,7 @@ export const PracticeSessionModal: React.FC<PracticeSessionModalProps> = ({
                           rows={2}
                           placeholder={
                             isError
-                              ? 'Mô tả lỗi bạn phát hiện…'
+                              ? 'Mô tả lỗi bạn phát hiện (bắt buộc)…'
                               : 'Nhận xét (không bắt buộc)'
                           }
                           className="w-full rounded-lg border border-fb-divider bg-fb-input px-3 py-2 text-sm text-fb-text"
@@ -343,7 +344,10 @@ export const PracticeSessionModal: React.FC<PracticeSessionModalProps> = ({
                         <button
                           type="button"
                           onClick={() => void submitRating()}
-                          disabled={busy || (stars === null && !isError)}
+                          disabled={
+                            busy ||
+                            (isError ? !comment.trim() : stars === null)
+                          }
                           className="rounded-lg bg-fb-blue px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
                         >
                           {isError ? 'Gửi báo lỗi' : 'Gửi đánh giá'}
