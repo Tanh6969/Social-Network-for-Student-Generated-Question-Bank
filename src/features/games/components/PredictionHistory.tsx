@@ -2,6 +2,7 @@ import React from 'react';
 import { CheckCircle2, Clock, History, XCircle } from 'lucide-react';
 import type { GamePredictionResponse } from '../../../api/games';
 import { describeData, GAME_LABELS } from '../gameLabels';
+import { SkeletonRows } from '../../../shared/components/Skeleton';
 
 /** Lịch sử các lượt dự đoán (GET /games/my-predictions). */
 export const PredictionHistory: React.FC<{
@@ -14,7 +15,7 @@ export const PredictionHistory: React.FC<{
     </h2>
     {error && <p className="text-sm text-fb-danger">{error}</p>}
     {!predictions && !error && (
-      <p className="py-6 text-center text-sm text-fb-text-2">Đang tải…</p>
+      <SkeletonRows count={3} avatar="square" label="Đang tải lịch sử dự đoán…" />
     )}
     {predictions?.length === 0 && (
       <p className="rounded-lg bg-fb-card p-8 text-center text-sm text-fb-text-2 shadow-fb-card">

@@ -8,6 +8,7 @@ import type {
 } from '../../../api/games';
 import { proposalGateway } from '../../proposals/proposalGateway';
 import { gamesGateway } from '../gamesGateway';
+import { SkeletonRows } from '../../../shared/components/Skeleton';
 
 interface LeaderboardPanelProps {
   /** Bấm vào một người; không truyền thì danh sách chỉ để xem. */
@@ -122,7 +123,7 @@ export const LeaderboardPanel: React.FC<LeaderboardPanelProps> = ({
 
       {error && <p className="text-sm text-fb-danger">{error}</p>}
       {!data && !error && (
-        <p className="py-6 text-center text-sm text-fb-text-2">Đang tải…</p>
+        <SkeletonRows count={5} label="Đang tải bảng xếp hạng…" />
       )}
 
       {data?.my_rank && (data.my_rank.rank ?? 0) > 0 && (

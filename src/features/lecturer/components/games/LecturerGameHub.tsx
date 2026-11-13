@@ -17,6 +17,7 @@ import {
   GameSelectorBar,
   type GameId,
 } from '../../../games/components/GameSelectorBar';
+import { CardListSkeleton } from '../../../../shared/components/Skeleton';
 
 /** Vai trò của giảng viên trong từng trò chơi, đúng theo những gì Swagger cung cấp. */
 const GAME_GUIDE = [
@@ -276,7 +277,7 @@ function ErrorReviewPanel() {
         </div>
       )}
       {reports === null && (
-        <p className="py-6 text-center text-sm text-fb-text-2">Đang tải…</p>
+        <CardListSkeleton count={2} label="Đang tải báo lỗi…" />
       )}
       {reports !== null && pending.length === 0 && (!apiMode || searched) && (
         <p className="rounded-lg bg-fb-card p-8 text-center text-sm text-fb-text-2 shadow-fb-card">

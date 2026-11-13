@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { MessageCircle, Send } from 'lucide-react';
 import { errorMessage } from '../../../api';
 import { postsApi, type CommentResponseDto } from '../../../api/posts';
+import { SkeletonRows } from '../../../shared/components/Skeleton';
 
 interface QuestionCommentsProps {
   questionId: number;
@@ -157,7 +158,7 @@ export const QuestionComments: React.FC<QuestionCommentsProps> = ({
       </h4>
 
       {comments === null && !error && (
-        <p className="text-sm text-fb-text-2">Đang tải bình luận…</p>
+        <SkeletonRows count={2} label="Đang tải bình luận…" />
       )}
       {error && (
         <p role="alert" className="text-sm text-fb-danger">

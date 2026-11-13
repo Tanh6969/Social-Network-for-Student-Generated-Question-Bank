@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Mail, Search, Users, X } from 'lucide-react';
 import { examsApi, errorMessage, ClassStudentResponse, CourseClassResponse } from '../../../api';
+import { SkeletonRows } from '../../../shared/components/Skeleton';
 
 interface ClassStudentsModalProps {
   courseClass: CourseClassResponse;
@@ -106,7 +107,7 @@ export const ClassStudentsModal: React.FC<ClassStudentsModalProps> = ({ courseCl
             </p>
           )}
           {filtered === null && !loadError && (
-            <p className="py-10 text-center text-sm text-fb-text-3">Đang tải danh sách...</p>
+            <SkeletonRows count={6} label="Đang tải danh sách sinh viên…" />
           )}
           {filtered?.length === 0 && (
             <div className="py-10 flex flex-col items-center gap-2 text-sm text-fb-text-3">

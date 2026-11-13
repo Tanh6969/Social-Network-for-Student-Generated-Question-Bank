@@ -23,6 +23,7 @@ import {
   SubjectResponse,
 } from '../../../../api';
 import { ExamExportModal } from './ExamExportModal';
+import { CardListSkeleton } from '../../../../shared/components/Skeleton';
 
 interface ExamListViewProps {
   onSelectExam: (examId: number) => void;
@@ -213,18 +214,7 @@ export const ExamListView: React.FC<ExamListViewProps> = ({
 
       {/* Loading Skeleton */}
       {loading && (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="bg-fb-card rounded-lg border border-fb-divider p-5 space-y-3 animate-pulse"
-            >
-              <div className="h-4 bg-fb-btn rounded-md w-1/3" />
-              <div className="h-3 bg-fb-input rounded-md w-1/4" />
-              <div className="h-8 bg-fb-inset rounded-lg w-full" />
-            </div>
-          ))}
-        </div>
+        <CardListSkeleton count={3} label="Đang tải danh sách đề thi…" />
       )}
 
       {/* Error State */}

@@ -9,6 +9,8 @@ import type { Role, User } from '../demo/types';
 import { postsApi } from '../../api/posts';
 import { applyProfile, mapAuthUser } from './mapAuthUser';
 import { authenticateMockAccount } from './mockAuthentication';
+import { useQueryClient } from '@tanstack/react-query';
+import { clearStoredSnapshots } from '../bank/bankQuery';
 
 type Notify = (
   message: string,
@@ -22,6 +24,7 @@ export function useAuthSession(notify: Notify) {
   const accessToken = useRef<string | null>(null);
   const [role, setRole] = useState<Role>('STUDENT');
   const [currentUser, setCurrentUser] = useState<User>(mockCurrentUserStudent);
+  const queryClient = useQueryClient();
 
   const loginWithCredentials = async (email: string, password: string) => {
     const mockUser = authenticateMockAccount(email, password);
@@ -62,6 +65,9 @@ export function useAuthSession(notify: Notify) {
       sessionKind === 'api' ? (tokenStore.get() ?? accessToken.current) : null;
     accessToken.current = null;
     tokenStore.set(null);
+    // Không để lại dữ liệu của tài khoản này cho người dùng sau (máy dùng chung).
+    queryClient.removeQueries({ queryKey: ['bank'] });
+    clearStoredSnapshots();
     setSessionKind(null);
     setIsAuthenticated(false);
     if (!token) {

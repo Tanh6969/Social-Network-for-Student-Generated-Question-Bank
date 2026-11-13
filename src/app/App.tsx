@@ -8,6 +8,7 @@ import { ToastContainer } from '../shared/components/ToastContainer';
 
 // Auth Page
 import { AuthPage } from '../features/auth/components/AuthPage';
+import { PageSkeleton } from '../shared/components/Skeleton';
 
 // Split screens by route while preserving the existing demo components.
 const FeedView = React.lazy(() =>
@@ -105,16 +106,14 @@ const MainContent: React.FC = () => {
   if (!isAuthenticated) {
     return (
       <>
-        {justLoggedOut ? (
-          location.pathname !== '/login' && <Navigate to="/login" replace />
-        ) : (
-          location.pathname !== '/login' && (
-            <Navigate
-              to={`/login?next=${encodeURIComponent(`${location.pathname}${location.search}`)}`}
-              replace
-            />
-          )
-        )}
+        {justLoggedOut
+          ? location.pathname !== '/login' && <Navigate to="/login" replace />
+          : location.pathname !== '/login' && (
+              <Navigate
+                to={`/login?next=${encodeURIComponent(`${location.pathname}${location.search}`)}`}
+                replace
+              />
+            )}
         <AuthPage />
         <ToastContainer />
       </>
@@ -142,13 +141,7 @@ const MainContent: React.FC = () => {
         </div>
       )}
 
-      <Suspense
-        fallback={
-          <div className="flex-1 p-8 text-center text-sm">
-            Đang tải màn hình...
-          </div>
-        }
-      >
+      <Suspense fallback={<PageSkeleton />}>
         <div className="flex-1">
           {activeTab === 'feed' && <FeedView />}
           {activeTab === 'bank' && <BankView />}

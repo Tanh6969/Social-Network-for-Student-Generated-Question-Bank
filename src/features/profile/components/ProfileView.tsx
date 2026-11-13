@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import type { User } from '../../demo/types';
 import { ProfileQuestionSets } from './ProfileQuestionSets';
+import { PostListSkeleton } from '../../../shared/components/Skeleton';
 
 export const ProfileView: React.FC = () => {
   const {
@@ -836,14 +837,7 @@ export const ProfileView: React.FC = () => {
                   className="py-3 text-center text-xs text-fb-text-2"
                 >
                   {profilePostPages.isLoadingMore && (
-                    <div
-                      role="status"
-                      aria-label="Đang tải bài viết"
-                      className="animate-pulse rounded-lg border border-fb-divider bg-fb-card p-4 text-left shadow-xs"
-                    >
-                      <div className="h-3 w-full rounded bg-fb-btn" />
-                      <div className="mt-2 h-3 w-2/3 rounded bg-fb-btn" />
-                    </div>
+                    <PostListSkeleton count={1} />
                   )}
                   {profilePostPages.hasMore &&
                     !profilePostPages.isLoadingMore && (

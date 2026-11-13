@@ -31,6 +31,7 @@ import {
   Info,
   Clock,
 } from 'lucide-react';
+import { CardListSkeleton } from '../../../shared/components/Skeleton';
 
 export const ProposeView: React.FC = () => {
   const { showToast } = useApp();
@@ -840,10 +841,7 @@ export const ProposeView: React.FC = () => {
 
             {/* Submissions Cards List */}
             {loadingSubmissions ? (
-              <div className="py-20 flex flex-col items-center justify-center text-fb-text-2">
-                <div className="w-8 h-8 border-3 border-fb-blue border-t-transparent rounded-full animate-spin mb-3" />
-                <p className="text-body">Đang tải danh sách phiên đề xuất...</p>
-              </div>
+              <CardListSkeleton count={3} label="Đang tải danh sách phiên đề xuất…" />
             ) : submissionsError ? (
               <div className="bg-fb-card rounded-lg border border-fb-divider p-8 text-center space-y-3">
                 <p className="text-body text-fb-danger">{submissionsError}</p>

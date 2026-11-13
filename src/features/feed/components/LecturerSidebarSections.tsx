@@ -4,6 +4,7 @@ import { examsApi, errorMessage, CourseClassResponse } from '../../../api';
 import { proposalGateway } from '../../proposals/proposalGateway';
 import { ClassStudentsModal } from '../../lecturer/components/ClassStudentsModal';
 import { ChevronRight, ClipboardCheck, Gamepad2 } from 'lucide-react';
+import { SkeletonRows } from '../../../shared/components/Skeleton';
 
 // Màu nhận diện theo môn học, xoay vòng theo subject_id
 const SUBJECT_COLORS = [
@@ -89,7 +90,7 @@ export const LecturerSidebarSections: React.FC = () => {
           </p>
         )}
         {classes === null && !classesError && (
-          <p className="px-3 py-2 text-xs text-fb-text-3">Đang tải...</p>
+          <SkeletonRows count={3} label="Đang tải lớp phụ trách…" />
         )}
         {classes?.length === 0 && (
           <p className="px-3 py-2 text-xs text-fb-text-3">Học kỳ này bạn chưa phụ trách lớp nào.</p>

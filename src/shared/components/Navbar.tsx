@@ -25,6 +25,9 @@ import {
 } from 'lucide-react';
 import { MainTab } from '../../features/demo/types';
 import { proposalGateway } from '../../features/proposals/proposalGateway';
+import { useQueryClient } from '@tanstack/react-query';
+import { isApiSession } from '../../api/session-mode';
+import { prefetchBank } from '../../features/bank/bankQuery';
 
 export const Navbar: React.FC = () => {
   const {
@@ -53,6 +56,12 @@ export const Navbar: React.FC = () => {
     switchRole,
     logout
   } = useApp();
+
+  // Rê chuột / focus vào Ngân hàng đề thì tải trước dữ liệu (bỏ qua nếu cache còn mới).
+  const queryClient = useQueryClient();
+  const prefetchBankData = () => {
+    if (isApiSession()) void prefetchBank(queryClient, currentUser.id);
+  };
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMessengerOpen, setIsMessengerOpen] = useState(false);
@@ -345,6 +354,8 @@ export const Navbar: React.FC = () => {
             {/* Ngân hàng đề chung & Làm thử */}
             <button
               onClick={() => handleTabClick('bank')}
+              onMouseEnter={prefetchBankData}
+              onFocus={prefetchBankData}
               className={`relative flex items-center justify-center flex-1 transition-colors ${
                 activeTab === 'bank'
                   ? 'h-full text-fb-blue border-b-[3px] border-fb-blue'
@@ -373,6 +384,8 @@ export const Navbar: React.FC = () => {
             {/* Ngân hàng đề */}
             <button
               onClick={() => handleTabClick('bank')}
+              onMouseEnter={prefetchBankData}
+              onFocus={prefetchBankData}
               className={`relative flex items-center justify-center flex-1 transition-colors ${
                 activeTab === 'bank'
                   ? 'h-full text-fb-blue border-b-[3px] border-fb-blue'

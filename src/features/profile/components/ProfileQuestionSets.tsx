@@ -7,6 +7,7 @@ import {
 } from '../../proposals/practiceGateway';
 import type { SubmissionSessionSummary } from '../../proposals/types';
 import { PracticeSessionModal } from '../../practice/components/PracticeSessionModal';
+import { CardListSkeleton } from '../../../shared/components/Skeleton';
 
 interface ProfileQuestionSetsProps {
   owner: ProfileOwner;
@@ -60,7 +61,11 @@ export const ProfileQuestionSets: React.FC<ProfileQuestionSetsProps> = ({
       </p>
 
       {sessions === undefined && !error && (
-        <p className="py-8 text-center text-sm text-fb-text-2">Đang tải…</p>
+        <CardListSkeleton
+          count={2}
+          label="Đang tải bộ câu hỏi…"
+          className="grid grid-cols-1 gap-3 md:grid-cols-2"
+        />
       )}
       {error && (
         <p className="py-8 text-center text-sm text-fb-danger">{error}</p>

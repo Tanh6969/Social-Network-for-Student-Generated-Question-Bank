@@ -131,7 +131,7 @@ export const bankGateway = {
   },
 
   /**
-   * Tải thống kê sống cho nhiều bộ (tối đa 6 yêu cầu song song), báo về
+   * Tải thống kê sống cho nhiều bộ (tối đa 8 yêu cầu song song), báo về
    * từng bộ ngay khi có. Bộ lỗi được báo qua `onError`, không làm hỏng bộ khác.
    */
   async loadAllStats(
@@ -140,7 +140,7 @@ export const bankGateway = {
     onError: (sessionId: number) => void,
     isCancelled: () => boolean = () => false,
   ): Promise<void> {
-    await forEachLimited(sessionIds, 6, async (id) => {
+    await forEachLimited(sessionIds, 8, async (id) => {
       if (isCancelled()) return;
       try {
         const stats = await bankGateway.loadStats(id);

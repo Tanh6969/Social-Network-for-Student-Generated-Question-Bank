@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   ArrowUpDown,
   BookOpen,
@@ -16,16 +17,26 @@ import {
   Star,
 } from 'lucide-react';
 import { useApp } from '../../demo/context/AppContext';
-import { errorMessage, examsApi, type SubjectResponse } from '../../../api';
+import { errorMessage, type SubjectResponse } from '../../../api';
 import {
-  bankGateway,
   progressOf,
   type BankSet,
   type BankSetStats,
   type Progress,
 } from '../bankGateway';
 import { getSubjectTone } from '../subjectTone';
+import {
+  refreshSetStats,
+  useBankSnapshot,
+  type StatsState,
+} from '../bankQuery';
 import { ApiExamRoom } from './ApiExamRoom';
+import {
+  CardListSkeleton,
+  Skeleton,
+  SkeletonRegion,
+  SkeletonRows,
+} from '../../../shared/components/Skeleton';
 
 type SortKey = 'NEWEST' | 'QUESTIONS' | 'RATINGS' | 'COMMENTS';
 type ProgressFilter = 'ALL' | Progress;
@@ -46,7 +57,8 @@ const PROGRESS_OPTIONS: { value: ProgressFilter; label: string }[] = [
 
 const ALL = 'ALL';
 
-type StatsState = Record<number, BankSetStats | 'error'>;
+const EMPTY_SUBJECTS: SubjectResponse[] = [];
+const EMPTY_STATS: StatsState = {};
 
 function byNewest(a: BankSet, b: BankSet) {
   return (
@@ -113,11 +125,7 @@ const Stat: React.FC<{
 }> = ({ icon, value, label }) => (
   <span className="flex items-center gap-1" title={label}>
     {icon}
-    {value === undefined ? (
-      <span className="inline-block h-3 w-4 animate-pulse rounded bg-fb-input" />
-    ) : (
-      value
-    )}
+    {value === undefined ? <Skeleton className="h-3 w-5" /> : value}
     <span className="sr-only sm:not-sr-only sm:ml-0.5">{label}</span>
   </span>
 );
@@ -250,68 +258,31 @@ const SideSetItem: React.FC<{
 export const ApiBankView: React.FC = () => {
   const { setActiveTab, showToast, currentUser } = useApp();
 
-  const [sets, setSets] = useState<BankSet[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [stats, setStats] = useState<StatsState>({});
-  const [subjects, setSubjects] = useState<SubjectResponse[]>([]);
+  const queryClient = useQueryClient();
   const [subject, setSubject] = useState<string>(ALL);
   const [progressFilter, setProgressFilter] = useState<ProgressFilter>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<SortKey>('NEWEST');
   const [practiceId, setPracticeId] = useState<number | null>(null);
 
-  const load = useCallback(async () => {
-    setError(null);
-    setSets(null);
-    setStats({});
-    try {
-      setSets(await bankGateway.loadSets());
-    } catch (err: unknown) {
-      setError(errorMessage(err, 'Không tải được kho bộ câu hỏi.'));
-    }
-  }, []);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  // Thống kê sống của từng bộ, tải dần sau khi có danh sách.
-  useEffect(() => {
-    if (!sets || sets.length === 0) return;
-    let cancelled = false;
-    void bankGateway.loadAllStats(
-      sets.map((s) => s.sessionId),
-      (id, value) => setStats((prev) => ({ ...prev, [id]: value })),
-      (id) => setStats((prev) => ({ ...prev, [id]: 'error' })),
-      () => cancelled,
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [sets]);
-
-  // Danh mục môn (GET /subjects) để hiện cả môn chưa có bộ nào; lỗi thì vẫn
-  // lọc được theo các môn có trong kết quả tìm kiếm.
-  useEffect(() => {
-    let cancelled = false;
-    examsApi
-      .getAllSubjects()
-      .then((list) => !cancelled && setSubjects(list))
-      .catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // Một lượt: danh sách + môn + thống kê mọi bộ; có cache (xem bankQuery.ts).
+  const bank = useBankSnapshot(currentUser.id);
+  const sets = bank.data?.sets ?? null;
+  const subjects = bank.data?.subjects ?? EMPTY_SUBJECTS;
+  const stats = bank.data?.stats ?? EMPTY_STATS;
+  // Có dữ liệu cũ trong cache thì cứ hiện, chỉ báo lỗi khi chưa có gì.
+  const error =
+    bank.isError && !bank.data
+      ? errorMessage(bank.error, 'Không tải được kho bộ câu hỏi.')
+      : null;
+  const load = () => void bank.refetch();
 
   const closeExamRoom = () => {
     const id = practiceId;
     setPracticeId(null);
     if (id === null) return;
     // Cập nhật số liệu của bộ vừa làm (đã làm / đánh giá / bình luận).
-    bankGateway
-      .loadStats(id)
-      .then((value) => setStats((prev) => ({ ...prev, [id]: value })))
-      .catch(() => undefined);
+    refreshSetStats(queryClient, currentUser.id, id).catch(() => undefined);
   };
 
   const liveStats = useCallback(
@@ -389,9 +360,11 @@ export const ApiBankView: React.FC = () => {
   }, [subjectAndSearchSets, progressFilter, sortBy, liveStats]);
 
   // ---- Thanh bên ----
-  const statsLoaded = (sets ?? []).filter((s) => liveStats(s.sessionId));
-  const statsPending =
-    (sets?.length ?? 0) > 0 && statsLoaded.length < (sets?.length ?? 0);
+  // Đã xong = có số liệu hoặc đã lỗi (bộ lỗi không làm "đang tải" kéo dài mãi).
+  const statsSettled = (sets ?? []).filter(
+    (s) => stats[s.sessionId] !== undefined,
+  ).length;
+  const statsPending = (sets?.length ?? 0) > 0 && statsSettled < sets!.length;
 
   // Tiến độ tính theo BỘ (không theo câu — bộ thật có thể tới hàng trăm câu).
   const myProgress = useMemo(() => {
@@ -494,73 +467,102 @@ export const ApiBankView: React.FC = () => {
 
           <div className="my-3 border-t border-fb-divider" />
 
-          <SubjectItem
-            label="Tất cả môn học"
-            count={sets?.length ?? 0}
-            active={subject === ALL}
-            onClick={() => setSubject(ALL)}
-          />
-          {subjectOptions.map((opt) => (
-            <SubjectItem
-              key={opt.key}
-              label={opt.label}
-              count={opt.count}
-              tone={getSubjectTone(opt.label)}
-              active={subject === opt.key}
-              onClick={() => setSubject(opt.key)}
-            />
-          ))}
+          {sets === null && !error ? (
+            <SkeletonRows count={3} label="Đang tải môn học…" />
+          ) : (
+            <>
+              <SubjectItem
+                label="Tất cả môn học"
+                count={sets?.length ?? 0}
+                active={subject === ALL}
+                onClick={() => setSubject(ALL)}
+              />
+              {subjectOptions.map((opt) => (
+                <SubjectItem
+                  key={opt.key}
+                  label={opt.label}
+                  count={opt.count}
+                  tone={getSubjectTone(opt.label)}
+                  active={subject === opt.key}
+                  onClick={() => setSubject(opt.key)}
+                />
+              ))}
+            </>
+          )}
         </div>
 
         <section className="bg-fb-card rounded-lg shadow-fb-card p-3 space-y-3">
           <h2 className="px-1 text-card-title font-semibold text-fb-text">
             Tiến độ của bạn
           </h2>
-          <div className="space-y-2 px-1">
-            <p className="flex items-baseline justify-between gap-2">
-              <span className="text-sm text-fb-text-2">
-                <span className="text-2xl font-bold text-fb-text tabular-nums">
-                  {myProgress.done}
-                </span>
-                <span className="text-fb-text-2">/{myProgress.total}</span> bộ
-                đã làm xong
-              </span>
-              <span className="text-sm font-semibold text-fb-success tabular-nums">
-                {myProgress.total > 0
-                  ? Math.round((myProgress.done / myProgress.total) * 100)
-                  : 0}
-                %
-              </span>
-            </p>
-            <ProgressBar value={myProgress.done} max={myProgress.total} />
-          </div>
-          <dl className="divide-y divide-fb-divider px-1 text-sm">
-            <div className="flex items-center justify-between py-2">
-              <dt className="flex items-center gap-2 text-fb-text-2">
-                <PlayCircle
-                  className="h-4 w-4 text-fb-blue"
-                  aria-hidden="true"
-                />
-                Đang làm dở
-              </dt>
-              <dd className="font-semibold text-fb-text tabular-nums">
-                {myProgress.inProgress} bộ
-              </dd>
-            </div>
-            <div className="flex items-center justify-between py-2">
-              <dt className="flex items-center gap-2 text-fb-text-2">
-                <Star className="h-4 w-4 text-fb-warning" aria-hidden="true" />
-                Đã chấm sao
-              </dt>
-              <dd className="font-semibold text-fb-text tabular-nums">
-                {myProgress.rated} bộ
-              </dd>
-            </div>
-          </dl>
-          {statsPending && (
-            <p className="px-1 text-xs text-fb-text-3">
-              Đang cập nhật số liệu…
-            </p>
+          {statsPending || (sets === null && !error) ? (
+            <SkeletonRegion
+              label="Đang tải tiến độ…"
+              className="space-y-3 px-1"
+            >
+              <div className="flex items-end justify-between">
+                <Skeleton className="h-7 w-32" />
+                <Skeleton className="h-3 w-8" />
+              </div>
+              <Skeleton className="h-1.5 w-full rounded-full" />
+              <div className="space-y-3 pt-1">
+                <div className="flex justify-between">
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-3 w-10" />
+                </div>
+                <div className="flex justify-between">
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-3 w-10" />
+                </div>
+              </div>
+            </SkeletonRegion>
+          ) : (
+            <>
+              <div className="space-y-2 px-1">
+                <p className="flex items-baseline justify-between gap-2">
+                  <span className="text-sm text-fb-text-2">
+                    <span className="text-2xl font-bold text-fb-text tabular-nums">
+                      {myProgress.done}
+                    </span>
+                    <span className="text-fb-text-2">/{myProgress.total}</span>{' '}
+                    bộ đã làm xong
+                  </span>
+                  <span className="text-sm font-semibold text-fb-success tabular-nums">
+                    {myProgress.total > 0
+                      ? Math.round((myProgress.done / myProgress.total) * 100)
+                      : 0}
+                    %
+                  </span>
+                </p>
+                <ProgressBar value={myProgress.done} max={myProgress.total} />
+              </div>
+              <dl className="divide-y divide-fb-divider px-1 text-sm">
+                <div className="flex items-center justify-between py-2">
+                  <dt className="flex items-center gap-2 text-fb-text-2">
+                    <PlayCircle
+                      className="h-4 w-4 text-fb-blue"
+                      aria-hidden="true"
+                    />
+                    Đang làm dở
+                  </dt>
+                  <dd className="font-semibold text-fb-text tabular-nums">
+                    {myProgress.inProgress} bộ
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between py-2">
+                  <dt className="flex items-center gap-2 text-fb-text-2">
+                    <Star
+                      className="h-4 w-4 text-fb-warning"
+                      aria-hidden="true"
+                    />
+                    Đã chấm sao
+                  </dt>
+                  <dd className="font-semibold text-fb-text tabular-nums">
+                    {myProgress.rated} bộ
+                  </dd>
+                </div>
+              </dl>
+            </>
           )}
         </section>
       </aside>
@@ -574,11 +576,13 @@ export const ApiBankView: React.FC = () => {
               <h2 className="text-xl font-bold text-fb-text truncate">
                 {activeLabel}
               </h2>
-              <p className="text-sm text-fb-text-2">
-                {sets
-                  ? `${visibleSets.length} bộ câu hỏi do sinh viên đóng góp`
-                  : 'Đang tải…'}
-              </p>
+              {sets ? (
+                <p className="text-sm text-fb-text-2">
+                  {visibleSets.length} bộ câu hỏi do sinh viên đóng góp
+                </p>
+              ) : (
+                <Skeleton className="mt-1.5 h-3 w-56" />
+              )}
             </div>
             <label className="relative shrink-0">
               <span className="sr-only">Sắp xếp bộ câu hỏi</span>
@@ -644,7 +648,10 @@ export const ApiBankView: React.FC = () => {
                 >
                   <span className="flex items-center gap-1.5">
                     {opt.label}
-                    {sets && (
+                    {(!sets || (statsPending && opt.value !== 'ALL')) && (
+                      <Skeleton className="h-5 w-6 rounded-full" />
+                    )}
+                    {sets && !(statsPending && opt.value !== 'ALL') && (
                       <span
                         className={`min-w-5 rounded-full px-1.5 text-xs leading-5 tabular-nums ${
                           active
@@ -666,9 +673,7 @@ export const ApiBankView: React.FC = () => {
         </div>
 
         {sets === null && !error && (
-          <div className="bg-fb-card rounded-lg shadow-fb-card p-8 text-center text-body text-fb-text-2">
-            Đang tải bộ câu hỏi…
-          </div>
+          <CardListSkeleton count={4} label="Đang tải bộ câu hỏi…" />
         )}
 
         {error && (
@@ -757,11 +762,13 @@ export const ApiBankView: React.FC = () => {
           <h2 className="px-1 mb-1 text-card-title font-semibold text-fb-text">
             Được thảo luận nhiều
           </h2>
-          {mostDiscussed.length === 0 && (
+          {(statsPending || (sets === null && !error)) &&
+            mostDiscussed.length === 0 && (
+              <SkeletonRows count={3} avatar="square" />
+            )}
+          {!statsPending && sets !== null && mostDiscussed.length === 0 && (
             <p className="px-1 py-2 text-sm text-fb-text-2">
-              {statsPending
-                ? 'Đang tải số liệu…'
-                : 'Chưa có bộ câu hỏi nào được đánh giá hay bình luận.'}
+              Chưa có bộ câu hỏi nào được đánh giá hay bình luận.
             </p>
           )}
           {mostDiscussed.map(({ set, s }) => (

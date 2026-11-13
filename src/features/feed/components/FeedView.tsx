@@ -29,6 +29,7 @@ import {
   Send,
   Ban,
 } from 'lucide-react';
+import { PostListSkeleton } from '../../../shared/components/Skeleton';
 
 export const FeedView: React.FC = () => {
   const {
@@ -162,12 +163,7 @@ export const FeedView: React.FC = () => {
           </div>
         )}
         {isFeedLoading && feedPages.visiblePosts.length === 0 && (
-          <div
-            role="status"
-            className="rounded-lg bg-fb-card p-6 text-center text-sm text-fb-text-2 shadow-fb-card"
-          >
-            Đang tải bảng tin...
-          </div>
+          <PostListSkeleton count={3} />
         )}
         {!isFeedLoading &&
           !feedError &&
@@ -371,21 +367,7 @@ export const FeedView: React.FC = () => {
           className="py-3 text-center text-xs text-fb-text-2"
         >
           {feedPages.isLoadingMore && (
-            <div
-              role="status"
-              aria-label="Đang tải bài viết"
-              className="animate-pulse rounded-lg border border-fb-divider bg-fb-card p-4 text-left shadow-xs"
-            >
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-fb-btn" />
-                <div className="space-y-2">
-                  <div className="h-3 w-28 rounded bg-fb-btn" />
-                  <div className="h-2 w-20 rounded bg-fb-btn" />
-                </div>
-              </div>
-              <div className="mt-5 h-3 w-full rounded bg-fb-btn" />
-              <div className="mt-2 h-3 w-2/3 rounded bg-fb-btn" />
-            </div>
+            <PostListSkeleton count={1} />
           )}
           {feedPages.hasMore && !feedPages.isLoadingMore && (
             <button

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { examsApi, ExamDetailResponse } from '../../../../api';
 import { ExamExportModal } from './ExamExportModal';
+import { QuestionListSkeleton } from '../../../../shared/components/Skeleton';
 
 interface ExamDetailViewProps {
   examId: number;
@@ -133,10 +134,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
 
       {/* Loading State */}
       {loading && (
-        <div className="bg-fb-card rounded-lg border border-fb-divider p-12 text-center text-xs text-fb-text-2 space-y-3">
-          <div className="w-8 h-8 border-3 border-fb-blue border-t-transparent rounded-full animate-spin mx-auto" />
-          <p>Đang tải chi tiết đề thi và danh sách câu hỏi...</p>
-        </div>
+        <QuestionListSkeleton count={3} label="Đang tải chi tiết đề thi…" />
       )}
 
       {/* Error State */}

@@ -8,6 +8,7 @@ import type { StudentExamSet } from '../studentBankData';
 import { examSetFromSession, submitAnswersToApi } from '../apiExamRoom';
 import { ExamTestFullscreenModal } from './ExamTestFullscreenModal';
 import { QuestionComments } from '../../practice/components/QuestionComments';
+import { ExamRoomSkeleton } from '../../../shared/components/Skeleton';
 
 interface ApiExamRoomProps {
   sessionId: number;
@@ -94,6 +95,10 @@ export const ApiExamRoom: React.FC<ApiExamRoomProps> = ({
       showToast(errorMessage(err, 'Không gửi được đánh giá.'), 'error');
     }
   };
+
+  if ((!exam || !session) && !error) {
+    return createPortal(<ExamRoomSkeleton />, document.body);
+  }
 
   if (!exam || !session) {
     return createPortal(
