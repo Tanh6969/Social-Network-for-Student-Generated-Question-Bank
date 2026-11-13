@@ -147,3 +147,21 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Thanh cuộn của sidebar sticky: chỉ hiện khi rê chuột vào (giống Facebook),
+   tránh 2 thanh cuộn nằm sát nhau cạnh thanh cuộn của trang. */
+.scrollbar-hover {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+.scrollbar-hover:hover,
+.scrollbar-hover:focus-within {
+  scrollbar-color: var(--fb-scroll) transparent;
+}
+.scrollbar-hover::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+.scrollbar-hover:hover::-webkit-scrollbar-thumb,
+.scrollbar-hover:focus-within::-webkit-scrollbar-thumb {
+  background: var(--fb-scroll);
+}

@@ -57,7 +57,9 @@ export function useAuthSession(notify: Notify) {
   };
 
   const logout = async () => {
-    const token = sessionKind === 'api' ? accessToken.current : null;
+    // Token có thể đã được làm mới sau khi đăng nhập → lấy bản hiện tại.
+    const token =
+      sessionKind === 'api' ? (tokenStore.get() ?? accessToken.current) : null;
     accessToken.current = null;
     tokenStore.set(null);
     setSessionKind(null);

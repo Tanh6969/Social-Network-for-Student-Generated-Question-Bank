@@ -326,7 +326,7 @@ export const ProposeView: React.FC = () => {
   return (
     <div className="w-full min-h-[calc(100vh-3.5rem)] flex flex-col md:flex-row items-start bg-fb-canvas">
       {/* ================= CỘT TRÁI (LEFT SIDEBAR): CỐ ĐỊNH KHI CUỘN TRANG ================= */}
-      <aside className="w-full md:w-80 lg:w-84 xl:w-88 shrink-0 bg-fb-card border-r border-fb-divider md:sticky md:top-14 md:h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-5 flex flex-col select-none z-20">
+      <aside className="scrollbar-hover w-full md:w-80 lg:w-84 xl:w-88 shrink-0 bg-fb-card border-r border-fb-divider md:sticky md:top-14 md:h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-5 flex flex-col select-none z-20">
         <div className="space-y-4">
           <div className="px-1 pt-1 pb-3 border-b border-fb-divider">
             <h2 className="text-2xl font-bold text-fb-text flex items-center gap-2.5">

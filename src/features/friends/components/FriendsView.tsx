@@ -437,7 +437,7 @@ export const FriendsView: React.FC = () => {
   return (
     <div className="w-full flex flex-col lg:flex-row items-start">
       {/* ================= CỘT TRÁI: Menu điều hướng ================= */}
-      <aside className="w-full lg:w-[320px] xl:w-[360px] shrink-0 select-none bg-fb-card shadow-fb-card lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)] lg:overflow-y-auto p-3 lg:p-2">
+      <aside className="scrollbar-hover w-full lg:w-[320px] xl:w-[360px] shrink-0 select-none bg-fb-card shadow-fb-card lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)] lg:overflow-y-auto p-3 lg:p-2">
         <h1 className="hidden lg:block px-2 pt-2 pb-3 text-2xl font-bold text-fb-text">
           Bạn bè
         </h1>

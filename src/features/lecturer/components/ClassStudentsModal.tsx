@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Mail, Search, Users, X } from 'lucide-react';
-import { examsApi, ClassStudentResponse, CourseClassResponse } from '../../../api';
+import { examsApi, errorMessage, ClassStudentResponse, CourseClassResponse } from '../../../api';
 
 interface ClassStudentsModalProps {
   courseClass: CourseClassResponse;
@@ -17,13 +17,17 @@ function getInitials(fullName?: string): string {
 export const ClassStudentsModal: React.FC<ClassStudentsModalProps> = ({ courseClass, onClose }) => {
   const [students, setStudents] = useState<ClassStudentResponse[] | null>(null);
   const [query, setQuery] = useState('');
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    setLoadError(null);
     examsApi
       .getClassStudents(courseClass)
       .then((data) => !cancelled && setStudents(data))
-      .catch(() => !cancelled && setStudents([]));
+      .catch((err: unknown) => {
+        if (!cancelled) setLoadError(errorMessage(err, 'Không tải được danh sách sinh viên.'));
+      });
     return () => {
       cancelled = true;
     };
@@ -96,7 +100,12 @@ export const ClassStudentsModal: React.FC<ClassStudentsModalProps> = ({ courseCl
 
         {/* List */}
         <div className="flex-1 overflow-y-auto px-2 py-2">
-          {filtered === null && (
+          {loadError && (
+            <p role="alert" className="py-10 px-4 text-center text-sm text-fb-danger">
+              {loadError}
+            </p>
+          )}
+          {filtered === null && !loadError && (
             <p className="py-10 text-center text-sm text-fb-text-3">Đang tải danh sách...</p>
           )}
           {filtered?.length === 0 && (

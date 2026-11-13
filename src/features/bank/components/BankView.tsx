@@ -11,6 +11,8 @@ import { ExamDetailView } from './ExamDetailView';
 import { ExamTestFullscreenModal } from './ExamTestFullscreenModal';
 import { BookOpen, Library, Plus, Search, Star } from 'lucide-react';
 import { getSubjectTone } from '../subjectTone';
+import { isApiSession } from '../../../api';
+import { ApiBankView } from './ApiBankView';
 
 type SortKey = 'NEWEST' | 'RATING' | 'ATTEMPTS' | 'QUESTIONS_COUNT';
 
@@ -54,7 +56,11 @@ const SubjectItem: React.FC<{
   </button>
 );
 
-export const BankView: React.FC = () => {
+/** Phiên thật dùng dữ liệu API; phiên demo giữ màn hình mẫu bên dưới. */
+export const BankView: React.FC = () =>
+  isApiSession() ? <ApiBankView /> : <DemoBankView />;
+
+const DemoBankView: React.FC = () => {
   const {
     questions,
     sessions,
@@ -199,7 +205,7 @@ export const BankView: React.FC = () => {
   return (
     <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 py-4 flex justify-between items-start gap-4 xl:gap-6">
       {/* ================= CỘT TRÁI: TÌM KIẾM & MÔN HỌC ================= */}
-      <aside className="hidden lg:block w-[280px] xl:w-[300px] shrink-0 sticky top-18 max-h-[calc(100vh-5rem)] overflow-y-auto select-none">
+      <aside className="scrollbar-hover hidden lg:block w-[280px] xl:w-[300px] shrink-0 sticky top-18 max-h-[calc(100vh-5rem)] overflow-y-auto select-none">
         <div className="bg-fb-card rounded-lg shadow-fb-card p-3">
           <h1 className="px-1 text-2xl font-bold text-fb-text">Ngân hàng đề</h1>
 
@@ -356,7 +362,7 @@ export const BankView: React.FC = () => {
       </main>
 
       {/* ================= CỘT PHẢI: NỔI BẬT & NGƯỜI ĐÓNG GÓP ================= */}
-      <aside className="hidden xl:block w-[300px] shrink-0 sticky top-18 max-h-[calc(100vh-5rem)] overflow-y-auto space-y-3">
+      <aside className="scrollbar-hover hidden xl:block w-[300px] shrink-0 sticky top-18 max-h-[calc(100vh-5rem)] overflow-y-auto space-y-3">
         <section className="bg-fb-card rounded-lg shadow-fb-card p-3">
           <h2 className="px-1 mb-1 text-card-title font-semibold text-fb-text">
             Được đánh giá cao

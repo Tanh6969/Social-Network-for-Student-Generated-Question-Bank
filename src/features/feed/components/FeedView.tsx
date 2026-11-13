@@ -85,7 +85,7 @@ export const FeedView: React.FC = () => {
   return (
     <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 flex justify-between items-start gap-4 xl:gap-6">
       {/* ================= CỘT TRÁI (sticky sát lề trái) ================= */}
-      <aside className="hidden lg:block w-[280px] xl:w-[300px] 2xl:w-[320px] shrink-0 sticky top-18 h-[calc(100vh-5rem)] overflow-y-auto space-y-2 pr-2 select-none">
+      <aside className="scrollbar-hover hidden lg:block w-[280px] xl:w-[300px] 2xl:w-[320px] shrink-0 sticky top-18 h-[calc(100vh-5rem)] overflow-y-auto space-y-2 pr-2 select-none">
         {/* User Quick Info */}
         <div
           onClick={() => {
@@ -403,7 +403,7 @@ export const FeedView: React.FC = () => {
       </main>
 
       {/* ================= CỘT PHẢI (sticky sát lề phải) ================= */}
-      <aside className="hidden xl:block w-[300px] xl:w-[320px] 2xl:w-[340px] shrink-0 sticky top-18 h-[calc(100vh-5rem)] overflow-y-auto space-y-4 select-none pl-1">
+      <aside className="scrollbar-hover hidden xl:block w-[300px] xl:w-[320px] 2xl:w-[340px] shrink-0 sticky top-18 h-[calc(100vh-5rem)] overflow-y-auto space-y-4 select-none pl-1">
         {/* Minigame Widget */}
         {minigames.length > 0 && (
           <div className="bg-fb-card rounded-lg shadow-fb-card p-4">

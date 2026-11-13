@@ -9,8 +9,9 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
-import { errorMessage } from '../../../api';
+import { errorMessage, isApiSession } from '../../../api';
 import { practiceGateway } from '../../proposals/practiceGateway';
+import { QuestionComments } from './QuestionComments';
 import type {
   AnswerQuestionResponse,
   PracticeQuestionDto,
@@ -355,6 +356,15 @@ export const PracticeSessionModal: React.FC<PracticeSessionModalProps> = ({
                       </>
                     )}
                   </div>
+
+                  {/* Bình luận sau khi trả lời, để không lộ đáp án trước */}
+                  {qid && isApiSession() && (
+                    <QuestionComments
+                      key={qid}
+                      questionId={qid}
+                      showToast={showToast}
+                    />
+                  )}
                 </div>
               )}
             </>

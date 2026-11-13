@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import {
   examsApi,
+  errorMessage,
   ExamItem,
   CursorPaginationDto,
   SubjectResponse,
@@ -63,14 +64,18 @@ export const ExamListView: React.FC<ExamListViewProps> = ({
       try {
         const list = await examsApi.getAllSubjects();
         if (isMounted) setSubjects(list);
-      } catch {
-        // Fallback
+      } catch (err: unknown) {
+        if (isMounted) {
+          showToast(errorMessage(err, 'Không tải được danh sách môn học để lọc.'), 'error');
+        }
       }
     };
     fetchSubjects();
     return () => {
       isMounted = false;
     };
+    // Chỉ tải môn học một lần; showToast của AppContext đổi tham chiếu mỗi lần render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Fetch exams function

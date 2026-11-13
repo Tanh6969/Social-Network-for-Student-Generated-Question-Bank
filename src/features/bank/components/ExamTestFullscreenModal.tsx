@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { StudentExamSet } from '../studentBankData';
 import { StarRating } from './StarRating';
+import { useLockPageScroll } from '../../../shared/lockPageScroll';
 import {
   Clock,
   AlertCircle,
@@ -17,18 +18,48 @@ import {
   Sparkles,
 } from 'lucide-react';
 
+type OptionKey = 'A' | 'B' | 'C' | 'D';
+
+/** Kết quả chấm của một câu do máy chủ trả về (POST /questions/{id}/answer). */
+export interface RemoteAnswerResult {
+  correctAnswer?: string;
+  explanation?: string;
+  isCorrect?: boolean;
+}
+
 interface ExamTestFullscreenModalProps {
   exam: StudentExamSet;
   onClose: () => void;
   onRateQuestion: (questionId: string, stars: number, comment?: string) => void;
   currentUserId: string;
+  /**
+   * Phiên thật: đáp án bị ẩn nên bài được chấm ở máy chủ khi nộp.
+   * Không truyền = phiên demo, chấm bằng đáp án có sẵn trong đề.
+   */
+  onSubmitAnswers?: (
+    answers: Record<string, OptionKey>,
+  ) => Promise<Record<string, RemoteAnswerResult>>;
+  /** Nội dung thêm dưới mỗi câu ở màn kết quả (vd. bình luận). */
+  renderQuestionExtras?: (questionId: string) => React.ReactNode;
 }
 
 export const ExamTestFullscreenModal: React.FC<
   ExamTestFullscreenModalProps
-> = ({ exam, onClose, onRateQuestion, currentUserId }) => {
+> = ({
+  exam,
+  onClose,
+  onRateQuestion,
+  currentUserId,
+  onSubmitAnswers,
+  renderQuestionExtras,
+}) => {
   // Test states
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [remoteResults, setRemoteResults] = useState<
+    Record<string, RemoteAnswerResult>
+  >({});
   const [answers, setAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>(
     {},
   );
@@ -40,29 +71,40 @@ export const ExamTestFullscreenModal: React.FC<
   // Modals inside test
   const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
   const [showConfirmExit, setShowConfirmExit] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [, setIsFullscreen] = useState(false);
+  // Popup rời phòng mở vì người dùng thoát toàn màn hình (Esc / F11)
+  const [leftFullscreen, setLeftFullscreen] = useState(false);
+  const isSubmittedRef = useRef(isSubmitted);
+  const wasFullscreenRef = useRef(false);
 
-  // Lock body scroll on mount to prevent double scrollbars
   useEffect(() => {
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = originalOverflow;
-    };
-  }, []);
+    isSubmittedRef.current = isSubmitted;
+  }, [isSubmitted]);
+
+  // Khoá cuộn trang phía sau (cả <html>) để không hiện 2 thanh cuộn
+  useLockPageScroll();
+
+  const enterFullscreen = () => {
+    try {
+      document.documentElement.requestFullscreen?.().catch(() => {});
+    } catch {
+      // Trình duyệt chặn toàn màn hình thì vẫn làm bài bình thường
+    }
+  };
 
   // Enter browser fullscreen on mount (with catch for browser permissions)
   useEffect(() => {
-    try {
-      if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen().catch(() => {});
-      }
-    } catch {
-      // Ignored if browser blocks automatic fullscreen
-    }
+    enterFullscreen();
 
     const onFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      const fullscreen = !!document.fullscreenElement;
+      setIsFullscreen(fullscreen);
+      // Đang làm bài mà thoát toàn màn hình → hỏi lại, đồng hồ dừng tại đây
+      if (!fullscreen && wasFullscreenRef.current && !isSubmittedRef.current) {
+        setLeftFullscreen(true);
+        setShowConfirmExit(true);
+      }
+      wasFullscreenRef.current = fullscreen;
     };
 
     document.addEventListener('fullscreenchange', onFullscreenChange);
@@ -88,20 +130,46 @@ export const ExamTestFullscreenModal: React.FC<
     };
   }, [isSubmitted]);
 
-  // Handle timer counting up from 0:00
+  // Đồng hồ đếm tăng từ 0:00; dừng khi đang hỏi rời phòng thi, chạy tiếp
+  // đúng từ giây đó nếu người dùng chọn tiếp tục.
   useEffect(() => {
-    if (isSubmitted) return;
+    if (isSubmitted || showConfirmExit) return;
 
     const timer = setInterval(() => {
       setElapsedSeconds((prev) => prev + 1);
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isSubmitted]);
+  }, [isSubmitted, showConfirmExit]);
 
-  const handleSubmitExam = () => {
-    setIsSubmitted(true);
-    setShowConfirmSubmit(false);
+  const continueExam = () => {
+    setShowConfirmExit(false);
+    // Bấm nút là thao tác của người dùng → trình duyệt cho vào lại toàn màn hình
+    if (leftFullscreen) enterFullscreen();
+    setLeftFullscreen(false);
+  };
+
+  const handleSubmitExam = async () => {
+    if (!onSubmitAnswers) {
+      setIsSubmitted(true);
+      setShowConfirmSubmit(false);
+      return;
+    }
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      setRemoteResults(await onSubmitAnswers(answers));
+      setIsSubmitted(true);
+      setShowConfirmSubmit(false);
+    } catch (err: unknown) {
+      setSubmitError(
+        err instanceof Error && err.message
+          ? err.message
+          : 'Không nộp được bài. Vui lòng thử lại.',
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSelectOption = (
@@ -117,6 +185,8 @@ export const ExamTestFullscreenModal: React.FC<
 
   const handleRestartExam = () => {
     setAnswers({});
+    setRemoteResults({});
+    setSubmitError(null);
     setCurrentQuestionIndex(0);
     setElapsedSeconds(0);
     setIsSubmitted(false);
@@ -134,10 +204,21 @@ export const ExamTestFullscreenModal: React.FC<
   const answeredCount = Object.keys(answers).length;
   const currentQuestion = exam.questions[currentQuestionIndex];
 
+  // Đáp án / giải thích: ưu tiên kết quả máy chủ chấm (phiên thật).
+  // Chuỗi rỗng = chưa biết đáp án (câu chưa làm trong phiên thật).
+  const correctAnswerOf = (q: (typeof exam.questions)[number]): string =>
+    remoteResults[q.id]?.correctAnswer ?? q.correctAnswer ?? '';
+  const explanationOf = (q: (typeof exam.questions)[number]): string =>
+    remoteResults[q.id]?.explanation ?? q.explanation ?? '';
+  const isCorrectOf = (q: (typeof exam.questions)[number]): boolean => {
+    const remote = remoteResults[q.id]?.isCorrect;
+    if (remote !== undefined) return remote;
+    const key = correctAnswerOf(q);
+    return Boolean(key) && answers[q.id] === key;
+  };
+
   // Score statistics after submission
-  const correctCount = exam.questions.filter(
-    (q) => answers[q.id] === q.correctAnswer,
-  ).length;
+  const correctCount = exam.questions.filter(isCorrectOf).length;
   const scoreOutOf10 =
     exam.questions.length > 0
       ? Number(((correctCount / exam.questions.length) * 10).toFixed(1))
@@ -420,8 +501,10 @@ export const ExamTestFullscreenModal: React.FC<
 
               {exam.questions.map((q, idx) => {
                 const userAns = answers[q.id];
-                const isCorrect = userAns === q.correctAnswer;
-                const isAuthor = q.creatorId === currentUserId;
+                const isCorrect = isCorrectOf(q);
+                const correctKey = correctAnswerOf(q);
+                const explanation = explanationOf(q);
+                const isAuthor = Boolean(q.creatorId) && q.creatorId === currentUserId;
 
                 return (
                   <div
@@ -461,7 +544,7 @@ export const ExamTestFullscreenModal: React.FC<
                     {/* Options list */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                       {q.options.map((opt) => {
-                        const isThisCorrect = q.correctAnswer === opt.id;
+                        const isThisCorrect = correctKey === opt.id;
                         const isUserChoice = userAns === opt.id;
 
                         let borderStyle =
@@ -497,15 +580,24 @@ export const ExamTestFullscreenModal: React.FC<
                     </div>
 
                     {/* Giải thích chi tiết */}
-                    <div className="p-3.5 rounded-lg bg-fb-success-soft/60 border border-fb-success/60 text-xs space-y-1">
-                      <div className="font-bold text-fb-success flex items-center gap-1.5">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-fb-success" />
-                        <span>Đáp án chính xác: Phương án {q.correctAnswer}</span>
+                    {correctKey ? (
+                      <div className="p-3.5 rounded-lg bg-fb-success-soft/60 border border-fb-success/60 text-xs space-y-1">
+                        <div className="font-bold text-fb-success flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-fb-success" />
+                          <span>Đáp án chính xác: Phương án {correctKey}</span>
+                        </div>
+                        {explanation && (
+                          <p className="text-fb-success font-normal leading-relaxed">
+                            <strong>Giải thích:</strong> {explanation}
+                          </p>
+                        )}
                       </div>
-                      <p className="text-fb-success font-normal leading-relaxed">
-                        <strong>Giải thích:</strong> {q.explanation}
-                      </p>
-                    </div>
+                    ) : (
+                      <div className="p-3.5 rounded-lg bg-fb-input border border-fb-divider text-xs text-fb-text-2">
+                        Bạn chưa làm câu này nên đáp án và lời giải vẫn được ẩn.
+                        Làm lại đề và trả lời câu này để xem.
+                      </div>
+                    )}
 
                     {/* Đánh giá sao câu hỏi (0 - 4 sao) */}
                     <div className="pt-2 border-t border-fb-divider">
@@ -522,6 +614,8 @@ export const ExamTestFullscreenModal: React.FC<
                         allowComment={true}
                       />
                     </div>
+
+                    {renderQuestionExtras?.(q.id)}
                   </div>
                 );
               })}
@@ -551,20 +645,28 @@ export const ExamTestFullscreenModal: React.FC<
               bài không?
             </p>
 
+            {submitError && (
+              <p role="alert" className="text-xs text-fb-danger">
+                {submitError}
+              </p>
+            )}
+
             <div className="flex items-center justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setShowConfirmSubmit(false)}
-                className="px-4 py-2 rounded-lg text-xs font-semibold text-fb-text hover:bg-fb-hover transition cursor-pointer"
+                disabled={isSubmitting}
+                className="px-4 py-2 rounded-lg text-xs font-semibold text-fb-text hover:bg-fb-hover transition cursor-pointer disabled:opacity-50"
               >
                 Làm tiếp
               </button>
               <button
                 type="button"
-                onClick={handleSubmitExam}
-                className="px-4 py-2 rounded-lg text-xs font-bold bg-fb-success hover:bg-fb-success/90 text-white transition cursor-pointer shadow-xs"
+                onClick={() => void handleSubmitExam()}
+                disabled={isSubmitting}
+                className="px-4 py-2 rounded-lg text-xs font-bold bg-fb-success hover:bg-fb-success/90 text-white transition cursor-pointer shadow-xs disabled:opacity-60"
               >
-                Xác nhận nộp bài
+                {isSubmitting ? 'Đang chấm bài…' : 'Xác nhận nộp bài'}
               </button>
             </div>
           </div>
@@ -574,25 +676,23 @@ export const ExamTestFullscreenModal: React.FC<
       {/* ================= MODAL CẢNH BÁO KHÔNG CHO OUT RA ================= */}
       {showConfirmExit && (
         <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/60">
-          <div className="bg-fb-card rounded-lg max-w-sm w-full p-5 border border-fb-divider shadow-2xl space-y-4 animate-in zoom-in-95 duration-150">
-            <div className="flex items-center gap-3 text-fb-danger">
-              <AlertCircle className="w-6 h-6" />
-              <h3 className="font-bold text-base text-fb-text">
-                Cảnh báo rời phòng thi
-              </h3>
-            </div>
+          <div
+            role="alertdialog"
+            aria-label="Xác nhận thoát phòng thi"
+            className="bg-fb-card rounded-lg max-w-sm w-full p-5 border border-fb-divider shadow-2xl space-y-4 animate-in zoom-in-95 duration-150"
+          >
+            <h3 className="font-bold text-base text-fb-text">
+              Bạn có muốn thoát khỏi phòng thi không?
+            </h3>
 
-            <p className="text-xs text-fb-text-2 leading-relaxed">
-              Bạn đang trong quá trình làm bài thi thử. Nếu rời đi bây giờ, toàn bộ câu trả lời sẽ <strong>không được lưu lại</strong>!
-            </p>
-
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="flex items-center justify-end gap-2">
               <button
                 type="button"
-                onClick={() => setShowConfirmExit(false)}
-                className="px-4 py-2 rounded-lg text-xs font-bold bg-fb-blue text-white hover:bg-fb-blue-hover transition cursor-pointer"
+                autoFocus
+                onClick={continueExam}
+                className="px-4 py-2 rounded-lg text-xs font-semibold text-fb-text bg-fb-btn hover:bg-fb-btn-hover transition cursor-pointer"
               >
-                Tiếp tục làm bài
+                Ở lại
               </button>
               <button
                 type="button"
@@ -600,9 +700,9 @@ export const ExamTestFullscreenModal: React.FC<
                   setShowConfirmExit(false);
                   onClose();
                 }}
-                className="px-4 py-2 rounded-lg text-xs font-semibold text-fb-danger hover:bg-fb-danger-soft transition cursor-pointer"
+                className="px-4 py-2 rounded-lg text-xs font-bold bg-fb-danger text-white hover:bg-fb-danger/90 transition cursor-pointer"
               >
-                Thoát bài thi
+                Thoát
               </button>
             </div>
           </div>
