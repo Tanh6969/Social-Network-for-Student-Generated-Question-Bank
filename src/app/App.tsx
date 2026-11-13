@@ -8,7 +8,7 @@ import { ToastContainer } from '../shared/components/ToastContainer';
 
 // Auth Page
 import { AuthPage } from '../features/auth/components/AuthPage';
-import { PageSkeleton } from '../shared/components/Skeleton';
+import { PageSkeleton, Skeleton } from '../shared/components/Skeleton';
 
 // Split screens by route while preserving the existing demo components.
 const FeedView = React.lazy(() =>
@@ -91,7 +91,13 @@ import { WifiOff } from 'lucide-react';
 
 const MainContent: React.FC = () => {
   const location = useLocation();
-  const { isAuthenticated, activeTab, isOfflineSimulated, role } = useApp();
+  const {
+    isAuthenticated,
+    isRestoringSession,
+    activeTab,
+    isOfflineSimulated,
+    role,
+  } = useApp();
   // Chỉ đăng xuất mới chuyển từ đã đăng nhập sang chưa đăng nhập. Khi đó không
   // giữ trang cũ trong `next`, để lần đăng nhập sau (có thể là tài khoản khác)
   // luôn mở trang chủ MXH.
@@ -100,6 +106,21 @@ const MainContent: React.FC = () => {
   if (prevAuthenticated !== isAuthenticated) {
     setPrevAuthenticated(isAuthenticated);
     setJustLoggedOut(!isAuthenticated);
+  }
+
+  // Tải lại trang: đang khôi phục phiên từ cookie → giữ nguyên đường dẫn,
+  // hiện khung trang thay vì nháy qua màn đăng nhập.
+  if (isRestoringSession && !isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-fb-canvas pt-14">
+        <div className="fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between gap-4 border-b border-fb-divider bg-fb-card px-4">
+          <Skeleton className="h-10 w-40 rounded-full" />
+          <Skeleton className="hidden h-8 w-80 md:block" />
+          <Skeleton className="h-10 w-10 rounded-full" />
+        </div>
+        <PageSkeleton />
+      </div>
+    );
   }
 
   // Authentication and the local demo entry points share the login screen.

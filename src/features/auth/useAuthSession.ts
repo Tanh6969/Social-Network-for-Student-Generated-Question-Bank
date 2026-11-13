@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { authApi } from '../../api/auth';
 import { tokenStore } from '../../api/token';
 import {
@@ -11,6 +11,11 @@ import { applyProfile, mapAuthUser } from './mapAuthUser';
 import { authenticateMockAccount } from './mockAuthentication';
 import { useQueryClient } from '@tanstack/react-query';
 import { clearStoredSnapshots } from '../bank/bankQuery';
+import {
+  hasSessionHint,
+  restoreApiSession,
+  setSessionHint,
+} from './restoreSession';
 
 type Notify = (
   message: string,
@@ -25,12 +30,42 @@ export function useAuthSession(notify: Notify) {
   const [role, setRole] = useState<Role>('STUDENT');
   const [currentUser, setCurrentUser] = useState<User>(mockCurrentUserStudent);
   const queryClient = useQueryClient();
+  // Đang khôi phục phiên sau khi tải lại trang (chỉ khi trước đó đã đăng nhập).
+  const [isRestoringSession, setIsRestoringSession] = useState(hasSessionHint);
+
+  useEffect(() => {
+    if (!hasSessionHint()) return;
+    let cancelled = false;
+    void restoreApiSession()
+      .then((restored) => {
+        if (cancelled) return;
+        if (!restored) {
+          setSessionHint(false);
+          return;
+        }
+        accessToken.current = restored.accessToken;
+        setCurrentUser(restored.user);
+        setRole(restored.user.role);
+        setSessionKind('api');
+        setIsAuthenticated(true);
+      })
+      .catch(() => {
+        if (!cancelled) setSessionHint(false);
+      })
+      .finally(() => {
+        if (!cancelled) setIsRestoringSession(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const loginWithCredentials = async (email: string, password: string) => {
     const mockUser = authenticateMockAccount(email, password);
     if (mockUser) {
       accessToken.current = null;
       tokenStore.set(null);
+      setSessionHint(false);
       setCurrentUser(mockUser);
       setRole(mockUser.role);
       setSessionKind('demo');
@@ -50,6 +85,7 @@ export function useAuthSession(notify: Notify) {
     }
     accessToken.current = account.access_token!;
     tokenStore.set(account.access_token!);
+    setSessionHint(true);
     // Tên thật, ảnh, điểm… nằm ở hồ sơ; lỗi thì vẫn đăng nhập với dữ liệu tối thiểu.
     user = applyProfile(user, await postsApi.getMyProfile().catch(() => null));
     setCurrentUser(user);
@@ -68,6 +104,7 @@ export function useAuthSession(notify: Notify) {
     // Không để lại dữ liệu của tài khoản này cho người dùng sau (máy dùng chung).
     queryClient.removeQueries({ queryKey: ['bank'] });
     clearStoredSnapshots();
+    setSessionHint(false);
     setSessionKind(null);
     setIsAuthenticated(false);
     if (!token) {
@@ -107,6 +144,7 @@ export function useAuthSession(notify: Notify) {
 
   return {
     isAuthenticated,
+    isRestoringSession,
     sessionKind,
     currentUser,
     setCurrentUser,

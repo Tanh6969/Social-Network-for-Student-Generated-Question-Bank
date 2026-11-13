@@ -105,6 +105,8 @@ export interface Toast {
 interface AppContextType {
   // Auth state
   isAuthenticated: boolean;
+  /** Đang khôi phục phiên đăng nhập sau khi tải lại trang. */
+  isRestoringSession: boolean;
   loginWithCredentials: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 
@@ -515,6 +517,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const {
     isAuthenticated,
+    isRestoringSession,
     sessionKind,
     currentUser: rawCurrentUser,
     setCurrentUser,
@@ -2751,6 +2754,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     <AppContext.Provider
       value={{
         isAuthenticated,
+        isRestoringSession,
         loginWithCredentials,
         logout,
         currentUser,
