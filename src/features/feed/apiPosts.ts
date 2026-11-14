@@ -10,6 +10,7 @@ import {
   type PostResponseDto,
 } from '../../api/posts';
 import type { CommentItem, Post, PostDocument, User } from '../demo/types';
+import { searchApi } from '../../api/search';
 
 type ApiAuthor = PostResponseDto['author'];
 
@@ -139,25 +140,56 @@ export function commentFromApi(
   };
 }
 
+/** Số bài công khai mới nhất của mọi người gộp vào bảng tin. */
+export const PUBLIC_POSTS_LIMIT = 30;
+
 /**
- * Bảng tin phiên thật: dòng hoạt động + bài của chính mình (gồm cả bài
+ * Bài của mọi người (không chỉ bạn bè): GET /activity-feeds chỉ có bạn bè /
+ * người đang theo dõi, còn GET /search?type=POST với từ khoá trống trả về bài
+ * công khai của tất cả (đã kiểm tra trên backend thật 2026-11-14). Chỉ lấy id:
+ * số đếm trong chỉ mục tìm kiếm không cập nhật, và GET /posts/{id} còn kiểm
+ * tra quyền xem. Lỗi tìm kiếm không làm hỏng bảng tin.
+ */
+async function loadPublicPostIds(): Promise<number[]> {
+  try {
+    const page = await searchApi.search({ type: 'POST', limit: 50 });
+    return page.items
+      .map((item) => item.post)
+      .filter((p): p is NonNullable<typeof p> => p?.post_id != null)
+      .sort(
+        (a, b) =>
+          Date.parse(b.created_at ?? '') - Date.parse(a.created_at ?? ''),
+      )
+      .slice(0, PUBLIC_POSTS_LIMIT)
+      .map((p) => p.post_id!);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Bảng tin phiên thật: dòng hoạt động + bài công khai của mọi người + bài
+ * của chính mình (gồm cả bài
  * "Chỉ mình tôi" không xuất hiện trong dòng hoạt động). Hoạt động đăng bài
  * được tải chi tiết qua GET /posts/{id}; bài đã xoá/không xem được bị bỏ qua.
  */
 export async function loadApiFeed(currentUser: User): Promise<Post[]> {
-  const [feed, mine] = await Promise.all([
+  const [feed, mine, publicIds] = await Promise.all([
     postsApi.getActivityFeed(),
     postsApi.getMyPosts(),
+    loadPublicPostIds(),
   ]);
   const posts = new Map<string, Post>();
   for (const dto of mine.items) {
     if (dto.post_id != null)
       posts.set(String(dto.post_id), postFromApi(dto, currentUser));
   }
-  const postIds = feed.items
-    .filter((item) => item.target_type === 'POST' && item.target_id != null)
-    .map((item) => item.target_id!)
-    .filter((id) => !posts.has(String(id)));
+  const postIds = [
+    ...feed.items
+      .filter((item) => item.target_type === 'POST' && item.target_id != null)
+      .map((item) => item.target_id!),
+    ...publicIds,
+  ].filter((id) => !posts.has(String(id)));
   const details = await Promise.allSettled(
     [...new Set(postIds)].map((id) => postsApi.getPost(id)),
   );

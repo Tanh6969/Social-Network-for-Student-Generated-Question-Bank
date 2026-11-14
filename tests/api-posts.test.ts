@@ -313,3 +313,71 @@ describe('tải media khi đăng / sửa bài', () => {
     });
   });
 });
+
+describe('bảng tin — bài công khai của mọi người', () => {
+  it('gộp bài từ GET /search?type=POST, lấy chi tiết từng bài, bỏ bài không xem được', async () => {
+    respond = (_m, url) => {
+      if (url.pathname.endsWith('/activity-feeds'))
+        return envelope({ items: [], pagination: { has_next: false } });
+      if (url.pathname.endsWith('/posts/me'))
+        return envelope({
+          items: [
+            { post_id: 10, author: { user_id: 144 }, content: 'Của tôi' },
+          ],
+        });
+      if (url.pathname.endsWith('/search'))
+        return envelope({
+          items: [
+            {
+              type: 'POST',
+              post: { post_id: 10, created_at: '2026-11-01T00:00:00Z' },
+            },
+            {
+              type: 'POST',
+              post: { post_id: 56, created_at: '2026-10-30T09:01:00Z' },
+            },
+            {
+              type: 'POST',
+              post: { post_id: 57, created_at: '2026-10-29T09:01:00Z' },
+            },
+          ],
+          pagination: { has_next: false },
+        });
+      if (url.pathname.endsWith('/posts/56'))
+        return envelope({
+          post_id: 56,
+          author: { user_id: 25, full_name: 'Đồng Văn Hiếu' },
+          content: 'RESTful API',
+          visibility: 'PUBLIC',
+          react_count: 3,
+        });
+      // Bài 57: không có quyền xem (chặn / chỉ bạn bè) → backend từ chối.
+      return envelope(null, 403, '1009', 'FORBIDDEN');
+    };
+    const { feed } = await load();
+    const posts = await feed.loadApiFeed(me);
+
+    expect(posts.map((p) => p.id).sort()).toEqual(['10', '56']);
+    expect(
+      requests.find((r) => r.path.startsWith('/api/v1/search'))?.path,
+    ).toBe('/api/v1/search?type=POST&limit=50');
+    // Bài của mình đã có trong /posts/me thì không tải lại.
+    expect(requests.some((r) => r.path.endsWith('/posts/10'))).toBe(false);
+    expect(posts.find((p) => p.id === '56')).toMatchObject({
+      content: 'RESTful API',
+      likesCount: 3,
+    });
+  });
+
+  it('tìm kiếm lỗi thì bảng tin vẫn hiện như cũ', async () => {
+    respond = (_m, url) => {
+      if (url.pathname.endsWith('/search'))
+        return envelope(null, 500, '5000', 'ES down');
+      if (url.pathname.endsWith('/activity-feeds'))
+        return envelope({ items: [], pagination: { has_next: false } });
+      return envelope({ items: [{ post_id: 10, author: { user_id: 144 } }] });
+    };
+    const { feed } = await load();
+    expect((await feed.loadApiFeed(me)).map((p) => p.id)).toEqual(['10']);
+  });
+});
