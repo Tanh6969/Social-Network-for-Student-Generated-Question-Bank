@@ -2,7 +2,6 @@ import type { MainTab, Role } from '../features/demo/types';
 
 export const tabPaths: Record<MainTab, string> = {
   feed: '/feed',
-  video: '/videos',
   bank: '/bank',
   'lecturer-bank': '/lecturer-bank',
   propose: '/propose',

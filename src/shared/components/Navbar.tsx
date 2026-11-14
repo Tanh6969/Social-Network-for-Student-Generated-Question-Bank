@@ -4,7 +4,6 @@ import { AvatarWithFrame } from './AvatarWithFrame';
 import {
   Search,
   Home,
-  Video,
   BookOpen,
   Gamepad2,
   Users,
@@ -309,12 +308,6 @@ export const Navbar: React.FC = () => {
           <Home className={`w-6 h-6 ${activeTab === 'feed' ? 'stroke-[2.5]' : ''}`} />
         </button>
 
-        <button onClick={() => handleTabClick('video')}
-          className={`relative flex flex-1 items-center justify-center transition-colors ${activeTab === 'video' ? 'h-full border-b-[3px] border-fb-blue text-fb-blue' : 'my-1 h-12 rounded-lg text-fb-text-2 hover:bg-fb-hover'}`}
-          title="Video học tập">
-          <Video className="h-6 w-6" />
-        </button>
-
         {/* NẾU LÀ GIẢNG VIÊN: ĐƯA 2 TAB KIỂM DUYỆT CÂU HỎI & NGÂN HÀNG ĐỀ LÊN TRƯỚC */}
         {role === 'LECTURER' ? (
           <>
@@ -556,13 +549,6 @@ export const Navbar: React.FC = () => {
                     </button>
                   </>
                 )}
-
-                <button onClick={() => { handleTabClick('video'); setIsGridMenuOpen(false); }}
-                  className="rounded-lg bg-fb-input p-2.5 text-left transition hover:bg-fb-blue-soft">
-                  <Video className="mb-1 h-5 w-5 text-fb-blue" />
-                  <span className="block font-semibold text-fb-text">Video học tập</span>
-                  <span className="text-xs text-fb-text-2">Bài giảng mới</span>
-                </button>
 
                 <button
                   onClick={() => {

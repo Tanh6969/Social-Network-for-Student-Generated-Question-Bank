@@ -128,7 +128,7 @@ describe('ghi dữ liệu theo Swagger', () => {
 });
 
 describe('phân trang bảng tin từ backend', () => {
-  it('dùng cursor riêng cho activity, bài cá nhân và tìm kiếm công khai', async () => {
+  it('dùng cursor riêng cho activity, bài cá nhân, tìm kiếm và video', async () => {
     respond = (_method, url) => {
       const after = url.searchParams.get('after');
       if (url.pathname.endsWith('/activity-feeds')) return envelope({
@@ -146,19 +146,24 @@ describe('phân trang bảng tin từ backend', () => {
           [{ type: 'POST', post: { post_id: 31 } }],
         pagination: after ? { has_next: false } : { has_next: true, after: 10 },
       });
+      if (url.pathname.endsWith('/video-posts')) return envelope({
+        items: after ? [{ post_id: 42 }] : [{ post_id: 41 }],
+        pagination: after ? { has_next: false } : { has_next: true, after: 41 },
+      });
       const id = Number(url.pathname.split('/').pop());
       return envelope({ post_id: id, author: { user_id: 7 }, visibility: 'PUBLIC' });
     };
     const { feed } = await load();
     const first = await feed.loadApiFeedPage(me, feed.initialApiFeedCursor);
-    expect(first.posts.map((post) => post.id).sort()).toEqual(['11', '21', '31']);
+    expect(first.posts.map((post) => post.id).sort()).toEqual(['11', '21', '31', '41']);
     expect(first.cursor).toMatchObject({
       activity: { after: 1, hasNext: true },
       mine: { after: 11, hasNext: true },
       public: { after: 10, hasNext: true },
+      videos: { after: 41, hasNext: true },
     });
     const second = await feed.loadApiFeedPage(me, first.cursor);
-    expect(second.posts.map((post) => post.id).sort()).toEqual(['12', '22', '32']);
+    expect(second.posts.map((post) => post.id).sort()).toEqual(['12', '22', '32', '42']);
     expect(Object.values(second.cursor).every((source) => !source.hasNext)).toBe(true);
     expect(requests.some((item) => item.path.includes('/search?type=POST&after=10&limit=10'))).toBe(true);
   });
