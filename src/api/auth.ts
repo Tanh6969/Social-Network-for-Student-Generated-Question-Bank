@@ -1,13 +1,14 @@
 import { createId } from '../shared/createId';
-import { api, expectEnvelope } from './client';
+import { api, expectEnvelope, refreshAccessToken } from './client';
 import type { components } from './generated/openapi';
 
 export type AuthResponse = components['schemas']['AuthResponse'];
+export type ChangePasswordRequest = components['schemas']['ChangePasswordRequest'];
 type LoginRequest = components['schemas']['LoginRequest'];
 
 const deviceIdKey = 'sqb_web_device_id';
 
-function getDeviceId(): string {
+export function getDeviceId(): string {
   try {
     const existing = localStorage.getItem(deviceIdKey);
     if (existing) return existing;
@@ -44,5 +45,16 @@ export const authApi = {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     expectEnvelope(result);
+  },
+
+  /** POST /auth/change-password — Đổi mật khẩu người dùng. */
+  async changePassword(body: ChangePasswordRequest): Promise<void> {
+    const result = await api.POST('/auth/change-password', { body });
+    expectEnvelope(result);
+  },
+
+  /** POST /auth/refresh — Cấp mới Access Token bằng Refresh Token. */
+  async refresh(): Promise<boolean> {
+    return Boolean(await refreshAccessToken());
   },
 };

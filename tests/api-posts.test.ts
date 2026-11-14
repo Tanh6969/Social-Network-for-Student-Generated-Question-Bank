@@ -117,7 +117,7 @@ describe('ghi dữ liệu theo Swagger', () => {
   it('gửi báo cáo thật đến đúng đối tượng và loại vi phạm', async () => {
     respond = () => envelope({ report_id: 17 });
     const { reportsApi } = await import('../src/api/reports');
-    await reportsApi.create({
+    await reportsApi.createReport({
       target_type: 'POST', target_id: 42, violation_type: 'SPAM',
       description: 'Quảng cáo lặp lại',
     });

@@ -1,43 +1,83 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { X, ShieldAlert } from 'lucide-react';
-import { reportsApi, type CreateReportRequest } from '../../../../api/reports';
-import { errorMessage } from '../../../../api';
+import { isApiSession, reportsApi, type ReportTargetType, type ViolationType } from '../../../../api';
+
+function mapReportTargetType(rawType: string): ReportTargetType | null {
+  const normalized = rawType.trim().toUpperCase();
+  if (normalized.includes('BÌNH LUẬN') || normalized === 'COMMENT') {
+    return 'COMMENT';
+  }
+  if (normalized.includes('BÀI VIẾT') || normalized === 'POST') {
+    return 'POST';
+  }
+  if (normalized.includes('NGƯỜI DÙNG') || normalized === 'USER') return 'USER';
+  return null;
+}
 
 export const ReportModal: React.FC = () => {
-  const { isReportModalOpen, closeReportModal, reportTarget, showToast, sessionKind } = useApp();
+  const { isReportModalOpen, closeReportModal, reportTarget, showToast } = useApp();
 
-  const [reason, setReason] = useState<CreateReportRequest['violation_type']>('OTHER');
+  const [violationType, setViolationType] = useState<ViolationType>('OTHER');
+  const [reason, setReason] = useState('Nội dung sai kiến thức học thuật');
   const [description, setDescription] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isReportModalOpen || !reportTarget) return null;
 
+  const handleReasonChange = (nextReason: string) => {
+    setReason(nextReason);
+    if (nextReason === 'Spam hoặc quảng cáo') {
+      setViolationType('SPAM');
+    } else if (nextReason === 'Quấy rối hoặc ngôn từ thù địch') {
+      setViolationType('HARASSMENT');
+    } else if (nextReason === 'Phát ngôn thù ghét / xúc phạm') {
+      setViolationType('HATE_STATEMENT');
+    } else {
+      setViolationType('OTHER');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (busy) return;
-    if (sessionKind === 'api') {
-      const targetType = reportTarget.type === 'BÀI VIẾT' ? 'POST' :
-        reportTarget.type === 'NGƯỜI DÙNG' ? 'USER' : null;
+    if (isSubmitting) return;
+
+    if (isApiSession()) {
+      const targetType = mapReportTargetType(reportTarget.type);
       const targetId = Number(reportTarget.id);
       if (!targetType || !Number.isSafeInteger(targetId) || targetId <= 0) {
-        setError('Đối tượng này chưa hỗ trợ gửi báo cáo.');
+        showToast('Đối tượng này chưa hỗ trợ gửi báo cáo.', 'error');
         return;
       }
-      setBusy(true);
-      setError(null);
+      setIsSubmitting(true);
       try {
-        await reportsApi.create({ target_type: targetType, target_id: targetId,
-          violation_type: reason, description: description.trim() || undefined });
-      } catch (cause: unknown) {
-        setError(errorMessage(cause, 'Không gửi được báo cáo.'));
-        setBusy(false);
-        return;
+        await reportsApi.createReport({
+          target_type: targetType,
+          target_id: targetId,
+          violation_type: violationType,
+          description: description.trim() ? `${reason}: ${description.trim()}` : reason,
+        });
+        showToast(
+          'Cảm ơn bạn đã gửi báo cáo. Ban quản trị sẽ rà soát nội dung trong 24 giờ.',
+          'success',
+        );
+        closeReportModal();
+        setDescription('');
+      } catch (err) {
+        showToast(
+          err instanceof Error ? err.message : 'Không thể gửi báo cáo vi phạm.',
+          'error',
+        );
+      } finally {
+        setIsSubmitting(false);
       }
-      setBusy(false);
+      return;
     }
-    showToast('Đã gửi báo cáo.', 'success');
+
+    showToast(
+      'Cảm ơn bạn đã gửi báo cáo. Ban quản trị sẽ rà soát nội dung trong 24 giờ.',
+      'success',
+    );
     closeReportModal();
     setDescription('');
   };
@@ -64,24 +104,24 @@ export const ReportModal: React.FC = () => {
           Đối tượng báo cáo: <strong className="text-fb-text">[{reportTarget.type}] {reportTarget.title}</strong>
         </p>
 
-        <form onSubmit={(event) => void handleSubmit(event)} className="space-y-3 text-xs">
+        <form onSubmit={(e) => void handleSubmit(e)} className="space-y-3 text-xs">
           <div>
             <label className="block font-bold text-fb-text mb-1">
               Chọn lý do vi phạm:
             </label>
             <select
               value={reason}
-              onChange={(e) => setReason(e.target.value as CreateReportRequest['violation_type'])}
+              onChange={(e) => handleReasonChange(e.target.value)}
               className="w-full p-2 border border-fb-divider rounded-lg bg-fb-input"
             >
-              <option value="OTHER">Nội dung không phù hợp hoặc sai kiến thức</option>
-              <option value="SPAM">Spam hoặc quảng cáo</option>
-              <option value="HARASSMENT">Quấy rối</option>
-              <option value="HATE_STATEMENT">Phát ngôn thù ghét</option>
+              <option value="Nội dung sai kiến thức học thuật">Sai kiến thức học thuật / đề sai</option>
+              <option value="Spam hoặc quảng cáo">Spam hoặc quảng cáo không liên quan</option>
+              <option value="Quấy rối hoặc ngôn từ thù địch">Quấy rối hoặc ngôn từ thù địch</option>
+              <option value="Phát ngôn thù ghét / xúc phạm">Phát ngôn thù ghét / xúc phạm</option>
+              <option value="Vi phạm bản quyền giáo trình">Vi phạm bản quyền tài liệu trường</option>
+              <option value="Khác">Lý do khác</option>
             </select>
           </div>
-
-          {error && <p role="alert" className="text-fb-danger">{error}</p>}
 
           <div>
             <label className="block font-bold text-fb-text mb-1">
@@ -106,10 +146,10 @@ export const ReportModal: React.FC = () => {
             </button>
             <button
               type="submit"
-              disabled={busy}
-              className="px-5 py-2 bg-fb-danger hover:bg-fb-danger/90 text-white rounded-lg font-bold text-xs"
+              disabled={isSubmitting}
+              className="px-5 py-2 bg-fb-danger hover:bg-fb-danger/90 disabled:opacity-60 text-white rounded-lg font-bold text-xs"
             >
-              {busy ? 'Đang gửi…' : 'Gửi báo cáo'}
+              {isSubmitting ? 'Đang gửi...' : 'Gửi báo cáo'}
             </button>
           </div>
         </form>

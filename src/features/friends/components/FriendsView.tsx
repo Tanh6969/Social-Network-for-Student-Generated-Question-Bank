@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '../../demo/context/AppContext';
 import {
   BadgeCheck,
@@ -59,6 +59,7 @@ export const FriendsView: React.FC = () => {
     allUsers,
     friendsList,
     friendStatuses,
+    getUserById,
     getFriendsOfUser,
     getMutualFriendsCount,
     sendFriendRequest,
@@ -67,6 +68,7 @@ export const FriendsView: React.FC = () => {
     declineFriendRequest,
     unfriendUser,
     followingIds,
+    followersIds,
     toggleFollowUser,
     dismissedSuggestionIds,
     dismissSuggestion,
@@ -83,6 +85,7 @@ export const FriendsView: React.FC = () => {
     setActiveTab,
     openChatDock,
     openReportModal,
+    searchUsersOnApi,
   } = useApp();
 
   const [activeMenu, setActiveMenu] = useState<FriendsMenuTab>('ALL');
@@ -95,6 +98,24 @@ export const FriendsView: React.FC = () => {
   const [blockReason, setBlockReason] = useState('');
   const [blockSearch, setBlockSearch] = useState('');
 
+  useEffect(() => {
+    const query = searchTerm.trim();
+    if (!query) return;
+    const timer = window.setTimeout(() => {
+      void searchUsersOnApi(query);
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [searchTerm, searchUsersOnApi]);
+
+  useEffect(() => {
+    const query = blockSearch.trim();
+    if (!query) return;
+    const timer = window.setTimeout(() => {
+      void searchUsersOnApi(query);
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [blockSearch, searchUsersOnApi]);
+
   // Các danh sách người dùng thực tế (loại trừ những người đang trong trạng thái chặn)
   const unblockedUsers = allUsers.filter((u) => !isBlockedEitherWay(u.id));
 
@@ -104,7 +125,12 @@ export const FriendsView: React.FC = () => {
   const sentRequests = unblockedUsers.filter(
     (u) => friendStatuses[u.id] === 'REQUEST_SENT',
   );
-  const lecturersList = unblockedUsers.filter((u) => u.role === 'LECTURER');
+  const lecturersList = unblockedUsers.filter(
+    (u) => u.role === 'LECTURER' || followingIds.includes(u.id),
+  );
+  const followersList = unblockedUsers.filter((u) =>
+    followersIds.includes(u.id),
+  );
   const suggestionsList = unblockedUsers.filter(
     (u) =>
       u.role !== 'LECTURER' &&
@@ -134,6 +160,7 @@ export const FriendsView: React.FC = () => {
   const filteredIncoming = incomingRequests.filter(matchSearch);
   const filteredSent = sentRequests.filter(matchSearch);
   const filteredLecturers = lecturersList.filter(matchSearch);
+  const filteredFollowers = followersList.filter(matchSearch);
   const filteredSuggestions = suggestionsList.filter(matchSearch);
 
   const trimmedSearch = searchTerm.trim();
@@ -590,25 +617,42 @@ export const FriendsView: React.FC = () => {
           </section>
         )}
 
-        {/* ================= GIẢNG VIÊN ================= */}
+        {/* ================= GIẢNG VIÊN & THEO DÕI ================= */}
         {activeMenu === 'FOLLOWING' && (
-          <section>
-            {renderSectionHeader('Giảng viên', filteredLecturers.length)}
-            {filteredLecturers.length > 0 ? (
-              <div className={GRID_CLASS}>
-                {filteredLecturers.map(renderUserCard)}
-              </div>
-            ) : (
-              <EmptyState
-                icon={GraduationCap}
-                title={
-                  trimmedSearch
-                    ? noSearchResult
-                    : 'Không tìm thấy giảng viên nào'
-                }
-              />
+          <>
+            <section>
+              {renderSectionHeader('Giảng viên & Đang theo dõi', filteredLecturers.length)}
+              {filteredLecturers.length > 0 ? (
+                <div className={GRID_CLASS}>
+                  {filteredLecturers.map(renderUserCard)}
+                </div>
+              ) : (
+                <EmptyState
+                  icon={GraduationCap}
+                  title={
+                    trimmedSearch
+                      ? noSearchResult
+                      : 'Không tìm thấy giảng viên nào'
+                  }
+                />
+              )}
+            </section>
+
+            {filteredFollowers.length > 0 && (
+              <>
+                <hr className="border-fb-divider" />
+                <section>
+                  {renderSectionHeader(
+                    'Người đang theo dõi bạn',
+                    filteredFollowers.length,
+                  )}
+                  <div className={GRID_CLASS}>
+                    {filteredFollowers.map(renderUserCard)}
+                  </div>
+                </section>
+              </>
             )}
-          </section>
+          </>
         )}
 
         {/* ================= TAB 5: QUẢN LÝ DANH SÁCH ĐÃ CHẶN (SLIDE 24) ================= */}
@@ -718,9 +762,9 @@ export const FriendsView: React.FC = () => {
               ) : (
                 <div className="divide-y divide-fb-divider">
                   {blockedUsers.map((entry) => {
-                    const blockedUser = allUsers.find(
-                      (u) => u.id === entry.userId,
-                    );
+                    const blockedUser =
+                      allUsers.find((u) => u.id === entry.userId) ??
+                      getUserById(entry.userId);
                     if (!blockedUser) return null;
                     return (
                       <div
