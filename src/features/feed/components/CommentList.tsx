@@ -1,14 +1,16 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CommentItem } from '../../demo/types';
 import { useApp } from '../../demo/context/AppContext';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
 import { formatPostTime } from '../postUtils';
 
 export function CommentList({
+  postId,
   comments,
   onReply,
   limit,
 }: {
+  postId: string;
   comments: CommentItem[];
   onReply: (comment: CommentItem) => void;
   limit?: number;
@@ -22,7 +24,7 @@ export function CommentList({
   return (
     <div ref={listRef} className="space-y-3">
       {visibleComments.map((comment) => (
-        <CommentRow key={comment.id} comment={comment} onReply={onReply} />
+        <CommentRow key={comment.id} postId={postId} comment={comment} onReply={onReply} />
       ))}
     </div>
   );
@@ -62,15 +64,38 @@ function useScrollToNewComment(comments: CommentItem[]) {
 }
 
 function CommentRow({
+  postId,
   comment,
   onReply,
   isReply = false,
 }: {
+  postId: string;
   comment: CommentItem;
   onReply?: (comment: CommentItem) => void;
   isReply?: boolean;
 }) {
-  const { setViewingUserId, setActiveTab } = useApp();
+  const { setViewingUserId, setActiveTab, currentUser, sessionKind,
+    updateComment, deleteComment } = useApp();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(comment.content);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const canManage = sessionKind === 'api' && !comment.deleted &&
+    comment.author.id === currentUser.id && Number.isSafeInteger(Number(comment.id));
+  const save = async () => {
+    if (!draft.trim() || draft.trim() === comment.content) {
+      setEditing(false);
+      return;
+    }
+    setBusy(true);
+    if (await updateComment(postId, comment.id, draft)) setEditing(false);
+    setBusy(false);
+  };
+  const remove = async () => {
+    setBusy(true);
+    if (await deleteComment(postId, comment.id)) setConfirmDelete(false);
+    setBusy(false);
+  };
   const openAuthorProfile = () => {
     setViewingUserId(comment.author.id);
     setActiveTab('profile');
@@ -95,13 +120,23 @@ function CommentRow({
           >
             {comment.author.name}
           </button>
-          <p className="whitespace-pre-wrap wrap-break-word text-fb-text">
-            {comment.content}
-          </p>
+          {editing ? (
+            <textarea
+              aria-label="Sửa bình luận"
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              rows={2}
+              className="mt-1 w-full resize-y rounded-md bg-fb-card p-2 text-fb-text"
+            />
+          ) : (
+            <p className="whitespace-pre-wrap wrap-break-word text-fb-text">
+              {comment.content}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-3 px-2 pt-1 text-xs text-fb-text-2">
           <span>{formatPostTime(comment.createdAt)}</span>
-          {onReply && (
+          {onReply && !comment.deleted && (
             <button
               type="button"
               onClick={() => onReply(comment)}
@@ -110,10 +145,29 @@ function CommentRow({
               Trả lời
             </button>
           )}
+          {canManage && !editing && !confirmDelete && (
+            <>
+              <button type="button" onClick={() => { setDraft(comment.content); setEditing(true); }} className="font-semibold hover:underline">Sửa</button>
+              <button type="button" onClick={() => setConfirmDelete(true)} className="font-semibold hover:underline">Xóa</button>
+            </>
+          )}
+          {editing && (
+            <>
+              <button type="button" disabled={busy || !draft.trim()} onClick={() => void save()} className="font-semibold text-fb-blue disabled:opacity-50">Lưu</button>
+              <button type="button" disabled={busy} onClick={() => setEditing(false)} className="hover:underline">Hủy</button>
+            </>
+          )}
+          {confirmDelete && (
+            <>
+              <span>Xóa bình luận này?</span>
+              <button type="button" disabled={busy} onClick={() => void remove()} className="font-semibold text-fb-danger">Xóa</button>
+              <button type="button" disabled={busy} onClick={() => setConfirmDelete(false)} className="hover:underline">Hủy</button>
+            </>
+          )}
         </div>
         {!isReply &&
           comment.replies?.map((reply) => (
-            <CommentRow key={reply.id} comment={reply} isReply />
+            <CommentRow key={reply.id} postId={postId} comment={reply} isReply />
           ))}
       </div>
     </div>

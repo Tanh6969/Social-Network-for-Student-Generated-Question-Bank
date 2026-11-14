@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../demo/context/AppContext';
+import { ApiCosmeticsView } from './ApiCosmeticsView';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
 import {
   Sparkles,
@@ -14,6 +15,11 @@ import {
 import { CosmeticItem } from '../../demo/types';
 
 export const CosmeticsView: React.FC = () => {
+  const { sessionKind } = useApp();
+  return sessionKind === 'api' ? <ApiCosmeticsView /> : <DemoCosmeticsView />;
+};
+
+const DemoCosmeticsView: React.FC = () => {
   const {
     cosmetics,
     equipCosmetic,

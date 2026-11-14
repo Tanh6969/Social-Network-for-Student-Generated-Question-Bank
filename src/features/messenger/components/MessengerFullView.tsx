@@ -22,6 +22,13 @@ export const MessengerFullView: React.FC = () => {
     currentUser,
     markConversationRead,
     sendMessage,
+    sessionKind,
+    chatConnectionError,
+    loadChatMessages,
+    loadOlderChatMessages,
+    olderChatMessagesAvailable,
+    loadMoreConversations,
+    moreConversationsAvailable,
     recallMessage,
     openReportModal,
     showToast,
@@ -62,6 +69,12 @@ export const MessengerFullView: React.FC = () => {
     if (activeConvIdToRead) markConversationRead(activeConvIdToRead);
   }, [activeConvIdToRead, markConversationRead]);
 
+  useEffect(() => {
+    if (sessionKind === 'api' && activeConvIdToRead) loadChatMessages(activeConvIdToRead);
+    // Chỉ tải khi đổi hội thoại, không tải lặp theo mỗi lần context render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionKind, activeConvIdToRead]);
+
   const isPartnerBlocked = activeConv
     ? isBlockedEitherWay(activeConv.partner.id)
     : false;
@@ -72,10 +85,9 @@ export const MessengerFullView: React.FC = () => {
     ? isBlockingMe(activeConv.partner.id)
     : false;
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (inputText.trim() && activeConv && !isPartnerBlocked) {
-      sendMessage(activeConv.id, inputText);
-      setInputText('');
+      if (await sendMessage(activeConv.id, inputText)) setInputText('');
     }
   };
 
@@ -88,6 +100,8 @@ export const MessengerFullView: React.FC = () => {
             <h2 className="text-xl font-bold text-fb-text">
               Đoạn chat
             </h2>
+            {chatConnectionError && sessionKind === 'api' &&
+              <p role="alert" className="text-xs text-fb-danger">{chatConnectionError}</p>}
             <div className="relative">
               <Search className="w-4 h-4 text-fb-text-3 absolute left-3 top-2.5" />
               <input
@@ -161,6 +175,8 @@ export const MessengerFullView: React.FC = () => {
                 </div>
               );
             })}
+            {moreConversationsAvailable && <button type="button" onClick={loadMoreConversations}
+              className="w-full p-3 text-center text-xs font-semibold text-fb-blue">Xem thêm hội thoại</button>}
           </div>
         </aside>
 
@@ -172,10 +188,11 @@ export const MessengerFullView: React.FC = () => {
               <div className="h-16 px-4 bg-fb-card border-b border-fb-divider flex items-center justify-between shadow-2xs">
                 <div
                   onClick={() => {
+                    if (activeConv.isGroup) return;
                     setViewingUserId(activeConv.partner.id);
                     setActiveTab('profile');
                   }}
-                  className="flex items-center gap-3 cursor-pointer"
+                  className={`flex items-center gap-3 ${activeConv.isGroup ? '' : 'cursor-pointer'}`}
                 >
                   <AvatarWithFrame user={activeConv.partner} size="md" />
                   <div>
@@ -198,7 +215,7 @@ export const MessengerFullView: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-2 text-fb-blue">
-                  <button
+                  {sessionKind !== 'api' && <button
                     disabled={isPartnerBlocked}
                     onClick={() =>
                       showToast('Tính năng gọi thoại đang kết nối...', 'info')
@@ -206,8 +223,8 @@ export const MessengerFullView: React.FC = () => {
                     className="p-2 rounded-full hover:bg-fb-hover disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Phone className="w-4 h-4" />
-                  </button>
-                  <button
+                  </button>}
+                  {sessionKind !== 'api' && <button
                     disabled={isPartnerBlocked}
                     onClick={() =>
                       showToast('Tính năng gọi video đang kết nối...', 'info')
@@ -215,7 +232,7 @@ export const MessengerFullView: React.FC = () => {
                     className="p-2 rounded-full hover:bg-fb-hover disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Video className="w-4 h-4" />
-                  </button>
+                  </button>}
                 </div>
               </div>
 
@@ -226,6 +243,9 @@ export const MessengerFullView: React.FC = () => {
                 followLatest={activeConv.messages[activeConv.messages.length - 1]?.senderId === currentUser.id}
                 className="flex-1 p-4 overflow-y-auto space-y-3 text-xs"
               >
+                {olderChatMessagesAvailable[activeConv.id] &&
+                  <button type="button" onClick={() => loadOlderChatMessages(activeConv.id)}
+                    className="block w-full py-2 text-center font-semibold text-fb-blue">Xem tin nhắn cũ hơn</button>}
                 {activeConv.messages.map((msg) => {
                   const isMine = msg.senderId === currentUser.id;
 
@@ -299,12 +319,12 @@ export const MessengerFullView: React.FC = () => {
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleSend();
+                      if (e.key === 'Enter') void handleSend();
                     }}
                     className="flex-1 bg-fb-input text-xs px-4 py-2.5 rounded-full border border-fb-divider"
                   />
                   <button
-                    onClick={handleSend}
+                    onClick={() => void handleSend()}
                     disabled={!inputText.trim()}
                     className="p-2.5 rounded-full bg-fb-blue text-white disabled:bg-fb-divider transition"
                   >
@@ -338,7 +358,7 @@ export const MessengerFullView: React.FC = () => {
               </div>
 
               <div className="space-y-2 text-xs font-semibold text-fb-text">
-                <button
+                {!activeConv.isGroup && <button
                   type="button"
                   onClick={() => {
                     setViewingUserId(activeConv.partner.id);
@@ -348,9 +368,9 @@ export const MessengerFullView: React.FC = () => {
                 >
                   <User className="w-4 h-4 text-fb-text-2" />
                   <span>Xem trang cá nhân</span>
-                </button>
+                </button>}
 
-                <button
+                {sessionKind !== 'api' && <button
                   type="button"
                   onClick={() =>
                     showToast(
@@ -362,9 +382,9 @@ export const MessengerFullView: React.FC = () => {
                 >
                   <BellOff className="w-4 h-4 text-fb-text-2" />
                   <span>Tắt thông báo</span>
-                </button>
+                </button>}
 
-                <button
+                {sessionKind !== 'api' && <button
                   type="button"
                   onClick={() =>
                     openReportModal(
@@ -377,9 +397,9 @@ export const MessengerFullView: React.FC = () => {
                 >
                   <Shield className="w-4 h-4" />
                   <span>Báo cáo cuộc trò chuyện</span>
-                </button>
+                </button>}
 
-                {isPartnerBlockedByMe ? (
+                {activeConv.isGroup ? null : isPartnerBlockedByMe ? (
                   <button
                     type="button"
                     onClick={() => unblockUser(activeConv.partner.id)}

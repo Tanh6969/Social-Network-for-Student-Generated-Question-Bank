@@ -35,6 +35,7 @@ export interface User {
   followersCount: number;
   isOnline: boolean;
   equippedFrameId?: string;
+  frameUrl?: string;
   equippedChatEffectId?: string;
   verifiedLecturer?: boolean;
 }
@@ -54,6 +55,7 @@ export interface Post {
   type: PostType;
   content: string;
   subjectTag?: string;
+  subjectId?: number;
   mediaUrls?: string[];
   documents?: PostDocument[];
   videoUrl?: string;
@@ -99,6 +101,7 @@ export interface CommentItem {
   createdAt: string;
   likesCount: number;
   isLiked: boolean;
+  deleted?: boolean;
   replies?: CommentItem[];
 }
 
@@ -266,11 +269,13 @@ export interface Conversation {
   participantIds: string[];
   partner: User;
   lastMessage: string;
+  lastMessageId?: number;
   lastMessageTime: string;
   unreadCount: number;
   unreadCounts?: Record<string, number>;
   isTyping?: boolean;
   messages: MessageItem[];
+  isGroup?: boolean;
 }
 
 export interface AppNotification {
@@ -290,16 +295,19 @@ export interface AppNotification {
     | 'SYSTEM';
   actor?: User;
   targetId?: string;
+  targetType?: 'BADGE' | 'SESSION' | 'POST' | 'QUESTION' | 'USER' | 'CONVERSATION';
 }
 
 export type MainTab =
   | 'feed'
+  | 'video'
   | 'bank'
   | 'lecturer-bank'
   | 'propose'
   | 'game'
   | 'friends'
   | 'review'
+  | 'classes'
   | 'messenger'
   | 'profile'
   | 'cosmetics'

@@ -5,6 +5,7 @@ type Schemas = components['schemas'];
 export type SearchResultItemDto = Schemas['SearchResultItemDto'];
 export type SessionSearchResultDto = Schemas['SessionSearchResultDto'];
 export type QuestionSearchResultDto = Schemas['QuestionSearchResultDto'];
+export type SavedSearchDto = Schemas['SavedSearchDto'];
 export type SearchType =
   'ALL' | 'POST' | 'USER' | 'QUESTION' | 'SESSION' | 'SUBJECT';
 
@@ -42,5 +43,23 @@ export const searchApi = {
       after: data?.pagination?.after ?? undefined,
       totalHits: data?.total_hits ?? 0,
     };
+  },
+
+  async getSaved(): Promise<{ saved: SavedSearchDto[]; trending: string[] }> {
+    const data = expectEnvelope(await api.GET('/search/saved')).data;
+    return {
+      saved: data?.saved_searches ?? [],
+      trending: data?.trending_searches ?? [],
+    };
+  },
+
+  async record(query: string): Promise<void> {
+    expectEnvelope(await api.POST('/search/saved', { body: { query } }));
+  },
+
+  async deleteSaved(id: number): Promise<void> {
+    expectEnvelope(await api.DELETE('/search/saved/{id}', {
+      params: { path: { id } },
+    }));
   },
 };

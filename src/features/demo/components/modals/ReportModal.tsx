@@ -1,18 +1,43 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { X, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { X, ShieldAlert } from 'lucide-react';
+import { reportsApi, type CreateReportRequest } from '../../../../api/reports';
+import { errorMessage } from '../../../../api';
 
 export const ReportModal: React.FC = () => {
-  const { isReportModalOpen, closeReportModal, reportTarget, showToast } = useApp();
+  const { isReportModalOpen, closeReportModal, reportTarget, showToast, sessionKind } = useApp();
 
-  const [reason, setReason] = useState('Nội dung sai kiến thức học thuật');
+  const [reason, setReason] = useState<CreateReportRequest['violation_type']>('OTHER');
   const [description, setDescription] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!isReportModalOpen || !reportTarget) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    showToast('Cảm ơn bạn đã gửi báo cáo. Ban quản trị sẽ rà soát nội dung trong 24 giờ.', 'success');
+    if (busy) return;
+    if (sessionKind === 'api') {
+      const targetType = reportTarget.type === 'BÀI VIẾT' ? 'POST' :
+        reportTarget.type === 'NGƯỜI DÙNG' ? 'USER' : null;
+      const targetId = Number(reportTarget.id);
+      if (!targetType || !Number.isSafeInteger(targetId) || targetId <= 0) {
+        setError('Đối tượng này chưa hỗ trợ gửi báo cáo.');
+        return;
+      }
+      setBusy(true);
+      setError(null);
+      try {
+        await reportsApi.create({ target_type: targetType, target_id: targetId,
+          violation_type: reason, description: description.trim() || undefined });
+      } catch (cause: unknown) {
+        setError(errorMessage(cause, 'Không gửi được báo cáo.'));
+        setBusy(false);
+        return;
+      }
+      setBusy(false);
+    }
+    showToast('Đã gửi báo cáo.', 'success');
     closeReportModal();
     setDescription('');
   };
@@ -39,23 +64,24 @@ export const ReportModal: React.FC = () => {
           Đối tượng báo cáo: <strong className="text-fb-text">[{reportTarget.type}] {reportTarget.title}</strong>
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-3 text-xs">
+        <form onSubmit={(event) => void handleSubmit(event)} className="space-y-3 text-xs">
           <div>
             <label className="block font-bold text-fb-text mb-1">
               Chọn lý do vi phạm:
             </label>
             <select
               value={reason}
-              onChange={(e) => setReason(e.target.value)}
+              onChange={(e) => setReason(e.target.value as CreateReportRequest['violation_type'])}
               className="w-full p-2 border border-fb-divider rounded-lg bg-fb-input"
             >
-              <option value="Nội dung sai kiến thức học thuật">Sai kiến thức học thuật / đề sai</option>
-              <option value="Spam hoặc quảng cáo">Spam hoặc quảng cáo không liên quan</option>
-              <option value="Quấy rối hoặc ngôn từ thù địch">Quấy rối hoặc ngôn từ thù địch</option>
-              <option value="Vi phạm bản quyền giáo trình">Vi phạm bản quyền tài liệu trường</option>
-              <option value="Khác">Lý do khác</option>
+              <option value="OTHER">Nội dung không phù hợp hoặc sai kiến thức</option>
+              <option value="SPAM">Spam hoặc quảng cáo</option>
+              <option value="HARASSMENT">Quấy rối</option>
+              <option value="HATE_STATEMENT">Phát ngôn thù ghét</option>
             </select>
           </div>
+
+          {error && <p role="alert" className="text-fb-danger">{error}</p>}
 
           <div>
             <label className="block font-bold text-fb-text mb-1">
@@ -80,9 +106,10 @@ export const ReportModal: React.FC = () => {
             </button>
             <button
               type="submit"
+              disabled={busy}
               className="px-5 py-2 bg-fb-danger hover:bg-fb-danger/90 text-white rounded-lg font-bold text-xs"
             >
-              Gửi báo cáo
+              {busy ? 'Đang gửi…' : 'Gửi báo cáo'}
             </button>
           </div>
         </form>

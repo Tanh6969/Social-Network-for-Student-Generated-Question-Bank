@@ -16,6 +16,11 @@ const FeedView = React.lazy(() =>
     default: module.FeedView,
   })),
 );
+const VideoFeedView = React.lazy(() =>
+  import('../features/feed/components/VideoFeedView').then((module) => ({
+    default: module.VideoFeedView,
+  })),
+);
 const BankView = React.lazy(() =>
   import('../features/bank/components/BankView').then((module) => ({
     default: module.BankView,
@@ -44,6 +49,11 @@ const ReviewDashboardView = React.lazy(() =>
 const LecturerBankView = React.lazy(() =>
   import('../features/lecturer/components/LecturerBankView').then((module) => ({
     default: module.LecturerBankView,
+  })),
+);
+const LecturerClassesView = React.lazy(() =>
+  import('../features/lecturer/components/LecturerClassesView').then((module) => ({
+    default: module.LecturerClassesView,
   })),
 );
 const MessengerFullView = React.lazy(() =>
@@ -165,12 +175,15 @@ const MainContent: React.FC = () => {
       <Suspense fallback={<PageSkeleton />}>
         <div className="flex-1">
           {activeTab === 'feed' && <FeedView />}
+          {activeTab === 'video' && <VideoFeedView />}
           {activeTab === 'bank' && <BankView />}
           {activeTab === 'propose' && <ProposeView />}
           {activeTab === 'game' && <MinigameView />}
           {activeTab === 'friends' && <FriendsView />}
           {activeTab === 'review' &&
             (role === 'LECTURER' ? <ReviewDashboardView /> : <FeedView />)}
+          {activeTab === 'classes' &&
+            (role === 'LECTURER' ? <LecturerClassesView /> : <FeedView />)}
           {activeTab === 'lecturer-bank' &&
             (role === 'LECTURER' ? <LecturerBankView /> : <FeedView />)}
           {activeTab === 'messenger' && <MessengerFullView />}

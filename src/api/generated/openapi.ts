@@ -23,10 +23,10 @@ export interface paths {
         put: operations["updateMyProfile"];
         post?: never;
         /**
-         * Xóa hồ sơ cá nhân
-         * @description Yêu cầu vô hiệu hóa và xóa dữ liệu hồ sơ tài khoản hiện tại.
+         * Yêu cầu xóa tài khoản sau 30 ngày
+         * @description Tài khoản vẫn hoạt động trong thời gian chờ. Gửi lại yêu cầu giữ nguyên hạn đã đặt.
          */
-        delete: operations["deleteMyProfile"];
+        delete: operations["requestAccountDeletion"];
         options?: never;
         head?: never;
         patch?: never;
@@ -141,8 +141,8 @@ export interface paths {
         };
         get?: never;
         /**
-         * Giảng viên thêm/cập nhật ghi chú chuyên môn
-         * @description Dành riêng cho Giảng viên hoặc Admin để đính kèm nhận xét học thuật, lời khuyên vào bài đăng.
+         * Thêm hoặc sửa ghi chú trên bài vinh danh
+         * @description Chỉ giảng viên phụ trách lớp học phần của phiên gắn với bài QUESTION_APPROVED_NOTIFICATION có thể ghi chú. Mỗi bài lưu một ghi chú và tên giảng viên cập nhật gần nhất.
          */
         put: operations["updateLecturerNote"];
         post?: never;
@@ -162,11 +162,27 @@ export interface paths {
         get?: never;
         /**
          * Giảng viên chỉnh sửa câu hỏi
-         * @description Cho phép giảng viên chỉnh sửa nội dung, đáp án, giải thích của câu hỏi và tùy chọn tự động duyệt ngay vào ngân hàng đề.
+         * @description Chỉnh sửa nội dung, đáp án, giải thích và tùy chọn ghi quyết định phê duyệt trước khi chốt phiên.
          */
         put: operations["editQuestion"];
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lecturer/medias/lecture-uploads/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["status"];
+        put: operations["start"];
+        post?: never;
+        delete: operations["cancel"];
         options?: never;
         head?: never;
         patch?: never;
@@ -242,7 +258,7 @@ export interface paths {
         get?: never;
         /**
          * Cập nhật vai trò thành viên nhóm
-         * @description Chỉ Tù trưởng (CHIEF) mới có quyền đổi vai trò thành viên (bổ nhiệm VILLAGE_ELDER hoặc hạ xuống VILLAGER). Nếu bổ nhiệm CHIEF mới, Tù trưởng cũ sẽ tự động lùi về làm Già làng (VILLAGE_ELDER).
+         * @description Chỉ Tù trưởng (CHIEF) mới có quyền đổi vai trò thành viên. Khi chuyển quyền, Tù trưởng cũ trở thành Già làng (VILLAGE_ELDER). Nếu vai trò thay đổi, GROUP_ROLES_CHANGED được phát sau khi giao dịch hoàn tất.
          */
         put: operations["updateMemberRole"];
         post?: never;
@@ -271,6 +287,26 @@ export interface paths {
          * @description Chỉ người tạo bình luận hoặc Admin mới có quyền xóa. Bình luận sẽ bị đánh dấu xóa mềm.
          */
         delete: operations["deleteComment"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/semesters/{semesterId}/start-date": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Cập nhật ngày khai giảng
+         * @description Đặt hoặc sửa ngày khai giảng của một học kỳ hiện có, kể cả học kỳ đã chốt sổ.
+         */
+        put: operations["updateSemesterStartDate"];
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -418,6 +454,22 @@ export interface paths {
          * @description Người dùng gửi đơn khiếu nại/báo cáo về một bài viết, bình luận hoặc tài khoản người dùng vi phạm tiêu chuẩn cộng đồng kèm bằng chứng hình ảnh (nếu có).
          */
         post: operations["createReport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/report/evidence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["uploadEvidence"];
         delete?: never;
         options?: never;
         head?: never;
@@ -675,7 +727,7 @@ export interface paths {
         put?: never;
         /**
          * Chốt hoàn tất duyệt phiên đề xuất
-         * @description Giảng viên chốt kết thúc quá trình duyệt phiên. Các câu hỏi chưa được duyệt (còn PENDING) sẽ tự động bị từ chối (REJECTED), phiên chuyển sang RESOLVED và gửi thông báo cho tác giả.
+         * @description Khóa kết quả và chuyển phiên sang RESOLVED. Các câu còn PENDING bị từ chối. Ghi nhận điểm và thông báo nếu có câu được duyệt. Gọi lại với phiên đã chốt trả thành công mà không ghi nhận lặp.
          */
         post: operations["completeSessionReview"];
         delete?: never;
@@ -695,7 +747,7 @@ export interface paths {
         put?: never;
         /**
          * Từ chối danh sách câu hỏi
-         * @description Từ chối các câu hỏi không đạt chất lượng hoặc trùng lặp. Tự động cập nhật trạng thái phiên nếu tất cả câu hỏi đã được xử lý.
+         * @description Ghi lý do từ chối. Có thể đổi quyết định cho tới khi chốt phiên.
          */
         post: operations["rejectQuestions"];
         delete?: never;
@@ -714,10 +766,42 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Phê duyệt danh sách câu hỏi
-         * @description Phê duyệt các câu hỏi đạt chuẩn vào Ngân hàng câu hỏi chính thức. Tự động thưởng điểm cho tác giả và tự động hoàn tất phiên nếu tất cả câu hỏi đã được xử lý.
+         * Ghi quyết định phê duyệt danh sách câu hỏi
+         * @description Giảng viên có thể đổi quyết định đến khi chốt phiên. Chỉ sau khi chốt, câu được duyệt mới được dùng để tạo đề và tính điểm thưởng.
          */
         post: operations["approveQuestions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lecturer/medias/lecture-uploads/{id}/parts/{number}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["partUrl"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lecturer/medias/lecture-uploads/{id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["complete"];
         delete?: never;
         options?: never;
         head?: never;
@@ -732,8 +816,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Lấy danh sách lớp học phần trong học kỳ hiện tại
-         * @description Trả về toàn bộ danh sách lớp học phần của học kỳ đang mở (active semester).
+         * Lấy danh sách lớp học phần theo học kỳ
+         * @description Mặc định trả lớp của học kỳ đang hoạt động. Quản trị viên có thể chọn học kỳ bằng semester_id.
          */
         get: operations["getCourseClasses"];
         put?: never;
@@ -887,7 +971,7 @@ export interface paths {
         put?: never;
         /**
          * Gửi lời mời kết bạn
-         * @description Chỉ người dùng đồng cấp (cùng vai trò Sinh viên hoặc Giảng viên) mới có thể kết bạn. Nếu người kia đã gửi lời mời trước đó, hệ thống sẽ tự động chấp nhận kết bạn.
+         * @description Hai tài khoản phải cùng vai trò. Người gửi tự động theo dõi người nhận. Nếu người kia đã gửi lời mời trước đó, thao tác này chấp nhận lời mời đó.
          */
         post: operations["sendFriendRequest"];
         delete?: never;
@@ -927,7 +1011,7 @@ export interface paths {
         put?: never;
         /**
          * Chấp nhận lời mời kết bạn
-         * @description Chấp nhận lời mời kết bạn đang ở trạng thái PENDING do người khác gửi đến.
+         * @description Người nhận chấp nhận lời mời đang chờ của người cùng vai trò và tự động theo dõi người gửi.
          */
         post: operations["acceptFriendRequest"];
         delete?: never;
@@ -1074,8 +1158,8 @@ export interface paths {
         get: operations["getGroupMembers"];
         put?: never;
         /**
-         * Thêm thành viên vào nhóm chat
-         * @description Thêm một hoặc nhiều người dùng vào nhóm (tối đa 200 người). Trả về danh sách thành viên thêm thành công và danh sách thất bại kèm lý do.
+         * Thêm hoặc mời vào nhóm chat
+         * @description Thêm trực tiếp bạn bè và gửi lời mời cho người theo dõi hoặc đang được theo dõi. Trả về thành viên đã thêm, số lời mời đã gửi và lý do của từng mục thất bại.
          */
         post: operations["addGroupMembers"];
         delete?: never;
@@ -1124,6 +1208,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/conversations/hidden/lock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Khóa kho trò chuyện ẩn của phiên hiện tại */
+        post: operations["lockHiddenChat"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/conversations/group": {
         parameters: {
             query?: never;
@@ -1135,9 +1236,26 @@ export interface paths {
         put?: never;
         /**
          * Tạo nhóm chat mới
-         * @description Khởi tạo nhóm trò chuyện mới với số lượng từ 3 đến 200 thành viên (bao gồm người tạo). Người tạo sẽ mặc định mang vai trò Tù trưởng (CHIEF).
+         * @description Chọn 2 đến 199 người. Bạn bè được thêm trực tiếp. Người theo dõi hoặc đang được theo dõi nhận lời mời. Người tạo là Tù trưởng (CHIEF).
          */
         post: operations["createGroupConversation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/conversations/group/invitations/{id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Chấp nhận lời mời và nhận ID hội thoại */
+        post: operations["accept"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1179,7 +1297,7 @@ export interface paths {
         put?: never;
         /**
          * Tạo bình luận mới hoặc trả lời bình luận
-         * @description Đăng bình luận vào bài viết (POST), phiên đề xuất (SESSION), hoặc câu hỏi (QUESTION). Hỗ trợ trả lời lồng nhau qua parent_comment_id.
+         * @description Đăng bình luận vào bài viết (POST), phiên đề xuất (SESSION) hoặc câu hỏi (QUESTION). Nếu trả lời, bình luận cha phải thuộc cùng đối tượng.
          */
         post: operations["createComment"];
         delete?: never;
@@ -1496,6 +1614,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/reports/{id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["resolve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/reports/{id}/evidence/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["importEvidence"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/moderation-actions/{id}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["reverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/leaderboards/rebuild": {
         parameters: {
             query?: never;
@@ -1560,6 +1726,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/badges/{badgeId}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Thu hồi huy hiệu của các tài khoản đã chọn */
+        post: operations["revokeBadge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/badges/{badgeId}/grant": {
         parameters: {
             query?: never;
@@ -1571,29 +1754,9 @@ export interface paths {
         put?: never;
         /**
          * Cấp phát huy hiệu thủ công cho người dùng
-         * @description Quản trị viên trao tặng huy hiệu trực tiếp cho danh sách user_ids mà không cần qua điều kiện trigger tự động.
+         * @description Quản trị viên có thể trao mọi huy hiệu đang hoạt động cho danh sách user_ids, kể cả huy hiệu có xét thưởng tự động. Người đã đạt huy hiệu được bỏ qua.
          */
         post: operations["grantManualBadge"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/admin/ai/chat": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Trò chuyện tương tác với trợ lý AI
-         * @description Gửi lời nhắc và ngữ cảnh môn học đến mô hình AI nội bộ để nhận phản hồi học thuật.
-         */
-        post: operations["chatWithAi"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1649,7 +1812,7 @@ export interface paths {
         };
         /**
          * Lấy danh sách video bài giảng
-         * @description Lấy danh sách các video học tập (LEARNING_VIDEO) đã được Giảng viên đăng tải, có thể lọc theo mã môn học.
+         * @description Trả video của môn người xem đã đăng ký học, video do người xem đăng hoặc toàn bộ video nếu là Admin. Có thể lọc theo ID môn học.
          */
         get: operations["getVideoPosts"];
         put?: never;
@@ -1688,8 +1851,9 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Lấy danh sách phiên đề xuất của một người dùng
-         * @description Truy vấn danh sách các phiên do một người dùng đề xuất. Nếu xem trang cá nhân của người khác, chỉ các phiên đã được phê duyệt (RESOLVED) mới được hiển thị.
+         * Lấy danh sách phiên đề xuất của chính mình theo ID người dùng
+         * @deprecated
+         * @description API tương thích cho client cũ, chỉ truy cập được khi ID trùng với userId. Dùng GET /sessions/my-submissions để xem phiên của mình hoặc GET /sessions/practice-catalog để tìm bộ câu hỏi luyện tập theo môn.
          */
         get: operations["getUserProposedSessions"];
         put?: never;
@@ -1709,7 +1873,8 @@ export interface paths {
         };
         /**
          * Xem thống kê quan hệ của một người dùng
-         * @description Xem số lượng bạn bè (friends_count), số người theo dõi (followers_count) và số người đang theo dõi (following_count) kèm trạng thái quan hệ với tài khoản hiện tại.
+         * @deprecated
+         * @description Giữ cho client cũ. Tích hợp mới dùng GET /users/{userId} để lấy hồ sơ kèm thống kê quan hệ.
          */
         get: operations["getRelationshipStats"];
         put?: never;
@@ -1735,6 +1900,30 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/me/deletion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Xem lịch xóa tài khoản
+         * @description Thời điểm xóa để trống nếu không có yêu cầu đang chờ.
+         */
+        get: operations["getAccountDeletionStatus"];
+        put?: never;
+        post?: never;
+        /**
+         * Hủy yêu cầu xóa tài khoản
+         * @description Có thể hủy trước hạn xóa. Gọi khi chưa có yêu cầu cũng trả về trạng thái không có lịch xóa.
+         */
+        delete: operations["cancelAccountDeletion"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1772,6 +1961,26 @@ export interface paths {
          * @description Lấy toàn bộ câu hỏi trong một phiên phục vụ làm bài luyện tập. Đáp án đúng và lời giải sẽ bị ẩn nếu người dùng chưa hoàn thành câu hỏi đó.
          */
         get: operations["getSessionQuestions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sessions/practice-catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Tìm bộ câu hỏi trong kho luyện tập
+         * @description Liệt kê các phiên đã chốt theo môn học. Tìm theo tiêu đề hoặc mã phiên, không trả danh tính người nộp hay kết quả duyệt.
+         */
+        get: operations["getPracticeCatalog"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1929,7 +2138,7 @@ export interface paths {
         };
         /**
          * Xem chi tiết phiên đề xuất để duyệt
-         * @description Giảng viên mở xem toàn bộ câu hỏi trong phiên để duyệt. Phiên sẽ chuyển sang trạng thái REVIEWING và hệ thống trả về cảnh báo trùng lặp tự động (nếu có).
+         * @description Mở phiên PENDING sẽ chuyển phiên sang REVIEWING. Phản hồi trả trạng thái phiên và các cảnh báo trùng lặp. Phiên RESOLVED chỉ đọc.
          */
         get: operations["getSessionDetailForReview"];
         put?: never;
@@ -2400,6 +2609,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/conversations/group/invitations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Xem lời mời vào nhóm gửi tới tài khoản hiện tại
+         * @description Chỉ trả về lời mời còn hiệu lực. Nội dung nhóm chỉ được mở sau khi chấp nhận.
+         */
+        get: operations["incoming"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/conversations/group/candidates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Tìm người có thể thêm hoặc mời vào nhóm
+         * @description Trả về bạn bè, người theo dõi và người đang được theo dõi. Khi có ID nhóm, loại thành viên hiện tại và người đã có lời mời còn hạn.
+         */
+        get: operations["candidates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/blocks": {
         parameters: {
             query?: never;
@@ -2428,8 +2677,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Lấy danh sách tất cả huy hiệu đang hoạt động trong hệ thống
-         * @description Trả về danh sách các huy hiệu có trạng thái active = true, sắp xếp theo ID tăng dần.
+         * Lấy danh mục huy hiệu
+         * @description Bao gồm huy hiệu đã ngừng trao với active = false, sắp xếp theo ID tăng dần.
          */
         get: operations["getAllBadges_1"];
         put?: never;
@@ -2500,18 +2749,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/admin/ai/chat/sessions": {
+    "/admin/reports": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /**
-         * Lấy danh sách các phiên trò chuyện AI của tôi
-         * @description Truy vấn danh sách các cuộc hội thoại AI trước đây của người dùng hiện tại.
-         */
-        get: operations["getUserChatSessions"];
+        get: operations["queue"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2520,18 +2765,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/admin/ai/chat/history": {
+    "/admin/reports/{id}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /**
-         * Lấy lịch sử hội thoại AI theo phiên
-         * @description Truy vấn danh sách tin nhắn giữa người dùng và AI trong một phiên chat cụ thể theo con trỏ phân trang.
-         */
-        get: operations["getChatHistory"];
+        get: operations["detail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/reports/{id}/related": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["related"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/reports/{id}/evidence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["evidence"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/badges/{badgeId}/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tìm tài khoản để trao hoặc thu hồi huy hiệu */
+        get: operations["searchBadgeAccounts"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2692,9 +2982,26 @@ export interface paths {
         post?: never;
         /**
          * Xóa thành viên khỏi nhóm chat
-         * @description Tù trưởng (CHIEF) có quyền xóa Già làng và Dân làng. Già làng (VILLAGE_ELDER) chỉ có quyền xóa Dân làng (VILLAGER).
+         * @description Tù trưởng (CHIEF) có quyền xóa Già làng và Dân làng. Già làng (VILLAGE_ELDER) chỉ có quyền xóa Dân làng (VILLAGER). Sau khi lưu, sự kiện GROUP_MEMBER_REMOVED được gửi tới thành viên còn lại và người bị mời ra.
          */
         delete: operations["removeGroupMember"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/conversations/group/invitations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Từ chối lời mời gửi tới tài khoản hiện tại */
+        delete: operations["decline"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2861,6 +3168,11 @@ export interface components {
              */
             verified?: boolean;
             /**
+             * @description Đã thiết lập mã PIN kho trò chuyện ẩn (chỉ trả khi xem chính mình)
+             * @example false
+             */
+            hidden_chat_pin_configured?: boolean;
+            /**
              * Format: int32
              * @description Tổng số câu hỏi đã đề xuất vào ngân hàng đề
              * @example 12
@@ -2906,7 +3218,9 @@ export interface components {
         /** @description Quan hệ xã hội giữa người xem và tài khoản này (bạn bè, theo dõi...) */
         Relationship: {
             is_friend?: boolean;
+            /** @description Người được xem hồ sơ đang theo dõi người đăng nhập */
             is_following?: boolean;
+            /** @description Người đăng nhập đang theo dõi người được xem hồ sơ */
             is_followed?: boolean;
             /** @enum {string} */
             friend_request_status?: "NONE" | "PENDING" | "ACCEPTED" | "DECLINED";
@@ -3168,7 +3482,7 @@ export interface components {
              */
             explanation?: string;
             /**
-             * @description Tự động duyệt câu hỏi vào ngân hàng đề sau khi sửa (true: duyệt ngay, false: giữ trạng thái chờ)
+             * @description Quyết định sau khi lưu (true: phê duyệt, false: chuyển về chờ). Câu đã duyệt chỉ dùng để tạo đề sau khi chốt phiên.
              * @example true
              */
             auto_approve?: boolean;
@@ -3203,6 +3517,25 @@ export interface components {
             code?: string;
             message?: string;
             data?: components["schemas"]["EditQuestionResponse"];
+        };
+        StartRequest: {
+            file_name: string;
+            content_type: string;
+            /** Format: int64 */
+            file_size?: number;
+        };
+        GlobalResponseStatus: {
+            code?: string;
+            message?: string;
+            data?: components["schemas"]["Status"];
+        };
+        Status: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: int64 */
+            part_size?: number;
+            uploaded_parts?: number[];
+            media?: components["schemas"]["MediaItem"];
         };
         /** @description Yêu cầu tháo vật phẩm trang trí đang dùng */
         UnequipCosmeticRequestDto: {
@@ -3332,6 +3665,8 @@ export interface components {
             members?: components["schemas"]["ConversationMemberDto"][];
             /** Format: date-time */
             created_at?: string;
+            /** Format: int32 */
+            invited_member_count?: number;
         };
         /** @description Thông tin thành viên trong cuộc hội thoại / nhóm chat */
         ConversationMemberDto: {
@@ -3425,6 +3760,14 @@ export interface components {
             message?: string;
             data?: components["schemas"]["CommentResponseDto"];
         };
+        UpdateSemesterStartDateRequest: {
+            /**
+             * Format: date
+             * @description Ngày khai giảng mới
+             * @example 2026-09-07
+             */
+            start_date: string;
+        };
         GlobalResponseSemesterResponse: {
             code?: string;
             message?: string;
@@ -3443,6 +3786,12 @@ export interface components {
              * @example 20241
              */
             name?: string;
+            /**
+             * Format: date
+             * @description Ngày khai giảng của học kỳ, nếu đã được nhập
+             * @example 2026-09-07
+             */
+            start_date?: string;
             /**
              * @description Trạng thái đang kích hoạt phục vụ học tập/thi
              * @example true
@@ -3611,7 +3960,7 @@ export interface components {
              */
             pin: string;
             /**
-             * @description Mã PIN cũ (bắt buộc nếu đã từng cài mã PIN trước đó)
+             * @description Mã PIN cũ gồm đúng 6 chữ số (bắt buộc khi đổi PIN)
              * @example 000000
              */
             old_pin?: string;
@@ -3756,6 +4105,7 @@ export interface components {
              *     ]
              */
             evidence_urls?: string[];
+            evidence_keys?: string[];
             /**
              * @description Loại đối tượng bị báo cáo (USER, POST, COMMENT)
              * @example POST
@@ -3806,6 +4156,13 @@ export interface components {
              * @example 2026-10-06T12:00:00Z
              */
             created_at?: string;
+        };
+        GlobalResponseMapStringString: {
+            code?: string;
+            message?: string;
+            data?: {
+                [key: string]: string;
+            };
         };
         /** @description Yêu cầu thả hoặc gỡ cảm xúc */
         ReactRequest: {
@@ -4055,6 +4412,8 @@ export interface components {
              * @example true
              */
             approve: boolean;
+            /** @description Xác nhận đã tự rà soát khi BTProp cảnh báo hoặc chưa kiểm chứng được */
+            audit_acknowledged?: boolean;
         };
         /** @description Kết quả áp dụng/loại bỏ chỉnh sửa AI */
         AiApplyResponse: {
@@ -4141,6 +4500,7 @@ export interface components {
             /** Format: date-time */
             updated_at?: string;
             lecturer_note?: string;
+            can_edit_lecturer_note?: boolean;
             /** Format: date-time */
             lecturer_note_added_at?: string;
             noted_lecturer?: components["schemas"]["AuthorDto"];
@@ -4217,7 +4577,7 @@ export interface components {
              * @example AVATAR
              * @enum {string}
              */
-            purpose: "AVATAR" | "COVER" | "QUESTION" | "POST" | "COMMENT" | "CHAT" | "DOCUMENT";
+            purpose: "AVATAR" | "COVER" | "BADGE_ICON" | "QUESTION" | "POST" | "COMMENT" | "CHAT" | "DOCUMENT";
         };
         /** @description Yêu cầu cấp URL ký trước (Presigned URL) để tải media trực tiếp lên Cloudflare R2 */
         PresignMediaRequest: {
@@ -4296,8 +4656,8 @@ export interface components {
         ApproveQuestionsResponse: {
             /**
              * Format: double
-             * @description Tổng điểm thưởng đã cộng cho tác giả
-             * @example 30
+             * @description Điểm được cộng bởi thao tác này. Luôn bằng 0 vì điểm được ghi nhận khi chốt phiên
+             * @example 0
              */
             points_earned?: number;
         };
@@ -4305,6 +4665,19 @@ export interface components {
             code?: string;
             message?: string;
             data?: components["schemas"]["ApproveQuestionsResponse"];
+        };
+        GlobalResponsePartUrl: {
+            code?: string;
+            message?: string;
+            data?: components["schemas"]["PartUrl"];
+        };
+        PartUrl: {
+            upload_url?: string;
+        };
+        GlobalResponseMediaItem: {
+            code?: string;
+            message?: string;
+            data?: components["schemas"]["MediaItem"];
         };
         /** @description Yêu cầu tạo lớp học phần mới */
         CreateCourseClassRequest: {
@@ -4504,25 +4877,31 @@ export interface components {
             target_id?: number;
             /** @description Dữ liệu người chơi đã dự đoán */
             prediction_data?: Record<string, never>;
-            /** @description Dữ liệu kết quả thực tế sau khi tổng kết */
+            /** @description Dữ liệu kết quả thực tế. Game 3 trả outcome (WON, LOST hoặc INSUFFICIENT_RATINGS), matchedQuestions, nonMatchingQuestions và questionEvaluations tại thời điểm resolved_at (questionId, questionCode, displayOrder, declaredConfidence, averageRating, ratingCount, verdict). Lượt chốt trước khi bổ sung chi tiết chỉ có kết quả và số câu tổng hợp. */
             actual_data?: Record<string, never>;
             /**
-             * @description Trạng thái lượt dự đoán
+             * @description Trạng thái lượt dự đoán. Game 3 chuyển sang RESOLVED khi đã ghi kết quả.
              * @example PENDING
              * @enum {string}
              */
             status?: "PENDING" | "RESOLVED";
             /**
-             * @description Dự đoán chính xác hay không
+             * @description Dự đoán chính xác hay không. Với Game 3, đọc outcome để phân biệt thua và chưa đủ đánh giá.
              * @example false
              */
             is_correct?: boolean;
             /**
              * Format: date-time
-             * @description Thời điểm đặt dự đoán
+             * @description Thời điểm đặt dự đoán. Với Game 3, đây là thời điểm chốt phiên đề xuất.
              * @example 2026-10-06T15:00:00Z
              */
             created_at?: string;
+            /**
+             * Format: date-time
+             * @description Ngày mục tiêu của Game 1 (bắt đầu ngày theo giờ Việt Nam) hoặc thời điểm đến hạn xét của Game 3.
+             * @example 2026-10-06T17:00:00Z
+             */
+            target_date?: string;
             /**
              * Format: date-time
              * @description Thời điểm tổng kết kết quả
@@ -4967,6 +5346,8 @@ export interface components {
         AddGroupMembersResponseDto: {
             added_members?: components["schemas"]["ConversationMemberDto"][];
             failed_members?: components["schemas"]["FailedMemberDto"][];
+            /** Format: int32 */
+            invited_member_count?: number;
         };
         FailedMemberDto: {
             /** Format: int64 */
@@ -5013,6 +5394,18 @@ export interface components {
              */
             pin: string;
         };
+        GlobalResponseHiddenChatUnlockDto: {
+            code?: string;
+            message?: string;
+            data?: components["schemas"]["HiddenChatUnlockDto"];
+        };
+        HiddenChatUnlockDto: {
+            /**
+             * Format: date-time
+             * @description Thời điểm quyền mở kho ẩn hết hạn
+             */
+            expires_at?: string;
+        };
         /** @description Yêu cầu tạo nhóm chat mới */
         CreateGroupConversationDto: {
             /**
@@ -5034,6 +5427,12 @@ export interface components {
              *     ]
              */
             member_ids: number[];
+        };
+        GlobalResponseLong: {
+            code?: string;
+            message?: string;
+            /** Format: int64 */
+            data?: number;
         };
         /** @description Yêu cầu tạo cuộc trò chuyện trực tiếp 1-1 */
         CreateDirectConversationDto: {
@@ -5420,6 +5819,106 @@ export interface components {
              * @example 20241
              */
             name: string;
+            /**
+             * Format: date
+             * @description Ngày khai giảng của học kỳ, có thể bỏ trống
+             * @example 2026-09-07
+             */
+            start_date?: string;
+        };
+        ResolveRequest: {
+            /** Format: int64 */
+            version: number;
+            /** @enum {string} */
+            action: "DISMISS" | "HIDE_CONTENT" | "WARN_ACCOUNT" | "SUSPEND_ACCOUNT";
+            reason: string;
+            /** Format: int32 */
+            suspension_days?: number;
+        };
+        Action: {
+            /** Format: int64 */
+            id?: number;
+            /** @enum {string} */
+            type?: "HIDE_CONTENT" | "WARN_ACCOUNT" | "SUSPEND_ACCOUNT" | "RESTORE_CONTENT" | "LIFT_SUSPENSION";
+            reason?: string;
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            suspended_until?: string;
+            /** Format: int64 */
+            reversed_action_id?: number;
+            /** Format: int64 */
+            report_id?: number;
+            admin?: components["schemas"]["Person"];
+        };
+        Detail: {
+            report?: components["schemas"]["Summary"];
+            /** Format: int64 */
+            version?: number;
+            description?: string;
+            reporter?: components["schemas"]["Person"];
+            reviewer?: components["schemas"]["Person"];
+            /** Format: date-time */
+            reviewed_at?: string;
+            resolution_note?: string;
+            snapshot?: components["schemas"]["ReportSnapshot"];
+            current?: components["schemas"]["ReportSnapshot"];
+            /** Format: date-time */
+            suspended_until?: string;
+            /** Format: int64 */
+            active_action_id?: number;
+            allowed_actions?: ("DISMISS" | "HIDE_CONTENT" | "WARN_ACCOUNT" | "SUSPEND_ACCOUNT")[];
+            history?: components["schemas"]["Action"][];
+            has_evidence?: boolean;
+            has_legacy_evidence?: boolean;
+        };
+        GlobalResponseDetail: {
+            code?: string;
+            message?: string;
+            data?: components["schemas"]["Detail"];
+        };
+        Person: {
+            /** Format: int64 */
+            id?: number;
+            full_name?: string;
+        };
+        ReportSnapshot: {
+            /** Format: int64 */
+            author_id?: number;
+            content?: string;
+            /** Format: date-time */
+            updated_at?: string;
+        };
+        Summary: {
+            /** Format: int64 */
+            id?: number;
+            target_type?: string;
+            /** Format: int64 */
+            target_id?: number;
+            /** @enum {string} */
+            violation_type?: "HARASSMENT" | "HATE_STATEMENT" | "SPAM" | "OTHER";
+            /** @enum {string} */
+            status?: "PENDING" | "RESOLVED";
+            /** @enum {string} */
+            outcome?: "DISMISSED" | "TARGET_UNAVAILABLE" | "ALREADY_MODERATED" | "ACTION_TAKEN";
+            /** Format: date-time */
+            created_at?: string;
+            preview?: string;
+            /** @enum {string} */
+            target_state?: "AVAILABLE" | "HIDDEN" | "SUSPENDED" | "UNAVAILABLE";
+            /** Format: int64 */
+            pending_count?: number;
+        };
+        Evidence: {
+            url?: string;
+        };
+        GlobalResponseEvidence: {
+            code?: string;
+            message?: string;
+            data?: components["schemas"]["Evidence"];
+        };
+        ReverseRequest: {
+            reason: string;
         };
         /** @description Yêu cầu tái xây dựng lại Bảng xếp hạng trong Redis */
         RebuildLeaderboardRequest: {
@@ -5531,6 +6030,9 @@ export interface components {
             icon_url?: string;
             criteria: components["schemas"]["CounterThresholdCriteria"] | components["schemas"]["LeaderboardRankCriteria"] | components["schemas"]["ManualGrantCriteria"] | components["schemas"]["StreakCriteria"] | components["schemas"]["SubjectMasteryCriteria"];
         };
+        RevokeBadgeRequest: {
+            user_ids: number[];
+        };
         /** @description Yêu cầu cấp phát huy hiệu thủ công cho người dùng (Dành cho Quản trị viên) */
         ManualGrantBadgeRequestDto: {
             /**
@@ -5547,67 +6049,6 @@ export interface components {
              * @example Đạt giải nhất cuộc thi lập trình tuần 42
              */
             reason?: string;
-        };
-        /** @description Yêu cầu trò chuyện tương tác với trợ lý AI */
-        AiChatRequest: {
-            /**
-             * @description Câu hỏi hoặc lời nhắc mới của người dùng
-             * @example Giải thích giúp tôi sự khác nhau giữa ArrayList và LinkedList
-             */
-            prompt: string;
-            /**
-             * @description ID phiên trò chuyện để tiếp tục ngữ cảnh (để trống nếu tạo phiên mới)
-             * @example session_a1b2c3d4
-             */
-            chat_session_id?: string;
-            /** @description Lịch sử 5-10 tin nhắn gần nhất do Frontend lưu giữ và gửi lên (Stateless context) */
-            history?: components["schemas"]["ChatMessageDto"][];
-            context?: components["schemas"]["ChatContextDto"];
-        };
-        /** @description Thông tin ngữ cảnh học tập */
-        ChatContextDto: {
-            /**
-             * @description Tên môn học đang học/ôn tập
-             * @example Cấu trúc dữ liệu và giải thuật
-             */
-            subject_name?: string;
-            /**
-             * @description Chủ đề cụ thể
-             * @example Danh sách liên kết
-             */
-            topic?: string;
-        };
-        /** @description Một tin nhắn trong lịch sử trò chuyện */
-        ChatMessageDto: {
-            /**
-             * @description Vai trò người gửi: 'user' hoặc 'assistant'
-             * @example user
-             */
-            role: string;
-            /**
-             * @description Nội dung tin nhắn trong lịch sử
-             * @example Chào bạn, hãy hỗ trợ tôi môn Cấu trúc dữ liệu
-             */
-            content: string;
-        };
-        /** @description Câu trả lời từ trợ lý AI */
-        AiChatResponse: {
-            /**
-             * @description Nội dung phản hồi được định dạng Markdown của AI
-             * @example ArrayList dựa trên mảng động nên truy xuất ngẫu nhiên O(1)...
-             */
-            ai_response?: string;
-            /**
-             * @description ID phiên trò chuyện
-             * @example session_a1b2c3d4
-             */
-            session_id?: string;
-            ai_metadata?: components["schemas"]["AiMetadataDto"];
-        };
-        GlobalResponseAiChatResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["AiChatResponse"];
         };
         CursorPaginationDto: {
             /** Format: int64 */
@@ -5636,6 +6077,9 @@ export interface components {
             react_count?: number;
             /** Format: int32 */
             comment_count?: number;
+            reacted_by_me?: boolean;
+            /** @enum {string} */
+            my_reaction?: "LIKE" | "LOVE" | "WOW";
             media_urls?: components["schemas"]["MediaItem"][];
             author?: components["schemas"]["AuthorDto"];
             /** Format: date-time */
@@ -5742,6 +6186,12 @@ export interface components {
              */
             react_count?: number;
             /**
+             * @description Cảm xúc của người gọi trên phiên, null nếu chưa thả cảm xúc
+             * @example LIKE
+             * @enum {string}
+             */
+            my_reaction?: "LIKE" | "LOVE" | "WOW";
+            /**
              * Format: int32
              * @description Số lượng bình luận trao đổi trong phiên
              * @example 4
@@ -5778,8 +6228,8 @@ export interface components {
             friend_request_status?: "NONE" | "PENDING" | "ACCEPTED" | "DECLINED";
             followed_by?: boolean;
             friend?: boolean;
-            following?: boolean;
             blocked?: boolean;
+            following?: boolean;
         };
         CursorResponsePostResponseDto: {
             items?: components["schemas"]["PostResponseDto"][];
@@ -5789,6 +6239,16 @@ export interface components {
             code?: string;
             message?: string;
             data?: components["schemas"]["CursorResponsePostResponseDto"];
+        };
+        AccountDeletionResponse: {
+            /** Format: date-time */
+            scheduled_for?: string;
+            can_cancel?: boolean;
+        };
+        GlobalResponseAccountDeletionResponse: {
+            code?: string;
+            message?: string;
+            data?: components["schemas"]["AccountDeletionResponse"];
         };
         GlobalResponseListSubjectResponse: {
             code?: string;
@@ -5951,12 +6411,54 @@ export interface components {
              * @example 10
              */
             total_questions?: number;
+            /**
+             * Format: int32
+             * @description Tổng số lượt cảm xúc của bộ câu hỏi
+             * @example 12
+             */
+            react_count?: number;
+            /**
+             * @description Cảm xúc của người gọi trên bộ câu hỏi, null nếu chưa thả cảm xúc
+             * @example LIKE
+             * @enum {string}
+             */
+            my_reaction?: "LIKE" | "LOVE" | "WOW";
             /** @description Danh sách câu hỏi luyện tập */
             questions?: components["schemas"]["PracticeQuestionDto"][];
         };
         SubmittedOptionDto: {
             key?: string;
             text?: string;
+        };
+        GlobalResponsePracticeCatalogResponse: {
+            code?: string;
+            message?: string;
+            data?: components["schemas"]["PracticeCatalogResponse"];
+        };
+        /** @description Bộ câu hỏi có thể luyện tập sau khi chốt phiên, kèm phân trang con trỏ */
+        PracticeCatalogResponse: {
+            contents?: components["schemas"]["PracticeSetDto"][];
+            pagination?: components["schemas"]["CursorPaginationDto"];
+        };
+        /** @description Thông tin bộ câu hỏi công khai cho người dùng đã đăng nhập */
+        PracticeSetDto: {
+            /** Format: int64 */
+            session_id?: number;
+            session_code?: string;
+            title?: string;
+            content?: string;
+            subject_name?: string;
+            subject_code?: string;
+            /** Format: int32 */
+            question_counts?: number;
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: int32 */
+            react_count?: number;
+            /** @enum {string} */
+            my_reaction?: "LIKE" | "LOVE" | "WOW";
+            /** Format: int32 */
+            comment_count?: number;
         };
         GlobalResponseMySubmissionDetailResponse: {
             code?: string;
@@ -6361,6 +6863,11 @@ export interface components {
              */
             session_id?: number;
             /**
+             * @description Mã phiên khi tìm chính xác bằng mã
+             * @example IT4409_4E7Xer_1794274070936_452
+             */
+            session_code?: string;
+            /**
              * @description Tiêu đề phiên đóng góp
              * @example Đóng góp câu hỏi ôn thi giữa kỳ PRN211
              */
@@ -6664,7 +7171,7 @@ export interface components {
             /** Format: int64 */
             notification_id?: number;
             /** @enum {string} */
-            type?: "FRIEND_REQUEST" | "NEW_COMMENT" | "QUESTION_APPROVED" | "EARNED_BADGE" | "QUESTION_ERROR_PENALTY" | "GAME5_SEMESTER_RECAP" | "LEADERBOARD_HONOR";
+            type?: "FRIEND_REQUEST" | "NEW_COMMENT" | "QUESTION_APPROVED" | "EARNED_BADGE" | "BADGE_REVOKED" | "QUESTION_ERROR_PENALTY" | "GAME5_SEMESTER_RECAP" | "LEADERBOARD_HONOR" | "REPORT_REVIEWED" | "MODERATION_NOTICE";
             title?: string;
             body?: string;
             icon_url?: string;
@@ -6779,6 +7286,12 @@ export interface components {
         };
         /** @description Thông tin chi tiết phiên đề xuất dành cho giảng viên duyệt */
         SessionDetailReviewResponse: {
+            /**
+             * @description Trạng thái phiên. RESOLVED là phiên đã chốt và chỉ đọc
+             * @example REVIEWING
+             * @enum {string}
+             */
+            session_status?: "PENDING" | "REVIEWING" | "RESOLVED";
             /** @description Danh sách câu hỏi cần duyệt trong phiên */
             items?: components["schemas"]["SessionQuestionReviewDto"][];
             /** @description Danh sách cảnh báo trùng lặp được phát hiện tự động bởi hệ thống */
@@ -7303,6 +7816,7 @@ export interface components {
         FriendListResponseDto: {
             items?: components["schemas"]["FriendDto"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
+            next_cursor?: string;
             /** Format: int32 */
             total_friends?: number;
         };
@@ -7323,6 +7837,7 @@ export interface components {
         FriendRequestSentListResponseDto: {
             items?: components["schemas"]["FriendRequestSentDto"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
+            next_cursor?: string;
             /** Format: int32 */
             total_sent?: number;
         };
@@ -7343,6 +7858,7 @@ export interface components {
         FriendRequestReceivedListResponseDto: {
             items?: components["schemas"]["FriendRequestReceivedDto"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
+            next_cursor?: string;
             /** Format: int32 */
             total_pending?: number;
         };
@@ -7354,6 +7870,7 @@ export interface components {
         FollowingListResponseDto: {
             items?: components["schemas"]["FollowingUserDto"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
+            next_cursor?: string;
             /** Format: int32 */
             total_following?: number;
         };
@@ -7380,6 +7897,7 @@ export interface components {
         FollowerListResponseDto: {
             items?: components["schemas"]["FollowerUserDto"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
+            next_cursor?: string;
             /** Format: int32 */
             total_followers?: number;
         };
@@ -7395,8 +7913,8 @@ export interface components {
             code?: string;
             /** Format: date-time */
             followed_me_at?: string;
-            friend?: boolean;
             following_back?: boolean;
+            friend?: boolean;
         };
         GlobalResponseFollowerListResponseDto: {
             code?: string;
@@ -7679,6 +8197,7 @@ export interface components {
         ConversationListResponseDto: {
             items?: components["schemas"]["ConversationDto"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
+            next_cursor?: string;
             /** Format: int32 */
             total_conversations?: number;
         };
@@ -7693,6 +8212,7 @@ export interface components {
             content?: string;
             /** @enum {string} */
             message_type?: "TEXT" | "IMAGE" | "VIDEO" | "GIF";
+            revoked?: boolean;
             /** Format: date-time */
             created_at?: string;
         };
@@ -7716,14 +8236,18 @@ export interface components {
             reply_to_message?: components["schemas"]["ReplyMessagePreviewDto"];
             /** Format: date-time */
             created_at?: string;
-            edited?: boolean;
             revoked?: boolean;
+            edited?: boolean;
         };
         MessageListResponseDto: {
             /** Format: int64 */
             conversation_id?: number;
             /** @enum {string} */
             conversation_type?: "DIRECT" | "GROUP";
+            group_name?: string;
+            group_avatar_url?: string;
+            /** Format: date-time */
+            hidden_at?: string;
             messages?: components["schemas"]["MessageDto"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
         };
@@ -7734,11 +8258,48 @@ export interface components {
             sender_id?: number;
             sender_name?: string;
             content_preview?: string;
+            unavailable?: boolean;
         };
         GlobalResponseListConversationMemberDto: {
             code?: string;
             message?: string;
             data?: components["schemas"]["ConversationMemberDto"][];
+        };
+        CursorResponseGroupInvitationDto: {
+            items?: components["schemas"]["GroupInvitationDto"][];
+            pagination?: components["schemas"]["CursorPaginationDto"];
+        };
+        GlobalResponseCursorResponseGroupInvitationDto: {
+            code?: string;
+            message?: string;
+            data?: components["schemas"]["CursorResponseGroupInvitationDto"];
+        };
+        GroupInvitationDto: {
+            /** Format: int64 */
+            invitation_id?: number;
+            group_name?: string;
+            group_avatar_url?: string;
+            inviter_name?: string;
+            /** Format: date-time */
+            expires_at?: string;
+        };
+        CursorResponseGroupCandidateDto: {
+            items?: components["schemas"]["GroupCandidateDto"][];
+            pagination?: components["schemas"]["CursorPaginationDto"];
+        };
+        GlobalResponseCursorResponseGroupCandidateDto: {
+            code?: string;
+            message?: string;
+            data?: components["schemas"]["CursorResponseGroupCandidateDto"];
+        };
+        GroupCandidateDto: {
+            /** Format: int64 */
+            user_id?: number;
+            full_name?: string;
+            avatar_url?: string;
+            friend?: boolean;
+            following?: boolean;
+            follower?: boolean;
         };
         CursorResponseCommentResponseDto: {
             items?: components["schemas"]["CommentResponseDto"][];
@@ -7752,6 +8313,7 @@ export interface components {
         BlockedListResponseDto: {
             items?: components["schemas"]["BlockedUserDto"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
+            next_cursor?: string;
             /** Format: int32 */
             total_blocked?: number;
         };
@@ -7814,90 +8376,39 @@ export interface components {
              * @example 2026-10-05T12:00:00Z
              */
             earned_at?: string;
+            /** @description Huy hiệu còn được trao hay đã ngừng trao */
+            active?: boolean;
         };
         GlobalResponseListSemesterResponse: {
             code?: string;
             message?: string;
             data?: components["schemas"]["SemesterResponse"][];
         };
-        /** @description Tóm tắt thông tin phiên hội thoại AI của người dùng */
-        AiChatSessionSummaryResponse: {
-            /**
-             * Format: int64
-             * @description ID bản ghi phiên chat trong CSDL
-             * @example 42
-             */
-            chat_session_id?: number;
-            /**
-             * @description Mã định danh phiên chat (UUID/String)
-             * @example session_a1b2c3d4
-             */
-            session_id?: string;
-            /**
-             * @description Tiêu đề tóm tắt cuộc trò chuyện do hệ thống tạo
-             * @example Thảo luận về danh sách liên kết
-             */
-            title?: string;
-            /**
-             * Format: date-time
-             * @description Thời gian bắt đầu phiên
-             * @example 2026-10-06T08:00:00Z
-             */
-            created_at?: string;
-            /**
-             * Format: date-time
-             * @description Thời gian tương tác gần nhất
-             * @example 2026-10-06T08:35:00Z
-             */
-            last_active_at?: string;
-        };
-        CursorResponseAiChatSessionSummaryResponse: {
-            items?: components["schemas"]["AiChatSessionSummaryResponse"][];
+        CursorResponseSummary: {
+            items?: components["schemas"]["Summary"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
         };
-        GlobalResponseCursorResponseAiChatSessionSummaryResponse: {
+        GlobalResponseCursorResponseSummary: {
             code?: string;
             message?: string;
-            data?: components["schemas"]["CursorResponseAiChatSessionSummaryResponse"];
+            data?: components["schemas"]["CursorResponseSummary"];
         };
-        /** @description Tin nhắn trong lịch sử trò chuyện AI */
-        AiChatHistoryResponse: {
-            /**
-             * Format: int64
-             * @description ID tin nhắn
-             * @example 1001
-             */
-            message_id?: number;
-            /**
-             * @description ID phiên trò chuyện
-             * @example session_a1b2c3d4
-             */
-            session_id?: string;
-            /**
-             * @description Vai trò (user hoặc assistant)
-             * @example user
-             */
-            role?: string;
-            /**
-             * @description Nội dung tin nhắn
-             * @example Giải thích giúp tôi về Binary Search Tree
-             */
-            content?: string;
-            /**
-             * Format: date-time
-             * @description Thời điểm gửi tin nhắn
-             * @example 2026-10-06T09:00:00Z
-             */
-            created_at?: string;
+        BadgeAccountResponse: {
+            /** Format: int64 */
+            user_id?: number;
+            full_name?: string;
+            email?: string;
+            /** @enum {string} */
+            role?: "ADMIN" | "LECTURER" | "STUDENT";
         };
-        CursorResponseAiChatHistoryResponse: {
-            items?: components["schemas"]["AiChatHistoryResponse"][];
+        CursorResponseBadgeAccountResponse: {
+            items?: components["schemas"]["BadgeAccountResponse"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
         };
-        GlobalResponseCursorResponseAiChatHistoryResponse: {
+        GlobalResponseCursorResponseBadgeAccountResponse: {
             code?: string;
             message?: string;
-            data?: components["schemas"]["CursorResponseAiChatHistoryResponse"];
+            data?: components["schemas"]["CursorResponseBadgeAccountResponse"];
         };
         ActivityFeedItemDto: {
             /** Format: int64 */
@@ -8088,7 +8599,7 @@ export interface operations {
             };
         };
     };
-    deleteMyProfile: {
+    requestAccountDeletion: {
         parameters: {
             query?: never;
             header?: never;
@@ -8097,13 +8608,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Xóa hồ sơ thành công */
+            /** @description Trả về thời điểm xóa đã lên lịch */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["GlobalResponseVoid"];
+                    "*/*": components["schemas"]["GlobalResponseAccountDeletionResponse"];
                 };
             };
             /** @description Chưa xác thực hoặc token hết hạn (TOKEN_INVALID_OR_EXPIRED) */
@@ -8112,7 +8623,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["GlobalResponseVoid"];
+                    "*/*": components["schemas"]["GlobalResponseAccountDeletionResponse"];
                 };
             };
             /** @description Tài khoản đã bị khóa (ACCOUNT_NOT_ACTIVE) */
@@ -8121,7 +8632,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["GlobalResponseVoid"];
+                    "*/*": components["schemas"]["GlobalResponseAccountDeletionResponse"];
                 };
             };
         };
@@ -8635,7 +9146,7 @@ export interface operations {
                     "*/*": components["schemas"]["GlobalResponseVoid"];
                 };
             };
-            /** @description Chỉ Giảng viên hoặc Admin mới có quyền (ACCESS_DENIED) */
+            /** @description Bài không phải bài vinh danh hợp lệ hoặc giảng viên không phụ trách lớp học phần của phiên (ACCESS_DENIED) */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -8644,7 +9155,7 @@ export interface operations {
                     "*/*": components["schemas"]["GlobalResponseVoid"];
                 };
             };
-            /** @description Không tìm thấy bài viết hoặc tài khoản (POST_NOT_FOUND / USER_NOT_FOUND) */
+            /** @description Không tìm thấy bài viết (POST_NOT_FOUND) */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -8700,6 +9211,83 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["GlobalResponseEditQuestionResponse"];
                 };
+            };
+            /** @description Phiên đã chốt (SESSION_REVIEW_FINALIZED) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseEditQuestionResponse"];
+                };
+            };
+        };
+    };
+    status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseStatus"];
+                };
+            };
+        };
+    };
+    start: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseStatus"];
+                };
+            };
+        };
+    };
+    cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -8913,7 +9501,7 @@ export interface operations {
                     "*/*": components["schemas"]["GlobalResponseVoid"];
                 };
             };
-            /** @description Thành viên không tồn tại trong nhóm (RESOURCE_NOT_FOUND) */
+            /** @description Không tìm thấy nhóm hoặc thành viên đang hoạt động (CONVERSATION_NOT_FOUND / RESOURCE_NOT_FOUND) */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -9043,6 +9631,72 @@ export interface operations {
             };
         };
     };
+    updateSemesterStartDate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description ID học kỳ cần cập nhật
+                 * @example 1
+                 */
+                semesterId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateSemesterStartDateRequest"];
+            };
+        };
+        responses: {
+            /** @description Đã cập nhật ngày khai giảng */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseSemesterResponse"];
+                };
+            };
+            /** @description Thiếu ngày khai giảng hoặc ngày sai định dạng yyyy-MM-dd */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseSemesterResponse"];
+                };
+            };
+            /** @description Chưa xác thực hoặc token hết hạn */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseSemesterResponse"];
+                };
+            };
+            /** @description Không có quyền quản trị viên (ADMIN) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseSemesterResponse"];
+                };
+            };
+            /** @description Không tìm thấy học kỳ (RESOURCE_NOT_FOUND) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseSemesterResponse"];
+                };
+            };
+        };
+    };
     activateSemester: {
         parameters: {
             query?: never;
@@ -9076,7 +9730,7 @@ export interface operations {
                     "*/*": components["schemas"]["GlobalResponseSemesterResponse"];
                 };
             };
-            /** @description Thao tác không được phép: Đang có học kỳ khác mở chưa đóng, hoặc học kỳ đã chốt sổ (ACTION_NOT_ALLOWED) */
+            /** @description Học kỳ đã chốt sổ hoặc không có quyền quản trị */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -9087,6 +9741,15 @@ export interface operations {
             };
             /** @description Không tìm thấy học kỳ (RESOURCE_NOT_FOUND) */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseSemesterResponse"];
+                };
+            };
+            /** @description Đã có học kỳ khác hoạt động (ACTIVE_SEMESTER_CONFLICT) */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -9275,6 +9938,15 @@ export interface operations {
                     "*/*": components["schemas"]["GlobalResponseVoid"];
                 };
             };
+            /** @description Đã vượt giới hạn số lần thử PIN */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseVoid"];
+                };
+            };
         };
     };
     proposeSession: {
@@ -9412,6 +10084,15 @@ export interface operations {
             };
         };
         responses: {
+            /** @description Đã có báo cáo đang chờ của bạn */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseReportResponseDto"];
+                };
+            };
             /** @description Gửi báo cáo thành công */
             201: {
                 headers: {
@@ -9437,6 +10118,33 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["GlobalResponseReportResponseDto"];
+                };
+            };
+        };
+    };
+    uploadEvidence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseMapStringString"];
                 };
             };
         };
@@ -9705,7 +10413,7 @@ export interface operations {
                     "*/*": components["schemas"]["GlobalResponseAiRefineResponse"];
                 };
             };
-            /** @description Lời nhắc vi phạm chính sách hoặc chứa dấu hiệu Prompt Injection (CONTENT_VIOLATES_POLICY) */
+            /** @description Không có quyền duyệt lớp hoặc lời nhắc vi phạm chính sách */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -9716,6 +10424,15 @@ export interface operations {
             };
             /** @description Câu hỏi không tồn tại (QUESTION_NOT_FOUND) */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseAiRefineResponse"];
+                };
+            };
+            /** @description Phiên đã chốt kết quả duyệt */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -9762,7 +10479,7 @@ export interface operations {
                     "*/*": components["schemas"]["GlobalResponseAiApplyResponse"];
                 };
             };
-            /** @description Không có quyền thực hiện thao tác này (ACCESS_DENIED) */
+            /** @description Không có quyền duyệt lớp */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -9773,6 +10490,33 @@ export interface operations {
             };
             /** @description Câu hỏi liên kết không tồn tại (QUESTION_NOT_FOUND) */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseAiApplyResponse"];
+                };
+            };
+            /** @description Phiên đã chốt hoặc bản AI đã được xử lý */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseAiApplyResponse"];
+                };
+            };
+            /** @description Câu hỏi đã thay đổi sau khi yêu cầu tinh chỉnh */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseAiApplyResponse"];
+                };
+            };
+            /** @description Cần xác nhận đã tự rà soát cảnh báo BTProp */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -9961,7 +10705,7 @@ export interface operations {
         parameters: {
             query: {
                 /** @description Mục đích sử dụng media (AVATAR, COVER, POST, QUESTION, CHAT...) */
-                purpose: "AVATAR" | "COVER" | "QUESTION" | "POST" | "COMMENT" | "CHAT" | "DOCUMENT";
+                purpose: "AVATAR" | "COVER" | "BADGE_ICON" | "QUESTION" | "POST" | "COMMENT" | "CHAT" | "DOCUMENT";
             };
             header?: never;
             path?: never;
@@ -10092,6 +10836,15 @@ export interface operations {
                     "*/*": components["schemas"]["GlobalResponseVoid"];
                 };
             };
+            /** @description Phiên chưa có câu hỏi */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseVoid"];
+                };
+            };
             /** @description Từ chối truy cập: Chỉ giảng viên mới có quyền hoàn tất duyệt */
             403: {
                 headers: {
@@ -10143,6 +10896,15 @@ export interface operations {
                     "*/*": components["schemas"]["GlobalResponseVoid"];
                 };
             };
+            /** @description Phiên đã chốt (SESSION_REVIEW_FINALIZED) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseVoid"];
+                };
+            };
         };
     };
     approveQuestions: {
@@ -10158,7 +10920,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Phê duyệt câu hỏi thành công và trả về số điểm thưởng */
+            /** @description Đã ghi quyết định phê duyệt, điểm cộng bằng 0 */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -10176,11 +10938,71 @@ export interface operations {
                     "*/*": components["schemas"]["GlobalResponseApproveQuestionsResponse"];
                 };
             };
+            /** @description Phiên đã chốt (SESSION_REVIEW_FINALIZED) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseApproveQuestionsResponse"];
+                };
+            };
+        };
+    };
+    partUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponsePartUrl"];
+                };
+            };
+        };
+    };
+    complete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseMediaItem"];
+                };
+            };
         };
     };
     getCourseClasses: {
         parameters: {
-            query?: never;
+            query?: {
+                /**
+                 * @description ID học kỳ (tùy chọn, chỉ quản trị viên)
+                 * @example 2
+                 */
+                semester_id?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -10198,6 +11020,15 @@ export interface operations {
             };
             /** @description Chưa xác thực hoặc token hết hạn */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseListCourseClassResponse"];
+                };
+            };
+            /** @description Chỉ quản trị viên được lọc danh sách lớp chung theo học kỳ */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -10661,7 +11492,7 @@ export interface operations {
                     "*/*": components["schemas"]["GlobalResponseFriendshipResponseDto"];
                 };
             };
-            /** @description Mối quan hệ bị chặn hoặc không cùng vai trò đào tạo (USER_IS_BLOCKED / ACTION_NOT_ALLOWED) */
+            /** @description Mối quan hệ bị chặn hoặc hai tài khoản khác vai trò (USER_IS_BLOCKED / ACTION_NOT_ALLOWED) */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -10973,6 +11804,15 @@ export interface operations {
                     "*/*": components["schemas"]["GlobalResponseVoid"];
                 };
             };
+            /** @description Thiết bị đích là thiết bị đang gửi yêu cầu */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseVoid"];
+                };
+            };
             /** @description Không tìm thấy thiết bị (DEVICE_NOT_FOUND) */
             404: {
                 headers: {
@@ -11163,7 +12003,7 @@ export interface operations {
                     "*/*": components["schemas"]["GlobalResponseListConversationMemberDto"];
                 };
             };
-            /** @description Bạn không tham gia cuộc hội thoại này (ACTION_NOT_ALLOWED) */
+            /** @description Không có quyền xem, kho ẩn đang khóa hoặc tư cách thành viên đã kết thúc (ACTION_NOT_ALLOWED / HIDDEN_CHAT_LOCKED / GROUP_MEMBER_REMOVED / GROUP_MEMBER_INACTIVE) */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -11316,11 +12156,58 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["GlobalResponseVoid"];
+                    "*/*": components["schemas"]["GlobalResponseHiddenChatUnlockDto"];
                 };
             };
             /** @description Chưa cài mã PIN hoặc mã PIN không đúng (PIN_NOT_SET / INVALID_PIN) */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseHiddenChatUnlockDto"];
+                };
+            };
+            /** @description Chưa xác thực hoặc token hết hạn */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseHiddenChatUnlockDto"];
+                };
+            };
+            /** @description Không tìm thấy người dùng (USER_NOT_FOUND) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseHiddenChatUnlockDto"];
+                };
+            };
+            /** @description Đã vượt giới hạn số lần thử PIN */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseHiddenChatUnlockDto"];
+                };
+            };
+        };
+    };
+    lockHiddenChat: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Đã khóa kho ẩn */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -11330,15 +12217,6 @@ export interface operations {
             };
             /** @description Chưa xác thực hoặc token hết hạn */
             401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["GlobalResponseVoid"];
-                };
-            };
-            /** @description Không tìm thấy người dùng (USER_NOT_FOUND) */
-            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -11370,7 +12248,7 @@ export interface operations {
                     "*/*": components["schemas"]["GlobalResponseConversationDetailDto"];
                 };
             };
-            /** @description Quy mô nhóm không hợp lệ (phải từ 3 đến 200 thành viên - CONSTRAINTS_UNSATISFIED) */
+            /** @description Số người được chọn không hợp lệ (CONSTRAINTS_UNSATISFIED) */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -11388,7 +12266,7 @@ export interface operations {
                     "*/*": components["schemas"]["GlobalResponseConversationDetailDto"];
                 };
             };
-            /** @description Chứa thành viên đang có quan hệ chặn với người tạo (USER_IS_BLOCKED) */
+            /** @description Có người bị chặn hoặc không đủ điều kiện để thêm hay mời */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -11404,6 +12282,56 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["GlobalResponseConversationDetailDto"];
+                };
+            };
+        };
+    };
+    accept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID lời mời */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Đã tham gia nhóm */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseLong"];
+                };
+            };
+            /** @description Nhóm đã đạt giới hạn thành viên */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseLong"];
+                };
+            };
+            /** @description Chưa xác thực hoặc token hết hạn */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseLong"];
+                };
+            };
+            /** @description Không tìm thấy lời mời còn hiệu lực của người dùng hiện tại */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseLong"];
                 };
             };
         };
@@ -11535,7 +12463,16 @@ export interface operations {
                     "*/*": components["schemas"]["GlobalResponseCursorResponseCommentResponseDto"];
                 };
             };
-            /** @description Không tìm thấy đối tượng mục tiêu (POST_NOT_FOUND / RESOURCE_NOT_FOUND) */
+            /** @description Không có quyền xem thảo luận của bộ câu hỏi (ACCESS_DENIED) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseCursorResponseCommentResponseDto"];
+                };
+            };
+            /** @description Không tìm thấy đối tượng mục tiêu hoặc bình luận cha (POST_NOT_FOUND / RESOURCE_NOT_FOUND) */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -11568,7 +12505,7 @@ export interface operations {
                     "*/*": components["schemas"]["GlobalResponseCommentResponseDto"];
                 };
             };
-            /** @description Bình luận phải có nội dung chữ hoặc hình ảnh đính kèm (MISSING_REQUIRED_PARAMETER) */
+            /** @description Thiếu nội dung hoặc bình luận cha thuộc đối tượng khác */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -11579,6 +12516,15 @@ export interface operations {
             };
             /** @description Chưa xác thực hoặc token hết hạn */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseCommentResponseDto"];
+                };
+            };
+            /** @description Không có quyền thảo luận về bộ câu hỏi (ACCESS_DENIED) */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -12223,7 +13169,7 @@ export interface operations {
                     "*/*": components["schemas"]["GlobalResponseSemesterResponse"];
                 };
             };
-            /** @description Dữ liệu yêu cầu không hợp lệ (tên học kỳ trống hoặc vượt quá 100 ký tự) */
+            /** @description Tên học kỳ không hợp lệ hoặc ngày khai giảng sai định dạng yyyy-MM-dd */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -12281,6 +13227,80 @@ export interface operations {
             };
         };
     };
+    resolve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResolveRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseDetail"];
+                };
+            };
+        };
+    };
+    importEvidence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseEvidence"];
+                };
+            };
+        };
+    };
+    reverse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseDetail"];
+                };
+            };
+        };
+    };
     rebuildLeaderboard: {
         parameters: {
             query?: never;
@@ -12296,6 +13316,15 @@ export interface operations {
         responses: {
             /** @description Tái tạo bảng xếp hạng thành công */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseVoid"];
+                };
+            };
+            /** @description Dữ liệu không hợp lệ hoặc chưa có học kỳ hoạt động (NO_ACTIVE_SEMESTER) */
+            400: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -12439,6 +13468,32 @@ export interface operations {
             };
         };
     };
+    revokeBadge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                badgeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevokeBadgeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseVoid"];
+                };
+            };
+        };
+    };
     grantManualBadge: {
         parameters: {
             query?: never;
@@ -12476,8 +13531,8 @@ export interface operations {
                     "*/*": components["schemas"]["GlobalResponseVoid"];
                 };
             };
-            /** @description Huy hiệu không tồn tại (BADGE_NOT_FOUND) */
-            404: {
+            /** @description Huy hiệu đã ngừng hoạt động hoặc không có quyền quản trị */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -12485,46 +13540,13 @@ export interface operations {
                     "*/*": components["schemas"]["GlobalResponseVoid"];
                 };
             };
-        };
-    };
-    chatWithAi: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AiChatRequest"];
-            };
-        };
-        responses: {
-            /** @description Phản hồi từ AI thành công */
-            200: {
+            /** @description Huy hiệu hoặc tài khoản nhận không tồn tại */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["GlobalResponseAiChatResponse"];
-                };
-            };
-            /** @description Dữ liệu yêu cầu không hợp lệ */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["GlobalResponseAiChatResponse"];
-                };
-            };
-            /** @description Lời nhắc vi phạm chính sách an toàn */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["GlobalResponseAiChatResponse"];
+                    "*/*": components["schemas"]["GlobalResponseVoid"];
                 };
             };
         };
@@ -12725,7 +13747,7 @@ export interface operations {
                  */
                 subject_id?: number;
                 /**
-                 * @description Lọc theo trạng thái phiên (chỉ có tác dụng khi xem chính mình)
+                 * @description Lọc theo trạng thái phiên
                  * @example RESOLVED
                  */
                 status?: "PENDING" | "REVIEWING" | "RESOLVED";
@@ -12744,6 +13766,15 @@ export interface operations {
         responses: {
             /** @description Lấy danh sách phiên thành công */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseSubmissionsResponse"];
+                };
+            };
+            /** @description Không được xem danh sách phiên của tài khoản khác */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -12852,6 +13883,46 @@ export interface operations {
             };
         };
     };
+    getAccountDeletionStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseAccountDeletionResponse"];
+                };
+            };
+        };
+    };
+    cancelAccountDeletion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Đã hết thời hạn hủy yêu cầu xóa */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseAccountDeletionResponse"];
+                };
+            };
+        };
+    };
     getAllSubjects: {
         parameters: {
             query?: never;
@@ -12925,6 +13996,65 @@ export interface operations {
             };
         };
     };
+    getPracticeCatalog: {
+        parameters: {
+            query?: {
+                /**
+                 * @description ID của phiên cuối trang trước
+                 * @example 45
+                 */
+                after?: number;
+                /**
+                 * @description Số bộ mỗi trang (mặc định 10, tối đa 50)
+                 * @example 10
+                 */
+                limit?: number;
+                /**
+                 * @description ID môn học
+                 * @example 1
+                 */
+                subject_id?: number;
+                /**
+                 * @description Một phần tiêu đề hoặc mã phiên, tối đa 120 ký tự
+                 * @example IT4409
+                 */
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lấy danh sách bộ câu hỏi thành công */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponsePracticeCatalogResponse"];
+                };
+            };
+            /** @description Tham số không hợp lệ */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponsePracticeCatalogResponse"];
+                };
+            };
+            /** @description Phiên đăng nhập thiếu hoặc hết hạn */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponsePracticeCatalogResponse"];
+                };
+            };
+        };
+    };
     getMySubmissions: {
         parameters: {
             query?: {
@@ -12948,6 +14078,11 @@ export interface operations {
                  * @example PENDING
                  */
                 status?: "PENDING" | "REVIEWING" | "RESOLVED";
+                /**
+                 * @description Tìm theo mã phiên, tiêu đề, nội dung hoặc môn học
+                 * @example IT4409
+                 */
+                q?: string;
             };
             header?: never;
             path?: never;
@@ -13234,6 +14369,7 @@ export interface operations {
                  * @example 50
                  */
                 after?: number;
+                before?: number;
                 /**
                  * @description Số lượng phiên tối đa mỗi trang (mặc định 10, tối đa 50)
                  * @example 10
@@ -13249,6 +14385,7 @@ export interface operations {
                  * @example created_at
                  */
                 sort_by?: string;
+                q?: string;
             };
             header?: never;
             path?: never;
@@ -13474,6 +14611,7 @@ export interface operations {
                  * @example 1050
                  */
                 after?: number;
+                before?: number;
                 /**
                  * @description Số lượng bản ghi tối đa mỗi trang (mặc định 10, tối đa 50)
                  * @example 10
@@ -13551,6 +14689,7 @@ export interface operations {
                  * @example 1728200000000
                  */
                 after?: number;
+                cursor?: string;
                 /**
                  * @description Số lượng bạn bè mỗi trang (mặc định 20, tối đa 50)
                  * @example 20
@@ -13591,6 +14730,7 @@ export interface operations {
                  * @example 1728200000000
                  */
                 after?: number;
+                cursor?: string;
                 /**
                  * @description Số lượng lời mời mỗi trang (mặc định 20, tối đa 50)
                  * @example 20
@@ -13631,6 +14771,7 @@ export interface operations {
                  * @example 1728200000000
                  */
                 after?: number;
+                cursor?: string;
                 /**
                  * @description Số lượng lời mời mỗi trang (mặc định 20, tối đa 50)
                  * @example 20
@@ -13671,6 +14812,7 @@ export interface operations {
                  * @example 1728200000000
                  */
                 after?: number;
+                cursor?: string;
                 /**
                  * @description Số lượng mỗi trang (mặc định 20, tối đa 50)
                  * @example 20
@@ -13711,6 +14853,7 @@ export interface operations {
                  * @example 1728200000000
                  */
                 after?: number;
+                cursor?: string;
                 /**
                  * @description Số lượng mỗi trang (mặc định 20, tối đa 50)
                  * @example 20
@@ -13837,6 +14980,7 @@ export interface operations {
                  * @example 20
                  */
                 after?: number;
+                before?: number;
                 /**
                  * @description Số lượng bản ghi tối đa mỗi trang (mặc định 10, tối đa 20)
                  * @example 10
@@ -13985,6 +15129,8 @@ export interface operations {
                  * @example 20
                  */
                 limit?: number;
+                /** @description Con trỏ đầy đủ từ next_cursor của trang trước */
+                cursor?: string;
             };
             header?: never;
             path?: never;
@@ -14056,7 +15202,7 @@ export interface operations {
                     "*/*": components["schemas"]["GlobalResponseMessageListResponseDto"];
                 };
             };
-            /** @description Bạn không tham gia cuộc hội thoại này (ACTION_NOT_ALLOWED) */
+            /** @description Không có quyền đọc, kho ẩn đang khóa hoặc tư cách thành viên đã kết thúc (ACTION_NOT_ALLOWED / HIDDEN_CHAT_LOCKED / GROUP_MEMBER_REMOVED / GROUP_MEMBER_INACTIVE) */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -14089,6 +15235,8 @@ export interface operations {
                  * @example 20
                  */
                 limit?: number;
+                /** @description Con trỏ đầy đủ từ next_cursor của trang trước */
+                cursor?: string;
             };
             header?: never;
             path?: never;
@@ -14114,6 +15262,105 @@ export interface operations {
                     "*/*": components["schemas"]["GlobalResponseConversationListResponseDto"];
                 };
             };
+            /** @description Phiên hiện tại chưa mở kho ẩn hoặc quyền đã hết hạn (HIDDEN_CHAT_LOCKED) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseConversationListResponseDto"];
+                };
+            };
+        };
+    };
+    incoming: {
+        parameters: {
+            query?: {
+                /** @description Con trỏ ID lời mời từ trang trước */
+                after?: number;
+                /** @description Số lời mời mỗi trang, tối đa 50 */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lấy lời mời thành công */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseCursorResponseGroupInvitationDto"];
+                };
+            };
+            /** @description Chưa xác thực hoặc token hết hạn */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseCursorResponseGroupInvitationDto"];
+                };
+            };
+        };
+    };
+    candidates: {
+        parameters: {
+            query?: {
+                /** @description ID nhóm hiện có. Bỏ qua khi tạo nhóm. */
+                conversation_id?: number;
+                /** @description Con trỏ ID người dùng từ trang trước */
+                after?: number;
+                /** @description Từ khóa tìm theo tên */
+                search?: string;
+                /** @description Số người mỗi trang, tối đa 50 */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lấy danh sách người phù hợp thành công */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseCursorResponseGroupCandidateDto"];
+                };
+            };
+            /** @description Chưa xác thực hoặc token hết hạn */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseCursorResponseGroupCandidateDto"];
+                };
+            };
+            /** @description Không có quyền truy cập nhóm */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseCursorResponseGroupCandidateDto"];
+                };
+            };
+            /** @description Không tìm thấy nhóm */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseCursorResponseGroupCandidateDto"];
+                };
+            };
         };
     };
     getBlockedUsers: {
@@ -14124,6 +15371,7 @@ export interface operations {
                  * @example 1728200000000
                  */
                 after?: number;
+                cursor?: string;
                 /**
                  * @description Số lượng mỗi trang (mặc định 20, tối đa 50)
                  * @example 20
@@ -14266,15 +15514,13 @@ export interface operations {
             };
         };
     };
-    getUserChatSessions: {
+    queue: {
         parameters: {
             query?: {
-                /** @description Con trỏ phân trang (ID phiên chat) */
+                status?: string;
+                target_type?: "POST" | "COMMENT" | "USER";
+                violation_type?: "HARASSMENT" | "HATE_STATEMENT" | "SPAM" | "OTHER";
                 after?: number;
-                /**
-                 * @description Số lượng phiên chat trả về
-                 * @example 20
-                 */
                 limit?: number;
             };
             header?: never;
@@ -14283,46 +15529,108 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Lấy danh sách các cuộc hội thoại AI thành công */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["GlobalResponseCursorResponseAiChatSessionSummaryResponse"];
+                    "*/*": components["schemas"]["GlobalResponseCursorResponseSummary"];
                 };
             };
         };
     };
-    getChatHistory: {
+    detail: {
         parameters: {
-            query?: {
-                /**
-                 * @description Mã định danh phiên chat
-                 * @example session_a1b2c3d4
-                 */
-                session_id?: string;
-                /** @description Con trỏ phân trang (ID tin nhắn) */
-                after?: number;
-                /**
-                 * @description Số lượng tin nhắn trả về mỗi trang
-                 * @example 20
-                 */
-                limit?: number;
-            };
+            query?: never;
             header?: never;
-            path?: never;
+            path: {
+                id: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Lấy lịch sử hội thoại AI thành công */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["GlobalResponseCursorResponseAiChatHistoryResponse"];
+                    "*/*": components["schemas"]["GlobalResponseDetail"];
+                };
+            };
+        };
+    };
+    related: {
+        parameters: {
+            query?: {
+                after?: number;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseCursorResponseSummary"];
+                };
+            };
+        };
+    };
+    evidence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseEvidence"];
+                };
+            };
+        };
+    };
+    searchBadgeAccounts: {
+        parameters: {
+            query?: {
+                holders?: boolean;
+                query?: string;
+                after?: number;
+            };
+            header?: never;
+            path: {
+                badgeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseCursorResponseBadgeAccountResponse"];
                 };
             };
         };
@@ -14492,7 +15800,7 @@ export interface operations {
                     "*/*": components["schemas"]["GlobalResponseDeleteMessageResponseDto"];
                 };
             };
-            /** @description Không có quyền thu hồi tin nhắn của người khác hoặc không thuộc hội thoại (NOT_MESSAGE_OWNER / ACTION_NOT_ALLOWED) */
+            /** @description Không có quyền với tin nhắn hoặc kho ẩn đang khóa (NOT_MESSAGE_OWNER / ACTION_NOT_ALLOWED / HIDDEN_CHAT_LOCKED) */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -14629,6 +15937,15 @@ export interface operations {
                     "*/*": components["schemas"]["GlobalResponseVoid"];
                 };
             };
+            /** @description Thiết bị đích là thiết bị đang gửi yêu cầu */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseVoid"];
+                };
+            };
             /** @description Không tìm thấy thiết bị (DEVICE_NOT_FOUND) */
             404: {
                 headers: {
@@ -14688,6 +16005,47 @@ export interface operations {
                 };
             };
             /** @description Không tìm thấy cuộc hội thoại hoặc thành viên không còn trong nhóm (CONVERSATION_NOT_FOUND / RESOURCE_NOT_FOUND) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseVoid"];
+                };
+            };
+        };
+    };
+    decline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID lời mời */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Đã từ chối lời mời */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseVoid"];
+                };
+            };
+            /** @description Chưa xác thực hoặc token hết hạn */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseVoid"];
+                };
+            };
+            /** @description Không tìm thấy lời mời của người dùng hiện tại */
             404: {
                 headers: {
                     [name: string]: unknown;

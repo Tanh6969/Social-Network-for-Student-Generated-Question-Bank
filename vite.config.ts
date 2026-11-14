@@ -13,6 +13,7 @@ export default defineConfig({
       '/api/v1': {
         target: 'https://snsqb.duckdns.org',
         changeOrigin: true,
+        ws: true,
       },
     },
   },

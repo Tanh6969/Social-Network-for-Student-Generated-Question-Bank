@@ -20,6 +20,7 @@ export function basicUser(info: {
   user_id?: number;
   full_name?: string;
   avatar_url?: string;
+  frame_url?: string;
   role?: string;
   school_faculty?: string;
 }): User {
@@ -29,6 +30,7 @@ export function basicUser(info: {
     role: toRole(info.role),
     email: '',
     avatar: info.avatar_url || DEFAULT_AVATAR,
+    frameUrl: info.frame_url || undefined,
     coverImage: DEFAULT_COVER,
     bio: '',
     faculty: info.school_faculty || '',

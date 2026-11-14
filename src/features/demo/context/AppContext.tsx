@@ -8,6 +8,7 @@ import React, {
   ReactNode,
 } from 'react';
 import { useAuthSession } from '../../auth/useAuthSession';
+import { applyProfile } from '../../auth/mapAuthUser';
 import { useLocation, useNavigate } from 'react-router';
 import { tabFromPath, tabPaths } from '../../../app/routes';
 import {
@@ -42,6 +43,10 @@ import {
 import { revokeMediaUrl } from '../../feed/mediaUtils';
 import { errorMessage, isApiSession } from '../../../api';
 import { postsApi } from '../../../api/posts';
+import { searchApi, type SavedSearchDto } from '../../../api/search';
+import { notificationsApi, type NotificationDto } from '../../../api/notifications';
+import { chatApi } from '../../../api/chat';
+import { tokenStore } from '../../../api/token';
 import { relationshipsApi } from '../../../api/relationships';
 import {
   basicUser,
@@ -53,7 +58,9 @@ import {
 import {
   buildMediaItems,
   commentFromApi,
-  loadApiFeed,
+  loadApiFeedPage,
+  initialApiFeedCursor,
+  type ApiFeedCursor,
   postFromApi,
 } from '../../feed/apiPosts';
 import {
@@ -85,6 +92,8 @@ import {
   areConversationSnapshotsEqual,
   isSharedChatMessage,
 } from '../../messenger/sharedChatSync';
+import { conversationFromApi, messageFromApi } from '../../messenger/apiChat';
+import { ChatSocket } from '../../messenger/chatSocket';
 import {
   arePostSnapshotsEqual,
   isSharedFeedMessage,
@@ -116,12 +125,14 @@ interface AppContextType {
   role: Role;
   switchRole: (newRole: Role) => void;
   updateCurrentUser: (updates: Partial<User>) => void;
+  saveProfileChanges: (updates: Pick<User, 'name' | 'bio' | 'faculty' | 'classOrTitle'>) => Promise<boolean>;
   profilePhotoHistory: ProfilePhotoHistoryItem[];
   saveProfilePhoto: (
     kind: 'avatar' | 'cover',
     url: string,
     crop: ImageCrop,
-  ) => void;
+    file?: File,
+  ) => Promise<boolean>;
   viewingUserId: string | null;
   setViewingUserId: (id: string | null) => void;
   getUserById: (id: string) => User;
@@ -136,6 +147,7 @@ interface AppContextType {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   savedSearches: string[];
+  trendingSearches: string[];
   removeSavedSearch: (term: string) => void;
   clearAllSavedSearches: () => void;
   triggerSearch: (query: string) => void;
@@ -150,7 +162,12 @@ interface AppContextType {
   isFeedLoading: boolean;
   /** Lỗi tải bảng tin của phiên thật (null nếu không lỗi). */
   feedError: string | null;
+  newFeedCount: number;
   reloadFeed: () => void;
+  apiFeedHasMore: boolean;
+  isFeedLoadingMore: boolean;
+  loadMoreFeed: () => Promise<void>;
+  loadProfilePosts: (userId: string, after?: number) => Promise<{ hasNext: boolean; after?: number }>;
   /**
    * `files` ánh xạ blob URL (trong mediaUrls/documents) → tệp gốc để tải lên
    * máy chủ ở phiên thật. Trả về true khi đăng thành công.
@@ -168,11 +185,14 @@ interface AppContextType {
     files?: ReadonlyMap<string, File>,
   ) => Promise<boolean>;
   toggleLikePost: (postId: string) => void;
-  addComment: (postId: string, text: string, parentCommentId?: string) => void;
+  addComment: (postId: string, text: string, parentCommentId?: string) => Promise<boolean>;
+  updateComment: (postId: string, commentId: string, content: string) => Promise<boolean>;
+  deleteComment: (postId: string, commentId: string) => Promise<boolean>;
   /** Phiên thật: tải bình luận của bài khi mở chi tiết (demo: không làm gì). */
   loadPostComments: (postId: string) => void;
+  openPostById: (postId: number) => Promise<void>;
   deletePost: (postId: string) => void;
-  addLecturerNote: (postId: string, note: string) => void;
+  addLecturerNote: (postId: string, note: string) => Promise<boolean>;
   friendStatuses: Record<string, FriendStatus>;
   setFriendStatuses: React.Dispatch<
     React.SetStateAction<Record<string, FriendStatus>>
@@ -293,6 +313,12 @@ interface AppContextType {
 
   // Messenger & Chat Dock
   conversations: Conversation[];
+  chatConnectionError: string | null;
+  loadChatMessages: (conversationId: string) => void;
+  loadOlderChatMessages: (conversationId: string) => void;
+  olderChatMessagesAvailable: Record<string, boolean>;
+  loadMoreConversations: () => void;
+  moreConversationsAvailable: boolean;
   openChatDock: (partnerUserId: string) => void;
   markConversationRead: (conversationId: string) => void;
   closeChatDock: (conversationId: string) => void;
@@ -300,11 +326,13 @@ interface AppContextType {
   restoreChatDock: (conversationId: string) => void;
   activeDockIds: string[];
   minimizedDockIds: string[];
-  sendMessage: (conversationId: string, text: string) => void;
+  sendMessage: (conversationId: string, text: string) => Promise<boolean>;
   recallMessage: (conversationId: string, messageId: string) => void;
 
   // Notifications
   notifications: AppNotification[];
+  notificationsHasMore: boolean;
+  loadMoreNotifications: () => void;
   markNotificationAsRead: (id: string) => void;
   markAllNotificationsAsRead: () => void;
   unreadNotificationsCount: number;
@@ -382,13 +410,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   // Search
   const [searchQuery, setSearchQuery] = useState('');
-  const [savedSearches, setSavedSearches] = useState<string[]>([
+  const [demoSavedSearches, setDemoSavedSearches] = useState<string[]>([
     'Thuật toán Dijkstra cây AVL',
     'Chuẩn 3NF Cơ sở dữ liệu',
     'TS. Trần Minh Đức',
     'Giải tích 1 chuỗi số',
     'Đề thi Mạng máy tính K64',
   ]);
+  const [apiSavedSearches, setApiSavedSearches] = useState<SavedSearchDto[]>([]);
+  const [apiTrendingSearches, setApiTrendingSearches] = useState<string[]>([]);
 
   // Data states
   const [posts, setPosts] = useState<Post[]>(mockPosts);
@@ -420,12 +450,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   const [cosmetics, setCosmetics] = useState<CosmeticItem[]>(mockCosmetics);
   const [conversationRecords, setConversationRecords] =
     useState<Conversation[]>(mockConversations);
+  const [apiConversations, setApiConversations] = useState<Conversation[]>([]);
+  const apiConversationsRef = useRef<Conversation[]>([]);
+  useEffect(() => { apiConversationsRef.current = apiConversations; }, [apiConversations]);
+  const [chatConnectionError, setChatConnectionError] = useState<string | null>(null);
+  const [apiChatCursor, setApiChatCursor] = useState<string | undefined>();
+  const [moreConversationsAvailable, setMoreConversationsAvailable] = useState(false);
+  const [chatMessagesAfter, setChatMessagesAfter] = useState<Record<string, number | undefined>>({});
+  const [olderChatMessagesAvailable, setOlderChatMessagesAvailable] = useState<Record<string, boolean>>({});
+  const chatSocketRef = useRef<ChatSocket | null>(null);
   const conversationRecordsRef = useRef<Conversation[]>(mockConversations);
   const chatChannelRef = useRef<BroadcastChannel | null>(null);
   const initializedChatSyncRef = useRef(false);
   const [notificationsByAccount, setNotificationsByAccount] = useState<
     Record<string, AppNotification[]>
   >({ [mockCurrentUserStudent.id]: mockNotifications });
+  const [apiNotifications, setApiNotifications] = useState<AppNotification[]>([]);
+  const [apiNotificationsAfter, setApiNotificationsAfter] = useState<number | undefined>();
+  const [notificationsHasMore, setNotificationsHasMore] = useState(false);
+  const [apiUnreadCount, setApiUnreadCount] = useState(0);
 
   // Chat dock
   const [activeDockIdsByAccount, setActiveDockIdsByAccount] = useState<
@@ -529,6 +572,78 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     updateCurrentUser: updateAuthCurrentUser,
   } = useAuthSession(showToast);
 
+  const notificationFromApi = (dto: NotificationDto): AppNotification => ({
+    id: String(dto.notification_id),
+    recipientId: rawCurrentUser.id,
+    title: dto.title ?? 'Thông báo',
+    message: dto.body ?? '',
+    timestamp: dto.created_at ? new Date(dto.created_at).toLocaleString('vi-VN') : '',
+    isRead: Boolean(dto.read_at),
+    type: dto.type === 'FRIEND_REQUEST' || dto.type === 'QUESTION_APPROVED'
+      ? dto.type : 'SYSTEM',
+    actor: dto.actor?.user_id != null ? basicUser(dto.actor) : undefined,
+    targetId: dto.target?.target_id != null ? String(dto.target.target_id) : undefined,
+    targetType: dto.target?.type,
+  });
+  useEffect(() => {
+    if (sessionKind !== 'api') {
+      setApiNotifications([]);
+      setApiNotificationsAfter(undefined);
+      setNotificationsHasMore(false);
+      setApiUnreadCount(0);
+      return;
+    }
+    setApiNotifications([]);
+    setApiNotificationsAfter(undefined);
+    setNotificationsHasMore(false);
+    setApiUnreadCount(0);
+    let cancelled = false;
+    const load = () => notificationsApi.list().then((page) => {
+      if (cancelled) return;
+      const fresh = page.items.map(notificationFromApi);
+      setApiNotifications((previous) => {
+        const ids = new Set(fresh.map((item) => item.id));
+        return [...fresh, ...previous.filter((item) => !ids.has(item.id))];
+      });
+      setApiNotificationsAfter(page.after);
+      setNotificationsHasMore(page.hasNext);
+      setApiUnreadCount(page.unreadCount);
+    }).catch((error: unknown) => {
+      if (!cancelled) showToast(errorMessage(error, 'Không tải được thông báo.'), 'error');
+    });
+    void load();
+    const interval = window.setInterval(() => { if (document.visibilityState === 'visible') void load(); }, 30_000);
+    return () => { cancelled = true; window.clearInterval(interval); };
+    // Nạp lại theo tài khoản; các hàm provider không ổn định giữa render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionKind, rawCurrentUser.id]);
+
+  const savedSearches = sessionKind === 'api'
+    ? apiSavedSearches.map((item) => item.query_text ?? '').filter(Boolean)
+    : demoSavedSearches;
+  const trendingSearches = sessionKind === 'api'
+    ? apiTrendingSearches
+    : ['TCP/IP', 'Cây AVL', 'Chuẩn 3NF', 'Giải tích 1', 'Đề thi 2026'];
+  useEffect(() => {
+    if (sessionKind !== 'api') {
+      setApiSavedSearches([]);
+      setApiTrendingSearches([]);
+      return;
+    }
+    let cancelled = false;
+    searchApi.getSaved().then(({ saved, trending }) => {
+      if (!cancelled) {
+        setApiSavedSearches(saved);
+        setApiTrendingSearches(trending);
+      }
+    }).catch((error: unknown) => {
+      if (!cancelled) showToast(errorMessage(error, 'Không tải được lịch sử tìm kiếm.'), 'error');
+    });
+    return () => { cancelled = true; };
+    // Tải lại khi đổi tài khoản API; showToast là hàm của provider.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionKind, rawCurrentUser.id]);
+
   const loginWithCredentials = async (email: string, password: string) => {
     await authenticate(email, password);
     setActiveDockIdsByAccount({});
@@ -549,6 +664,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   const [isFeedLoading, setIsFeedLoading] = useState(false);
   const [feedError, setFeedError] = useState<string | null>(null);
   const [feedReloadKey, setFeedReloadKey] = useState(0);
+  const [feedSeenAt, setFeedSeenAt] = useState<number | null>(null);
+  const [newFeedCount, setNewFeedCount] = useState(0);
+  const [apiFeedCursor, setApiFeedCursor] = useState<ApiFeedCursor>(initialApiFeedCursor);
+  const [isFeedLoadingMore, setIsFeedLoadingMore] = useState(false);
+  const loadingFeedPageRef = useRef(false);
   const apiFeedUserId = sessionKind === 'api' ? rawCurrentUser.id : null;
   const rawCurrentUserRef = useRef(rawCurrentUser);
   useEffect(() => {
@@ -556,6 +676,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   }, [rawCurrentUser]);
   useEffect(() => {
     if (!apiFeedUserId) {
+      setFeedSeenAt(null);
+      setNewFeedCount(0);
+      setApiFeedCursor(initialApiFeedCursor);
       if (postsSourceRef.current === 'api') {
         postsSourceRef.current = 'demo';
         setPosts(mockPosts);
@@ -565,11 +688,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     postsSourceRef.current = 'api';
     let cancelled = false;
     setPosts([]);
+    setApiFeedCursor(initialApiFeedCursor);
     setFeedError(null);
     setIsFeedLoading(true);
-    loadApiFeed(rawCurrentUserRef.current)
+    loadApiFeedPage(rawCurrentUserRef.current, initialApiFeedCursor)
       .then((loaded) => {
-        if (!cancelled) setPosts(loaded);
+        if (!cancelled) {
+          setPosts(loaded.posts);
+          setApiFeedCursor(loaded.cursor);
+          setFeedSeenAt(Date.now());
+          setNewFeedCount(0);
+        }
       })
       .catch((error: unknown) => {
         if (!cancelled)
@@ -583,6 +712,53 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     };
   }, [apiFeedUserId, feedReloadKey]);
   const reloadFeed = () => setFeedReloadKey((key) => key + 1);
+  const apiFeedHasMore = Object.values(apiFeedCursor).some((source) => source.hasNext);
+  const loadMoreFeed = async () => {
+    if (sessionKind !== 'api' || !apiFeedHasMore || loadingFeedPageRef.current || isFeedLoading) return;
+    loadingFeedPageRef.current = true;
+    setIsFeedLoadingMore(true);
+    try {
+      const page = await loadApiFeedPage(rawCurrentUserRef.current, apiFeedCursor);
+      setPosts((previous) => {
+        const known = new Set(previous.map((post) => post.id));
+        return [...previous, ...page.posts.filter((post) => !known.has(post.id))];
+      });
+      setApiFeedCursor(page.cursor);
+    } catch (error: unknown) {
+      showToast(errorMessage(error, 'Không tải thêm được bài viết.'), 'error');
+    } finally {
+      loadingFeedPageRef.current = false;
+      setIsFeedLoadingMore(false);
+    }
+  };
+  const loadProfilePosts = async (userId: string, after?: number) => {
+    if (sessionKind !== 'api') return { hasNext: false };
+    const numericId = Number(userId);
+    if (!Number.isSafeInteger(numericId) || numericId <= 0)
+      throw new Error('Tài khoản không hợp lệ.');
+    const page = await postsApi.getUserPosts(numericId, after);
+    const incoming = page.items.filter((dto) => dto.post_id != null)
+      .map((dto) => postFromApi(dto, currentUser));
+    setPosts((previous) => {
+      const known = new Set(previous.map((post) => post.id));
+      return [...previous, ...incoming.filter((post) => !known.has(post.id))];
+    });
+    return { hasNext: page.hasNext && page.after != null, after: page.after };
+  };
+
+  useEffect(() => {
+    if (!apiFeedUserId || activeTab !== 'feed' || feedSeenAt === null || isFeedLoading)
+      return;
+    let cancelled = false;
+    const check = () => {
+      if (document.visibilityState !== 'visible') return;
+      void postsApi.getNewActivityCount(feedSeenAt)
+        .then((count) => { if (!cancelled) setNewFeedCount(count); })
+        .catch(() => undefined);
+    };
+    const interval = window.setInterval(check, 30_000);
+    return () => { cancelled = true; window.clearInterval(interval); };
+  }, [apiFeedUserId, activeTab, feedSeenAt, isFeedLoading]);
 
   // Người dùng đã biết trong phiên thật (bạn bè, tác giả bài, kết quả tìm,
   // hồ sơ đã mở). Thay cho danh sách người dùng mẫu của phiên demo.
@@ -769,10 +945,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return { ...previous, [rawCurrentUser.id]: next };
     });
   };
-  const notifications = getNotificationsForAccount(
-    notificationsByAccount[rawCurrentUser.id] ?? [],
-    rawCurrentUser.id,
-  );
+  const notifications = sessionKind === 'api' ? apiNotifications :
+    getNotificationsForAccount(notificationsByAccount[rawCurrentUser.id] ?? [], rawCurrentUser.id);
+  const loadMoreNotifications = () => {
+    if (sessionKind !== 'api' || !notificationsHasMore || apiNotificationsAfter == null) return;
+    void notificationsApi.list(apiNotificationsAfter).then((page) => {
+      setApiNotifications((previous) => [...previous, ...page.items.map(notificationFromApi)
+        .filter((item) => !previous.some((old) => old.id === item.id))]);
+      setApiNotificationsAfter(page.after);
+      setNotificationsHasMore(page.hasNext);
+      setApiUnreadCount(page.unreadCount);
+    }).catch((error: unknown) => showToast(errorMessage(error, 'Không tải thêm được thông báo.'), 'error'));
+  };
   const setNotifications: React.Dispatch<
     React.SetStateAction<AppNotification[]>
   > = (update) => {
@@ -910,7 +1094,109 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     return found || mockCurrentUserStudent;
   };
 
-  const conversations = getConversationsForAccount(
+  const loadApiChatList = async (cursor?: string) => {
+    const page = await chatApi.list(cursor);
+    const mapped = await Promise.all(page.items.map(async (dto) => {
+      const members = dto.conversation_id != null
+        ? await chatApi.members(dto.conversation_id).catch(() => []) : [];
+      return conversationFromApi(dto, members, rawCurrentUser);
+    }));
+    setApiConversations((previous) => {
+      const next = mapped.map((item) => ({
+        ...item,
+        messages: previous.find((old) => old.id === item.id)?.messages ?? [],
+      }));
+      if (cursor) return [...previous, ...next.filter((item) => !previous.some((old) => old.id === item.id))];
+      if (!page.hasNext) return next;
+      const firstPageIds = new Set(next.map((item) => item.id));
+      return [...next, ...previous.filter((item) => !firstPageIds.has(item.id))];
+    });
+    setApiChatCursor(page.nextCursor);
+    setMoreConversationsAvailable(page.hasNext);
+    setChatConnectionError(null);
+  };
+  const loadMoreConversations = () => {
+    if (sessionKind !== 'api' || !moreConversationsAvailable || !apiChatCursor) return;
+    void loadApiChatList(apiChatCursor).catch((error: unknown) =>
+      showToast(errorMessage(error, 'Không tải thêm được hội thoại.'), 'error'));
+  };
+  const loadApiChatMessages = async (conversationId: string, after?: number) => {
+    const id = Number(conversationId);
+    if (!Number.isSafeInteger(id) || id <= 0) return;
+    const page = await chatApi.messages(id, after);
+    const mapped = page.items.map((item) => messageFromApi(item, conversationId));
+    setApiConversations((previous) => previous.map((conversation) => {
+      if (conversation.id !== conversationId) return conversation;
+      const combined = after ? [...conversation.messages, ...mapped] : mapped;
+      const unique = [...new Map(combined.map((item) => [item.id, item])).values()];
+      unique.sort((a, b) => Number(a.id) - Number(b.id));
+      return { ...conversation, messages: unique };
+    }));
+    setChatMessagesAfter((previous) => ({ ...previous, [conversationId]: page.after }));
+    setOlderChatMessagesAvailable((previous) => ({ ...previous, [conversationId]: page.hasNext }));
+  };
+  const loadChatMessages = (conversationId: string) => {
+    if (sessionKind !== 'api') return;
+    void loadApiChatMessages(conversationId).catch((error: unknown) =>
+      showToast(errorMessage(error, 'Không tải được tin nhắn.'), 'error'));
+  };
+  const loadOlderChatMessages = (conversationId: string) => {
+    if (sessionKind !== 'api' || !olderChatMessagesAvailable[conversationId]) return;
+    const after = chatMessagesAfter[conversationId];
+    if (after == null) return;
+    void loadApiChatMessages(conversationId, after).catch((error: unknown) =>
+      showToast(errorMessage(error, 'Không tải thêm được tin nhắn.'), 'error'));
+  };
+
+  useEffect(() => {
+    if (sessionKind !== 'api') {
+      setApiConversations([]);
+      setChatConnectionError(null);
+      return;
+    }
+    let cancelled = false;
+    const refresh = () => void loadApiChatList().catch((error: unknown) => {
+      if (!cancelled) setChatConnectionError(errorMessage(error, 'Không tải được hội thoại.'));
+    });
+    refresh();
+    const socket = new ChatSocket((body) => {
+      refresh();
+      try {
+        const event = JSON.parse(body) as {
+          conversation_id?: number;
+          message?: { conversation_id?: number };
+          payload?: { conversation_id?: number };
+        };
+        const id = event.conversation_id ?? event.message?.conversation_id ?? event.payload?.conversation_id;
+        if (id != null) {
+          void loadApiChatMessages(String(id));
+          return;
+        }
+      } catch { /* Tin không có JSON vẫn làm mới danh sách hội thoại. */ }
+      apiConversationsRef.current.filter((item) => item.messages.length > 0)
+        .forEach((item) => { void loadApiChatMessages(item.id); });
+    }, () => setChatConnectionError(null));
+    chatSocketRef.current = socket;
+    void socket.connect().then(() => setChatConnectionError(null))
+      .catch((error: unknown) => {
+        if (!cancelled) setChatConnectionError(errorMessage(error, 'Không kết nối được chat thời gian thực.'));
+      });
+    const unsubscribe = tokenStore.subscribe(() => socket.reconnect());
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') refresh();
+    }, 30_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      unsubscribe();
+      socket.close();
+      if (chatSocketRef.current === socket) chatSocketRef.current = null;
+    };
+    // Mỗi tài khoản API sở hữu một kết nối chat.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionKind, rawCurrentUser.id]);
+
+  const conversations = sessionKind === 'api' ? apiConversations : getConversationsForAccount(
     conversationRecords,
     rawCurrentUser.id,
   ).map((conversation) => {
@@ -1451,11 +1737,61 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     );
   };
 
-  const saveProfilePhoto = (
+  const saveProfileChanges = async (
+    updates: Pick<User, 'name' | 'bio' | 'faculty' | 'classOrTitle'>,
+  ) => {
+    if (sessionKind !== 'api') {
+      updateCurrentUser(updates);
+      return true;
+    }
+    try {
+      const profile = await postsApi.updateMyProfile({
+        full_name: updates.name.trim(),
+        bio: updates.bio.trim(),
+      });
+      updateCurrentUser({
+        ...applyProfile(currentUser, profile),
+        name: profile?.full_name?.trim() || updates.name.trim(),
+        bio: profile?.bio ?? updates.bio.trim(),
+      });
+      showToast('Đã cập nhật hồ sơ.', 'success');
+      return true;
+    } catch (error: unknown) {
+      showToast(errorMessage(error, 'Không cập nhật được hồ sơ.'), 'error');
+      return false;
+    }
+  };
+
+  const saveProfilePhoto = async (
     kind: 'avatar' | 'cover',
     url: string,
     crop: ImageCrop,
+    file?: File,
   ) => {
+    if (sessionKind === 'api') {
+      if (!file && (url.startsWith('blob:') || url.startsWith('data:'))) {
+        showToast('Không xử lý được ảnh đã chọn.', 'error');
+        return false;
+      }
+      try {
+        const savedUrl = file
+          ? (await postsApi.uploadMedia(file, kind === 'avatar' ? 'AVATAR' : 'COVER')).url
+          : url;
+        const profile = await postsApi.updateMyProfile(kind === 'avatar'
+          ? { avatar_url: savedUrl } : { cover_url: savedUrl });
+        const updated = applyProfile(currentUser, profile);
+        updateCurrentUser(kind === 'avatar'
+          ? { avatar: updated.avatar === currentUser.avatar ? savedUrl : updated.avatar,
+              avatarCrop: { x: 50, y: 50, zoom: 1 } }
+          : { coverImage: updated.coverImage === currentUser.coverImage ? savedUrl : updated.coverImage,
+              coverCrop: { x: 50, y: 50, zoom: 1 } });
+        showToast('Đã cập nhật ảnh.', 'success');
+        return true;
+      } catch (error: unknown) {
+        showToast(errorMessage(error, 'Không cập nhật được ảnh.'), 'error');
+        return false;
+      }
+    }
     const previousUrl =
       kind === 'avatar' ? currentUser.avatar : currentUser.coverImage;
     const previousCrop =
@@ -1478,6 +1814,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         ? { avatar: url, avatarCrop: crop }
         : { coverImage: url, coverCrop: crop },
     );
+    return true;
   };
 
   // Sync dark mode class on root
@@ -1505,18 +1842,46 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   // Saved Searches
   const removeSavedSearch = (term: string) => {
-    setSavedSearches((prev) => prev.filter((s) => s !== term));
+    if (sessionKind !== 'api') {
+      setDemoSavedSearches((prev) => prev.filter((s) => s !== term));
+      return;
+    }
+    const saved = apiSavedSearches.find((item) => item.query_text === term);
+    if (saved?.saved_search_id == null) return;
+    void searchApi.deleteSaved(saved.saved_search_id)
+      .then(() => setApiSavedSearches((prev) => prev.filter((item) => item.saved_search_id !== saved.saved_search_id)))
+      .catch((error: unknown) => showToast(errorMessage(error, 'Không xóa được tìm kiếm.'), 'error'));
   };
 
   const clearAllSavedSearches = () => {
-    setSavedSearches([]);
-    showToast('Đã xóa toàn bộ lịch sử tìm kiếm', 'info');
+    if (sessionKind !== 'api') {
+      setDemoSavedSearches([]);
+      showToast('Đã xóa toàn bộ lịch sử tìm kiếm', 'info');
+      return;
+    }
+    void Promise.allSettled(apiSavedSearches.filter((item) => item.saved_search_id != null)
+      .map((item) => searchApi.deleteSaved(item.saved_search_id!)))
+      .then(async () => {
+        const { saved, trending } = await searchApi.getSaved();
+        setApiSavedSearches(saved);
+        setApiTrendingSearches(trending);
+        showToast(saved.length ? 'Một số tìm kiếm chưa xóa được.' : 'Đã xóa lịch sử tìm kiếm', saved.length ? 'warning' : 'info');
+      })
+      .catch((error: unknown) => showToast(errorMessage(error, 'Không xóa được lịch sử tìm kiếm.'), 'error'));
   };
 
   const triggerSearch = (query: string) => {
-    setSearchQuery(query);
-    if (query.trim() && !savedSearches.includes(query.trim())) {
-      setSavedSearches((prev) => [query.trim(), ...prev.slice(0, 9)]);
+    const text = query.trim();
+    setSearchQuery(text);
+    if (sessionKind === 'api' && text.length >= 2) {
+      void searchApi.record(text).then(() => searchApi.getSaved())
+        .then(({ saved, trending }) => {
+          setApiSavedSearches(saved);
+          setApiTrendingSearches(trending);
+        })
+        .catch((error: unknown) => showToast(errorMessage(error, 'Không lưu được lịch sử tìm kiếm.'), 'error'));
+    } else if (sessionKind !== 'api' && text && !demoSavedSearches.includes(text)) {
+      setDemoSavedSearches((prev) => [text, ...prev.slice(0, 9)]);
     }
     setActiveTab('search');
   };
@@ -1546,7 +1911,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
           content: postData.content?.trim() || undefined,
           media_urls: media.length ? media : undefined,
           visibility: postData.privacy || 'PUBLIC',
-          post_type: 'SOCIAL_POST',
+          post_type: postData.type === 'VIDEO' && role === 'LECTURER' ? 'LEARNING_VIDEO' : 'SOCIAL_POST',
+          subject_id: postData.type === 'VIDEO' && role === 'LECTURER'
+            ? postData.subjectId : undefined,
         });
         if (dto?.post_id != null) {
           const created = postFromApi(dto, currentUser);
@@ -1730,48 +2097,42 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       });
   };
 
-  const addComment = (
+  const addComment = async (
     postId: string,
     text: string,
     parentCommentId?: string,
   ) => {
-    if (!text.trim()) return;
+    if (!text.trim()) return false;
     const post = posts.find((item) => item.id === postId);
     if (
       !post ||
       (parentCommentId &&
         !post.comments?.some((item) => item.id === parentCommentId))
     )
-      return;
+      return false;
     if (isApiSession()) {
       const target = post.apiTarget;
       if (!target) {
         showToast('Hoạt động này chưa hỗ trợ bình luận.', 'info');
-        return;
+        return false;
       }
-      postsApi
-        .createComment(
+      try {
+        const dto = await postsApi.createComment(
           target.type,
           target.id,
           text.trim(),
           parentCommentId ? Number(parentCommentId) : undefined,
-        )
-        .then((dto) => {
-          if (!dto) return;
-          setPosts((previous) =>
-            appendComment(
-              previous,
-              postId,
-              commentFromApi(dto, currentUser),
-              parentCommentId,
-            ),
-          );
-          showToast('Đã gửi bình luận!', 'success');
-        })
-        .catch((error: unknown) =>
-          showToast(errorMessage(error, 'Không gửi được bình luận.'), 'error'),
         );
-      return;
+        if (!dto) throw new Error('Máy chủ không trả về bình luận vừa gửi.');
+        setPosts((previous) =>
+          appendComment(previous, postId, commentFromApi(dto, currentUser), parentCommentId),
+        );
+        showToast('Đã gửi bình luận!', 'success');
+        return true;
+      } catch (error: unknown) {
+        showToast(errorMessage(error, 'Không gửi được bình luận.'), 'error');
+        return false;
+      }
     }
     const newComment: CommentItem = {
       id: createId(),
@@ -1786,6 +2147,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       appendComment(previous, postId, newComment, parentCommentId),
     );
     showToast('Đã gửi bình luận!', 'success');
+    return true;
   };
 
   const loadingCommentsRef = useRef(new Set<string>());
@@ -1818,6 +2180,74 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         showToast(errorMessage(error, 'Không tải được bình luận.'), 'error'),
       )
       .finally(() => loadingCommentsRef.current.delete(postId));
+  };
+
+  const openPostById = async (postId: number) => {
+    if (sessionKind !== 'api') return;
+    try {
+      const dto = await postsApi.getPost(postId);
+      if (!dto) throw new Error('Bài viết không tồn tại hoặc bạn không có quyền xem.');
+      const post = postFromApi(dto, currentUser);
+      setPosts((previous) => [post, ...previous.filter((item) => item.id !== post.id)]);
+      setActivePostDetail(post);
+    } catch (error: unknown) {
+      showToast(errorMessage(error, 'Không mở được bài viết.'), 'error');
+    }
+  };
+
+  const ownComment = (postId: string, commentId: string) => {
+    const post = posts.find((item) => item.id === postId);
+    const comment = post?.comments?.flatMap((item) => [item, ...(item.replies ?? [])])
+      .find((item) => item.id === commentId);
+    const id = Number(commentId);
+    return sessionKind === 'api' && post?.apiTarget && comment &&
+      comment.author.id === currentUser.id && !comment.deleted &&
+      Number.isSafeInteger(id) && id > 0 ? id : null;
+  };
+
+  const replaceComment = (
+    postId: string,
+    commentId: string,
+    transform: (comment: CommentItem) => CommentItem,
+  ) => setPosts((previous) => previous.map((post) => post.id !== postId ? post : {
+    ...post,
+    comments: post.comments?.map((comment) => comment.id === commentId
+      ? transform(comment)
+      : { ...comment, replies: comment.replies?.map((reply) =>
+          reply.id === commentId ? transform(reply) : reply) }),
+  }));
+
+  const updateComment = async (postId: string, commentId: string, content: string) => {
+    const id = ownComment(postId, commentId);
+    if (!id || !content.trim()) return false;
+    try {
+      const updated = await postsApi.updateComment(id, content.trim());
+      replaceComment(postId, commentId, (comment) => ({
+        ...comment,
+        content: updated?.content ?? content.trim(),
+      }));
+      showToast('Đã sửa bình luận.', 'success');
+      return true;
+    } catch (error: unknown) {
+      showToast(errorMessage(error, 'Không sửa được bình luận.'), 'error');
+      return false;
+    }
+  };
+
+  const deleteComment = async (postId: string, commentId: string) => {
+    const id = ownComment(postId, commentId);
+    if (!id) return false;
+    try {
+      await postsApi.deleteComment(id);
+      replaceComment(postId, commentId, (comment) => ({
+        ...comment, content: 'Bình luận đã bị xoá.', deleted: true,
+      }));
+      showToast('Đã xóa bình luận.', 'success');
+      return true;
+    } catch (error: unknown) {
+      showToast(errorMessage(error, 'Không xóa được bình luận.'), 'error');
+      return false;
+    }
   };
 
   const deletePost = (postId: string) => {
@@ -1857,7 +2287,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     showToast('Đã xóa bài viết thành công!', 'info');
   };
 
-  const addLecturerNote = (postId: string, note: string) => {
+  const addLecturerNote = async (postId: string, note: string): Promise<boolean> => {
+    if (!note.trim() || role !== 'LECTURER') return false;
+    if (sessionKind === 'api') {
+      const post = posts.find((item) => item.id === postId);
+      if (post?.apiTarget?.type !== 'POST' || post.type !== 'QUESTION_APPROVED')
+        return false;
+      try {
+        await postsApi.updateLecturerNote(post.apiTarget.id, note.trim());
+        const fresh = await postsApi.getPost(post.apiTarget.id);
+        if (fresh) setPosts((previous) => previous.map((item) =>
+          item.id === postId ? { ...postFromApi(fresh, currentUser), comments: item.comments } : item));
+        showToast('Đã lưu ghi chú giảng viên.', 'success');
+        return true;
+      } catch (error: unknown) {
+        showToast(errorMessage(error, 'Không lưu được ghi chú giảng viên.'), 'error');
+        return false;
+      }
+    }
     setPosts((prev) =>
       prev.map((p) => {
         if (p.id === postId) {
@@ -1875,6 +2322,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       }),
     );
     showToast('Đã ghim ghi chú giảng viên!', 'success');
+    return true;
   };
 
   // Questions
@@ -2578,11 +3026,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   // Chat dock
   const openChatDock = (partnerUserId: string) => {
-    if (sessionKind !== 'demo') {
-      showToast(
-        'Trò chuyện bằng tài khoản API chưa được kết nối với máy chủ.',
-        'warning',
-      );
+    if (sessionKind === 'api') {
+      if (partnerUserId === currentUser.id) return;
+      const existing = apiConversations.find((item) => item.partner.id === partnerUserId);
+      if (existing) {
+        setActiveDockIds((previous) => [...previous.filter((id) => id !== existing.id).slice(-2), existing.id]);
+        setMinimizedDockIds((previous) => previous.filter((id) => id !== existing.id));
+        loadChatMessages(existing.id);
+        return;
+      }
+      const targetUserId = Number(partnerUserId);
+      if (!Number.isSafeInteger(targetUserId) || targetUserId <= 0) return;
+      void chatApi.createDirect(targetUserId).then((detail) => {
+        if (detail?.conversation_id == null) throw new Error('Không mở được hội thoại.');
+        const id = String(detail.conversation_id);
+        const conversation: Conversation = {
+          id, participantIds: [currentUser.id, partnerUserId],
+          partner: getUserById(partnerUserId), lastMessage: '',
+          lastMessageTime: '', unreadCount: 0, messages: [],
+        };
+        setApiConversations((previous) => [conversation, ...previous.filter((item) => item.id !== id)]);
+        setActiveDockIds((previous) => [...previous.filter((item) => item !== id).slice(-2), id]);
+        setMinimizedDockIds((previous) => previous.filter((item) => item !== id));
+        loadChatMessages(id);
+        void loadApiChatList().catch(() => undefined);
+      }).catch((error: unknown) => showToast(errorMessage(error, 'Không mở được hội thoại.'), 'error'));
       return;
     }
     if (partnerUserId === currentUser.id) return;
@@ -2630,6 +3098,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const markConversationRead = (conversationId: string) => {
+    if (sessionKind === 'api') {
+      const conversation = apiConversations.find((item) => item.id === conversationId);
+      if (!conversation?.unreadCount || !conversation.lastMessageId) return;
+      void chatSocketRef.current?.read(Number(conversationId), conversation.lastMessageId)
+        .then(() => setApiConversations((previous) => previous.map((item) =>
+          item.id === conversationId ? { ...item, unreadCount: 0 } : item)))
+        .catch((error: unknown) => showToast(errorMessage(error, 'Không đánh dấu được tin nhắn đã đọc.'), 'error'));
+      return;
+    }
     const conversation = conversations.find(
       (item) => item.id === conversationId,
     );
@@ -2649,16 +3126,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     );
   };
 
-  const sendMessage = (conversationId: string, text: string) => {
-    if (!text.trim()) return;
+  const sendMessage = async (conversationId: string, text: string): Promise<boolean> => {
+    if (!text.trim()) return false;
     const targetConv = conversations.find((c) => c.id === conversationId);
-    if (!targetConv) return;
+    if (!targetConv) return false;
     if (isBlockedEitherWay(targetConv.partner.id)) {
       showToast(
         'Không thể gửi tin nhắn vì hai người đang trong trạng thái chặn.',
         'error',
       );
-      return;
+      return false;
+    }
+    if (sessionKind === 'api') {
+      try {
+        if (!chatSocketRef.current) throw new Error('Chat chưa kết nối.');
+        await chatSocketRef.current.send(Number(conversationId), text.trim());
+        window.setTimeout(() => loadChatMessages(conversationId), 500);
+        return true;
+      } catch (error: unknown) {
+        showToast(errorMessage(error, 'Không gửi được tin nhắn.'), 'error');
+        return false;
+      }
     }
     const newMessage: MessageItem = {
       id: 'm_' + Date.now(),
@@ -2691,9 +3179,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         return c;
       }),
     );
+    return true;
   };
 
   const recallMessage = (conversationId: string, messageId: string) => {
+    if (sessionKind === 'api') {
+      const conversation = apiConversations.find((item) => item.id === conversationId);
+      const message = conversation?.messages.find((item) => item.id === messageId);
+      if (!message || message.senderId !== currentUser.id) return;
+      void chatApi.revoke(Number(messageId)).then(() => loadChatMessages(conversationId))
+        .catch((error: unknown) => showToast(errorMessage(error, 'Không thu hồi được tin nhắn.'), 'error'));
+      return;
+    }
     const conversation = conversations.find(
       (item) => item.id === conversationId,
     );
@@ -2725,17 +3222,33 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   // Notifications
   const markNotificationAsRead = (id: string) => {
+    if (sessionKind === 'api') {
+      const notification = apiNotifications.find((item) => item.id === id);
+      if (!notification || notification.isRead) return;
+      void notificationsApi.markRead(Number(id)).then(() => {
+        setApiNotifications((previous) => previous.map((item) => item.id === id ? { ...item, isRead: true } : item));
+        setApiUnreadCount((count) => Math.max(0, count - 1));
+      }).catch((error: unknown) => showToast(errorMessage(error, 'Không đánh dấu được thông báo.'), 'error'));
+      return;
+    }
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
     );
   };
 
   const markAllNotificationsAsRead = () => {
+    if (sessionKind === 'api') {
+      void notificationsApi.markAllRead().then(() => {
+        setApiNotifications((previous) => previous.map((item) => ({ ...item, isRead: true })));
+        setApiUnreadCount(0);
+      }).catch((error: unknown) => showToast(errorMessage(error, 'Không đánh dấu được thông báo.'), 'error'));
+      return;
+    }
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     showToast('Đã đánh dấu tất cả thông báo là đã đọc', 'info');
   };
 
-  const unreadNotificationsCount = notifications.filter(
+  const unreadNotificationsCount = sessionKind === 'api' ? apiUnreadCount : notifications.filter(
     (n) => !n.isRead,
   ).length;
 
@@ -2772,6 +3285,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         role,
         switchRole,
         updateCurrentUser,
+        saveProfileChanges,
         profilePhotoHistory,
         saveProfilePhoto,
         viewingUserId,
@@ -2784,6 +3298,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         searchQuery,
         setSearchQuery,
         savedSearches,
+        trendingSearches,
         removeSavedSearch,
         clearAllSavedSearches,
         triggerSearch,
@@ -2792,12 +3307,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         posts,
         isFeedLoading,
         feedError,
+        newFeedCount,
         reloadFeed,
+        apiFeedHasMore,
+        isFeedLoadingMore,
+        loadMoreFeed,
+        loadProfilePosts,
         createPost,
         updatePost,
         toggleLikePost,
         addComment,
+        updateComment,
+        deleteComment,
         loadPostComments,
+        openPostById,
         deletePost,
         addLecturerNote,
         friendStatuses,
@@ -2862,6 +3385,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         equipCosmetic,
         unequipCosmetic,
         conversations,
+        chatConnectionError,
+        loadChatMessages,
+        loadOlderChatMessages,
+        olderChatMessagesAvailable,
+        loadMoreConversations,
+        moreConversationsAvailable: sessionKind === 'api' && moreConversationsAvailable,
         openChatDock,
         markConversationRead,
         closeChatDock,
@@ -2872,6 +3401,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         sendMessage,
         recallMessage,
         notifications,
+        notificationsHasMore: sessionKind === 'api' && notificationsHasMore,
+        loadMoreNotifications,
         markNotificationAsRead,
         markAllNotificationsAsRead,
         unreadNotificationsCount,

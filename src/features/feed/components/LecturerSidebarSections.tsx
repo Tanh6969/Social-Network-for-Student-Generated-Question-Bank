@@ -81,9 +81,11 @@ export const LecturerSidebarSections: React.FC = () => {
 
       {/* Lớp phụ trách — GET /lecturer/course-classes/my-classes */}
       <div className="pt-3 mt-2 border-t border-fb-divider">
-        <h4 className="px-3 pb-1 text-xs font-semibold text-fb-text-2">
-          Lớp phụ trách
-        </h4>
+        <div className="flex items-center justify-between px-3 pb-1">
+          <h4 className="text-xs font-semibold text-fb-text-2">Lớp phụ trách</h4>
+          <button type="button" onClick={() => setActiveTab('classes')}
+            className="text-xs font-semibold text-fb-blue hover:underline">Quản lý lớp</button>
+        </div>
         {classesError && (
           <p role="alert" className="px-3 py-2 text-xs text-fb-danger">
             {classesError}

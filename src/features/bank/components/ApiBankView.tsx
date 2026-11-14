@@ -1,4 +1,5 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   ArrowUpDown,
@@ -257,6 +258,8 @@ const SideSetItem: React.FC<{
  */
 export const ApiBankView: React.FC = () => {
   const { setActiveTab, showToast, currentUser } = useApp();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const queryClient = useQueryClient();
   const [subject, setSubject] = useState<string>(ALL);
@@ -264,6 +267,16 @@ export const ApiBankView: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<SortKey>('NEWEST');
   const [practiceId, setPracticeId] = useState<number | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const sessionId = Number(params.get('session'));
+    const subjectId = Number(params.get('subject'));
+    if (params.has('session') && Number.isSafeInteger(sessionId) && sessionId > 0)
+      setPracticeId(sessionId);
+    if (params.has('subject') && Number.isSafeInteger(subjectId) && subjectId > 0)
+      setSubject(`id:${subjectId}`);
+  }, [location.search]);
 
   // Một lượt: danh sách + môn + thống kê mọi bộ; có cache (xem bankQuery.ts).
   const bank = useBankSnapshot(currentUser.id);
@@ -280,6 +293,7 @@ export const ApiBankView: React.FC = () => {
   const closeExamRoom = () => {
     const id = practiceId;
     setPracticeId(null);
+    if (new URLSearchParams(location.search).has('session')) navigate('/bank', { replace: true });
     if (id === null) return;
     // Cập nhật số liệu của bộ vừa làm (đã làm / đánh giá / bình luận).
     refreshSetStats(queryClient, currentUser.id, id).catch(() => undefined);

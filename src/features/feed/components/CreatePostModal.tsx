@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { FileText, ImagePlus, Video, X } from 'lucide-react';
 import { useApp } from '../../demo/context/AppContext';
-import { isApiSession } from '../../../api';
+import { examsApi, isApiSession, type SubjectResponse } from '../../../api';
 import type { Post, PostDocument } from '../../demo/types';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
 import { MediaLightbox } from '../../../shared/components/MediaLightbox';
@@ -45,7 +45,7 @@ function PostComposer({
   editingPost?: Post;
   initialMediaKind: 'image' | 'video' | 'document' | null;
 }) {
-  const { currentUser, createPost, updatePost, closePostComposer, showToast } =
+  const { currentUser, role, createPost, updatePost, closePostComposer, showToast } =
     useApp();
   const imageInput = useRef<HTMLInputElement>(null);
   const videoInput = useRef<HTMLInputElement>(null);
@@ -70,6 +70,8 @@ function PostComposer({
         : 'image',
   );
   const [fileError, setFileError] = useState<string | null>(null);
+  const [subjects, setSubjects] = useState<SubjectResponse[]>([]);
+  const [subjectId, setSubjectId] = useState<number | null>(editingPost?.subjectId ?? null);
   const [isReadingFiles, setIsReadingFiles] = useState(false);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const wordCount = countWords(content);
@@ -79,6 +81,14 @@ function PostComposer({
   const showImageAndDocumentActions = initialMediaKind !== 'video';
   const showVideoAction =
     initialMediaKind === null || initialMediaKind === 'video';
+
+  useEffect(() => {
+    if (!isApiSession() || role !== 'LECTURER' || mediaType !== 'video') return;
+    let cancelled = false;
+    examsApi.getAllSubjects().then((items) => { if (!cancelled) setSubjects(items); })
+      .catch(() => { if (!cancelled) setFileError('Không tải được danh sách môn học.'); });
+    return () => { cancelled = true; };
+  }, [role, mediaType]);
 
   useEffect(() => {
     const ownedUrls = newMediaUrls.current;
@@ -224,6 +234,11 @@ function PostComposer({
       isSaving
     )
       return;
+    if (isApiSession() && role === 'LECTURER' && mediaType === 'video' &&
+      mediaUrls.length && !subjectId) {
+      setFileError('Chọn môn học cho video bài giảng.');
+      return;
+    }
     const apiSession = isApiSession();
     // Demo giữ blob URL trong bài viết nên không được thu hồi khi đóng form;
     // phiên thật dùng URL máy chủ nên blob được thu hồi bình thường.
@@ -256,6 +271,7 @@ function PostComposer({
           documents,
           type:
             mediaType === 'video' && mediaUrls.length ? 'VIDEO' : 'KNOWLEDGE',
+          subjectId: subjectId ?? undefined,
         },
         mediaFiles.current,
       );
@@ -295,6 +311,19 @@ function PostComposer({
             <AvatarWithFrame user={currentUser} size="md" />
             <p className="text-sm font-bold text-fb-text">{currentUser.name}</p>
           </div>
+          {isApiSession() && role === 'LECTURER' && mediaType === 'video' && mediaUrls.length > 0 && (
+            <label className="block text-xs font-semibold text-fb-text">
+              Môn học của video bài giảng
+              <select value={subjectId ?? ''}
+                onChange={(event) => setSubjectId(Number(event.target.value) || null)}
+                className="mt-1 block w-full rounded-lg border border-fb-divider bg-fb-input p-2 text-fb-text">
+                <option value="">Chọn môn học</option>
+                {subjects.filter((subject) => subject.subject_id != null).map((subject) => (
+                  <option key={subject.subject_id} value={subject.subject_id}>{subject.name}</option>
+                ))}
+              </select>
+            </label>
+          )}
           <label htmlFor="post-content" className="sr-only">
             Nội dung bài viết
           </label>

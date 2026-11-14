@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '../../features/demo/context/AppContext';
 import { AvatarWithFrame } from './AvatarWithFrame';
 import { AutoScrollArea } from './AutoScrollArea';
@@ -21,6 +21,8 @@ export const ChatDock: React.FC = () => {
     minimizeChatDock,
     restoreChatDock,
     sendMessage,
+    loadChatMessages,
+    sessionKind,
     recallMessage,
     currentUser,
     blockUser,
@@ -38,18 +40,25 @@ export const ChatDock: React.FC = () => {
     msgId: string;
   } | null>(null);
 
-  const handleSend = (convId: string) => {
+  useEffect(() => {
+    if (sessionKind !== 'api') return;
+    activeDockIds.forEach(loadChatMessages);
+    // Chỉ tải khi danh sách cửa sổ chat thay đổi.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionKind, activeDockIds.join('|')]);
+
+  const handleSend = async (convId: string) => {
     const text = inputTexts[convId] || '';
     if (text.trim()) {
-      sendMessage(convId, text);
-      setInputTexts((prev) => ({ ...prev, [convId]: '' }));
+      if (await sendMessage(convId, text))
+        setInputTexts((prev) => ({ ...prev, [convId]: '' }));
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, convId: string) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSend(convId);
+      void handleSend(convId);
     }
   };
 
@@ -99,10 +108,11 @@ export const ChatDock: React.FC = () => {
             <div className="px-3 py-2.5 bg-fb-card border-b border-fb-divider flex items-center justify-between shadow-2xs">
               <div
                 onClick={() => {
+                  if (conv.isGroup) return;
                   setViewingUserId(conv.partner.id);
                   setActiveTab('profile');
                 }}
-                className="flex items-center gap-2 truncate cursor-pointer"
+                className={`flex items-center gap-2 truncate ${conv.isGroup ? '' : 'cursor-pointer'}`}
               >
                 <AvatarWithFrame user={conv.partner} size="sm" />
                 <div className="truncate">
@@ -125,7 +135,7 @@ export const ChatDock: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-1 text-fb-text-2">
-                {!isBlocked && (
+                {!conv.isGroup && !isBlocked && (
                   <button
                     onClick={() =>
                       blockUser(conv.partner.id, 'Chặn từ cửa sổ Chat Dock')

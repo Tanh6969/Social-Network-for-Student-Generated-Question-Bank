@@ -139,7 +139,7 @@ export function useAuthSession(notify: Notify) {
 
   const updateCurrentUser = (updates: Partial<User>) => {
     setCurrentUser((previous) => ({ ...previous, ...updates }));
-    notify('Đã cập nhật hồ sơ trên giao diện demo.', 'info');
+    if (sessionKind === 'demo') notify('Đã cập nhật hồ sơ trên giao diện demo.', 'info');
   };
 
   return {

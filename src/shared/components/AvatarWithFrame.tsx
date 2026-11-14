@@ -31,7 +31,7 @@ export const AvatarWithFrame: React.FC<AvatarWithFrameProps> = ({
   };
 
   const getFrameRingClass = () => {
-    if (!user.equippedFrameId) return '';
+    if (user.frameUrl || !user.equippedFrameId) return '';
     if (user.equippedFrameId === 'frame_gold') {
       return 'ring-2 ring-amber-400 ring-offset-2 ring-offset-white dark:ring-offset-[#242526] shadow-[0_0_8px_rgba(251,191,36,0.5)]';
     }
@@ -65,6 +65,11 @@ export const AvatarWithFrame: React.FC<AvatarWithFrameProps> = ({
           }}
         />
       </span>
+
+      {user.frameUrl && (
+        <img src={user.frameUrl} alt="" aria-hidden="true"
+          className="pointer-events-none absolute -inset-[12%] h-[124%] w-[124%] object-contain" />
+      )}
 
       {/* Online indicator dot */}
       {showOnline && user.isOnline && isPresenceVisible(user.id) && (

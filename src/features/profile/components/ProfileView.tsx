@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useApp } from '../../demo/context/AppContext';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
 import { PostContent } from '../../feed/components/PostContent';
@@ -12,6 +12,7 @@ import {
 } from '../../../shared/components/MediaLightbox';
 import { ProfilePhotoEditor, type PhotoOption } from './ProfilePhotoEditor';
 import { ProfilePhotoLibrary } from './ProfilePhotoLibrary';
+import { ProfileBadges } from './ProfileBadges';
 import { EditProfileModal } from './EditProfileModal';
 import { formatPostTime } from '../../feed/postUtils';
 import { getProfileRelationAction } from '../profileRelations';
@@ -65,14 +66,16 @@ export const ProfileView: React.FC = () => {
     openChatDock,
     showToast,
     openReportModal,
-    updateCurrentUser,
+    saveProfileChanges,
+    sessionKind,
     profilePhotoHistory,
     saveProfilePhoto,
+    loadProfilePosts,
     viewedProfileError,
   } = useApp();
 
   const [activeTab, setActiveTabLocal] = useState<
-    'POSTS' | 'ABOUT' | 'PHOTOS' | 'FRIENDS' | 'QUESTION_SETS'
+    'POSTS' | 'ABOUT' | 'PHOTOS' | 'FRIENDS' | 'QUESTION_SETS' | 'BADGES'
   >('POSTS');
   const [activeMenuPostId, setActiveMenuPostId] = useState<string | null>(null);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -85,11 +88,35 @@ export const ProfileView: React.FC = () => {
     index: number;
   } | null>(null);
   const profilePostsSentinelRef = useRef<HTMLDivElement>(null);
+  const loadProfilePostsRef = useRef(loadProfilePosts);
+  useEffect(() => { loadProfilePostsRef.current = loadProfilePosts; }, [loadProfilePosts]);
+  const [profileAfter, setProfileAfter] = useState<number | undefined>();
+  const [profileHasMore, setProfileHasMore] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileLoadingMore, setProfileLoadingMore] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   const targetUser: User = viewingUserId
     ? getUserById(viewingUserId)
     : currentUser;
   const isMe = targetUser.id === currentUser.id;
+  useEffect(() => {
+    if (sessionKind !== 'api') return;
+    let cancelled = false;
+    setProfileLoading(true);
+    setProfileError(null);
+    setProfileHasMore(false);
+    setProfileAfter(undefined);
+    void loadProfilePostsRef.current(targetUser.id).then((page) => {
+      if (cancelled) return;
+      setProfileHasMore(page.hasNext);
+      setProfileAfter(page.after);
+    }).catch(() => {
+      if (!cancelled) setProfileError('Không tải được bài viết của tài khoản này.');
+    }).finally(() => { if (!cancelled) setProfileLoading(false); });
+    return () => { cancelled = true; };
+    // Chỉ tải lại khi đổi tài khoản/trang cá nhân.
+  }, [sessionKind, targetUser.id]);
   const profileFriends = getFriendsOfUser(targetUser.id);
   const relationAction = getProfileRelationAction(
     role,
@@ -118,9 +145,35 @@ export const ProfileView: React.FC = () => {
     profilePostsSentinelRef,
     targetUser.id,
   );
-  const photoHistory = profilePhotoHistory.filter(
-    (photo) => photo.userId === targetUser.id,
-  );
+  const loadProfileMore = useCallback(async () => {
+    if (!profileHasMore || profileAfter == null || profileLoadingMore) return;
+    setProfileLoadingMore(true);
+    setProfileError(null);
+    try {
+      const page = await loadProfilePostsRef.current(targetUser.id, profileAfter);
+      setProfileHasMore(page.hasNext);
+      setProfileAfter(page.after);
+    } catch {
+      setProfileError('Không tải thêm được bài viết.');
+    } finally {
+      setProfileLoadingMore(false);
+    }
+  }, [profileHasMore, profileAfter, profileLoadingMore, targetUser.id]);
+  useEffect(() => {
+    if (sessionKind !== 'api' || activeTab !== 'POSTS' || profilePostPages.hasMore ||
+      !profileHasMore || profileLoadingMore) return;
+    const onScroll = () => {
+      if (window.scrollY <= 0) return;
+      const sentinel = profilePostsSentinelRef.current;
+      if (sentinel && sentinel.getBoundingClientRect().top <= window.innerHeight + 100)
+        void loadProfileMore();
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [sessionKind, activeTab, profilePostPages.hasMore, profileHasMore, profileLoadingMore, loadProfileMore]);
+  const photoHistory = sessionKind === 'demo'
+    ? profilePhotoHistory.filter((photo) => photo.userId === targetUser.id)
+    : [];
   const avatarPhotos = [
     {
       id: 'avatar-current',
@@ -415,6 +468,7 @@ export const ProfileView: React.FC = () => {
               { id: 'POSTS', label: 'Bài viết' },
               { id: 'ABOUT', label: 'Giới thiệu' },
               { id: 'PHOTOS', label: 'Ảnh' },
+              { id: 'BADGES', label: 'Huy hiệu' },
               { id: 'FRIENDS', label: `Bạn bè (${targetUser.friendsCount})` },
               // Bộ câu hỏi chỉ có ở sinh viên (GET /users/{userId}/sessions)
               ...(targetUser.role === 'STUDENT'
@@ -441,7 +495,7 @@ export const ProfileView: React.FC = () => {
       </div>
 
       {activeTab === 'PHOTOS' && (
-        <ProfilePhotoLibrary
+        <><ProfilePhotoLibrary
           avatarPhotos={avatarPhotos}
           coverPhotos={coverPhotos}
           postPhotos={postPhotos}
@@ -455,7 +509,15 @@ export const ProfileView: React.FC = () => {
           }
           onOpenPostPhoto={(post, index) => openPostMedia(post, index)}
         />
+        {sessionKind === 'api' && profileHasMore &&
+          <button type="button" disabled={profileLoadingMore} onClick={() => void loadProfileMore()}
+            className="mx-auto mt-4 block rounded-lg bg-fb-card px-4 py-2 text-sm font-semibold text-fb-blue disabled:opacity-50">
+            {profileLoadingMore ? 'Đang tải…' : 'Xem thêm ảnh từ bài viết'}
+          </button>}
+        </>
       )}
+
+      {activeTab === 'BADGES' && <ProfileBadges userId={targetUser.id} isMe={isMe} />}
 
       {/* ================= 2 CỘT DƯỚI ================= */}
       {activeTab === 'QUESTION_SETS' && targetUser.role === 'STUDENT' && (
@@ -466,7 +528,7 @@ export const ProfileView: React.FC = () => {
         />
       )}
 
-      {activeTab !== 'PHOTOS' && activeTab !== 'QUESTION_SETS' && (
+      {activeTab !== 'PHOTOS' && activeTab !== 'QUESTION_SETS' && activeTab !== 'BADGES' && (
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mt-4 px-2 sm:px-0">
           {/* CỘT TRÁI (360px): Giới thiệu & Bạn bè (5 cols) */}
           <div className="md:col-span-5 space-y-4 md:sticky md:top-18 md:self-start">
@@ -645,6 +707,8 @@ export const ProfileView: React.FC = () => {
             {activeTab === 'POSTS' && (
               <>
                 {isMe && <PostComposerCard />}
+                {profileError && <p role="alert" className="rounded-lg bg-fb-card p-4 text-sm text-fb-danger">{profileError}</p>}
+                {profileLoading && userPosts.length === 0 && <PostListSkeleton count={2} />}
                 {profilePostPages.visiblePosts.map((post) => (
                   <article
                     key={post.id}
@@ -836,20 +900,23 @@ export const ProfileView: React.FC = () => {
                   ref={profilePostsSentinelRef}
                   className="py-3 text-center text-xs text-fb-text-2"
                 >
-                  {profilePostPages.isLoadingMore && (
+                  {(profilePostPages.isLoadingMore || profileLoadingMore) && (
                     <PostListSkeleton count={1} />
                   )}
-                  {profilePostPages.hasMore &&
-                    !profilePostPages.isLoadingMore && (
+                  {(profilePostPages.hasMore || (sessionKind === 'api' && profileHasMore)) &&
+                    !profilePostPages.isLoadingMore && !profileLoadingMore && (
                       <button
                         type="button"
-                        onClick={profilePostPages.loadMore}
+                        onClick={() => {
+                          if (profilePostPages.hasMore) profilePostPages.loadMore();
+                          else void loadProfileMore();
+                        }}
                         className="font-semibold text-fb-blue hover:underline"
                       >
                         Xem thêm bài viết
                       </button>
                     )}
-                  {!profilePostPages.hasMore &&
+                  {!profilePostPages.hasMore && !(sessionKind === 'api' && profileHasMore) &&
                     profilePostPages.visiblePosts.length > 0 && (
                       <span>Đã xem hết bài viết.</span>
                     )}
@@ -878,10 +945,11 @@ export const ProfileView: React.FC = () => {
                 ? targetUser.avatar
                 : targetUser.coverImage),
           )}
-          onSave={(url, crop) => {
-            saveProfilePhoto(editorKind, url, crop);
-            setEditorKind(null);
-            showToast('Đã cập nhật ảnh.', 'success');
+          persistToApi={sessionKind === 'api'}
+          onSave={async (url, crop, file) => {
+            const saved = await saveProfilePhoto(editorKind, url, crop, file);
+            if (saved) setEditorKind(null);
+            return saved;
           }}
           onClose={() => setEditorKind(null)}
         />
@@ -889,10 +957,12 @@ export const ProfileView: React.FC = () => {
       {isEditingProfile && isMe && (
         <EditProfileModal
           user={currentUser}
+          persistToApi={sessionKind === 'api'}
           onClose={() => setIsEditingProfile(false)}
-          onSave={(updates) => {
-            updateCurrentUser(updates);
-            setIsEditingProfile(false);
+          onSave={async (updates) => {
+            const saved = await saveProfileChanges(updates);
+            if (saved) setIsEditingProfile(false);
+            return saved;
           }}
         />
       )}

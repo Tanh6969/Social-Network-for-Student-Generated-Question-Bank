@@ -2,12 +2,14 @@ import type { MainTab, Role } from '../features/demo/types';
 
 export const tabPaths: Record<MainTab, string> = {
   feed: '/feed',
+  video: '/videos',
   bank: '/bank',
   'lecturer-bank': '/lecturer-bank',
   propose: '/propose',
   game: '/games',
   friends: '/friends',
   review: '/review',
+  classes: '/classes',
   messenger: '/messages',
   profile: '/profile',
   cosmetics: '/cosmetics',
@@ -33,6 +35,6 @@ export function postLoginDestination(search: string): string {
 }
 
 export function canAccessTab(role: Role, tab: MainTab): boolean {
-  const lecturerOnlyTabs: MainTab[] = ['review', 'lecturer-bank', 'exams'];
+  const lecturerOnlyTabs: MainTab[] = ['review', 'lecturer-bank', 'exams', 'classes'];
   return role === 'LECTURER' || !lecturerOnlyTabs.includes(tab);
 }

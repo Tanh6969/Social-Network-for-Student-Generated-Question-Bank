@@ -40,6 +40,7 @@ export function applyProfile(
     name: profile.full_name?.trim() || user.name,
     avatar: profile.avatar_url || user.avatar,
     coverImage: profile.cover_url || user.coverImage,
+    frameUrl: profile.frame_url || undefined,
     bio: profile.bio ?? user.bio,
     faculty: profile.school_faculty || user.faculty,
     classOrTitle: profile.class_name || user.classOrTitle,

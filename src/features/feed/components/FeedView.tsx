@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { useApp } from '../../demo/context/AppContext';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
@@ -30,10 +30,12 @@ import {
   Ban,
 } from 'lucide-react';
 import { PostListSkeleton } from '../../../shared/components/Skeleton';
+import { gamesApi, type Game6ActiveSessionResponse, type LeaderboardResponse } from '../../../api/games';
 
 export const FeedView: React.FC = () => {
   const {
     currentUser,
+    sessionKind,
     role,
     posts,
     activePostDetail,
@@ -59,7 +61,11 @@ export const FeedView: React.FC = () => {
     openReportModal,
     isFeedLoading,
     feedError,
+    newFeedCount,
     reloadFeed,
+    apiFeedHasMore,
+    isFeedLoadingMore,
+    loadMoreFeed,
   } = useApp();
   const location = useLocation();
   const navigate = useNavigate();
@@ -67,9 +73,22 @@ export const FeedView: React.FC = () => {
     new URLSearchParams(location.search).has('post') && !activePostDetail;
 
   const [activeMenuPostId, setActiveMenuPostId] = useState<string | null>(null);
+  const [apiLeaderboard, setApiLeaderboard] = useState<LeaderboardResponse | null>(null);
+  const [apiActiveGame, setApiActiveGame] = useState<Game6ActiveSessionResponse | null>(null);
   const feedSentinelRef = useRef<HTMLDivElement>(null);
 
   const friendIds = new Set(friendsList.map((f) => f.id));
+  useEffect(() => {
+    if (sessionKind !== 'api') return;
+    let cancelled = false;
+    void gamesApi.getLeaderboard({ period: 'SEMESTER', limit: 3 })
+      .then((result) => { if (!cancelled) setApiLeaderboard(result); })
+      .catch(() => { if (!cancelled) setApiLeaderboard(null); });
+    void gamesApi.getGame6ActiveSession()
+      .then((result) => { if (!cancelled) setApiActiveGame(result); })
+      .catch(() => { if (!cancelled) setApiActiveGame(null); });
+    return () => { cancelled = true; };
+  }, [sessionKind]);
   const incomingRequests = allUsers.filter(
     (u) =>
       friendStatuses[u.id] === 'REQUEST_RECEIVED' && !isBlockedEitherWay(u.id),
@@ -81,7 +100,20 @@ export const FeedView: React.FC = () => {
   );
   const orderedPosts = sortFeedPosts(visiblePosts, currentUser.id, friendIds);
   const feedPages = useFeedPages(orderedPosts, feedSentinelRef);
-  const myRank = leaderboard.find((l) => l.user.id === currentUser.id)?.rank;
+  useEffect(() => {
+    if (sessionKind !== 'api' || feedPages.hasMore || !apiFeedHasMore || isFeedLoadingMore) return;
+    const onScroll = () => {
+      if (window.scrollY <= 0) return;
+      const sentinel = feedSentinelRef.current;
+      if (sentinel && sentinel.getBoundingClientRect().top <= window.innerHeight + 100)
+        void loadMoreFeed();
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [sessionKind, feedPages.hasMore, apiFeedHasMore, isFeedLoadingMore, loadMoreFeed]);
+  const myRank = sessionKind === 'api'
+    ? apiLeaderboard?.my_rank?.rank
+    : leaderboard.find((l) => l.user.id === currentUser.id)?.rank;
 
   return (
     <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 flex justify-between items-start gap-4 xl:gap-6">
@@ -133,6 +165,13 @@ export const FeedView: React.FC = () => {
       {/* ================= CỘT GIỮA (cuộn nội dung, có khoảng trống 2 bên) ================= */}
       <main className="flex-1 min-w-0 max-w-[760px] mx-auto space-y-4">
         <PostComposerCard />
+
+        {newFeedCount > 0 && (
+          <button type="button" onClick={reloadFeed}
+            className="w-full rounded-full bg-fb-card px-4 py-2.5 text-center text-sm font-semibold text-fb-blue shadow-fb-card hover:bg-fb-hover">
+            Có {newFeedCount} cập nhật mới · Xem ngay
+          </button>
+        )}
 
         {/* Feed Posts */}
         {unavailablePost && (
@@ -366,19 +405,24 @@ export const FeedView: React.FC = () => {
           ref={feedSentinelRef}
           className="py-3 text-center text-xs text-fb-text-2"
         >
-          {feedPages.isLoadingMore && (
+          {(feedPages.isLoadingMore || isFeedLoadingMore) && (
             <PostListSkeleton count={1} />
           )}
-          {feedPages.hasMore && !feedPages.isLoadingMore && (
+          {(feedPages.hasMore || (sessionKind === 'api' && apiFeedHasMore)) &&
+            !feedPages.isLoadingMore && !isFeedLoadingMore && (
             <button
               type="button"
-              onClick={feedPages.loadMore}
+              onClick={() => {
+                if (feedPages.hasMore) feedPages.loadMore();
+                else void loadMoreFeed();
+              }}
               className="font-semibold text-fb-blue hover:underline"
             >
               Xem thêm bài viết
             </button>
           )}
-          {!feedPages.hasMore && feedPages.visiblePosts.length > 0 && (
+          {!feedPages.hasMore && !(sessionKind === 'api' && apiFeedHasMore) &&
+            feedPages.visiblePosts.length > 0 && (
             <span>Đã xem hết bài viết.</span>
           )}
         </div>
@@ -387,7 +431,21 @@ export const FeedView: React.FC = () => {
       {/* ================= CỘT PHẢI (sticky sát lề phải) ================= */}
       <aside className="scrollbar-hover hidden xl:block w-[300px] xl:w-[320px] 2xl:w-[340px] shrink-0 sticky top-18 h-[calc(100vh-5rem)] overflow-y-auto space-y-4 select-none pl-1">
         {/* Minigame Widget */}
-        {minigames.length > 0 && (
+        {sessionKind === 'api' && apiActiveGame && (
+          <div className="rounded-lg bg-fb-card p-4 shadow-fb-card">
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-fb-text">
+              <Gamepad2 className="h-4 w-4 text-fb-blue" /> Minigame tuần
+            </span>
+            <p className="mt-2 text-xs text-fb-text-2">
+              Thử thách tuần {apiActiveGame.week_number ?? ''} đang diễn ra.
+            </p>
+            <button type="button" onClick={() => setActiveTab('game')}
+              className="mt-3 w-full rounded-lg bg-fb-blue py-2 text-xs font-semibold text-white">
+              Tham gia ngay
+            </button>
+          </div>
+        )}
+        {sessionKind === 'demo' && minigames.length > 0 && (
           <div className="bg-fb-card rounded-lg shadow-fb-card p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold text-fb-text flex items-center gap-1.5">
@@ -484,7 +542,32 @@ export const FeedView: React.FC = () => {
         </div>
 
         {/* Top 3 Bảng xếp hạng tuần */}
-        <div className="bg-fb-card rounded-lg shadow-fb-card p-4">
+        {sessionKind === 'api' && apiLeaderboard && (
+          <div className="rounded-lg bg-fb-card p-4 shadow-fb-card">
+            <div className="mb-3 flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-xs font-semibold text-fb-text-2">
+                <Trophy className="h-3.5 w-3.5" /> Top cống hiến học kỳ
+              </span>
+              <button type="button" onClick={() => setActiveTab('game')}
+                className="text-xs font-medium text-fb-blue hover:underline">Bảng vàng</button>
+            </div>
+            {(apiLeaderboard.entries ?? []).slice(0, 3).map((entry) => (
+              <button key={entry.user_id} type="button"
+                onClick={() => { if (entry.user_id != null) {
+                  setViewingUserId(String(entry.user_id)); setActiveTab('profile');
+                } }}
+                className="flex w-full items-center gap-2 rounded-lg p-1.5 text-left hover:bg-fb-hover">
+                <span className="w-5 text-xs font-bold text-fb-blue">{entry.rank}</span>
+                <img src={entry.avatar_url || '/default-avatar.svg'} alt=""
+                  className="h-8 w-8 rounded-full object-cover" />
+                <span className="min-w-0 flex-1 truncate text-xs font-medium text-fb-text">
+                  {entry.full_name || `Người dùng #${entry.user_id}`}</span>
+                <span className="text-xs text-fb-text-2">{entry.total_points ?? 0} đ</span>
+              </button>
+            ))}
+          </div>
+        )}
+        {sessionKind === 'demo' && <div className="bg-fb-card rounded-lg shadow-fb-card p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold text-fb-text-2 flex items-center gap-1.5">
               <Trophy className="w-3.5 h-3.5 text-fb-text-3" />
@@ -531,7 +614,7 @@ export const FeedView: React.FC = () => {
               </div>
             ))}
           </div>
-        </div>
+        </div>}
       </aside>
     </div>
   );
