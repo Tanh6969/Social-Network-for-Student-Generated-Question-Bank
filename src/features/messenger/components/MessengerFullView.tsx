@@ -531,7 +531,7 @@ export const MessengerFullView: React.FC = () => {
                 >
                   <BellOff className="w-4 h-4 text-fb-text-2" />
                   <span>Tắt thông báo</span>
-                </button>}
+                </button>
 
                 {!isApiSession() && <button
                   type="button"
