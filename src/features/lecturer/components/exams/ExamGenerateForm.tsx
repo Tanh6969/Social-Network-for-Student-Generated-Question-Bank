@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import {
   examsApi,
+  errorMessage,
   GenerateExamRequest,
   ExamDetailResponse,
   SubjectResponse,
@@ -87,8 +88,10 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
             setSubjectId(subs[0].subject_id || '');
           }
         }
-      } catch {
-        // Fallback gracefully
+      } catch (err: unknown) {
+        if (isMounted) {
+          setFormError(errorMessage(err, 'Không tải được danh sách môn học / lớp học phần.'));
+        }
       } finally {
         if (isMounted) setLoadingData(false);
       }

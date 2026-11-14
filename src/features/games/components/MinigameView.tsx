@@ -16,6 +16,7 @@ import { gamesGateway } from '../gamesGateway';
 import { LeaderboardPanel } from './LeaderboardPanel';
 import { PredictionHistory } from './PredictionHistory';
 import { StudentGameCenter } from './StudentGameCenter';
+import { CardListSkeleton, SkeletonRows } from '../../../shared/components/Skeleton';
 
 type StudentMenu = 'CENTER' | 'LEADERBOARD' | 'BADGES' | 'HISTORY';
 
@@ -40,7 +41,7 @@ function BadgesPanel({
       </h2>
       {error && <p className="text-sm text-fb-danger">{error}</p>}
       {!badges && !error && (
-        <p className="py-6 text-center text-sm text-fb-text-2">Đang tải…</p>
+        <SkeletonRows count={3} label="Đang tải huy hiệu…" />
       )}
       {badges?.length === 0 && (
         <p className="rounded-lg bg-fb-card p-8 text-center text-sm text-fb-text-2 shadow-fb-card">
@@ -221,9 +222,7 @@ export const MinigameView: React.FC = () => {
         <main className="w-full min-w-0 flex-1">
           {menu === 'CENTER' &&
             (predictions === null ? (
-              <p className="py-10 text-center text-sm text-fb-text-2">
-                Đang tải…
-              </p>
+              <CardListSkeleton count={3} withAction={false} />
             ) : (
               <StudentGameCenter
                 predictions={predictions}

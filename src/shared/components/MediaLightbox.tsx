@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { lockPageScroll } from '../lockPageScroll';
 import {
   ChevronLeft,
   ChevronRight,
@@ -35,11 +36,10 @@ export function MediaLightbox({
 
   useEffect(() => {
     const previousFocus = document.activeElement as HTMLElement | null;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const unlockScroll = lockPageScroll();
     closeButton.current?.focus();
     return () => {
-      document.body.style.overflow = previousOverflow;
+      unlockScroll();
       previousFocus?.focus();
     };
   }, []);

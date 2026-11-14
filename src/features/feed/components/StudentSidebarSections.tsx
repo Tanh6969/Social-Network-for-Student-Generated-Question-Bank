@@ -5,6 +5,7 @@ import { tabPaths } from '../../../app/routes';
 import type { SubjectResponse } from '../../../api';
 import { proposalGateway } from '../../proposals/proposalGateway';
 import { BookOpen, CheckCircle, Clock, Eye } from 'lucide-react';
+import { SkeletonRows } from '../../../shared/components/Skeleton';
 
 type SessionStatus = 'PENDING' | 'REVIEWING' | 'RESOLVED';
 
@@ -107,10 +108,13 @@ export const StudentSidebarSections: React.FC = () => {
           Môn học của tôi
         </h4>
         <div className="space-y-0.5 text-sm font-medium text-fb-text">
-          {subjects === null && (
+          {subjects === null && subjectsFailed && (
             <p className="px-3 py-2 text-xs text-fb-text-3">
-              {subjectsFailed ? 'Không tải được danh sách môn học.' : 'Đang tải...'}
+              Không tải được danh sách môn học.
             </p>
+          )}
+          {subjects === null && !subjectsFailed && (
+            <SkeletonRows count={3} label="Đang tải môn học…" />
           )}
           {subjects?.length === 0 && (
             <p className="px-3 py-2 text-xs text-fb-text-3">

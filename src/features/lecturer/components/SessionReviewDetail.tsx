@@ -32,6 +32,7 @@ import { CompleteReviewModal } from './CompleteReviewModal';
 import { EditQuestionModal } from './EditQuestionModal';
 import { QuestionAiRefineModal, type RefinedContent } from './QuestionAiRefineModal';
 import type { BasketItem } from './ReviewBasketBar';
+import { QuestionListSkeleton } from '../../../shared/components/Skeleton';
 
 interface SessionReviewDetailProps {
   session: PendingSessionItemDto;
@@ -364,10 +365,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
 
       {/* Loading state */}
       {loading && (
-        <div className="py-20 flex flex-col items-center justify-center text-fb-text-2">
-          <div className="w-8 h-8 border-3 border-fb-blue border-t-transparent rounded-full animate-spin mb-3" />
-          <p className="text-sm">Đang tải danh sách câu hỏi trong phiên...</p>
-        </div>
+        <QuestionListSkeleton count={3} label="Đang tải danh sách câu hỏi trong phiên…" />
       )}
 
       {/* Error state */}

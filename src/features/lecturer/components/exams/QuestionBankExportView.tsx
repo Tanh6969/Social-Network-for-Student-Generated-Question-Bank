@@ -12,7 +12,7 @@ import {
   Layers,
   Database,
 } from 'lucide-react';
-import { examsApi, ExportResponse, SubjectResponse } from '../../../../api';
+import { examsApi, errorMessage, ExportResponse, SubjectResponse } from '../../../../api';
 
 interface QuestionBankExportViewProps {
   showToast: (message: string, type: 'success' | 'info' | 'warning' | 'error') => void;
@@ -42,8 +42,8 @@ export const QuestionBankExportView: React.FC<QuestionBankExportViewProps> = ({ 
             setSelectedSubjectId(list[0].subject_id || '');
           }
         }
-      } catch {
-        // Fallback gracefully
+      } catch (err: unknown) {
+        if (isMounted) setError(errorMessage(err, 'Không tải được danh sách môn học.'));
       } finally {
         if (isMounted) setLoadingSubjects(false);
       }

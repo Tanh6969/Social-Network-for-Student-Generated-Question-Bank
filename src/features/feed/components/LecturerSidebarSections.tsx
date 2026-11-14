@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../../demo/context/AppContext';
-import { examsApi, CourseClassResponse } from '../../../api';
+import { examsApi, errorMessage, CourseClassResponse } from '../../../api';
 import { proposalGateway } from '../../proposals/proposalGateway';
 import { ClassStudentsModal } from '../../lecturer/components/ClassStudentsModal';
 import { ChevronRight, ClipboardCheck, Gamepad2 } from 'lucide-react';
+import { SkeletonRows } from '../../../shared/components/Skeleton';
 
 // Màu nhận diện theo môn học, xoay vòng theo subject_id
 const SUBJECT_COLORS = [
@@ -20,6 +21,7 @@ export const LecturerSidebarSections: React.FC = () => {
   const [pendingCount, setPendingCount] = useState<string | null>(null);
   const [classes, setClasses] = useState<CourseClassResponse[] | null>(null);
   const [openClass, setOpenClass] = useState<CourseClassResponse | null>(null);
+  const [classesError, setClassesError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -33,7 +35,9 @@ export const LecturerSidebarSections: React.FC = () => {
     examsApi
       .getMyCourseClasses()
       .then((data) => !cancelled && setClasses(data))
-      .catch(() => !cancelled && setClasses([]));
+      .catch((err: unknown) => {
+        if (!cancelled) setClassesError(errorMessage(err, 'Không tải được danh sách lớp.'));
+      });
     return () => {
       cancelled = true;
     };
@@ -80,7 +84,14 @@ export const LecturerSidebarSections: React.FC = () => {
         <h4 className="px-3 pb-1 text-xs font-semibold text-fb-text-2">
           Lớp phụ trách
         </h4>
-        {classes === null && <p className="px-3 py-2 text-xs text-fb-text-3">Đang tải...</p>}
+        {classesError && (
+          <p role="alert" className="px-3 py-2 text-xs text-fb-danger">
+            {classesError}
+          </p>
+        )}
+        {classes === null && !classesError && (
+          <SkeletonRows count={3} label="Đang tải lớp phụ trách…" />
+        )}
         {classes?.length === 0 && (
           <p className="px-3 py-2 text-xs text-fb-text-3">Học kỳ này bạn chưa phụ trách lớp nào.</p>
         )}

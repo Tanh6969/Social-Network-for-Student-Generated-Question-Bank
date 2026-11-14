@@ -1,5 +1,5 @@
 import { api, expectEnvelope } from './client';
-import { tokenStore } from './token';
+import { isApiSession } from './session-mode';
 import type { components } from './generated/openapi';
 import {
   loadStoredMockExams,
@@ -15,7 +15,8 @@ import {
 // TypeScript Types re-exported from OpenAPI Schema
 // ============================================================================
 
-export type DifficultyDistribution = components['schemas']['DifficultyDistribution'];
+export type DifficultyDistribution =
+  components['schemas']['DifficultyDistribution'];
 export type GenerateExamRequest = components['schemas']['GenerateExamRequest'];
 export type ExamDetailResponse = components['schemas']['ExamDetailResponse'];
 export type ExamQuestionDto = components['schemas']['ExamQuestionDto'];
@@ -26,7 +27,8 @@ export type ExamListResponse = components['schemas']['ExamListResponse'];
 export type CursorPaginationDto = components['schemas']['CursorPaginationDto'];
 export type ExportResponse = components['schemas']['ExportResponse'];
 export type CourseClassResponse = components['schemas']['CourseClassResponse'];
-export type ClassStudentResponse = components['schemas']['ClassStudentResponse'];
+export type ClassStudentResponse =
+  components['schemas']['ClassStudentResponse'];
 export type SubjectResponse = components['schemas']['SubjectResponse'];
 
 export interface GetMyExamsParams {
@@ -47,323 +49,208 @@ export interface ExportQuestionsParams {
   include_answer?: boolean;
 }
 
+/** Envelope thành công nhưng thiếu `data` — coi là lỗi, không bịa dữ liệu. */
+function requireData<T>(data: T | undefined | null, what: string): T {
+  if (data === undefined || data === null) {
+    throw new Error(`Máy chủ không trả về ${what}.`);
+  }
+  return data;
+}
+
 // ============================================================================
-// Exam Service & API Client Wrapper with Offline Mock Fallback
+// Demo data — chỉ dùng khi KHÔNG có phiên đăng nhập thật (isApiSession() = false)
+// ============================================================================
+
+const demoExams = {
+  generateExam(data: GenerateExamRequest): ExamDetailResponse {
+    return generateMockExamLocally(data);
+  },
+
+  getMyExams(params?: GetMyExamsParams): ExamListResponse {
+    let items = loadStoredMockExams();
+    if (params?.subject_id !== undefined && params.subject_id > 0) {
+      const sub = MOCK_SUBJECTS.find((s) => s.subject_id === params.subject_id);
+      if (sub) items = items.filter((e) => e.subject_name === sub.name);
+    }
+
+    const limit = params?.limit || 10;
+    let startIndex = 0;
+    if (params?.after !== undefined) {
+      const foundIdx = items.findIndex((e) => e.exam_id === params.after);
+      if (foundIdx !== -1) startIndex = foundIdx + 1;
+    }
+
+    const sliced = items.slice(startIndex, startIndex + limit);
+    const hasNext = startIndex + limit < items.length;
+    const nextCursor =
+      hasNext && sliced.length > 0
+        ? sliced[sliced.length - 1].exam_id
+        : undefined;
+
+    return {
+      items: sliced,
+      pagination: {
+        after: nextCursor,
+        has_next: hasNext,
+        has_prev: startIndex > 0,
+      },
+    };
+  },
+
+  getExamDetail(examId: number): ExamDetailResponse {
+    return (
+      loadStoredMockExamDetails()[examId] ??
+      generateMockExamLocally({
+        subject_id: 1,
+        class_ids: [101],
+        title: `Đề thi #${examId}`,
+        question_count: 5,
+      })
+    );
+  },
+
+  exportExam(examId: number): ExportResponse {
+    return generateMockExportLocally(`Đề thi #${examId}`, 30);
+  },
+
+  exportQuestions(params: ExportQuestionsParams): ExportResponse {
+    const sub = MOCK_SUBJECTS.find((s) => s.subject_id === params.subject_id);
+    const subName = sub?.name || 'Môn học #' + params.subject_id;
+    return generateMockExportLocally(`Ngân hàng câu hỏi ${subName}`, 85);
+  },
+};
+
+// ============================================================================
+// Exam service
+// Phiên thật: chỉ gọi REST theo Swagger, lỗi được ném ra nguyên văn cho UI hiển thị.
+// Không bao giờ quay về dữ liệu mock khi API lỗi hoặc trả rỗng.
 // ============================================================================
 
 export const examsApi = {
-  /**
-   * Tự động sinh đề thi từ ngân hàng câu hỏi đã APPROVED
-   * POST /exams/generate
-   */
+  /** POST /exams/generate — tự động sinh đề thi từ ngân hàng câu hỏi đã APPROVED */
   async generateExam(data: GenerateExamRequest): Promise<ExamDetailResponse> {
-    const token = tokenStore.get();
-    if (!token) {
-      return generateMockExamLocally(data);
-    }
+    if (!isApiSession()) return demoExams.generateExam(data);
 
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-
-      const result = await api.POST('/exams/generate', {
-        body: data,
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-
-      const envelope = expectEnvelope(result);
-      if (envelope.data) return envelope.data;
-      return generateMockExamLocally(data);
-    } catch {
-      // Fallback locally when server is offline (ERR_CONNECTION_REFUSED)
-      return generateMockExamLocally(data);
-    }
+    const envelope = expectEnvelope(
+      await api.POST('/exams/generate', { body: data }),
+    );
+    return requireData(envelope.data, 'đề thi vừa sinh');
   },
 
-  /**
-   * Lấy danh sách đề thi của giảng viên đăng nhập (phân trang cursor + lọc môn học)
-   * GET /exams/my-exams
-   */
+  /** GET /exams/my-exams — danh sách đề thi của giảng viên (cursor + lọc môn) */
   async getMyExams(params?: GetMyExamsParams): Promise<ExamListResponse> {
-    const token = tokenStore.get();
+    if (!isApiSession()) return demoExams.getMyExams(params);
 
-    // Helper for mock pagination
-    const getMockResponse = (): ExamListResponse => {
-      let items = loadStoredMockExams();
-      if (params?.subject_id !== undefined && params.subject_id > 0) {
-        const sub = MOCK_SUBJECTS.find((s) => s.subject_id === params.subject_id);
-        if (sub) {
-          items = items.filter((e) => e.subject_name === sub.name);
-        }
-      }
-
-      const limit = params?.limit || 10;
-      let startIndex = 0;
-      if (params?.after !== undefined) {
-        const foundIdx = items.findIndex((e) => e.exam_id === params.after);
-        if (foundIdx !== -1) startIndex = foundIdx + 1;
-      }
-
-      const sliced = items.slice(startIndex, startIndex + limit);
-      const hasNext = startIndex + limit < items.length;
-      const nextCursor = hasNext && sliced.length > 0 ? sliced[sliced.length - 1].exam_id : undefined;
-
-      return {
-        items: sliced,
-        pagination: {
-          after: nextCursor,
-          has_next: hasNext,
-          has_prev: startIndex > 0,
-        },
-      };
-    };
-
-    if (!token) {
-      return getMockResponse();
+    const query: { after?: number; limit?: number; subject_id?: number } = {};
+    if (params?.after !== undefined) query.after = params.after;
+    if (params?.limit !== undefined) query.limit = params.limit;
+    if (params?.subject_id !== undefined && params.subject_id > 0) {
+      query.subject_id = params.subject_id;
     }
 
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
-
-      const query: Record<string, string | number> = {};
-      if (params?.after !== undefined) query.after = params.after;
-      if (params?.limit !== undefined) query.limit = params.limit;
-      if (params?.subject_id !== undefined && params.subject_id > 0) {
-        query.subject_id = params.subject_id;
+    const envelope = expectEnvelope(
+      await api.GET('/exams/my-exams', { params: { query } }),
+    );
+    return (
+      envelope.data ?? {
+        items: [],
+        pagination: { has_next: false, has_prev: false },
       }
-
-      const result = await api.GET('/exams/my-exams', {
-        params: {
-          query: query as {
-            after?: number;
-            limit?: number;
-            subject_id?: number;
-          },
-        },
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-
-      const envelope = expectEnvelope(result);
-      if (envelope.data && envelope.data.items && envelope.data.items.length > 0) {
-        return envelope.data;
-      }
-      return getMockResponse();
-    } catch {
-      // Return mock data immediately if server is offline (ERR_CONNECTION_REFUSED)
-      return getMockResponse();
-    }
+    );
   },
 
-  /**
-   * Xem chi tiết đề thi và danh sách câu hỏi
-   * GET /exams/{examId}
-   */
+  /** GET /exams/{examId} — chi tiết đề thi và danh sách câu hỏi */
   async getExamDetail(examId: number): Promise<ExamDetailResponse> {
-    const token = tokenStore.get();
-    const mockDetails = loadStoredMockExamDetails();
+    if (!isApiSession()) return demoExams.getExamDetail(examId);
 
-    if (!token) {
-      if (mockDetails[examId]) return mockDetails[examId];
-      // Generate a mock detail if not found
-      return generateMockExamLocally({
-        subject_id: 1,
-        class_ids: [101],
-        title: `Đề thi #${examId}`,
-        question_count: 5,
-      });
-    }
-
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
-
-      const result = await api.GET('/exams/{examId}', {
-        params: {
-          path: { examId },
-        },
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-
-      const envelope = expectEnvelope(result);
-      if (envelope.data) return envelope.data;
-      return mockDetails[examId] || generateMockExamLocally({
-        subject_id: 1,
-        class_ids: [101],
-        title: `Đề thi #${examId}`,
-        question_count: 5,
-      });
-    } catch {
-      return mockDetails[examId] || generateMockExamLocally({
-        subject_id: 1,
-        class_ids: [101],
-        title: `Đề thi #${examId}`,
-        question_count: 5,
-      });
-    }
+    const envelope = expectEnvelope(
+      await api.GET('/exams/{examId}', { params: { path: { examId } } }),
+    );
+    return requireData(envelope.data, `chi tiết đề thi #${examId}`);
   },
 
-  /**
-   * Xuất file đề thi (PDF / Excel)
-   * GET /exams/{examId}/export
-   */
-  async exportExam(examId: number, params?: ExportExamParams): Promise<ExportResponse> {
-    const token = tokenStore.get();
-    if (!token) {
-      return generateMockExportLocally(`Đề thi #${examId}`, 30);
+  /** GET /exams/{examId}/export — xuất file đề thi (PDF / Excel), trả về link tải */
+  async exportExam(
+    examId: number,
+    params?: ExportExamParams,
+  ): Promise<ExportResponse> {
+    if (!isApiSession()) return demoExams.exportExam(examId);
+
+    const query: {
+      format?: string;
+      include_answer_key?: boolean;
+      paper_size?: string;
+    } = {};
+    if (params?.format) query.format = params.format;
+    if (params?.include_answer_key !== undefined) {
+      query.include_answer_key = params.include_answer_key;
     }
+    if (params?.paper_size) query.paper_size = params.paper_size;
 
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
-
-      const query: Record<string, string | boolean> = {};
-      if (params?.format) query.format = params.format;
-      if (params?.include_answer_key !== undefined) {
-        query.include_answer_key = params.include_answer_key;
-      }
-      if (params?.paper_size) query.paper_size = params.paper_size;
-
-      const result = await api.GET('/exams/{examId}/export', {
-        params: {
-          path: { examId },
-          query: query as {
-            format?: string;
-            include_answer_key?: boolean;
-            paper_size?: string;
-          },
-        },
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-
-      const envelope = expectEnvelope(result);
-      if (envelope.data) return envelope.data;
-      return generateMockExportLocally(`Đề thi #${examId}`, 30);
-    } catch {
-      return generateMockExportLocally(`Đề thi #${examId}`, 30);
-    }
+    const envelope = expectEnvelope(
+      await api.GET('/exams/{examId}/export', {
+        params: { path: { examId }, query },
+      }),
+    );
+    return requireData(envelope.data, 'link tải file đề thi');
   },
 
-  /**
-   * Giảng viên xuất toàn bộ câu hỏi môn học ra PDF hoặc Excel
-   * GET /lecturer/questions/export
-   */
-  async exportQuestions(params: ExportQuestionsParams): Promise<ExportResponse> {
-    const token = tokenStore.get();
-    const sub = MOCK_SUBJECTS.find((s) => s.subject_id === params.subject_id);
-    const subName = sub?.name || 'Môn học #' + params.subject_id;
+  /** GET /lecturer/questions/export — xuất toàn bộ câu hỏi môn học ra PDF / Excel */
+  async exportQuestions(
+    params: ExportQuestionsParams,
+  ): Promise<ExportResponse> {
+    if (!isApiSession()) return demoExams.exportQuestions(params);
 
-    if (!token) {
-      return generateMockExportLocally(`Ngân hàng câu hỏi ${subName}`, 85);
-    }
+    const query: {
+      subject_id: number;
+      format?: string;
+      include_answer?: boolean;
+    } = {
+      subject_id: params.subject_id,
+    };
+    if (params.format) query.format = params.format;
+    if (params.include_answer !== undefined)
+      query.include_answer = params.include_answer;
 
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
-
-      const query: Record<string, string | number | boolean> = {
-        subject_id: params.subject_id,
-      };
-      if (params.format) query.format = params.format;
-      if (params.include_answer !== undefined) query.include_answer = params.include_answer;
-
-      const result = await api.GET('/lecturer/questions/export', {
-        params: {
-          query: query as {
-            subject_id: number;
-            format?: string;
-            include_answer?: boolean;
-          },
-        },
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-
-      const envelope = expectEnvelope(result);
-      if (envelope.data) return envelope.data;
-      return generateMockExportLocally(`Ngân hàng câu hỏi ${subName}`, 85);
-    } catch {
-      return generateMockExportLocally(`Ngân hàng câu hỏi ${subName}`, 85);
-    }
+    const envelope = expectEnvelope(
+      await api.GET('/lecturer/questions/export', { params: { query } }),
+    );
+    return requireData(envelope.data, 'link tải file ngân hàng câu hỏi');
   },
 
-  /**
-   * Lấy danh sách lớp học phần do Giảng viên hiện tại phụ trách
-   * GET /lecturer/course-classes/my-classes
-   */
+  /** GET /lecturer/course-classes/my-classes — lớp học phần giảng viên phụ trách */
   async getMyCourseClasses(): Promise<CourseClassResponse[]> {
-    const token = tokenStore.get();
-    if (!token) return MOCK_COURSE_CLASSES;
+    if (!isApiSession()) return MOCK_COURSE_CLASSES;
 
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
-
-      const result = await api.GET('/lecturer/course-classes/my-classes', {
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-
-      const envelope = expectEnvelope(result);
-      if (envelope.data && envelope.data.length > 0) return envelope.data;
-      return MOCK_COURSE_CLASSES;
-    } catch {
-      return MOCK_COURSE_CLASSES;
-    }
+    const envelope = expectEnvelope(
+      await api.GET('/lecturer/course-classes/my-classes'),
+    );
+    return envelope.data ?? [];
   },
 
-  /**
-   * Lấy danh sách sinh viên trong lớp học phần
-   * GET /lecturer/course-classes/{courseClassId}/students
-   */
-  async getClassStudents(courseClass: CourseClassResponse): Promise<ClassStudentResponse[]> {
-    const token = tokenStore.get();
+  /** GET /lecturer/course-classes/{courseClassId}/students — sinh viên trong lớp */
+  async getClassStudents(
+    courseClass: CourseClassResponse,
+  ): Promise<ClassStudentResponse[]> {
+    if (!isApiSession()) return buildMockClassStudents(courseClass);
+
     const courseClassId = courseClass.course_class_id;
-    if (!token || courseClassId === undefined) return buildMockClassStudents(courseClass);
-
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
-
-      const result = await api.GET('/lecturer/course-classes/{courseClassId}/students', {
-        params: { path: { courseClassId } },
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-
-      const envelope = expectEnvelope(result);
-      return envelope.data ?? [];
-    } catch {
-      return buildMockClassStudents(courseClass);
+    if (courseClassId === undefined) {
+      throw new Error('Lớp học phần không có mã định danh.');
     }
+    const envelope = expectEnvelope(
+      await api.GET('/lecturer/course-classes/{courseClassId}/students', {
+        params: { path: { courseClassId } },
+      }),
+    );
+    return envelope.data ?? [];
   },
 
-  /**
-   * Lấy danh mục tất cả môn học trong hệ thống
-   * GET /subjects
-   */
+  /** GET /subjects — danh mục tất cả môn học */
   async getAllSubjects(): Promise<SubjectResponse[]> {
-    const token = tokenStore.get();
-    if (!token) return MOCK_SUBJECTS;
+    if (!isApiSession()) return MOCK_SUBJECTS;
 
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
-
-      const result = await api.GET('/subjects', {
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-
-      const envelope = expectEnvelope(result);
-      if (envelope.data && envelope.data.length > 0) return envelope.data;
-      return MOCK_SUBJECTS;
-    } catch {
-      return MOCK_SUBJECTS;
-    }
+    const envelope = expectEnvelope(await api.GET('/subjects'));
+    return envelope.data ?? [];
   },
 };

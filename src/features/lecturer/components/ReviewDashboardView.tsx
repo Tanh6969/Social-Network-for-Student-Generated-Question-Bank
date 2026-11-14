@@ -338,7 +338,7 @@ export const ReviewDashboardView: React.FC = () => {
         {/* =========================================================================
             LEFT SIDEBAR (3 mục: Chờ xem xét, Đang xem xét, Đã xem xét xong)
             ========================================================================= */}
-        <aside className="w-full lg:w-64 xl:w-72 shrink-0 bg-fb-card rounded-lg shadow-fb-card p-3 sm:p-4 space-y-2 lg:sticky lg:top-18 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto">
+        <aside className="scrollbar-hover w-full lg:w-64 xl:w-72 shrink-0 bg-fb-card rounded-lg shadow-fb-card p-3 sm:p-4 space-y-2 lg:sticky lg:top-18 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto">
           <div className="hidden lg:block pb-2 mb-2 border-b border-fb-divider">
             <span className="text-xs font-bold text-fb-text-3">
               Trạng thái bộ câu hỏi

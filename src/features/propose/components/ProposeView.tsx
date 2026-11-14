@@ -31,6 +31,7 @@ import {
   Info,
   Clock,
 } from 'lucide-react';
+import { CardListSkeleton } from '../../../shared/components/Skeleton';
 
 export const ProposeView: React.FC = () => {
   const { showToast } = useApp();
@@ -326,7 +327,7 @@ export const ProposeView: React.FC = () => {
   return (
     <div className="w-full min-h-[calc(100vh-3.5rem)] flex flex-col md:flex-row items-start bg-fb-canvas">
       {/* ================= CỘT TRÁI (LEFT SIDEBAR): CỐ ĐỊNH KHI CUỘN TRANG ================= */}
-      <aside className="w-full md:w-80 lg:w-84 xl:w-88 shrink-0 bg-fb-card border-r border-fb-divider md:sticky md:top-14 md:h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-5 flex flex-col select-none z-20">
+      <aside className="scrollbar-hover w-full md:w-80 lg:w-84 xl:w-88 shrink-0 bg-fb-card border-r border-fb-divider md:sticky md:top-14 md:h-[calc(100vh-3.5rem)] overflow-y-auto p-4 sm:p-5 flex flex-col select-none z-20">
         <div className="space-y-4">
           <div className="px-1 pt-1 pb-3 border-b border-fb-divider">
             <h2 className="text-2xl font-bold text-fb-text flex items-center gap-2.5">
@@ -840,10 +841,7 @@ export const ProposeView: React.FC = () => {
 
             {/* Submissions Cards List */}
             {loadingSubmissions ? (
-              <div className="py-20 flex flex-col items-center justify-center text-fb-text-2">
-                <div className="w-8 h-8 border-3 border-fb-blue border-t-transparent rounded-full animate-spin mb-3" />
-                <p className="text-body">Đang tải danh sách phiên đề xuất...</p>
-              </div>
+              <CardListSkeleton count={3} label="Đang tải danh sách phiên đề xuất…" />
             ) : submissionsError ? (
               <div className="bg-fb-card rounded-lg border border-fb-divider p-8 text-center space-y-3">
                 <p className="text-body text-fb-danger">{submissionsError}</p>

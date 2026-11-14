@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Camera, RotateCcw, X } from 'lucide-react';
+import { lockPageScroll } from '../../../shared/lockPageScroll';
 import type { ImageCrop } from '../../demo/types';
 import {
   getMediaKind,
@@ -53,12 +54,11 @@ export function ProfilePhotoEditor({
 
   useEffect(() => {
     const urls = ownedUrls.current;
-    const previousOverflow = document.body.style.overflow;
     closed.current = false;
-    document.body.style.overflow = 'hidden';
+    const unlockScroll = lockPageScroll();
     return () => {
       closed.current = true;
-      document.body.style.overflow = previousOverflow;
+      unlockScroll();
       urls.forEach(revokeMediaUrl);
       urls.clear();
     };

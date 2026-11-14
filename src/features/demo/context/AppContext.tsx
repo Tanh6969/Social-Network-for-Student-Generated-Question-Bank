@@ -106,6 +106,8 @@ interface AppContextType {
   // Auth state
   isAuthenticated: boolean;
   sessionKind: 'demo' | 'api' | null;
+  /** Đang khôi phục phiên đăng nhập sau khi tải lại trang. */
+  isRestoringSession: boolean;
   loginWithCredentials: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 
@@ -516,6 +518,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const {
     isAuthenticated,
+    isRestoringSession,
     sessionKind,
     currentUser: rawCurrentUser,
     setCurrentUser,
@@ -2762,6 +2765,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       value={{
         isAuthenticated,
         sessionKind,
+        isRestoringSession,
         loginWithCredentials,
         logout,
         currentUser,

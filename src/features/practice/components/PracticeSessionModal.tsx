@@ -9,8 +9,10 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
-import { errorMessage } from '../../../api';
+import { errorMessage, isApiSession } from '../../../api';
 import { practiceGateway } from '../../proposals/practiceGateway';
+import { QuestionComments } from './QuestionComments';
+import { reportQuestionError } from '../../bank/apiExamRoom';
 import type {
   AnswerQuestionResponse,
   PracticeQuestionDto,
@@ -131,7 +133,8 @@ export const PracticeSessionModal: React.FC<PracticeSessionModalProps> = ({
     if (!qid || (isError ? !comment.trim() : stars === null)) return;
     setBusy(true);
     try {
-      if (isError) await practiceGateway.report(qid, comment.trim());
+      // Minigame 5: báo lỗi = gửi mô tả để thẩm định + rating 0 sao.
+      if (isError) await reportQuestionError(qid, comment.trim());
       else
         await practiceGateway.rate(qid, {
           rating: stars ?? 0,
@@ -355,6 +358,15 @@ export const PracticeSessionModal: React.FC<PracticeSessionModalProps> = ({
                       </>
                     )}
                   </div>
+
+                  {/* Bình luận sau khi trả lời, để không lộ đáp án trước */}
+                  {qid && isApiSession() && (
+                    <QuestionComments
+                      key={qid}
+                      questionId={qid}
+                      showToast={showToast}
+                    />
+                  )}
                 </div>
               )}
             </>

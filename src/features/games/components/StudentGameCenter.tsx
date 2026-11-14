@@ -22,6 +22,7 @@ import type { SubmissionWithStatus } from '../../proposals/types';
 import { describeData, findPrediction } from '../gameLabels';
 import { gamesGateway } from '../gamesGateway';
 import { GameSelectorBar, type GameId } from './GameSelectorBar';
+import { QuestionListSkeleton, SkeletonRows } from '../../../shared/components/Skeleton';
 
 type Toast = (
   message: string,
@@ -201,7 +202,7 @@ const Game1Card: React.FC<CenterProps> = ({ onPredicted, showToast }) => {
       title="Game 1 · Bao nhiêu bạn trong lớp sẽ nộp câu hỏi ngày mai?"
       rule="Dự đoán cho từng lớp học phần bạn đang học. Chốt trước 22:00 mỗi ngày."
     >
-      {!classes && <p className="text-sm text-fb-text-2">Đang tải…</p>}
+      {!classes && <SkeletonRows count={2} avatar="square" />}
       {classes?.length === 0 && (
         <p className="text-sm text-fb-text-2">
           Bạn chưa thuộc lớp học phần nào.
@@ -332,7 +333,7 @@ const Game2Card: React.FC<CenterProps> = ({
       title="Game 2 · Bộ câu hỏi của bạn sẽ có bao nhiêu câu được chọn?"
       rule="Dự đoán riêng số câu do AI tạo và số câu bạn tự làm sẽ được giảng viên chọn vào ngân hàng đề. Kết quả công bố sau khi tổng kết, không cho biết là câu nào."
     >
-      {!sessions && <p className="text-sm text-fb-text-2">Đang tải…</p>}
+      {!sessions && <SkeletonRows count={2} avatar="square" />}
       {sessions?.length === 0 && (
         <p className="text-sm text-fb-text-2">
           Bạn không có bộ câu hỏi nào đang chờ xem xét.
@@ -555,9 +556,7 @@ const Game6Card: React.FC<CenterProps> = ({
       title="Game 6 · Câu nào do AI tạo?"
       rule="Mở vào Thứ 7 hằng tuần. Đánh dấu những câu bạn cho là do AI tạo; các câu còn lại được tính là do người viết."
     >
-      {session === undefined && (
-        <p className="text-sm text-fb-text-2">Đang tải…</p>
-      )}
+      {session === undefined && <QuestionListSkeleton count={1} />}
       {session === null && (
         <p className="text-sm text-fb-text-2">
           Hiện chưa có phiên nào mở. Quay lại vào Thứ 7 nhé!

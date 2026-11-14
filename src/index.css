@@ -27,6 +27,8 @@
   --fb-danger-soft: #FFEBEE;
   --fb-scroll: rgba(0, 0, 0, 0.18);
   --fb-scroll-hover: rgba(0, 0, 0, 0.3);
+  --fb-skeleton: #E4E6EB;
+  --fb-skeleton-shine: rgba(255, 255, 255, 0.65);
 }
 
 .dark {
@@ -52,6 +54,8 @@
   --fb-danger-soft: #3D1D24;
   --fb-scroll: rgba(255, 255, 255, 0.2);
   --fb-scroll-hover: rgba(255, 255, 255, 0.3);
+  --fb-skeleton: #3A3B3C;
+  --fb-skeleton-shine: rgba(255, 255, 255, 0.06);
 }
 
 @theme inline {
@@ -145,5 +149,53 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* Thanh cuộn của sidebar sticky: chỉ hiện khi rê chuột vào (giống Facebook),
+   tránh 2 thanh cuộn nằm sát nhau cạnh thanh cuộn của trang. */
+.scrollbar-hover {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+.scrollbar-hover:hover,
+.scrollbar-hover:focus-within {
+  scrollbar-color: var(--fb-scroll) transparent;
+}
+.scrollbar-hover::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+.scrollbar-hover:hover::-webkit-scrollbar-thumb,
+.scrollbar-hover:focus-within::-webkit-scrollbar-thumb {
+  background: var(--fb-scroll);
+}
+
+/* Skeleton loading: khối xám + ánh sáng chạy ngang (kiểu Facebook). */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--fb-skeleton);
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--fb-skeleton-shine) 50%,
+    transparent 100%
+  );
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
   }
 }
