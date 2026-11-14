@@ -14,9 +14,6 @@ import {
   User,
   Users,
   Plus,
-  EyeOff,
-  Eye,
-  Lock,
   Trash2,
   LogOut,
   UserPlus,
@@ -32,7 +29,6 @@ import { chatStompClient, isApiSession } from '../../../api';
 export const MessengerFullView: React.FC = () => {
   const {
     conversations,
-    hiddenConversations,
     allUsers,
     currentUser,
     markConversationRead,
@@ -47,10 +43,6 @@ export const MessengerFullView: React.FC = () => {
     removeMemberFromGroup,
     updateGroupMemberRole,
     leaveGroupChat,
-    hideChatConversation,
-    unhideChatConversation,
-    unlockHiddenConversations,
-    setHiddenChatPin,
     openReportModal,
     showToast,
     blockUser,
@@ -67,12 +59,12 @@ export const MessengerFullView: React.FC = () => {
     conversations[0]?.id || '',
   );
   const [inputText, setInputText] = useState('');
-  const [filterTab, setFilterTab] = useState<'ALL' | 'UNREAD' | 'HIDDEN'>('ALL');
+  const [filterTab, setFilterTab] = useState<'ALL' | 'UNREAD'>('ALL');
   const [searchPartner, setSearchPartner] = useState('');
   const [typingUserName, setTypingUserName] = useState<string | null>(null);
   const typingTimeoutRef = useRef<number | null>(null);
 
-  // Modals for Group Chat & Hidden Chat PIN
+  // Modals for Group Chat
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
   const [groupTitleInput, setGroupTitleInput] = useState('');
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
@@ -81,16 +73,7 @@ export const MessengerFullView: React.FC = () => {
   const [editGroupTitle, setEditGroupTitle] = useState('');
   const [addMemberSelectId, setAddMemberSelectId] = useState('');
 
-  const [showPinModal, setShowPinModal] = useState<'UNLOCK' | 'SET_PIN' | null>(
-    null,
-  );
-  const [pinInput, setPinInput] = useState('');
-  const [hiddenUnlocked, setHiddenUnlocked] = useState(false);
-
-  const sourceList =
-    filterTab === 'HIDDEN' ? hiddenConversations : conversations;
-
-  const filteredConversations = sourceList.filter((c) => {
+  const filteredConversations = conversations.filter((c) => {
     if (filterTab === 'UNREAD' && c.unreadCount === 0) return false;
     if (
       searchPartner.trim() &&
@@ -101,7 +84,6 @@ export const MessengerFullView: React.FC = () => {
   });
 
   const activeConv: Conversation | undefined =
-    sourceList.find((c) => c.id === activeConvId) ||
     conversations.find((c) => c.id === activeConvId) ||
     filteredConversations[0] ||
     conversations[0];
@@ -183,26 +165,6 @@ export const MessengerFullView: React.FC = () => {
     }
   };
 
-  const handlePinSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!pinInput.trim()) return;
-    if (showPinModal === 'SET_PIN') {
-      const ok = await setHiddenChatPin(pinInput.trim());
-      if (ok) {
-        setShowPinModal(null);
-        setPinInput('');
-      }
-    } else if (showPinModal === 'UNLOCK') {
-      const ok = await unlockHiddenConversations(pinInput.trim());
-      if (ok) {
-        setHiddenUnlocked(true);
-        setFilterTab('HIDDEN');
-        setShowPinModal(null);
-        setPinInput('');
-      }
-    }
-  };
-
   return (
     <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 my-2">
       <div className="h-[calc(100vh-5rem)] flex bg-fb-card rounded-lg shadow-fb-card overflow-hidden">
@@ -219,17 +181,6 @@ export const MessengerFullView: React.FC = () => {
                   className="p-2 rounded-full bg-fb-input hover:bg-fb-btn-hover text-fb-text transition"
                 >
                   <Plus className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPinInput('');
-                    setShowPinModal('SET_PIN');
-                  }}
-                  title="Thiết lập mã PIN ẩn đoạn chat"
-                  className="p-2 rounded-full bg-fb-input hover:bg-fb-btn-hover text-fb-text transition"
-                >
-                  <Lock className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -265,24 +216,6 @@ export const MessengerFullView: React.FC = () => {
                 }`}
               >
                 Chưa đọc
-              </button>
-              <button
-                onClick={() => {
-                  if (!hiddenUnlocked && isApiSession()) {
-                    setPinInput('');
-                    setShowPinModal('UNLOCK');
-                  } else {
-                    setFilterTab('HIDDEN');
-                  }
-                }}
-                className={`px-3 py-1 rounded-full transition flex items-center gap-1 ${
-                  filterTab === 'HIDDEN'
-                    ? 'bg-fb-blue text-white'
-                    : 'bg-fb-input text-fb-text-2'
-                }`}
-              >
-                <EyeOff className="w-3 h-3" />
-                <span>Đã ẩn</span>
               </button>
             </div>
           </div>
@@ -586,27 +519,7 @@ export const MessengerFullView: React.FC = () => {
                   </>
                 )}
 
-                {activeConv.isHidden ? (
-                  <button
-                    type="button"
-                    onClick={() => void unhideChatConversation(activeConv.id)}
-                    className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-fb-hover transition"
-                  >
-                    <Eye className="w-4 h-4 text-fb-text-2" />
-                    <span>Bỏ ẩn đoạn chat</span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => void hideChatConversation(activeConv.id)}
-                    className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-fb-hover transition"
-                  >
-                    <EyeOff className="w-4 h-4 text-fb-text-2" />
-                    <span>Ẩn đoạn chat</span>
-                  </button>
-                )}
-
-                {!isApiSession() && <button
+                <button
                   type="button"
                   onClick={() =>
                     showToast(
@@ -618,7 +531,7 @@ export const MessengerFullView: React.FC = () => {
                 >
                   <BellOff className="w-4 h-4 text-fb-text-2" />
                   <span>Tắt thông báo</span>
-                </button>}
+                </button>
 
                 {!isApiSession() && <button
                   type="button"
@@ -897,65 +810,6 @@ export const MessengerFullView: React.FC = () => {
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal PIN Đoạn Chat Ẩn */}
-      {showPinModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="bg-fb-card rounded-lg max-w-sm w-full p-5 shadow-2xl border border-fb-divider space-y-4 text-xs">
-            <div className="flex items-center justify-between border-b border-fb-divider pb-3">
-              <h3 className="font-bold text-sm text-fb-text flex items-center gap-2">
-                <Lock className="w-4 h-4 text-fb-blue" />
-                <span>
-                  {showPinModal === 'SET_PIN'
-                    ? 'Thiết lập mã PIN đoạn chat ẩn'
-                    : 'Mở khóa đoạn chat ẩn'}
-                </span>
-              </h3>
-              <button
-                type="button"
-                onClick={() => setShowPinModal(null)}
-                className="p-1 rounded-full hover:bg-fb-hover"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form
-              onSubmit={(e) => void handlePinSubmit(e)}
-              className="space-y-3"
-            >
-              <div>
-                <label className="block font-bold text-fb-text mb-1">
-                  Nhập mã PIN (6 chữ số):
-                </label>
-                <input
-                  type="password"
-                  maxLength={6}
-                  value={pinInput}
-                  onChange={(e) => setPinInput(e.target.value)}
-                  placeholder="******"
-                  className="w-full p-2.5 text-center tracking-widest text-sm rounded-lg bg-fb-input border border-fb-divider"
-                />
-              </div>
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowPinModal(null)}
-                  className="px-4 py-2 rounded-lg bg-fb-input font-semibold"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-lg bg-fb-blue text-white font-bold"
-                >
-                  Xác nhận
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}
