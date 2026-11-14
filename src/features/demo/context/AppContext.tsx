@@ -41,15 +41,26 @@ import {
 } from '../../feed/postUtils';
 import { revokeMediaUrl } from '../../feed/mediaUtils';
 import { errorMessage, isApiSession } from '../../../api';
+import { chatApi } from '../../../api/chat';
 import { postsApi } from '../../../api/posts';
 import { relationshipsApi } from '../../../api/relationships';
+import { chatStompClient } from '../../../api/stompClient';
 import {
   basicUser,
   friendStatusFromProfile,
+  friendStatusFromRelationshipStats,
   loadApiRelationships,
   userFromProfile,
   userFromSearch,
 } from '../../friends/apiRelationships';
+import {
+  conversationFromDetailDto,
+  conversationFromDto,
+  formatChatTime,
+  memberFromDto,
+  messageFromDto,
+  messageFromWs,
+} from '../../messenger/apiChat';
 import {
   buildMediaItems,
   commentFromApi,
@@ -186,7 +197,9 @@ interface AppContextType {
   declineFriendRequest: (userId: string) => void;
   unfriendUser: (userId: string) => void;
   followingIds: string[];
+  followersIds: string[];
   toggleFollowUser: (userId: string) => void;
+  searchUsersOnApi: (query: string) => void;
   dismissedSuggestionIds: string[];
   dismissSuggestion: (userId: string) => void;
 
@@ -292,7 +305,9 @@ interface AppContextType {
 
   // Messenger & Chat Dock
   conversations: Conversation[];
+  hiddenConversations: Conversation[];
   openChatDock: (partnerUserId: string) => void;
+  loadConversationMessages: (conversationId: string) => void;
   markConversationRead: (conversationId: string) => void;
   closeChatDock: (conversationId: string) => void;
   minimizeChatDock: (conversationId: string) => void;
@@ -300,7 +315,43 @@ interface AppContextType {
   activeDockIds: string[];
   minimizedDockIds: string[];
   sendMessage: (conversationId: string, text: string) => void;
-  recallMessage: (conversationId: string, messageId: string) => void;
+  recallMessage: (
+    conversationId: string,
+    messageId: string,
+    scope?: 'ME' | 'EVERYONE',
+  ) => void;
+  sendTyping: (conversationId: string, isTyping: boolean) => void;
+  createGroupChat: (
+    name: string,
+    memberIds: string[],
+    avatarUrl?: string,
+  ) => Promise<Conversation | null>;
+  updateGroupChat: (
+    conversationId: string,
+    updates: { name?: string; avatar_url?: string },
+  ) => Promise<void>;
+  loadGroupMembers: (conversationId: string) => Promise<void>;
+  addMembersToGroup: (
+    conversationId: string,
+    userIds: string[],
+  ) => Promise<void>;
+  removeMemberFromGroup: (
+    conversationId: string,
+    userId: string,
+  ) => Promise<void>;
+  updateGroupMemberRole: (
+    conversationId: string,
+    userId: string,
+    role: 'CHIEF' | 'VILLAGE_ELDER' | 'VILLAGER',
+  ) => Promise<void>;
+  leaveGroupChat: (
+    conversationId: string,
+    newChiefId?: string,
+  ) => Promise<void>;
+  hideChatConversation: (conversationId: string) => Promise<void>;
+  unhideChatConversation: (conversationId: string) => Promise<void>;
+  unlockHiddenConversations: (pin: string) => Promise<boolean>;
+  setHiddenChatPin: (pin: string, oldPin?: string) => Promise<boolean>;
 
   // Notifications
   notifications: AppNotification[];
@@ -404,6 +455,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   >({
     [mockCurrentUserStudent.id]: ['user_gv_01', 'user_gv_02'],
   });
+  const [followersIdsByAccount, setFollowersIdsByAccount] = useState<
+    Record<string, string[]>
+  >({
+    [mockCurrentUserLecturer.id]: ['user_sv_01', 'user_sv_02', 'user_sv_03'],
+  });
+  const [hiddenConversationRecords, setHiddenConversationRecords] = useState<
+    Conversation[]
+  >([]);
   const [dismissedSuggestionIds, setDismissedSuggestionIds] = useState<
     string[]
   >([]);
@@ -584,8 +643,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   const relationsSourceRef = useRef<'demo' | 'api'>('demo');
   /**
    * Gộp người dùng vào bộ nhớ. `full` = hồ sơ đầy đủ (GET /users/{id});
-   * thông tin rút gọn (tác giả, danh sách) chỉ cập nhật tên/ảnh để không
-   * ghi đè vai trò, số bạn bè… đã biết từ hồ sơ.
+   * thông tin rút gọn (tác giả, danh sách) vẫn bổ sung các trường còn thiếu
+   * (vai trò LECTURER, khoa/viện, lớp/chuyên ngành, số người theo dõi…)
+   * nhưng không xóa thông tin đầy đủ đã biết từ hồ sơ.
    */
   const rememberApiUsers = (users: User[], full = false) =>
     setApiUsers((previous) => {
@@ -596,8 +656,40 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
           continue;
         const old = previous[user.id];
         if (old && !full) {
-          if (old.name === user.name && old.avatar === user.avatar) continue;
-          next[user.id] = { ...old, name: user.name, avatar: user.avatar };
+          const merged: User = {
+            ...old,
+            name: user.name || old.name,
+            avatar:
+              user.avatar && user.avatar !== '/default-avatar.svg'
+                ? user.avatar
+                : old.avatar,
+            role: user.role === 'LECTURER' ? 'LECTURER' : old.role,
+            verifiedLecturer:
+              user.role === 'LECTURER'
+                ? (user.verifiedLecturer ?? true)
+                : old.verifiedLecturer,
+            email: old.email || user.email,
+            bio: old.bio || user.bio,
+            faculty: old.faculty || user.faculty,
+            classOrTitle: old.classOrTitle || user.classOrTitle,
+            points: old.points || user.points,
+            approvedQuestionsCount:
+              old.approvedQuestionsCount || user.approvedQuestionsCount,
+            friendsCount: old.friendsCount || user.friendsCount,
+            followersCount: old.followersCount || user.followersCount,
+          };
+          if (
+            merged.name === old.name &&
+            merged.avatar === old.avatar &&
+            merged.role === old.role &&
+            merged.faculty === old.faculty &&
+            merged.classOrTitle === old.classOrTitle &&
+            merged.followersCount === old.followersCount &&
+            merged.approvedQuestionsCount === old.approvedQuestionsCount
+          ) {
+            continue;
+          }
+          next[user.id] = merged;
         } else {
           next[user.id] = old ? { ...old, ...user } : user;
         }
@@ -826,9 +918,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     (u) => friendStatuses[u.id] === 'FRIEND' && !isBlockedEitherWay(u.id),
   );
 
+  const [apiRelationsLoaded, setApiRelationsLoaded] = useState(false);
+  const followersIds = followersIdsByAccount[rawCurrentUser.id] ?? [];
   const currentUser: User = {
     ...rawCurrentUser,
-    friendsCount: friendsList.length,
+    friendsCount:
+      sessionKind === 'api' && !apiRelationsLoaded
+        ? rawCurrentUser.friendsCount
+        : friendsList.length,
+    followersCount:
+      followersIds.length > 0
+        ? Math.max(rawCurrentUser.followersCount, followersIds.length)
+        : rawCurrentUser.followersCount,
   };
   const followingIds = followingIdsByAccount[rawCurrentUser.id] ?? [];
   const setFollowingIds: React.Dispatch<React.SetStateAction<string[]>> = (
@@ -900,17 +1001,119 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     return found || mockCurrentUserStudent;
   };
 
+  const resolveDirectPartnerForApi = (
+    conversation: Conversation,
+  ): { partner: User; participantIds: string[] } => {
+    const rawPartnerId = getConversationPartnerId(
+      conversation,
+      rawCurrentUser.id,
+    );
+    if (conversation.type === 'GROUP') {
+      return {
+        partner: conversation.partner,
+        participantIds: conversation.participantIds,
+      };
+    }
+    if (
+      rawPartnerId &&
+      !rawPartnerId.startsWith('conv_partner_') &&
+      Number.isInteger(Number(rawPartnerId))
+    ) {
+      const known = apiUsers[rawPartnerId];
+      return {
+        partner: known
+          ? {
+              ...known,
+              name: conversation.partner.name || known.name,
+              avatar:
+                conversation.partner.avatar &&
+                conversation.partner.avatar !== '/default-avatar.svg'
+                  ? conversation.partner.avatar
+                  : known.avatar,
+            }
+          : conversation.partner,
+        participantIds: conversation.participantIds,
+      };
+    }
+
+    // 1. Thử lấy từ danh sách thành viên (members) của cuộc hội thoại
+    const memberMatch = conversation.members?.find(
+      (m) =>
+        m.userId !== rawCurrentUser.id &&
+        Number.isInteger(Number(m.userId)) &&
+        Number(m.userId) > 0,
+    );
+    // 2. Thử lấy từ senderId của tin nhắn đối phương gửi trong cuộc hội thoại
+    const msgMatch = conversation.messages.find(
+      (m) =>
+        m.senderId &&
+        m.senderId !== rawCurrentUser.id &&
+        Number.isInteger(Number(m.senderId)) &&
+        Number(m.senderId) > 0,
+    );
+    // 3. Thử khớp theo họ tên trong apiUsers đã biết
+    const targetName = conversation.partner.name.trim().toLowerCase();
+    const nameMatch = targetName
+      ? Object.values(apiUsers).find(
+          (u) =>
+            u.id !== rawCurrentUser.id &&
+            Number.isInteger(Number(u.id)) &&
+            u.name.trim().toLowerCase() === targetName,
+        )
+      : undefined;
+
+    const resolvedId =
+      memberMatch?.userId ?? msgMatch?.senderId ?? nameMatch?.id;
+    if (resolvedId) {
+      const known = apiUsers[resolvedId] ?? nameMatch;
+      const partner: User = known
+        ? {
+            ...known,
+            id: resolvedId,
+            name: conversation.partner.name || known.name,
+            avatar:
+              conversation.partner.avatar &&
+              conversation.partner.avatar !== '/default-avatar.svg'
+                ? conversation.partner.avatar
+                : known.avatar,
+          }
+        : {
+            ...conversation.partner,
+            id: resolvedId,
+          };
+      return {
+        partner,
+        participantIds: [rawCurrentUser.id, resolvedId],
+      };
+    }
+
+    return {
+      partner: conversation.partner,
+      participantIds: conversation.participantIds,
+    };
+  };
+
   const conversations = getConversationsForAccount(
     conversationRecords,
     rawCurrentUser.id,
   ).map((conversation) => {
     const partnerId = getConversationPartnerId(conversation, rawCurrentUser.id);
+    let partner = conversation.partner;
+    let participantIds = conversation.participantIds;
+    if (sessionKind === 'api') {
+      const resolved = resolveDirectPartnerForApi(conversation);
+      partner = resolved.partner;
+      participantIds = resolved.participantIds;
+    } else if (partnerId) {
+      partner = findRawUserById(partnerId);
+    }
     return {
       ...conversation,
+      participantIds,
       unreadCount:
         conversation.unreadCounts?.[rawCurrentUser.id] ??
         conversation.unreadCount,
-      partner: partnerId ? findRawUserById(partnerId) : conversation.partner,
+      partner,
     };
   });
 
@@ -957,6 +1160,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   const [apiRelationsReloadKey, setApiRelationsReloadKey] = useState(0);
   useEffect(() => {
     if (!apiFeedUserId) {
+      setApiRelationsLoaded(false);
       if (relationsSourceRef.current === 'api') {
         relationsSourceRef.current = 'demo';
         setApiUsers({});
@@ -980,7 +1184,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
           ...previous,
           [apiFeedUserId]: snapshot.following,
         }));
+        setFollowersIdsByAccount((previous) => ({
+          ...previous,
+          [apiFeedUserId]: snapshot.followers,
+        }));
         setBlockedUsers(snapshot.blocked);
+        setApiRelationsLoaded(true);
       })
       .catch((error: unknown) => {
         if (!cancelled)
@@ -989,6 +1198,35 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
             'error',
           );
       });
+
+    // Đồng thời tải danh sách người dùng công khai (GET /search?type=USER)
+    // để tab Gợi ý kết bạn & Giảng viên luôn có dữ liệu ngay cả khi tài khoản
+    // mới có total_friends = 0 và following = [].
+    relationshipsApi
+      .searchUsers('', 50)
+      .then((users) => {
+        if (!cancelled) rememberApiUsers(users.map(userFromSearch));
+      })
+      .catch(() => undefined);
+
+    // Đồng bộ thống kê quan hệ chính xác của tài khoản hiện tại (GET /users/{userId}/relationship-stats).
+    const myNumericId = Number(apiFeedUserId);
+    if (Number.isInteger(myNumericId) && myNumericId > 0) {
+      relationshipsApi
+        .getRelationshipStats(myNumericId)
+        .then((stats) => {
+          if (cancelled || !stats?.counts) return;
+          updateAuthCurrentUser({
+            friendsCount:
+              stats.counts.friends_count ?? rawCurrentUserRef.current.friendsCount,
+            followersCount:
+              stats.counts.followers_count ??
+              rawCurrentUserRef.current.followersCount,
+          });
+        })
+        .catch(() => undefined);
+    }
+
     return () => {
       cancelled = true;
     };
@@ -1010,6 +1248,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   }, [posts, sessionKind]);
 
   // Tìm người dùng trên máy chủ (GET /search?type=USER).
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchUsersOnApi = (query: string) => {
+    if (sessionKind !== 'api') return;
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    const text = query.trim();
+    searchTimerRef.current = setTimeout(() => {
+      relationshipsApi
+        .searchUsers(text, 30)
+        .then((users) => {
+          rememberApiUsers(users.map(userFromSearch));
+        })
+        .catch(() => undefined);
+    }, 250);
+  };
+
   useEffect(() => {
     const text = searchQuery.trim();
     if (sessionKind !== 'api' || !text) return;
@@ -1028,7 +1281,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     };
   }, [searchQuery, sessionKind]);
 
-  // Mở trang cá nhân người khác: tải hồ sơ, quan hệ với tôi và bài viết.
+  // Mở trang cá nhân người khác: tải hồ sơ, thống kê quan hệ (GET /users/{userId}/relationship-stats) và bài viết.
   const [viewedProfileError, setViewedProfileError] = useState<string | null>(
     null,
   );
@@ -1041,15 +1294,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     )
       return;
     const userId = Number(viewingUserId);
-    if (!Number.isInteger(userId)) return;
+    if (!Number.isInteger(userId) || userId <= 0) {
+      void resolveApiTargetUser(viewingUserId).then((resolved) => {
+        if (resolved && resolved.id !== viewingUserId) {
+          setViewingUserId(resolved.id);
+        }
+      });
+      return;
+    }
     const accountId = rawCurrentUser.id;
     let cancelled = false;
-    relationshipsApi
-      .getUser(userId)
-      .then((profile) => {
+    Promise.all([
+      relationshipsApi.getUser(userId),
+      relationshipsApi.getRelationshipStats(userId).catch(() => undefined),
+    ])
+      .then(([profile, stats]) => {
         if (cancelled || !profile) return;
-        rememberApiUsers([userFromProfile(profile)], true);
-        const status = friendStatusFromProfile(profile);
+        const mappedUser = userFromProfile(profile);
+        if (stats?.counts) {
+          mappedUser.friendsCount =
+            stats.counts.friends_count ?? mappedUser.friendsCount;
+          mappedUser.followersCount =
+            stats.counts.followers_count ?? mappedUser.followersCount;
+        }
+        rememberApiUsers([mappedUser], true);
+
+        const status =
+          friendStatusFromRelationshipStats(stats) ??
+          friendStatusFromProfile(profile);
         if (status)
           setFriendStatusesByAccount((previous) => {
             const current = getFriendStatusesForAccount(previous, accountId);
@@ -1059,7 +1331,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
               [accountId]: { ...current, [viewingUserId]: status },
             };
           });
-        const following = profile.relationships?.is_following;
+
+        const following =
+          stats?.relationship_with_me?.following ??
+          profile.relationships?.is_following;
         if (typeof following === 'boolean')
           setFollowingIdsByAccount((previous) => {
             const current = previous[accountId] ?? [];
@@ -1067,6 +1342,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
             return {
               ...previous,
               [accountId]: following
+                ? [...current, viewingUserId]
+                : current.filter((id) => id !== viewingUserId),
+            };
+          });
+
+        const followedBy =
+          stats?.relationship_with_me?.followed_by ??
+          profile.relationships?.is_followed;
+        if (typeof followedBy === 'boolean')
+          setFollowersIdsByAccount((previous) => {
+            const current = previous[accountId] ?? [];
+            if (current.includes(viewingUserId) === followedBy) return previous;
+            return {
+              ...previous,
+              [accountId]: followedBy
                 ? [...current, viewingUserId]
                 : current.filter((id) => id !== viewingUserId),
             };
@@ -1106,7 +1396,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   /** Gọi API quan hệ; thành công mới cập nhật giao diện, lỗi thì báo lỗi. */
   const runRelationAction = (
-    request: () => Promise<void>,
+    request: () => Promise<unknown>,
     onSuccess: () => void,
     message: string,
     type: 'success' | 'info' | 'warning' = 'success',
@@ -1135,11 +1425,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     }
     const target = findRawUserById(userId);
     if (sessionKind === 'api') {
-      runRelationAction(
-        () => relationshipsApi.sendFriendRequest(Number(userId)),
-        () => setApiFriendStatus(userId, 'REQUEST_SENT'),
-        `Đã gửi lời mời kết bạn tới ${target.name}!`,
-      );
+      relationshipsApi
+        .sendFriendRequest(Number(userId))
+        .then((res) => {
+          if (res?.status === 'ACCEPTED') {
+            setApiFriendStatus(userId, 'FRIEND');
+            showToast(
+              `Bạn và ${target.name} đã trở thành bạn bè (tự động chấp nhận lời mời)!`,
+              'success',
+            );
+          } else {
+            setApiFriendStatus(userId, 'REQUEST_SENT');
+            showToast(`Đã gửi lời mời kết bạn tới ${target.name}!`, 'success');
+          }
+        })
+        .catch((error: unknown) =>
+          showToast(errorMessage(error, 'Thao tác không thành công.'), 'error'),
+        );
       return;
     }
     updateFriendStatusesForBothAccounts(
@@ -1242,22 +1544,39 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     const target = findRawUserById(userId);
     if (sessionKind === 'api') {
       const following = followingIds.includes(userId);
-      runRelationAction(
-        () =>
-          following
-            ? relationshipsApi.unfollow(Number(userId))
-            : relationshipsApi.follow(Number(userId)),
-        () =>
+      const action = following
+        ? relationshipsApi.unfollow(Number(userId))
+        : relationshipsApi.follow(Number(userId));
+      action
+        .then((res) => {
           setFollowingIds((prev) =>
             following
               ? prev.filter((id) => id !== userId)
               : [...prev.filter((id) => id !== userId), userId],
-          ),
-        following
-          ? `Đã bỏ theo dõi ${target.name}.`
-          : `Đang theo dõi ${target.name}!`,
-        following ? 'info' : 'success',
-      );
+          );
+          if (res && typeof res.new_followers_count === 'number') {
+            setApiUsers((prev) => {
+              const existing = prev[userId];
+              if (!existing) return prev;
+              return {
+                ...prev,
+                [userId]: {
+                  ...existing,
+                  followersCount: res.new_followers_count!,
+                },
+              };
+            });
+          }
+          showToast(
+            following
+              ? `Đã bỏ theo dõi ${target.name}.`
+              : `Đang theo dõi ${target.name}!`,
+            following ? 'info' : 'success',
+          );
+        })
+        .catch((error: unknown) =>
+          showToast(errorMessage(error, 'Thao tác không thành công.'), 'error'),
+        );
       return;
     }
     setFollowingIds((prev) => {
@@ -1278,6 +1597,134 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     );
   };
 
+  /**
+   * Phân giải userId sang ID số nguyên thật trên backend (hỗ trợ cả trường hợp
+   * đối phương trong khung chat mới chỉ có ID tạm `conv_partner_<convId>` từ GET /conversations).
+   */
+  const resolveApiTargetUser = async (
+    userId: string,
+  ): Promise<{ id: string; numericId: number; name: string } | null> => {
+    const directNum = Number(userId);
+    if (Number.isInteger(directNum) && directNum > 0) {
+      return {
+        id: String(directNum),
+        numericId: directNum,
+        name: findRawUserById(String(directNum)).name,
+      };
+    }
+
+    const allConvs = [
+      ...conversationRecordsRef.current,
+      ...hiddenConversationRecords,
+    ];
+    const conv = allConvs.find(
+      (c) =>
+        c.partner.id === userId ||
+        `conv_partner_${c.id}` === userId ||
+        c.participantIds.includes(userId),
+    );
+    const partnerName = conv?.partner.name?.trim() || '';
+
+    // 1. Tìm trong apiUsers hiện có theo tên
+    if (partnerName) {
+      const matched = Object.values(apiUsersRef.current).find(
+        (u) =>
+          u.id !== rawCurrentUserRef.current.id &&
+          Number.isInteger(Number(u.id)) &&
+          u.name.trim().toLowerCase() === partnerName.toLowerCase(),
+      );
+      if (matched) {
+        return {
+          id: matched.id,
+          numericId: Number(matched.id),
+          name: matched.name,
+        };
+      }
+    }
+
+    // 2. Thử lấy từ GET /conversations/{id}/members nếu biết conversationId
+    const convIdStr =
+      conv?.id ??
+      (userId.startsWith('conv_partner_')
+        ? userId.replace('conv_partner_', '')
+        : '');
+    const convNum = Number(convIdStr);
+    if (Number.isInteger(convNum) && convNum > 0) {
+      try {
+        const members = await chatApi.getGroupMembers(convNum);
+        const other = members.find(
+          (m) =>
+            m.user_id != null &&
+            String(m.user_id) !== rawCurrentUserRef.current.id,
+        );
+        if (other?.user_id != null) {
+          const realId = String(other.user_id);
+          const mappedUser = basicUser(other);
+          rememberApiUsers([mappedUser]);
+          setConversationRecords((prev) =>
+            prev.map((c) =>
+              c.id === convIdStr
+                ? {
+                    ...c,
+                    partner: { ...c.partner, id: realId },
+                    participantIds: [rawCurrentUserRef.current.id, realId],
+                  }
+                : c,
+            ),
+          );
+          return {
+            id: realId,
+            numericId: other.user_id,
+            name: other.full_name || partnerName || mappedUser.name,
+          };
+        }
+      } catch {
+        // Bỏ qua nếu endpoint members chỉ cho phép GROUP
+      }
+    }
+
+    // 3. Tìm kiếm người dùng theo tên qua GET /search?type=USER
+    if (partnerName) {
+      try {
+        const results = await relationshipsApi.searchUsers(partnerName, 20);
+        const mappedList = results.map(userFromSearch);
+        rememberApiUsers(mappedList);
+        const exact =
+          mappedList.find(
+            (u) =>
+              u.id !== rawCurrentUserRef.current.id &&
+              u.name.trim().toLowerCase() === partnerName.toLowerCase(),
+          ) ??
+          mappedList.find((u) => u.id !== rawCurrentUserRef.current.id);
+        if (exact && Number.isInteger(Number(exact.id))) {
+          const realId = exact.id;
+          if (convIdStr) {
+            setConversationRecords((prev) =>
+              prev.map((c) =>
+                c.id === convIdStr
+                  ? {
+                      ...c,
+                      partner: { ...c.partner, ...exact, id: realId },
+                      participantIds: [rawCurrentUserRef.current.id, realId],
+                    }
+                  : c,
+              ),
+            );
+          }
+          return {
+            id: realId,
+            numericId: Number(realId),
+            name: exact.name,
+          };
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    return null;
+  };
+
   // Actions Chặn & Bỏ chặn theo đúng logic Slide 24:
   // - Chặn và bỏ chặn bất kỳ ai, chặn lại sau khi bỏ chặn KHÔNG bị giới hạn thời gian
   // - Chặn sẽ khiến người đó không còn là bạn bè của người thực hiện thao tác chặn
@@ -1289,25 +1736,45 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     const target = findRawUserById(userId);
     const wasFriend = friendStatuses[userId] === 'FRIEND';
     if (sessionKind === 'api') {
-      runRelationAction(
-        () => relationshipsApi.block(Number(userId)),
-        () => {
-          setApiFriendStatus(userId, 'NONE');
-          setFollowingIds((prev) => prev.filter((id) => id !== userId));
-          setBlockedUsers((prev) => [
-            {
-              userId,
-              blockedAt: new Date().toLocaleString('vi-VN'),
-              reason: reason?.trim() || undefined,
-            },
-            ...prev.filter((item) => item.userId !== userId),
-          ]);
-        },
-        wasFriend
-          ? `Đã chặn ${target.name} và hủy kết bạn.`
-          : `Đã chặn ${target.name}.`,
-        'warning',
-      );
+      void resolveApiTargetUser(userId).then((resolved) => {
+        if (!resolved) {
+          showToast(
+            'Không xác định được ID người dùng để chặn. Vui lòng thử lại.',
+            'error',
+          );
+          return;
+        }
+        const realId = resolved.id;
+        const displayName =
+          resolved.name && resolved.name !== 'Người dùng'
+            ? resolved.name
+            : target.name;
+        const wasRealFriend =
+          wasFriend || friendStatuses[realId] === 'FRIEND';
+        runRelationAction(
+          () => relationshipsApi.block(resolved.numericId),
+          () => {
+            setApiFriendStatus(realId, 'NONE');
+            setFollowingIds((prev) =>
+              prev.filter((id) => id !== realId && id !== userId),
+            );
+            setBlockedUsers((prev) => [
+              {
+                userId: realId,
+                blockedAt: new Date().toLocaleString('vi-VN'),
+                reason: reason?.trim() || undefined,
+              },
+              ...prev.filter(
+                (item) => item.userId !== realId && item.userId !== userId,
+              ),
+            ]);
+          },
+          wasRealFriend
+            ? `Đã chặn ${displayName} và hủy kết bạn.`
+            : `Đã chặn ${displayName}.`,
+          'warning',
+        );
+      });
       return;
     }
 
@@ -1345,14 +1812,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   const unblockUser = (userId: string) => {
     const target = findRawUserById(userId);
     if (sessionKind === 'api') {
-      runRelationAction(
-        () => relationshipsApi.unblock(Number(userId)),
-        () =>
-          setBlockedUsers((prev) =>
-            prev.filter((item) => item.userId !== userId),
-          ),
-        `Đã bỏ chặn ${target.name}.`,
-      );
+      void resolveApiTargetUser(userId).then((resolved) => {
+        if (!resolved) {
+          showToast('Không xác định được người dùng để bỏ chặn.', 'error');
+          return;
+        }
+        const realId = resolved.id;
+        const displayName =
+          resolved.name && resolved.name !== 'Người dùng'
+            ? resolved.name
+            : target.name;
+        runRelationAction(
+          () => relationshipsApi.unblock(resolved.numericId),
+          () =>
+            setBlockedUsers((prev) =>
+              prev.filter(
+                (item) => item.userId !== realId && item.userId !== userId,
+              ),
+            ),
+          `Đã bỏ chặn ${displayName}.`,
+        );
+      });
       return;
     }
     setBlockedUsers((prev) => prev.filter((item) => item.userId !== userId));
@@ -1363,8 +1843,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const toggleSimulatedBlockedByOther = (userId: string) => {
-    // Chỉ là công cụ mô phỏng của phiên demo.
-    if (sessionKind === 'api') return;
     const target = findRawUserById(userId);
     setBlockedByOtherIds((prev) => {
       const exists = prev.includes(userId);
@@ -1373,7 +1851,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         return prev.filter((id) => id !== userId);
       } else {
         // Khi người kia chặn mình, quan hệ bạn bè cũng tự động bị hủy
-        updateFriendStatusesForBothAccounts(userId, 'NONE', 'NONE');
+        if (sessionKind === 'api') {
+          setApiFriendStatus(userId, 'NONE');
+        } else {
+          updateFriendStatusesForBothAccounts(userId, 'NONE', 'NONE');
+        }
         showToast(
           `[Mô phỏng] ${target.name} vừa chặn bạn. Bạn không thể xem trang cá nhân hay nhắn tin cho người này.`,
           'warning',
@@ -2566,16 +3048,286 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     showToast(`Đã gỡ trang bị "${item.name}"!`, 'info');
   };
 
-  // Chat dock
-  const openChatDock = (partnerUserId: string) => {
-    if (sessionKind !== 'demo') {
-      showToast(
-        'Trò chuyện bằng tài khoản API chưa được kết nối với máy chủ.',
-        'warning',
-      );
+  // ---------------- Chat / Messenger (16 REST + STOMP WebSocket) ----------------
+  const chatSourceRef = useRef<'demo' | 'api'>('demo');
+  const apiUsersRef = useRef(apiUsers);
+  useEffect(() => {
+    apiUsersRef.current = apiUsers;
+  }, [apiUsers]);
+
+  useEffect(() => {
+    if (!apiFeedUserId) {
+      chatStompClient.disconnect();
+      if (chatSourceRef.current === 'api') {
+        chatSourceRef.current = 'demo';
+        setConversationRecords(mockConversations);
+        setHiddenConversationRecords([]);
+      }
       return;
     }
+    chatSourceRef.current = 'api';
+    let cancelled = false;
+    setConversationRecords([]);
+    setHiddenConversationRecords([]);
+
+    chatApi
+      .getConversations({ limit: 50 })
+      .then((res) => {
+        if (cancelled || !res?.items) return;
+        const mappedConvs = res.items.map((dto) =>
+          conversationFromDto(
+            dto,
+            apiFeedUserId,
+            apiUsersRef.current,
+          ),
+        );
+        setConversationRecords((previous) => {
+          const byId = new Map(previous.map((item) => [item.id, item]));
+          return res.items!.map((dto) =>
+            conversationFromDto(
+              dto,
+              apiFeedUserId,
+              apiUsersRef.current,
+              byId.get(String(dto.conversation_id)),
+            ),
+          );
+        });
+        // Phân giải trước user_id thật cho các cuộc trò chuyện 1-1 mới chỉ có display_name
+        for (const conv of mappedConvs) {
+          if (
+            conv.type !== 'GROUP' &&
+            conv.partner.id.startsWith('conv_partner_') &&
+            conv.partner.name
+          ) {
+            void resolveApiTargetUser(conv.partner.id);
+          }
+        }
+      })
+      .catch(() => undefined);
+
+    chatStompClient.connect();
+    const unsubscribe = chatStompClient.onUserMessage((wsPayload) => {
+      if (cancelled) return;
+      // Biên nhận đã đọc
+      if (
+        wsPayload.reader_id != null &&
+        wsPayload.conversation_id != null &&
+        wsPayload.message_id == null
+      ) {
+        const convId = String(wsPayload.conversation_id);
+        setConversationRecords((prev) =>
+          prev.map((c) =>
+            c.id === convId
+              ? {
+                  ...c,
+                  messages: c.messages.map((m) => ({ ...m, status: 'READ' })),
+                }
+              : c,
+          ),
+        );
+        return;
+      }
+
+      if (wsPayload.conversation_id == null) return;
+      const convId = String(wsPayload.conversation_id);
+      const incoming = messageFromWs(wsPayload, convId);
+      const isFromMe = incoming.senderId === apiFeedUserId;
+
+      setConversationRecords((prev) => {
+        const exists = prev.some((c) => c.id === convId);
+        if (!exists) {
+          // Hội thoại mới chưa có trong danh sách: tạo tạm rồi đồng bộ danh sách
+          const partner = wsPayload.sender_id
+            ? (apiUsersRef.current[String(wsPayload.sender_id)] ??
+              basicUser({
+                user_id: wsPayload.sender_id,
+                full_name: wsPayload.sender_name,
+                avatar_url: wsPayload.avatar_url,
+              }))
+            : basicUser({
+                user_id: wsPayload.conversation_id,
+                full_name: wsPayload.sender_name || `Hội thoại #${convId}`,
+                avatar_url: wsPayload.avatar_url,
+              });
+          const newConv: Conversation = {
+            id: convId,
+            type: 'DIRECT',
+            participantIds: [apiFeedUserId, partner.id],
+            partner,
+            lastMessage: incoming.text,
+            lastMessageTime: incoming.timestamp,
+            unreadCount: isFromMe ? 0 : 1,
+            unreadCounts: { [apiFeedUserId]: isFromMe ? 0 : 1 },
+            messages: [incoming],
+          };
+          return [newConv, ...prev];
+        }
+
+        return prev.map((c) => {
+          if (c.id !== convId) return c;
+          const hasExactId = c.messages.some((m) => m.id === incoming.id);
+          let updatedMessages: MessageItem[];
+          if (hasExactId) {
+            updatedMessages = c.messages.map((m) =>
+              m.id === incoming.id ? incoming : m,
+            );
+          } else if (isFromMe) {
+            // Khớp tin nhắn tạm (optimistic) vừa gửi
+            const tempIdx = c.messages.findIndex(
+              (m) =>
+                m.id.startsWith('temp_') &&
+                m.senderId === apiFeedUserId &&
+                m.text === incoming.text,
+            );
+            if (tempIdx >= 0) {
+              updatedMessages = [...c.messages];
+              updatedMessages[tempIdx] = incoming;
+            } else {
+              updatedMessages = [...c.messages, incoming];
+            }
+          } else {
+            updatedMessages = [...c.messages, incoming];
+          }
+
+          const nextUnread = isFromMe
+            ? 0
+            : (c.unreadCounts?.[apiFeedUserId] ?? c.unreadCount ?? 0) + 1;
+
+          return {
+            ...c,
+            lastMessage: incoming.text,
+            lastMessageTime: incoming.timestamp,
+            unreadCount: nextUnread,
+            unreadCounts: {
+              ...c.unreadCounts,
+              [apiFeedUserId]: nextUnread,
+            },
+            messages: updatedMessages,
+          };
+        });
+      });
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, [apiFeedUserId]);
+
+  const loadingConvMessagesRef = useRef(new Set<string>());
+  const loadConversationMessages = (conversationId: string) => {
+    if (
+      sessionKind !== 'api' ||
+      !conversationId ||
+      loadingConvMessagesRef.current.has(conversationId)
+    )
+      return;
+    const numericId = Number(conversationId);
+    if (!Number.isInteger(numericId) || numericId <= 0) return;
+
+    loadingConvMessagesRef.current.add(conversationId);
+    chatApi
+      .getMessages(numericId, { limit: 50 })
+      .then((res) => {
+        const rawList =
+          res?.messages ??
+          (res as { items?: NonNullable<typeof res>['messages'] } | undefined)
+            ?.items;
+        if (!rawList) return;
+        // Backend trả tin nhắn mới nhất trước hoặc theo thứ tự thời gian; sắp xếp tăng dần theo message_id
+        const sorted = [...rawList].sort(
+          (a, b) => (a.message_id ?? 0) - (b.message_id ?? 0),
+        );
+        const mapped = sorted.map((dto) => messageFromDto(dto, conversationId));
+        const mergeConv = (c: Conversation): Conversation => {
+          if (c.id !== conversationId) return c;
+          // Giữ lại các tin nhắn tạm (`temp_...`) vừa gửi nếu server chưa kịp trả về trong GET /messages
+          const pendingTemps = c.messages.filter(
+            (m) =>
+              m.id.startsWith('temp_') &&
+              !mapped.some(
+                (srv) => srv.senderId === m.senderId && srv.text === m.text,
+              ),
+          );
+          const mergedMessages =
+            mapped.length > 0 || pendingTemps.length > 0
+              ? [...mapped, ...pendingTemps]
+              : c.messages;
+          const latestMsg = mergedMessages[mergedMessages.length - 1];
+          return {
+            ...c,
+            type: res?.conversation_type ?? c.type,
+            messages: mergedMessages,
+            lastMessage: latestMsg ? latestMsg.text : c.lastMessage,
+            lastMessageTime: latestMsg
+              ? latestMsg.timestamp
+              : c.lastMessageTime,
+            unreadCount: 0,
+            unreadCounts: { ...c.unreadCounts, [currentUser.id]: 0 },
+          };
+        };
+        setConversationRecords((prev) => prev.map(mergeConv));
+        setHiddenConversationRecords((prev) => prev.map(mergeConv));
+        const latestMsgId = sorted[sorted.length - 1]?.message_id;
+        if (latestMsgId != null) {
+          chatStompClient.sendReadReceipt({
+            conversation_id: numericId,
+            message_id: latestMsgId,
+          });
+        }
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        loadingConvMessagesRef.current.delete(conversationId);
+      });
+  };
+
+  // Chat dock
+  const openChatDock = (partnerUserId: string) => {
     if (partnerUserId === currentUser.id) return;
+    if (sessionKind === 'api') {
+      const existing = conversations.find(
+        (c) => c.type !== 'GROUP' && c.partner.id === partnerUserId,
+      );
+      if (existing) {
+        markConversationRead(existing.id);
+        loadConversationMessages(existing.id);
+        if (!activeDockIds.includes(existing.id)) {
+          setActiveDockIds((prev) => [...prev.slice(-2), existing.id]);
+        }
+        setMinimizedDockIds((prev) => prev.filter((id) => id !== existing.id));
+        return;
+      }
+      const numericTargetId = Number(partnerUserId);
+      if (!Number.isInteger(numericTargetId) || numericTargetId <= 0) return;
+      chatApi
+        .createDirectConversation(numericTargetId)
+        .then((detail) => {
+          if (!detail || detail.conversation_id == null) return;
+          const newConv = conversationFromDetailDto(
+            detail,
+            currentUser.id,
+            apiUsersRef.current,
+          );
+          setConversationRecords((prev) => [
+            newConv,
+            ...prev.filter((item) => item.id !== newConv.id),
+          ]);
+          loadConversationMessages(newConv.id);
+          setActiveDockIds((prev) =>
+            prev.includes(newConv.id) ? prev : [...prev.slice(-2), newConv.id],
+          );
+          setMinimizedDockIds((prev) => prev.filter((id) => id !== newConv.id));
+        })
+        .catch((error: unknown) =>
+          showToast(
+            errorMessage(error, 'Không thể khởi tạo cuộc trò chuyện.'),
+            'error',
+          ),
+        );
+      return;
+    }
+
     let conv = conversations.find((c) => c.partner.id === partnerUserId);
     if (!conv) {
       const partner = getUserById(partnerUserId);
@@ -2629,6 +3381,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         item.id === conversationId
           ? {
               ...item,
+              unreadCount: 0,
               unreadCounts: {
                 ...item.unreadCounts,
                 [currentUser.id]: 0,
@@ -2637,19 +3390,71 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
           : item,
       ),
     );
+    if (sessionKind === 'api') {
+      const numericConvId = Number(conversationId);
+      const lastMsg = conversation.messages[conversation.messages.length - 1];
+      const numericMsgId = lastMsg ? Number(lastMsg.id) : NaN;
+      if (Number.isInteger(numericConvId) && Number.isInteger(numericMsgId)) {
+        chatStompClient.sendReadReceipt({
+          conversation_id: numericConvId,
+          message_id: numericMsgId,
+        });
+      }
+    }
   };
 
   const sendMessage = (conversationId: string, text: string) => {
     if (!text.trim()) return;
-    const targetConv = conversations.find((c) => c.id === conversationId);
+    const targetConv =
+      conversations.find((c) => c.id === conversationId) ??
+      hiddenConversationRecords.find((c) => c.id === conversationId);
     if (!targetConv) return;
-    if (isBlockedEitherWay(targetConv.partner.id)) {
+    if (
+      targetConv.type !== 'GROUP' &&
+      isBlockedEitherWay(targetConv.partner.id)
+    ) {
       showToast(
         'Không thể gửi tin nhắn vì hai người đang trong trạng thái chặn.',
         'error',
       );
       return;
     }
+
+    if (sessionKind === 'api') {
+      const numericConvId = Number(conversationId);
+      const tempMessage: MessageItem = {
+        id: `temp_${Date.now()}`,
+        conversationId,
+        senderId: currentUser.id,
+        text: text.trim(),
+        timestamp: formatChatTime(new Date().toISOString()),
+        status: 'SENDING',
+        effect: currentUser.equippedChatEffectId,
+      };
+      const appendTemp = (c: Conversation): Conversation =>
+        c.id === conversationId
+          ? {
+              ...c,
+              lastMessage: text.trim(),
+              lastMessageTime: tempMessage.timestamp,
+              messages: [...c.messages, tempMessage],
+            }
+          : c;
+      setConversationRecords((prev) => prev.map(appendTemp));
+      setHiddenConversationRecords((prev) => prev.map(appendTemp));
+      if (Number.isInteger(numericConvId) && numericConvId > 0) {
+        chatStompClient.sendMessage({
+          conversation_id: numericConvId,
+          content: text.trim(),
+          message_type: 'TEXT',
+        });
+        setTimeout(() => {
+          loadConversationMessages(conversationId);
+        }, 1200);
+      }
+      return;
+    }
+
     const newMessage: MessageItem = {
       id: 'm_' + Date.now(),
       conversationId,
@@ -2683,21 +3488,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     );
   };
 
-  const recallMessage = (conversationId: string, messageId: string) => {
+  const recallMessage = (
+    conversationId: string,
+    messageId: string,
+    scope: 'ME' | 'EVERYONE' = 'EVERYONE',
+  ) => {
     const conversation = conversations.find(
       (item) => item.id === conversationId,
     );
+    if (!conversation) return;
     if (
-      !conversation ||
+      scope === 'EVERYONE' &&
       !conversation.messages.some(
         (message) =>
           message.id === messageId && message.senderId === currentUser.id,
       )
     )
       return;
-    setConversationRecords((prev) =>
-      prev.map((c) => {
-        if (c.id === conversationId) {
+
+    const applyLocalDelete = () => {
+      setConversationRecords((prev) =>
+        prev.map((c) => {
+          if (c.id !== conversationId) return c;
+          if (scope === 'ME') {
+            return {
+              ...c,
+              messages: c.messages.filter((m) => m.id !== messageId),
+            };
+          }
           return {
             ...c,
             messages: c.messages.map((m) =>
@@ -2706,11 +3524,457 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
                 : m,
             ),
           };
-        }
-        return c;
+        }),
+      );
+    };
+
+    if (sessionKind === 'api') {
+      const numericMsgId = Number(messageId);
+      if (!Number.isInteger(numericMsgId) || numericMsgId <= 0) {
+        applyLocalDelete();
+        return;
+      }
+      chatApi
+        .deleteMessage(numericMsgId, scope)
+        .then(() => {
+          applyLocalDelete();
+          showToast(
+            scope === 'ME'
+              ? 'Đã xóa tin nhắn ở phía bạn.'
+              : 'Đã thu hồi tin nhắn đối với mọi người.',
+            'info',
+          );
+        })
+        .catch((error: unknown) =>
+          showToast(
+            errorMessage(error, 'Không thể xóa/thu hồi tin nhắn.'),
+            'error',
+          ),
+        );
+      return;
+    }
+
+    applyLocalDelete();
+    showToast(
+      scope === 'ME'
+        ? 'Đã xóa tin nhắn ở phía bạn.'
+        : 'Đã thu hồi tin nhắn đối với mọi người.',
+      'info',
+    );
+  };
+
+  const sendTyping = (conversationId: string, isTyping: boolean) => {
+    if (sessionKind !== 'api') return;
+    const numericConvId = Number(conversationId);
+    if (!Number.isInteger(numericConvId) || numericConvId <= 0) return;
+    chatStompClient.sendTyping({
+      conversation_id: numericConvId,
+      is_typing: isTyping,
+    });
+  };
+
+  const createGroupChat = async (
+    name: string,
+    memberIds: string[],
+    avatarUrl?: string,
+  ): Promise<Conversation | null> => {
+    if (!name.trim() || memberIds.length < 2) {
+      showToast(
+        'Nhóm chat cần có tên và tối thiểu 2 thành viên khác bạn.',
+        'warning',
+      );
+      return null;
+    }
+    if (sessionKind === 'api') {
+      try {
+        const dto = await chatApi.createGroupConversation({
+          name: name.trim(),
+          avatar_url: avatarUrl?.trim() || undefined,
+          member_ids: memberIds.map(Number).filter(Number.isFinite),
+        });
+        if (!dto) return null;
+        const created = conversationFromDetailDto(
+          dto,
+          currentUser.id,
+          apiUsersRef.current,
+        );
+        setConversationRecords((prev) => [
+          created,
+          ...prev.filter((c) => c.id !== created.id),
+        ]);
+        showToast(`Đã tạo nhóm "${created.partner.name}"!`, 'success');
+        return created;
+      } catch (error: unknown) {
+        showToast(errorMessage(error, 'Không tạo được nhóm chat.'), 'error');
+        return null;
+      }
+    }
+    const groupId = `group_${Date.now()}`;
+    const members = [currentUser.id, ...memberIds].map((uid, idx) => {
+      const u = getUserById(uid);
+      return {
+        userId: u.id,
+        name: u.name,
+        avatar: u.avatar,
+        role: (idx === 0 ? 'CHIEF' : 'VILLAGER') as
+          | 'CHIEF'
+          | 'VILLAGE_ELDER'
+          | 'VILLAGER',
+      };
+    });
+    const created: Conversation = {
+      id: groupId,
+      type: 'GROUP',
+      participantIds: [currentUser.id, ...memberIds],
+      partner: {
+        ...currentUser,
+        id: groupId,
+        name: name.trim(),
+        avatar: avatarUrl?.trim() || '/default-avatar.svg',
+        classOrTitle: `Nhóm · ${members.length} thành viên`,
+      },
+      lastMessage: 'Nhóm mới được khởi tạo',
+      lastMessageTime: 'Vừa xong',
+      unreadCount: 0,
+      memberCount: members.length,
+      members,
+      messages: [],
+    };
+    setConversationRecords((prev) => [created, ...prev]);
+    showToast(`Đã tạo nhóm "${name.trim()}"!`, 'success');
+    return created;
+  };
+
+  const updateGroupChat = async (
+    conversationId: string,
+    updates: { name?: string; avatar_url?: string },
+  ) => {
+    if (sessionKind === 'api') {
+      try {
+        const dto = await chatApi.updateGroupInfo(
+          Number(conversationId),
+          updates,
+        );
+        setConversationRecords((prev) =>
+          prev.map((c) =>
+            c.id === conversationId
+              ? dto
+                ? conversationFromDetailDto(
+                    dto,
+                    currentUser.id,
+                    apiUsersRef.current,
+                    c,
+                  )
+                : {
+                    ...c,
+                    partner: {
+                      ...c.partner,
+                      name: updates.name?.trim() || c.partner.name,
+                      avatar: updates.avatar_url?.trim() || c.partner.avatar,
+                    },
+                  }
+              : c,
+          ),
+        );
+        showToast('Đã cập nhật thông tin nhóm chat.', 'success');
+      } catch (error: unknown) {
+        showToast(
+          errorMessage(error, 'Không cập nhật được thông tin nhóm.'),
+          'error',
+        );
+      }
+      return;
+    }
+    setConversationRecords((prev) =>
+      prev.map((c) =>
+        c.id === conversationId
+          ? {
+              ...c,
+              partner: {
+                ...c.partner,
+                name: updates.name?.trim() || c.partner.name,
+                avatar: updates.avatar_url?.trim() || c.partner.avatar,
+              },
+            }
+          : c,
+      ),
+    );
+    showToast('Đã cập nhật thông tin nhóm chat.', 'success');
+  };
+
+  const loadGroupMembers = async (conversationId: string) => {
+    if (sessionKind !== 'api') return;
+    const numericId = Number(conversationId);
+    if (!Number.isInteger(numericId) || numericId <= 0) return;
+    try {
+      const list = await chatApi.getGroupMembers(numericId);
+      const mapped = list.map(memberFromDto);
+      setConversationRecords((prev) =>
+        prev.map((c) =>
+          c.id === conversationId
+            ? { ...c, members: mapped, memberCount: mapped.length }
+            : c,
+        ),
+      );
+    } catch {
+      // ignore
+    }
+  };
+
+  const addMembersToGroup = async (
+    conversationId: string,
+    userIds: string[],
+  ) => {
+    if (!userIds.length) return;
+    if (sessionKind === 'api') {
+      try {
+        await chatApi.addGroupMembers(
+          Number(conversationId),
+          userIds.map(Number).filter(Number.isFinite),
+        );
+        await loadGroupMembers(conversationId);
+        showToast('Đã thêm thành viên vào nhóm.', 'success');
+      } catch (error: unknown) {
+        showToast(errorMessage(error, 'Không thêm được thành viên.'), 'error');
+      }
+      return;
+    }
+    setConversationRecords((prev) =>
+      prev.map((c) => {
+        if (c.id !== conversationId) return c;
+        const existingIds = new Set((c.members ?? []).map((m) => m.userId));
+        const added = userIds
+          .filter((uid) => !existingIds.has(uid))
+          .map((uid) => {
+            const u = getUserById(uid);
+            return {
+              userId: u.id,
+              name: u.name,
+              avatar: u.avatar,
+              role: 'VILLAGER' as const,
+            };
+          });
+        const nextMembers = [...(c.members ?? []), ...added];
+        return {
+          ...c,
+          participantIds: Array.from(new Set([...c.participantIds, ...userIds])),
+          members: nextMembers,
+          memberCount: nextMembers.length,
+        };
       }),
     );
-    showToast('Đã thu hồi tin nhắn đối với mọi người.', 'info');
+    showToast('Đã thêm thành viên vào nhóm.', 'success');
+  };
+
+  const removeMemberFromGroup = async (
+    conversationId: string,
+    userId: string,
+  ) => {
+    if (sessionKind === 'api') {
+      try {
+        await chatApi.removeGroupMember(Number(conversationId), Number(userId));
+        await loadGroupMembers(conversationId);
+        showToast('Đã xóa thành viên khỏi nhóm.', 'info');
+      } catch (error: unknown) {
+        showToast(errorMessage(error, 'Không xóa được thành viên.'), 'error');
+      }
+      return;
+    }
+    setConversationRecords((prev) =>
+      prev.map((c) =>
+        c.id === conversationId
+          ? {
+              ...c,
+              members: (c.members ?? []).filter((m) => m.userId !== userId),
+            }
+          : c,
+      ),
+    );
+    showToast('Đã xóa thành viên khỏi nhóm.', 'info');
+  };
+
+  const updateGroupMemberRole = async (
+    conversationId: string,
+    userId: string,
+    newRole: 'CHIEF' | 'VILLAGE_ELDER' | 'VILLAGER',
+  ) => {
+    if (sessionKind === 'api') {
+      try {
+        await chatApi.updateMemberRole(
+          Number(conversationId),
+          Number(userId),
+          newRole,
+        );
+        await loadGroupMembers(conversationId);
+        showToast('Đã cập nhật vai trò thành viên.', 'success');
+      } catch (error: unknown) {
+        showToast(errorMessage(error, 'Không đổi được vai trò.'), 'error');
+      }
+      return;
+    }
+    setConversationRecords((prev) =>
+      prev.map((c) =>
+        c.id === conversationId
+          ? {
+              ...c,
+              members: (c.members ?? []).map((m) =>
+                m.userId === userId ? { ...m, role: newRole } : m,
+              ),
+            }
+          : c,
+      ),
+    );
+    showToast('Đã cập nhật vai trò thành viên.', 'success');
+  };
+
+  const leaveGroupChat = async (
+    conversationId: string,
+    newChiefId?: string,
+  ) => {
+    if (sessionKind === 'api') {
+      try {
+        await chatApi.leaveGroup(
+          Number(conversationId),
+          newChiefId ? Number(newChiefId) : undefined,
+        );
+        setConversationRecords((prev) =>
+          prev.filter((c) => c.id !== conversationId),
+        );
+        closeChatDock(conversationId);
+        showToast('Bạn đã rời khỏi nhóm chat.', 'info');
+      } catch (error: unknown) {
+        showToast(errorMessage(error, 'Không thể rời nhóm chat.'), 'error');
+      }
+      return;
+    }
+    setConversationRecords((prev) =>
+      prev.filter((c) => c.id !== conversationId),
+    );
+    closeChatDock(conversationId);
+    showToast('Bạn đã rời khỏi nhóm chat.', 'info');
+  };
+
+  const hideChatConversation = async (conversationId: string) => {
+    const target = conversations.find((c) => c.id === conversationId);
+    if (!target) return;
+    if (sessionKind === 'api') {
+      try {
+        await chatApi.hideConversation(Number(conversationId));
+        setConversationRecords((prev) =>
+          prev.filter((c) => c.id !== conversationId),
+        );
+        setHiddenConversationRecords((prev) => [
+          { ...target, isHidden: true },
+          ...prev.filter((c) => c.id !== conversationId),
+        ]);
+        closeChatDock(conversationId);
+        showToast('Đã ẩn cuộc hội thoại vào kho bí mật.', 'info');
+      } catch (error: unknown) {
+        showToast(errorMessage(error, 'Không thể ẩn cuộc hội thoại.'), 'error');
+      }
+      return;
+    }
+    setConversationRecords((prev) =>
+      prev.filter((c) => c.id !== conversationId),
+    );
+    setHiddenConversationRecords((prev) => [
+      { ...target, isHidden: true },
+      ...prev.filter((c) => c.id !== conversationId),
+    ]);
+    closeChatDock(conversationId);
+    showToast('Đã ẩn cuộc hội thoại vào kho bí mật.', 'info');
+  };
+
+  const unhideChatConversation = async (conversationId: string) => {
+    const target = hiddenConversationRecords.find(
+      (c) => c.id === conversationId,
+    );
+    if (sessionKind === 'api') {
+      try {
+        await chatApi.unhideConversation(Number(conversationId));
+        setHiddenConversationRecords((prev) =>
+          prev.filter((c) => c.id !== conversationId),
+        );
+        if (target) {
+          setConversationRecords((prev) => [
+            { ...target, isHidden: false },
+            ...prev.filter((c) => c.id !== conversationId),
+          ]);
+        }
+        showToast('Đã đưa cuộc hội thoại trở lại hộp thư chính.', 'success');
+      } catch (error: unknown) {
+        showToast(
+          errorMessage(error, 'Không thể bỏ ẩn cuộc hội thoại.'),
+          'error',
+        );
+      }
+      return;
+    }
+    setHiddenConversationRecords((prev) =>
+      prev.filter((c) => c.id !== conversationId),
+    );
+    if (target) {
+      setConversationRecords((prev) => [
+        { ...target, isHidden: false },
+        ...prev.filter((c) => c.id !== conversationId),
+      ]);
+    }
+    showToast('Đã đưa cuộc hội thoại trở lại hộp thư chính.', 'success');
+  };
+
+  const unlockHiddenConversations = async (pin: string): Promise<boolean> => {
+    if (!/^\d{6}$/.test(pin.trim())) {
+      showToast('Mã PIN phải gồm đúng 6 chữ số.', 'warning');
+      return false;
+    }
+    if (sessionKind === 'api') {
+      try {
+        await chatApi.unlockHiddenChat(pin.trim());
+        const res = await chatApi.getHiddenConversations({ limit: 50 });
+        const items = (res?.items ?? []).map((dto) =>
+          conversationFromDto(dto, currentUser.id, apiUsersRef.current),
+        );
+        setHiddenConversationRecords(items);
+        showToast('Đã mở khóa kho trò chuyện ẩn.', 'success');
+        return true;
+      } catch (error: unknown) {
+        showToast(
+          errorMessage(
+            error,
+            'Không mở khóa được kho ẩn (kiểm tra lại mã PIN hoặc cài đặt mã PIN mới).',
+          ),
+          'error',
+        );
+        return false;
+      }
+    }
+    showToast('Đã mở khóa kho trò chuyện ẩn.', 'success');
+    return true;
+  };
+
+  const setHiddenChatPin = async (
+    pin: string,
+    oldPin?: string,
+  ): Promise<boolean> => {
+    if (!/^\d{6}$/.test(pin.trim())) {
+      showToast('Mã PIN mới phải gồm đúng 6 chữ số.', 'warning');
+      return false;
+    }
+    if (sessionKind === 'api') {
+      try {
+        await chatApi.setHiddenChatPin(pin.trim(), oldPin?.trim() || undefined);
+        showToast('Đã lưu mã PIN kho trò chuyện ẩn thành công!', 'success');
+        return true;
+      } catch (error: unknown) {
+        showToast(
+          errorMessage(error, 'Không lưu được mã PIN kho trò chuyện ẩn.'),
+          'error',
+        );
+        return false;
+      }
+    }
+    showToast('Đã lưu mã PIN kho trò chuyện ẩn thành công!', 'success');
+    return true;
   };
 
   // Notifications
@@ -2801,7 +4065,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         declineFriendRequest,
         unfriendUser,
         followingIds,
+        followersIds,
         toggleFollowUser,
+        searchUsersOnApi,
         dismissedSuggestionIds,
         dismissSuggestion,
         blockedUsers,
@@ -2851,7 +4117,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         equipCosmetic,
         unequipCosmetic,
         conversations,
+        hiddenConversations: hiddenConversationRecords,
         openChatDock,
+        loadConversationMessages,
         markConversationRead,
         closeChatDock,
         minimizeChatDock,
@@ -2860,6 +4128,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         minimizedDockIds,
         sendMessage,
         recallMessage,
+        sendTyping,
+        createGroupChat,
+        updateGroupChat,
+        loadGroupMembers,
+        addMembersToGroup,
+        removeMemberFromGroup,
+        updateGroupMemberRole,
+        leaveGroupChat,
+        hideChatConversation,
+        unhideChatConversation,
+        unlockHiddenConversations,
+        setHiddenChatPin,
         notifications,
         markNotificationAsRead,
         markAllNotificationsAsRead,

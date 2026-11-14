@@ -261,8 +261,16 @@ export interface MessageItem {
   attachmentUrl?: string;
 }
 
+export interface ConversationMemberInfo {
+  userId: string;
+  name: string;
+  avatar: string;
+  role: 'CHIEF' | 'VILLAGE_ELDER' | 'VILLAGER';
+}
+
 export interface Conversation {
   id: string;
+  type?: 'DIRECT' | 'GROUP';
   participantIds: string[];
   partner: User;
   lastMessage: string;
@@ -270,6 +278,10 @@ export interface Conversation {
   unreadCount: number;
   unreadCounts?: Record<string, number>;
   isTyping?: boolean;
+  isHidden?: boolean;
+  muted?: boolean;
+  memberCount?: number;
+  members?: ConversationMemberInfo[];
   messages: MessageItem[];
 }
 

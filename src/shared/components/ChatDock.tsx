@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '../../features/demo/context/AppContext';
 import { AvatarWithFrame } from './AvatarWithFrame';
 import { AutoScrollArea } from './AutoScrollArea';
@@ -8,6 +8,7 @@ import {
   Send,
   MoreVertical,
   Undo2,
+  Trash2,
   Ban,
   Unlock,
 } from 'lucide-react';
@@ -22,6 +23,8 @@ export const ChatDock: React.FC = () => {
     restoreChatDock,
     sendMessage,
     recallMessage,
+    loadConversationMessages,
+    sendTyping,
     currentUser,
     blockUser,
     unblockUser,
@@ -38,10 +41,19 @@ export const ChatDock: React.FC = () => {
     msgId: string;
   } | null>(null);
 
+  const activeDockKey = activeDockIds.join(',');
+  useEffect(() => {
+    activeDockIds.forEach((convId) => {
+      void loadConversationMessages(convId);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeDockKey]);
+
   const handleSend = (convId: string) => {
     const text = inputTexts[convId] || '';
     if (text.trim()) {
       sendMessage(convId, text);
+      sendTyping(convId, false);
       setInputTexts((prev) => ({ ...prev, [convId]: '' }));
     }
   };
@@ -87,8 +99,9 @@ export const ChatDock: React.FC = () => {
         const conv = conversations.find((c) => c.id === convId);
         if (!conv) return null;
 
-        const isBlocked = isBlockedEitherWay(conv.partner.id);
-        const blockedByMe = isBlockedByMe(conv.partner.id);
+        const isGroup = conv.type === 'GROUP';
+        const isBlocked = !isGroup && isBlockedEitherWay(conv.partner.id);
+        const blockedByMe = !isGroup && isBlockedByMe(conv.partner.id);
 
         return (
           <div
@@ -99,8 +112,10 @@ export const ChatDock: React.FC = () => {
             <div className="px-3 py-2.5 bg-fb-card border-b border-fb-divider flex items-center justify-between shadow-2xs">
               <div
                 onClick={() => {
-                  setViewingUserId(conv.partner.id);
-                  setActiveTab('profile');
+                  if (!isGroup) {
+                    setViewingUserId(conv.partner.id);
+                    setActiveTab('profile');
+                  }
                 }}
                 className="flex items-center gap-2 truncate cursor-pointer"
               >
@@ -125,7 +140,7 @@ export const ChatDock: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-1 text-fb-text-2">
-                {!isBlocked && (
+                {!isBlocked && !isGroup && (
                   <button
                     onClick={() =>
                       blockUser(conv.partner.id, 'Chặn từ cửa sổ Chat Dock')
@@ -157,7 +172,10 @@ export const ChatDock: React.FC = () => {
             <AutoScrollArea
               scrollKey={conv.id}
               latestKey={conv.messages[conv.messages.length - 1]?.id}
-              followLatest={conv.messages[conv.messages.length - 1]?.senderId === currentUser.id}
+              followLatest={
+                conv.messages[conv.messages.length - 1]?.senderId ===
+                currentUser.id
+              }
               className="flex-1 p-3 overflow-y-auto space-y-2.5 text-xs bg-fb-inset"
             >
               {conv.messages.map((msg) => {
@@ -168,7 +186,7 @@ export const ChatDock: React.FC = () => {
                     className={`flex flex-col group ${isMine ? 'items-end' : 'items-start'}`}
                   >
                     <div className="flex items-center gap-1 max-w-[85%]">
-                      {isMine && !msg.isRecalled && (
+                      {!msg.isRecalled && (
                         <div className="opacity-0 group-hover:opacity-100 transition relative">
                           <button
                             onClick={() =>
@@ -183,15 +201,30 @@ export const ChatDock: React.FC = () => {
                             <MoreVertical className="w-3 h-3" />
                           </button>
                           {activeMessageMenu?.msgId === msg.id && (
-                            <div className="absolute right-0 bottom-6 bg-fb-card shadow-lg rounded-lg border border-fb-divider py-1 z-10 w-28">
+                            <div className="absolute right-0 bottom-6 bg-fb-card shadow-lg rounded-lg border border-fb-divider py-1 z-10 w-32">
+                              {isMine && (
+                                <button
+                                  onClick={() => {
+                                    recallMessage(
+                                      convId,
+                                      msg.id,
+                                      'EVERYONE',
+                                    );
+                                    setActiveMessageMenu(null);
+                                  }}
+                                  className="w-full text-left px-2 py-1 text-xs text-fb-danger hover:bg-fb-danger-soft flex items-center gap-1"
+                                >
+                                  <Undo2 className="w-3 h-3" /> Thu hồi tin
+                                </button>
+                              )}
                               <button
                                 onClick={() => {
-                                  recallMessage(convId, msg.id);
+                                  recallMessage(convId, msg.id, 'ME');
                                   setActiveMessageMenu(null);
                                 }}
-                                className="w-full text-left px-2 py-1 text-xs text-fb-danger hover:bg-fb-danger-soft flex items-center gap-1"
+                                className="w-full text-left px-2 py-1 text-xs text-fb-text hover:bg-fb-hover flex items-center gap-1"
                               >
-                                <Undo2 className="w-3 h-3" /> Thu hồi tin
+                                <Trash2 className="w-3 h-3" /> Xóa ở phía tôi
                               </button>
                             </div>
                           )}
@@ -246,12 +279,14 @@ export const ChatDock: React.FC = () => {
                   type="text"
                   placeholder="Aa (Gửi tin nhắn...)"
                   value={inputTexts[convId] || ''}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const val = e.target.value;
                     setInputTexts((prev) => ({
                       ...prev,
-                      [convId]: e.target.value,
-                    }))
-                  }
+                      [convId]: val,
+                    }));
+                    sendTyping(convId, val.trim().length > 0);
+                  }}
                   onKeyDown={(e) => handleKeyDown(e, convId)}
                   className="flex-1 bg-fb-input text-xs px-3 py-2 rounded-full focus:outline-hidden focus:ring-1 focus:ring-fb-blue text-fb-text"
                 />

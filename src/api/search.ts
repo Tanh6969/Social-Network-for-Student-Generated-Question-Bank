@@ -29,8 +29,8 @@ export const searchApi = {
   /** GET /search — tìm kiếm toàn văn đa thực thể, phân trang theo offset. */
   async search(params: SearchParams = {}): Promise<SearchPage> {
     const query: SearchParams = {};
-    if (params.type) query.type = params.type;
     if (params.query?.trim()) query.query = params.query.trim();
+    if (params.type) query.type = params.type;
     if (params.after !== undefined) query.after = params.after;
     if (params.limit !== undefined) query.limit = params.limit;
 

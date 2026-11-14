@@ -24,6 +24,7 @@ import {
   ShieldAlert,
   MoreHorizontal,
   Ban,
+  Unlock,
   ThumbsUp,
   UserPlus,
   UserCheck,
@@ -61,6 +62,10 @@ export const ProfileView: React.FC = () => {
     toggleLikePost,
     filterVisibleComments,
     blockUser,
+    unblockUser,
+    isBlockedByMe,
+    isBlockingMe,
+    isBlockedEitherWay,
     setActiveTab,
     openChatDock,
     showToast,
@@ -181,24 +186,58 @@ export const ProfileView: React.FC = () => {
     });
   };
 
-  if (!isMe && viewedProfileError)
+  const blockedByMe = !isMe && isBlockedByMe(targetUser.id);
+  const blockedByOther = !isMe && isBlockingMe(targetUser.id);
+  const blockedEitherWay = !isMe && isBlockedEitherWay(targetUser.id);
+
+  if (!isMe && (blockedEitherWay || viewedProfileError))
     return (
-      <div className="mx-auto max-w-[1000px] py-10">
+      <div className="mx-auto max-w-[760px] py-10 px-4">
         <div
           role="alert"
-          className="rounded-lg bg-fb-card p-6 text-center text-sm text-fb-text shadow-fb-card"
+          className="rounded-xl bg-fb-card p-8 text-center text-sm text-fb-text shadow-fb-card border border-fb-divider space-y-4"
         >
-          <p className="font-semibold">{viewedProfileError}</p>
-          <button
-            type="button"
-            onClick={() => {
-              setViewingUserId(null);
-              setActiveTab('feed');
-            }}
-            className="mt-3 font-semibold text-fb-blue hover:underline"
-          >
-            Về bảng tin
-          </button>
+          <div className="w-14 h-14 mx-auto rounded-full bg-fb-danger-soft text-fb-danger flex items-center justify-center">
+            <Ban className="w-7 h-7" />
+          </div>
+          <div className="space-y-1.5">
+            <h2 className="text-base font-bold text-fb-text">
+              {blockedByMe
+                ? `Bạn đã chặn ${targetUser.name}`
+                : blockedByOther
+                  ? `${targetUser.name} đã chặn bạn`
+                  : 'Trang cá nhân hiện không khả dụng'}
+            </h2>
+            <p className="text-xs text-fb-text-2 max-w-md mx-auto leading-relaxed">
+              {blockedByMe
+                ? `Theo quy định bảo mật, khi chặn ${targetUser.name}, hai người không còn là bạn bè, không thể nhắn tin và không thể xem trang cá nhân của nhau.`
+                : blockedByOther
+                  ? 'Bạn hiện không thể xem trang cá nhân hoặc trao đổi tin nhắn với người dùng này.'
+                  : viewedProfileError}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            {blockedByMe && (
+              <button
+                type="button"
+                onClick={() => unblockUser(targetUser.id)}
+                className="px-4 py-2 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition"
+              >
+                <Unlock className="w-4 h-4" />
+                <span>Bỏ chặn {targetUser.name}</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setViewingUserId(null);
+                setActiveTab('feed');
+              }}
+              className="px-4 py-2 bg-fb-input hover:bg-fb-btn-hover text-fb-text rounded-lg text-xs font-semibold transition"
+            >
+              Về bảng tin
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -279,6 +318,11 @@ export const ProfileView: React.FC = () => {
                 <span>
                   <strong>{targetUser.friendsCount}</strong> bạn bè
                 </span>
+                {typeof targetUser.followersCount === 'number' && (
+                  <span>
+                    <strong>{targetUser.followersCount}</strong> người theo dõi
+                  </span>
+                )}
                 <span>
                   <strong>{targetUser.approvedQuestionsCount}</strong> câu hỏi
                   được duyệt
@@ -399,6 +443,21 @@ export const ProfileView: React.FC = () => {
                     title="Báo cáo người dùng"
                   >
                     <ShieldAlert className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      blockUser(
+                        targetUser.id,
+                        'Chặn trực tiếp từ trang cá nhân',
+                      )
+                    }
+                    className="px-3 py-2 text-fb-danger hover:bg-fb-danger-soft border border-fb-danger/30 rounded-lg text-xs font-bold transition flex items-center gap-1.5"
+                    title={`Chặn ${targetUser.name}`}
+                  >
+                    <Ban className="w-4 h-4" />
+                    <span>Chặn</span>
                   </button>
                 </>
               )}

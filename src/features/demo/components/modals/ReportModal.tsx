@@ -1,18 +1,77 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { X, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { X, ShieldAlert } from 'lucide-react';
+import { isApiSession, reportsApi, type ReportTargetType, type ViolationType } from '../../../../api';
+
+function mapReportTargetType(rawType: string): ReportTargetType {
+  const normalized = rawType.trim().toUpperCase();
+  if (normalized.includes('BÌNH LUẬN') || normalized === 'COMMENT') {
+    return 'COMMENT';
+  }
+  if (normalized.includes('BÀI VIẾT') || normalized === 'POST') {
+    return 'POST';
+  }
+  return 'USER';
+}
 
 export const ReportModal: React.FC = () => {
   const { isReportModalOpen, closeReportModal, reportTarget, showToast } = useApp();
 
+  const [violationType, setViolationType] = useState<ViolationType>('OTHER');
   const [reason, setReason] = useState('Nội dung sai kiến thức học thuật');
   const [description, setDescription] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isReportModalOpen || !reportTarget) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleReasonChange = (nextReason: string) => {
+    setReason(nextReason);
+    if (nextReason === 'Spam hoặc quảng cáo') {
+      setViolationType('SPAM');
+    } else if (nextReason === 'Quấy rối hoặc ngôn từ thù địch') {
+      setViolationType('HARASSMENT');
+    } else if (nextReason === 'Phát ngôn thù ghét / xúc phạm') {
+      setViolationType('HATE_STATEMENT');
+    } else {
+      setViolationType('OTHER');
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    showToast('Cảm ơn bạn đã gửi báo cáo. Ban quản trị sẽ rà soát nội dung trong 24 giờ.', 'success');
+    if (isSubmitting) return;
+
+    if (isApiSession()) {
+      setIsSubmitting(true);
+      try {
+        const targetIdNum = Number(reportTarget.id);
+        await reportsApi.createReport({
+          target_type: mapReportTargetType(reportTarget.type),
+          target_id: Number.isFinite(targetIdNum) && targetIdNum > 0 ? targetIdNum : 1,
+          violation_type: violationType,
+          description: description.trim() ? `${reason}: ${description.trim()}` : reason,
+        });
+        showToast(
+          'Cảm ơn bạn đã gửi báo cáo. Ban quản trị sẽ rà soát nội dung trong 24 giờ.',
+          'success',
+        );
+        closeReportModal();
+        setDescription('');
+      } catch (err) {
+        showToast(
+          err instanceof Error ? err.message : 'Không thể gửi báo cáo vi phạm.',
+          'error',
+        );
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    showToast(
+      'Cảm ơn bạn đã gửi báo cáo. Ban quản trị sẽ rà soát nội dung trong 24 giờ.',
+      'success',
+    );
     closeReportModal();
     setDescription('');
   };
@@ -39,19 +98,20 @@ export const ReportModal: React.FC = () => {
           Đối tượng báo cáo: <strong className="text-fb-text">[{reportTarget.type}] {reportTarget.title}</strong>
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-3 text-xs">
+        <form onSubmit={(e) => void handleSubmit(e)} className="space-y-3 text-xs">
           <div>
             <label className="block font-bold text-fb-text mb-1">
               Chọn lý do vi phạm:
             </label>
             <select
               value={reason}
-              onChange={(e) => setReason(e.target.value)}
+              onChange={(e) => handleReasonChange(e.target.value)}
               className="w-full p-2 border border-fb-divider rounded-lg bg-fb-input"
             >
               <option value="Nội dung sai kiến thức học thuật">Sai kiến thức học thuật / đề sai</option>
               <option value="Spam hoặc quảng cáo">Spam hoặc quảng cáo không liên quan</option>
               <option value="Quấy rối hoặc ngôn từ thù địch">Quấy rối hoặc ngôn từ thù địch</option>
+              <option value="Phát ngôn thù ghét / xúc phạm">Phát ngôn thù ghét / xúc phạm</option>
               <option value="Vi phạm bản quyền giáo trình">Vi phạm bản quyền tài liệu trường</option>
               <option value="Khác">Lý do khác</option>
             </select>
@@ -80,9 +140,10 @@ export const ReportModal: React.FC = () => {
             </button>
             <button
               type="submit"
-              className="px-5 py-2 bg-fb-danger hover:bg-fb-danger/90 text-white rounded-lg font-bold text-xs"
+              disabled={isSubmitting}
+              className="px-5 py-2 bg-fb-danger hover:bg-fb-danger/90 disabled:opacity-60 text-white rounded-lg font-bold text-xs"
             >
-              Gửi báo cáo
+              {isSubmitting ? 'Đang gửi...' : 'Gửi báo cáo'}
             </button>
           </div>
         </form>

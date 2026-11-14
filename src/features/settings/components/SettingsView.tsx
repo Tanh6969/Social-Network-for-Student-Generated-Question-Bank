@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useApp } from '../../demo/context/AppContext';
 import {
   User,
@@ -12,6 +12,9 @@ import {
   Unlock,
   Clock,
   Shield,
+  RefreshCw,
+  LogOut,
+  KeyRound,
 } from 'lucide-react';
 import {
   createDefaultPushPreferences,
@@ -23,6 +26,13 @@ import {
   saveVoiceRecording,
   type LocalPushPreferences,
 } from '../pushPreferences';
+import {
+  authApi,
+  devicesApi,
+  getDeviceId,
+  isApiSession,
+  type DeviceInfoDto,
+} from '../../../api';
 
 export const SettingsView: React.FC = () => {
   const { currentUser } = useApp();
@@ -74,10 +84,46 @@ const SettingsContent: React.FC = () => {
   );
   const [selectedBlockUserId, setSelectedBlockUserId] = useState('');
   const [blockReasonInput, setBlockReasonInput] = useState('');
+
+  // Security: Change password & Refresh Token
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isRefreshingToken, setIsRefreshingToken] = useState(false);
+
+  // Devices management
+  const [devices, setDevices] = useState<DeviceInfoDto[]>([]);
+  const [isLoadingDevices, setIsLoadingDevices] = useState(false);
+  const [fidInput, setFidInput] = useState('');
+  const [isSyncingFid, setIsSyncingFid] = useState(false);
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordingStreamRef = useRef<MediaStream | null>(null);
   const recordingTimeoutRef = useRef<number | null>(null);
   const voicePreviewUrlRef = useRef<string | null>(null);
+
+  const loadDevices = useCallback(async () => {
+    if (!isApiSession()) return;
+    setIsLoadingDevices(true);
+    try {
+      const list = await devicesApi.getMyDevices();
+      setDevices(list);
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : 'Không thể tải danh sách thiết bị.',
+        'error',
+      );
+    } finally {
+      setIsLoadingDevices(false);
+    }
+  }, [showToast]);
+
+  useEffect(() => {
+    if (activeTab === 'DEVICES' && isApiSession()) {
+      void loadDevices();
+    }
+  }, [activeTab, loadDevices]);
 
   useEffect(() => {
     let isMounted = true;
@@ -120,6 +166,139 @@ const SettingsContent: React.FC = () => {
       }
     };
   }, [currentUser.id]);
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      showToast('Vui lòng nhập đầy đủ mật khẩu hiện tại và mật khẩu mới.', 'warning');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      showToast('Mật khẩu xác nhận không khớp.', 'error');
+      return;
+    }
+    if (!isApiSession()) {
+      showToast('Đã cập nhật mật khẩu (chế độ Demo).', 'success');
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      return;
+    }
+    setIsChangingPassword(true);
+    try {
+      await authApi.changePassword({
+        old_password: oldPassword,
+        new_password: newPassword,
+      });
+      showToast('Đổi mật khẩu thành công!', 'success');
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : 'Không thể đổi mật khẩu.',
+        'error',
+      );
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const handleRefreshToken = async () => {
+    if (!isApiSession()) {
+      showToast('Phiên Demo không sử dụng JWT Refresh Token.', 'info');
+      return;
+    }
+    setIsRefreshingToken(true);
+    try {
+      const ok = await authApi.refresh();
+      if (ok) {
+        showToast('Đã làm mới phiên đăng nhập (Access Token) thành công!', 'success');
+      } else {
+        showToast('Không thể làm mới token. Vui lòng đăng nhập lại.', 'error');
+      }
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : 'Lỗi khi làm mới token.',
+        'error',
+      );
+    } finally {
+      setIsRefreshingToken(false);
+    }
+  };
+
+  const handleSyncFid = async () => {
+    const trimmed = fidInput.trim();
+    if (!trimmed) {
+      showToast('Vui lòng nhập Firebase Installation ID (FID).', 'warning');
+      return;
+    }
+    if (!isApiSession()) {
+      showToast('Đã đồng bộ FID (chế độ Demo).', 'success');
+      return;
+    }
+    setIsSyncingFid(true);
+    try {
+      await devicesApi.syncFid({ fid: trimmed });
+      showToast('Đã đồng bộ FID cho thiết bị hiện tại.', 'success');
+      setFidInput('');
+      await loadDevices();
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : 'Không thể đồng bộ FID.',
+        'error',
+      );
+    } finally {
+      setIsSyncingFid(false);
+    }
+  };
+
+  const handleUnregisterFid = async () => {
+    if (!isApiSession()) {
+      showToast('Đã hủy đăng ký FID (chế độ Demo).', 'info');
+      return;
+    }
+    setIsSyncingFid(true);
+    try {
+      await devicesApi.unregisterFid();
+      showToast('Đã hủy đăng ký nhận thông báo đẩy (FID) trên thiết bị này.', 'info');
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : 'Không thể hủy đăng ký FID.',
+        'error',
+      );
+    } finally {
+      setIsSyncingFid(false);
+    }
+  };
+
+  const handleLogoutDevice = async (deviceId: string) => {
+    if (!isApiSession()) return;
+    try {
+      await devicesApi.logoutDevice(deviceId);
+      showToast('Đã đăng xuất thiết bị.', 'info');
+      await loadDevices();
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : 'Không thể đăng xuất thiết bị.',
+        'error',
+      );
+    }
+  };
+
+  const handleDeleteDevice = async (deviceId: string) => {
+    if (!isApiSession()) return;
+    try {
+      await devicesApi.deleteDevice(deviceId);
+      setDevices((prev) => prev.filter((d) => d.device_id !== deviceId));
+      showToast('Đã xóa thiết bị khỏi danh sách.', 'info');
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : 'Không thể xóa thiết bị.',
+        'error',
+      );
+    }
+  };
 
   const updatePushPreferences = (next: LocalPushPreferences) => {
     try {
@@ -551,14 +730,95 @@ const SettingsContent: React.FC = () => {
         )}
 
         {activeTab === 'SECURITY' && (
-          <div className="space-y-4 text-xs">
-            <h3 className="font-bold text-base text-fb-text pb-2 border-b border-fb-divider">
-              Mật khẩu & Bảo mật
-            </h3>
-            <p className="text-fb-text-2">
-              Tài khoản của bạn đang được bảo vệ bởi xác thực trường học
-              (@truong.edu.vn).
-            </p>
+          <div className="space-y-6 text-xs">
+            <div>
+              <h3 className="font-bold text-base text-fb-text pb-2 border-b border-fb-divider">
+                Mật khẩu & Bảo mật
+              </h3>
+              <p className="text-fb-text-2 mt-2">
+                Tài khoản của bạn đang được bảo vệ bởi xác thực trường học. Bạn
+                có thể đổi mật khẩu hoặc làm mới phiên đăng nhập tại đây.
+              </p>
+            </div>
+
+            <form
+              onSubmit={(e) => void handleChangePassword(e)}
+              className="space-y-3 max-w-md p-4 rounded-lg bg-fb-inset border border-fb-divider"
+            >
+              <h4 className="font-bold text-sm text-fb-text flex items-center gap-2">
+                <KeyRound className="w-4 h-4 text-fb-blue" />
+                <span>Đổi mật khẩu</span>
+              </h4>
+
+              <div>
+                <label className="block text-fb-text-2 mb-1">
+                  Mật khẩu hiện tại
+                </label>
+                <input
+                  type="password"
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
+                  placeholder="Nhập mật khẩu hiện tại..."
+                  className="w-full p-2.5 bg-fb-card rounded-lg border border-fb-divider text-fb-text"
+                />
+              </div>
+
+              <div>
+                <label className="block text-fb-text-2 mb-1">
+                  Mật khẩu mới
+                </label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Nhập mật khẩu mới..."
+                  className="w-full p-2.5 bg-fb-card rounded-lg border border-fb-divider text-fb-text"
+                />
+              </div>
+
+              <div>
+                <label className="block text-fb-text-2 mb-1">
+                  Xác nhận mật khẩu mới
+                </label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Nhập lại mật khẩu mới..."
+                  className="w-full p-2.5 bg-fb-card rounded-lg border border-fb-divider text-fb-text"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isChangingPassword}
+                className="px-4 py-2 bg-fb-blue hover:bg-fb-blue-hover disabled:opacity-60 text-white rounded-lg font-bold"
+              >
+                {isChangingPassword ? 'Đang cập nhật...' : 'Cập nhật mật khẩu'}
+              </button>
+            </form>
+
+            <div className="p-4 rounded-lg bg-fb-inset border border-fb-divider flex items-center justify-between gap-4 max-w-md">
+              <div>
+                <p className="font-bold text-fb-text">
+                  Làm mới phiên đăng nhập (Refresh Token)
+                </p>
+                <p className="text-fb-text-2 mt-0.5">
+                  Cấp mới Access Token cho thiết bị hiện tại (`{getDeviceId()}`).
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={isRefreshingToken}
+                onClick={() => void handleRefreshToken()}
+                className="px-3.5 py-2 bg-fb-btn hover:bg-fb-btn-hover text-fb-text rounded-lg font-bold shrink-0 flex items-center gap-1.5"
+              >
+                <RefreshCw
+                  className={`w-3.5 h-3.5 ${isRefreshingToken ? 'animate-spin' : ''}`}
+                />
+                <span>Làm mới</span>
+              </button>
+            </div>
           </div>
         )}
 
@@ -740,19 +1000,127 @@ const SettingsContent: React.FC = () => {
 
         {activeTab === 'DEVICES' && (
           <div className="space-y-4 text-xs">
-            <h3 className="font-bold text-base text-fb-text pb-2 border-b border-fb-divider">
-              Quản lý thiết bị đã đăng nhập (NOTI.06)
-            </h3>
-            <div className="p-3 bg-fb-input rounded-lg flex items-center justify-between border">
-              <div>
-                <p className="font-bold text-fb-text">
-                  Chrome trên macOS · Thiết bị hiện tại
-                </p>
-                <span className="text-fb-success font-semibold">
-                  Đang hoạt động
-                </span>
+            <div className="flex items-center justify-between pb-2 border-b border-fb-divider">
+              <h3 className="font-bold text-base text-fb-text">
+                Quản lý thiết bị đã đăng nhập (NOTI.06)
+              </h3>
+              {isApiSession() && (
+                <button
+                  type="button"
+                  onClick={() => void loadDevices()}
+                  disabled={isLoadingDevices}
+                  className="px-3 py-1.5 rounded-lg bg-fb-input hover:bg-fb-btn-hover font-semibold flex items-center gap-1.5"
+                >
+                  <RefreshCw
+                    className={`w-3.5 h-3.5 ${isLoadingDevices ? 'animate-spin' : ''}`}
+                  />
+                  <span>Tải lại</span>
+                </button>
+              )}
+            </div>
+
+            <div className="p-4 rounded-lg bg-fb-inset border border-fb-divider space-y-2">
+              <p className="font-bold text-fb-text">
+                Đồng bộ Firebase Installation ID (FID) cho thông báo đẩy
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="text"
+                  value={fidInput}
+                  onChange={(e) => setFidInput(e.target.value)}
+                  placeholder="Nhập mã FID thiết bị..."
+                  className="flex-1 p-2 bg-fb-card rounded-lg border border-fb-divider text-fb-text"
+                />
+                <button
+                  type="button"
+                  disabled={isSyncingFid}
+                  onClick={() => void handleSyncFid()}
+                  className="px-3.5 py-2 bg-fb-blue hover:bg-fb-blue-hover text-white rounded-lg font-bold shrink-0"
+                >
+                  Đồng bộ FID
+                </button>
+                <button
+                  type="button"
+                  disabled={isSyncingFid}
+                  onClick={() => void handleUnregisterFid()}
+                  className="px-3.5 py-2 bg-fb-btn hover:bg-fb-btn-hover text-fb-text rounded-lg font-semibold shrink-0"
+                >
+                  Hủy FID
+                </button>
               </div>
             </div>
+
+            {devices.length > 0 ? (
+              <div className="space-y-2">
+                {devices.map((device) => {
+                  const devId = device.device_id || '';
+                  return (
+                    <div
+                      key={devId || device.user_device_id}
+                      className="p-3 bg-fb-input rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-fb-divider"
+                    >
+                      <div>
+                        <p className="font-bold text-fb-text flex items-center gap-2">
+                          <span>{device.device_name || devId}</span>
+                          {device.is_current_device && (
+                            <span className="text-xs bg-fb-blue-soft text-fb-blue px-2 py-0.5 rounded-full font-bold">
+                              Thiết bị hiện tại
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-fb-text-2 mt-0.5">
+                          Nền tảng: {device.platform || 'WEB'} · Hoạt động:{' '}
+                          {device.last_active_at
+                            ? new Date(device.last_active_at).toLocaleString('vi-VN')
+                            : 'Vừa xong'}
+                        </p>
+                        <span
+                          className={`font-semibold ${
+                            device.is_active ? 'text-fb-success' : 'text-fb-text-3'
+                          }`}
+                        >
+                          {device.is_active ? 'Đang hoạt động' : 'Đã đăng xuất'}
+                        </span>
+                      </div>
+
+                      {!device.is_current_device && devId && (
+                        <div className="flex items-center gap-2 self-end sm:self-center">
+                          {device.is_active && (
+                            <button
+                              type="button"
+                              onClick={() => void handleLogoutDevice(devId)}
+                              className="px-3 py-1.5 rounded-lg bg-fb-btn hover:bg-fb-btn-hover text-fb-text font-semibold flex items-center gap-1"
+                            >
+                              <LogOut className="w-3.5 h-3.5" />
+                              <span>Đăng xuất</span>
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => void handleDeleteDevice(devId)}
+                            className="px-3 py-1.5 rounded-lg bg-fb-danger-soft hover:bg-fb-danger hover:text-white text-fb-danger font-semibold flex items-center gap-1 transition"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Xóa</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="p-3 bg-fb-input rounded-lg flex items-center justify-between border border-fb-divider">
+                <div>
+                  <p className="font-bold text-fb-text">
+                    Trình duyệt hiện tại ({getDeviceId()}) · Thiết bị hiện tại
+                  </p>
+                  <span className="text-fb-success font-semibold">
+                    Đang hoạt động
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
