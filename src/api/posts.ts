@@ -7,10 +7,12 @@ export type PostResponseDto = Schemas['PostResponseDto'];
 export type ActivityFeedItemDto = Schemas['ActivityFeedItemDto'];
 export type MediaItem = Schemas['MediaItem'];
 export type CommentResponseDto = Schemas['CommentResponseDto'];
+export type VideoPostItemDto = Schemas['VideoPostItemDto'];
 export type CreatePostRequest = Schemas['CreatePostRequest'];
 export type UpdatePostRequest = Schemas['UpdatePostRequest'];
 export type MediaUploadResponse = Schemas['MediaUploadResponse'];
 export type ProfileResponse = Schemas['ProfileResponse'];
+export type UpdateProfileRequest = Schemas['UpdateProfileRequest'];
 export type PostVisibility = CreatePostRequest['visibility'];
 export type InteractionTargetType = Schemas['ReactRequest']['target_type'];
 export type MediaUploadPurpose =
@@ -40,6 +42,26 @@ export const postsApi = {
     };
   },
 
+  /** GET /activity-feeds/new-count — số hoạt động kể từ mốc đã xem. */
+  async getNewActivityCount(since: number): Promise<number> {
+    const data = expectEnvelope(await api.GET('/activity-feeds/new-count', {
+      params: { query: { since: String(since) } },
+    })).data;
+    return Math.max(0, data?.new_count ?? 0);
+  },
+
+  /** GET /video-posts — tối đa 3 video mỗi trang theo Swagger. */
+  async getVideoPosts(subjectId?: number, after?: number): Promise<CursorPage<VideoPostItemDto>> {
+    const data = expectEnvelope(await api.GET('/video-posts', {
+      params: { query: { subject_id: subjectId, after, limit: 3 } },
+    })).data;
+    return {
+      items: data?.items ?? [],
+      hasNext: data?.pagination?.has_next ?? false,
+      after: data?.pagination?.after,
+    };
+  },
+
   /** GET /posts/me — bài viết của chính mình. */
   async getMyPosts(
     after?: number,
@@ -49,6 +71,18 @@ export const postsApi = {
       params: { query: { after, limit } },
     });
     const data = expectEnvelope(result).data;
+    return {
+      items: data?.items ?? [],
+      hasNext: data?.pagination?.has_next ?? false,
+      after: data?.pagination?.after,
+    };
+  },
+
+  /** GET /users/{userId}/posts — bài viết trên trang cá nhân, phân trang riêng. */
+  async getUserPosts(userId: number, after?: number, limit = 20): Promise<CursorPage<PostResponseDto>> {
+    const data = expectEnvelope(await api.GET('/users/{userId}/posts', {
+      params: { path: { userId }, query: { after, limit } },
+    })).data;
     return {
       items: data?.items ?? [],
       hasNext: data?.pagination?.has_next ?? false,
@@ -147,6 +181,32 @@ export const postsApi = {
     return expectEnvelope(result).data ?? null;
   },
 
+  /** PUT /comments/{commentId} — chỉ tác giả được sửa. */
+  async updateComment(commentId: number, content: string): Promise<CommentResponseDto | null> {
+    const result = await api.PUT('/comments/{commentId}', {
+      params: { path: { commentId } },
+      body: { content },
+    });
+    return expectEnvelope(result).data ?? null;
+  },
+
+  /** DELETE /comments/{commentId} — xóa mềm bình luận. */
+  async deleteComment(commentId: number): Promise<void> {
+    const result = await api.DELETE('/comments/{commentId}', {
+      params: { path: { commentId } },
+    });
+    expectEnvelope(result);
+  },
+
+  /** PUT /posts/{id}/lecturer-notes. Quyền được backend kiểm tra. */
+  async updateLecturerNote(id: number, content: string): Promise<void> {
+    const result = await api.PUT('/posts/{id}/lecturer-notes', {
+      params: { path: { id } },
+      body: { content },
+    });
+    expectEnvelope(result);
+  },
+
   /** POST /medias/upload?purpose=… — tải tệp qua backend (multipart). */
   async uploadMedia(
     file: File,
@@ -165,5 +225,10 @@ export const postsApi = {
   /** GET /users/me — hồ sơ đầy đủ của người đang đăng nhập. */
   async getMyProfile(): Promise<ProfileResponse | null> {
     return expectEnvelope(await api.GET('/users/me')).data ?? null;
+  },
+
+  /** PUT /users/me — chỉ gửi các trường hồ sơ mà Swagger cho phép sửa. */
+  async updateMyProfile(body: UpdateProfileRequest): Promise<ProfileResponse | null> {
+    return expectEnvelope(await api.PUT('/users/me', { body })).data ?? null;
   },
 };

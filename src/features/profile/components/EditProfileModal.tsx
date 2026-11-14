@@ -6,12 +6,14 @@ type EditableProfile = Pick<User, 'name' | 'bio' | 'faculty' | 'classOrTitle'>;
 
 interface EditProfileModalProps {
   user: User;
+  persistToApi?: boolean;
   onClose: () => void;
-  onSave: (updates: EditableProfile) => void;
+  onSave: (updates: EditableProfile) => Promise<boolean>;
 }
 
 export function EditProfileModal({
   user,
+  persistToApi = false,
   onClose,
   onSave,
 }: EditProfileModalProps) {
@@ -22,6 +24,7 @@ export function EditProfileModal({
     classOrTitle: user.classOrTitle,
   });
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -36,18 +39,23 @@ export function EditProfileModal({
     setError('');
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!form.name.trim()) {
       setError('Vui lòng nhập tên hiển thị.');
       return;
     }
-    onSave({
-      name: form.name.trim(),
-      bio: form.bio.trim(),
-      faculty: form.faculty.trim(),
-      classOrTitle: form.classOrTitle.trim(),
-    });
+    setSaving(true);
+    try {
+      await onSave({
+        name: form.name.trim(),
+        bio: form.bio.trim(),
+        faculty: form.faculty.trim(),
+        classOrTitle: form.classOrTitle.trim(),
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const inputClassName =
@@ -90,7 +98,7 @@ export function EditProfileModal({
           </button>
         </header>
 
-        <form onSubmit={handleSubmit} className="flex min-h-0 flex-col">
+        <form onSubmit={(event) => void handleSubmit(event)} className="flex min-h-0 flex-col">
           <div className="space-y-6 overflow-y-auto px-5 py-5">
             <section className="space-y-4">
               <h3 className="border-b border-fb-divider pb-2 text-sm font-bold text-fb-text">
@@ -129,7 +137,7 @@ export function EditProfileModal({
               </div>
             </section>
 
-            <section className="space-y-4">
+            {!persistToApi && <section className="space-y-4">
               <h3 className="border-b border-fb-divider pb-2 text-sm font-bold text-fb-text">
                 Học tập và công việc
               </h3>
@@ -163,7 +171,7 @@ export function EditProfileModal({
                   className={inputClassName}
                 />
               </div>
-            </section>
+            </section>}
 
             <section className="space-y-2">
               <h3 className="border-b border-fb-divider pb-2 text-sm font-bold text-fb-text">
@@ -185,9 +193,9 @@ export function EditProfileModal({
               </div>
             </section>
 
-            <p className="rounded-lg bg-fb-blue-soft px-3 py-2 text-xs text-fb-blue">
+            {!persistToApi && <p className="rounded-lg bg-fb-blue-soft px-3 py-2 text-xs text-fb-blue">
               Thay đổi hồ sơ trong bản demo chỉ được lưu trong phiên trình duyệt.
-            </p>
+            </p>}
             {error && (
               <p role="alert" className="text-sm font-medium text-fb-danger">
                 {error}
@@ -205,9 +213,10 @@ export function EditProfileModal({
             </button>
             <button
               type="submit"
+              disabled={saving}
               className="rounded-lg bg-fb-blue px-5 py-2 text-sm font-semibold text-white hover:bg-fb-blue-hover"
             >
-              Lưu thay đổi
+              {saving ? 'Đang lưu…' : 'Lưu thay đổi'}
             </button>
           </footer>
         </form>

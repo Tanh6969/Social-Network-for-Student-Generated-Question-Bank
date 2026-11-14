@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ApiSearchResultsView } from './ApiSearchResultsView';
 import { useApp } from '../../demo/context/AppContext';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
 import { PostContent } from '../../feed/components/PostContent';
@@ -13,6 +14,7 @@ import {
 export const SearchResultsView: React.FC = () => {
   const {
     searchQuery,
+    sessionKind,
     posts,
     questions,
     allUsers,
@@ -28,6 +30,8 @@ export const SearchResultsView: React.FC = () => {
   const [filterType, setFilterType] = useState<
     'ALL' | 'USERS' | 'QUESTIONS' | 'POSTS'
   >('ALL');
+
+  if (sessionKind === 'api') return <ApiSearchResultsView />;
 
   const uMatch = allUsers.filter(
     (u) =>

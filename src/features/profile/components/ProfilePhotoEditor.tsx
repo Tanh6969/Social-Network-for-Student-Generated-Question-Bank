@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Camera, RotateCcw, X } from 'lucide-react';
 import { lockPageScroll } from '../../../shared/lockPageScroll';
 import type { ImageCrop } from '../../demo/types';
+import { cropProfilePhoto } from '../cropProfilePhoto';
 import {
   getMediaKind,
   readMediaFile,
@@ -25,18 +26,21 @@ export function ProfilePhotoEditor({
   options,
   onSave,
   onClose,
+  persistToApi = false,
 }: {
   kind: 'avatar' | 'cover';
   initialUrl: string;
   initialCrop?: ImageCrop;
   options: PhotoOption[];
-  onSave: (url: string, crop: ImageCrop) => void;
+  onSave: (url: string, crop: ImageCrop, file?: File) => Promise<boolean>;
   onClose: () => void;
+  persistToApi?: boolean;
 }) {
   const [selectedUrl, setSelectedUrl] = useState(initialUrl);
   const [crop, setCrop] = useState<ImageCrop>(initialCrop ?? CENTER);
   const [error, setError] = useState<string | null>(null);
   const [reading, setReading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const dragStart = useRef<{
@@ -106,10 +110,22 @@ export function ProfilePhotoEditor({
     }
   };
 
-  const save = () => {
-    if (!changed || reading) return;
-    ownedUrls.current.delete(selectedUrl);
-    onSave(selectedUrl, crop);
+  const save = async () => {
+    if (!changed || reading || saving) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const mustUploadCrop = ownedUrls.current.has(selectedUrl) ||
+        selectedUrl === initialUrl || crop.x !== 50 || crop.y !== 50 || crop.zoom !== 1;
+      const file = persistToApi && mustUploadCrop
+        ? await cropProfilePhoto(selectedUrl, crop, kind) : undefined;
+      const saved = await onSave(selectedUrl, crop, file);
+      if (saved && !persistToApi) ownedUrls.current.delete(selectedUrl);
+    } catch {
+      setError('Không xử lý được ảnh đã chọn. Hãy thử ảnh khác.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -289,11 +305,11 @@ export function ProfilePhotoEditor({
           </button>
           <button
             type="button"
-            onClick={save}
-            disabled={!changed || reading}
+            onClick={() => void save()}
+            disabled={!changed || reading || saving}
             className="rounded-lg bg-fb-blue px-5 py-2 text-sm font-bold text-white hover:bg-fb-blue-hover disabled:bg-fb-divider"
           >
-            Lưu ảnh
+            {saving ? 'Đang lưu…' : 'Lưu ảnh'}
           </button>
         </div>
       </div>

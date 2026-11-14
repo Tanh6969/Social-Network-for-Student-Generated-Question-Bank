@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { X, ShieldAlert } from 'lucide-react';
 import { isApiSession, reportsApi, type ReportTargetType, type ViolationType } from '../../../../api';
 
-function mapReportTargetType(rawType: string): ReportTargetType {
+function mapReportTargetType(rawType: string): ReportTargetType | null {
   const normalized = rawType.trim().toUpperCase();
   if (normalized.includes('BÌNH LUẬN') || normalized === 'COMMENT') {
     return 'COMMENT';
@@ -11,7 +11,8 @@ function mapReportTargetType(rawType: string): ReportTargetType {
   if (normalized.includes('BÀI VIẾT') || normalized === 'POST') {
     return 'POST';
   }
-  return 'USER';
+  if (normalized.includes('NGƯỜI DÙNG') || normalized === 'USER') return 'USER';
+  return null;
 }
 
 export const ReportModal: React.FC = () => {
@@ -42,12 +43,17 @@ export const ReportModal: React.FC = () => {
     if (isSubmitting) return;
 
     if (isApiSession()) {
+      const targetType = mapReportTargetType(reportTarget.type);
+      const targetId = Number(reportTarget.id);
+      if (!targetType || !Number.isSafeInteger(targetId) || targetId <= 0) {
+        showToast('Đối tượng này chưa hỗ trợ gửi báo cáo.', 'error');
+        return;
+      }
       setIsSubmitting(true);
       try {
-        const targetIdNum = Number(reportTarget.id);
         await reportsApi.createReport({
-          target_type: mapReportTargetType(reportTarget.type),
-          target_id: Number.isFinite(targetIdNum) && targetIdNum > 0 ? targetIdNum : 1,
+          target_type: targetType,
+          target_id: targetId,
           violation_type: violationType,
           description: description.trim() ? `${reason}: ${description.trim()}` : reason,
         });

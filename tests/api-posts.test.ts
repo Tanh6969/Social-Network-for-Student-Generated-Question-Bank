@@ -74,6 +74,96 @@ describe('API envelope', () => {
   });
 });
 
+describe('ghi dữ liệu theo Swagger', () => {
+  it('sửa và xóa bình luận của chính mình qua đúng endpoint', async () => {
+    respond = (method, url) => {
+      if (method === 'PUT' && url.pathname.endsWith('/comments/42'))
+        return envelope({ comment_id: 42, content: 'Đã sửa' });
+      if (method === 'DELETE' && url.pathname.endsWith('/comments/42'))
+        return envelope({ comment_id: 42 });
+      return envelope(null, 404, '2001', 'NOT_FOUND');
+    };
+    const { postsApi } = await load();
+    await expect(postsApi.updateComment(42, 'Đã sửa')).resolves.toMatchObject({ content: 'Đã sửa' });
+    await expect(postsApi.deleteComment(42)).resolves.toBeUndefined();
+    expect(requests.map((item) => [item.method, item.path, item.body])).toEqual([
+      ['PUT', '/api/v1/comments/42', { content: 'Đã sửa' }],
+      ['DELETE', '/api/v1/comments/42', null],
+    ]);
+  });
+
+  it('chỉnh hồ sơ chỉ gửi các trường được backend chấp nhận', async () => {
+    respond = () => envelope({ user_id: 144, full_name: 'Tên mới', bio: 'Tiểu sử' });
+    const { postsApi } = await load();
+    await postsApi.updateMyProfile({ full_name: 'Tên mới', bio: 'Tiểu sử' });
+    expect(requests[0]).toMatchObject({
+      method: 'PUT', path: '/api/v1/users/me',
+      body: { full_name: 'Tên mới', bio: 'Tiểu sử' },
+    });
+  });
+
+  it('bài viết trang cá nhân dùng cursor riêng của người đó', async () => {
+    respond = () => envelope({
+      items: [{ post_id: 9, author: { user_id: 7 } }],
+      pagination: { has_next: true, after: 9 },
+    });
+    const { postsApi } = await load();
+    await expect(postsApi.getUserPosts(7, 12)).resolves.toMatchObject({
+      items: [{ post_id: 9 }], hasNext: true, after: 9,
+    });
+    expect(requests[0].path).toBe('/api/v1/users/7/posts?after=12&limit=20');
+  });
+
+  it('gửi báo cáo thật đến đúng đối tượng và loại vi phạm', async () => {
+    respond = () => envelope({ report_id: 17 });
+    const { reportsApi } = await import('../src/api/reports');
+    await reportsApi.createReport({
+      target_type: 'POST', target_id: 42, violation_type: 'SPAM',
+      description: 'Quảng cáo lặp lại',
+    });
+    expect(requests[0]).toMatchObject({ method: 'POST', path: '/api/v1/report',
+      body: { target_type: 'POST', target_id: 42,
+        violation_type: 'SPAM', description: 'Quảng cáo lặp lại' } });
+  });
+});
+
+describe('phân trang bảng tin từ backend', () => {
+  it('dùng cursor riêng cho activity, bài cá nhân và tìm kiếm công khai', async () => {
+    respond = (_method, url) => {
+      const after = url.searchParams.get('after');
+      if (url.pathname.endsWith('/activity-feeds')) return envelope({
+        items: after ? [{ feed_id: 2, target_type: 'POST', target_id: 22 }] :
+          [{ feed_id: 1, target_type: 'POST', target_id: 21 }],
+        pagination: after ? { has_next: false } : { has_next: true, after: 1 },
+      });
+      if (url.pathname.endsWith('/posts/me')) return envelope({
+        items: after ? [{ post_id: 12, author: { user_id: 144 } }] :
+          [{ post_id: 11, author: { user_id: 144 } }],
+        pagination: after ? { has_next: false } : { has_next: true, after: 11 },
+      });
+      if (url.pathname.endsWith('/search')) return envelope({
+        items: after ? [{ type: 'POST', post: { post_id: 32 } }] :
+          [{ type: 'POST', post: { post_id: 31 } }],
+        pagination: after ? { has_next: false } : { has_next: true, after: 10 },
+      });
+      const id = Number(url.pathname.split('/').pop());
+      return envelope({ post_id: id, author: { user_id: 7 }, visibility: 'PUBLIC' });
+    };
+    const { feed } = await load();
+    const first = await feed.loadApiFeedPage(me, feed.initialApiFeedCursor);
+    expect(first.posts.map((post) => post.id).sort()).toEqual(['11', '21', '31']);
+    expect(first.cursor).toMatchObject({
+      activity: { after: 1, hasNext: true },
+      mine: { after: 11, hasNext: true },
+      public: { after: 10, hasNext: true },
+    });
+    const second = await feed.loadApiFeedPage(me, first.cursor);
+    expect(second.posts.map((post) => post.id).sort()).toEqual(['12', '22', '32']);
+    expect(Object.values(second.cursor).every((source) => !source.hasNext)).toBe(true);
+    expect(requests.some((item) => item.path.includes('/search?type=POST&after=10&limit=10'))).toBe(true);
+  });
+});
+
 describe('ánh xạ bài viết / bảng tin', () => {
   it('bài viết: media tách ảnh và tài liệu, tác giả là mình thì dùng currentUser', async () => {
     const { feed } = await load();

@@ -4,6 +4,7 @@ import { AvatarWithFrame } from './AvatarWithFrame';
 import {
   Search,
   Home,
+  Video,
   BookOpen,
   Gamepad2,
   Users,
@@ -41,15 +42,19 @@ export const Navbar: React.FC = () => {
     searchQuery,
     setSearchQuery,
     savedSearches,
+    trendingSearches,
     removeSavedSearch,
     clearAllSavedSearches,
     triggerSearch,
     conversations,
     openChatDock,
     notifications,
+    notificationsHasMore,
+    loadMoreNotifications,
     markNotificationAsRead,
     markAllNotificationsAsRead,
     unreadNotificationsCount,
+    openPostById,
     sessions,
     questions,
     setIsTourGuideOpen,
@@ -270,7 +275,7 @@ export const Navbar: React.FC = () => {
                   Xu hướng ôn thi
                 </span>
                 <div className="flex flex-wrap gap-1.5 px-1">
-                  {['TCP/IP', 'Cây AVL', 'Chuẩn 3NF', 'Giải tích 1', 'Đề thi 2026'].map((trend) => (
+                  {trendingSearches.map((trend) => (
                     <button
                       key={trend}
                       onClick={() => {
@@ -302,6 +307,12 @@ export const Navbar: React.FC = () => {
           title="Trang chủ"
         >
           <Home className={`w-6 h-6 ${activeTab === 'feed' ? 'stroke-[2.5]' : ''}`} />
+        </button>
+
+        <button onClick={() => handleTabClick('video')}
+          className={`relative flex flex-1 items-center justify-center transition-colors ${activeTab === 'video' ? 'h-full border-b-[3px] border-fb-blue text-fb-blue' : 'my-1 h-12 rounded-lg text-fb-text-2 hover:bg-fb-hover'}`}
+          title="Video học tập">
+          <Video className="h-6 w-6" />
         </button>
 
         {/* NẾU LÀ GIẢNG VIÊN: ĐƯA 2 TAB KIỂM DUYỆT CÂU HỎI & NGÂN HÀNG ĐỀ LÊN TRƯỚC */}
@@ -546,6 +557,13 @@ export const Navbar: React.FC = () => {
                   </>
                 )}
 
+                <button onClick={() => { handleTabClick('video'); setIsGridMenuOpen(false); }}
+                  className="rounded-lg bg-fb-input p-2.5 text-left transition hover:bg-fb-blue-soft">
+                  <Video className="mb-1 h-5 w-5 text-fb-blue" />
+                  <span className="block font-semibold text-fb-text">Video học tập</span>
+                  <span className="text-xs text-fb-text-2">Bài giảng mới</span>
+                </button>
+
                 <button
                   onClick={() => {
                     handleTabClick('cosmetics');
@@ -671,7 +689,14 @@ export const Navbar: React.FC = () => {
                     key={notif.id}
                     onClick={() => {
                       markNotificationAsRead(notif.id);
-                      if (notif.type === 'QUESTION_APPROVED') {
+                      if (notif.targetType === 'POST' && notif.targetId) {
+                        void openPostById(Number(notif.targetId));
+                      } else if (notif.targetType === 'USER' && notif.targetId) {
+                        setViewingUserId(notif.targetId);
+                        setActiveTab('profile');
+                      } else if (notif.targetType === 'CONVERSATION') {
+                        handleTabClick('messenger');
+                      } else if (notif.type === 'QUESTION_APPROVED') {
                         handleTabClick('bank');
                       } else if (notif.type === 'FRIEND_REQUEST') {
                         handleTabClick('friends');
@@ -707,6 +732,12 @@ export const Navbar: React.FC = () => {
                     )}
                   </div>
                 ))}
+                {notificationsHasMore && (
+                  <button type="button" onClick={loadMoreNotifications}
+                    className="w-full p-3 text-center text-xs font-semibold text-fb-blue hover:bg-fb-hover">
+                    Xem thêm thông báo
+                  </button>
+                )}
               </div>
             </div>
           )}

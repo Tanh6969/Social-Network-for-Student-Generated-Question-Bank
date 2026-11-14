@@ -316,7 +316,7 @@ export const MessengerFullView: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-2 text-fb-blue">
-                  <button
+                  {!isApiSession() && <button
                     disabled={isPartnerBlocked}
                     onClick={() =>
                       showToast('Tính năng gọi thoại đang kết nối...', 'info')
@@ -324,8 +324,8 @@ export const MessengerFullView: React.FC = () => {
                     className="p-2 rounded-full hover:bg-fb-hover disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Phone className="w-4 h-4" />
-                  </button>
-                  <button
+                  </button>}
+                  {!isApiSession() && <button
                     disabled={isPartnerBlocked}
                     onClick={() =>
                       showToast('Tính năng gọi video đang kết nối...', 'info')
@@ -333,7 +333,7 @@ export const MessengerFullView: React.FC = () => {
                     className="p-2 rounded-full hover:bg-fb-hover disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Video className="w-4 h-4" />
-                  </button>
+                  </button>}
                 </div>
               </div>
 
@@ -531,9 +531,9 @@ export const MessengerFullView: React.FC = () => {
                 >
                   <BellOff className="w-4 h-4 text-fb-text-2" />
                   <span>Tắt thông báo</span>
-                </button>
+                </button>}
 
-                <button
+                {!isApiSession() && <button
                   type="button"
                   onClick={() =>
                     openReportModal(
@@ -546,7 +546,7 @@ export const MessengerFullView: React.FC = () => {
                 >
                   <Shield className="w-4 h-4" />
                   <span>Báo cáo cuộc trò chuyện</span>
-                </button>
+                </button>}
 
                 {!isGroupConv &&
                   (isPartnerBlockedByMe ? (

@@ -27,6 +27,7 @@ export function userFromAuthor(author: ApiAuthor, currentUser: User): User {
     role: 'STUDENT',
     email: '',
     avatar: author?.avatar_url || DEFAULT_AVATAR,
+    frameUrl: author?.frame_url || undefined,
     coverImage: DEFAULT_COVER,
     bio: '',
     faculty: '',
@@ -70,6 +71,7 @@ export function postFromApi(dto: PostResponseDto, currentUser: User): Post {
           : 'KNOWLEDGE',
     content: dto.content ?? '',
     subjectTag: dto.subject_name || undefined,
+    subjectId: dto.subject_id,
     mediaUrls: mediaUrls.length ? mediaUrls : undefined,
     documents: documents.length ? documents : undefined,
     likesCount: dto.react_count ?? 0,
@@ -133,6 +135,7 @@ export function commentFromApi(
     id: String(dto.comment_id),
     author: userFromAuthor(dto.author, currentUser),
     content: dto.deleted ? 'Bình luận đã bị xoá.' : (dto.content ?? ''),
+    deleted: Boolean(dto.deleted),
     createdAt: dto.created_at ?? '',
     likesCount: 0,
     isLiked: false,
@@ -206,6 +209,59 @@ export async function loadApiFeed(currentUser: User): Promise<Post[]> {
     posts.set(post.id, post);
   }
   return [...posts.values()];
+}
+
+export interface ApiFeedCursor {
+  activity: { after?: number; hasNext: boolean };
+  mine: { after?: number; hasNext: boolean };
+  public: { after?: number; hasNext: boolean };
+}
+
+export const initialApiFeedCursor: ApiFeedCursor = {
+  activity: { hasNext: true },
+  mine: { hasNext: true },
+  public: { hasNext: true },
+};
+
+/** Nạp thêm từ cả ba nguồn theo cursor của backend, không cắt mảng có sẵn. */
+export async function loadApiFeedPage(currentUser: User, cursor: ApiFeedCursor) {
+  const [activity, mine, publicPage] = await Promise.all([
+    cursor.activity.hasNext ? postsApi.getActivityFeed(cursor.activity.after, 10)
+      : Promise.resolve({ items: [], hasNext: false, after: undefined }),
+    cursor.mine.hasNext ? postsApi.getMyPosts(cursor.mine.after, 10)
+      : Promise.resolve({ items: [], hasNext: false, after: undefined }),
+    cursor.public.hasNext ? searchApi.search({ type: 'POST', after: cursor.public.after, limit: 10 })
+      .catch(() => ({ items: [], hasNext: false, after: undefined, totalHits: 0 }))
+      : Promise.resolve({ items: [], hasNext: false, after: undefined, totalHits: 0 }),
+  ]);
+
+  const result = new Map<string, Post>();
+  for (const dto of mine.items) {
+    if (dto.post_id != null) result.set(String(dto.post_id), postFromApi(dto, currentUser));
+  }
+  const ids = [
+    ...activity.items.filter((item) => item.target_type === 'POST' && item.target_id != null)
+      .map((item) => item.target_id!),
+    ...publicPage.items.map((item) => item.post?.post_id).filter((id): id is number => id != null),
+  ].filter((id) => !result.has(String(id)));
+  const details = await Promise.allSettled([...new Set(ids)].map((id) => postsApi.getPost(id)));
+  for (const detail of details) {
+    if (detail.status === 'fulfilled' && detail.value?.post_id != null)
+      result.set(String(detail.value.post_id), postFromApi(detail.value, currentUser));
+  }
+  for (const item of activity.items) {
+    if (item.target_type === 'POST') continue;
+    const post = activityToPost(item, currentUser);
+    result.set(post.id, post);
+  }
+  const next = (page: { hasNext: boolean; after?: number }) => ({
+    after: page.after,
+    hasNext: page.hasNext && page.after != null,
+  });
+  return {
+    posts: [...result.values()],
+    cursor: { activity: next(activity), mine: next(mine), public: next(publicPage) },
+  };
 }
 
 /**
