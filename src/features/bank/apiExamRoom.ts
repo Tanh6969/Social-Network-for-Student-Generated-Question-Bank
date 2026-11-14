@@ -156,3 +156,18 @@ export async function submitAnswersToApi(
   }
   return { results, failed, firstError };
 }
+
+/**
+ * Minigame 5 — "rate 0 sao" khi phát hiện câu lỗi: gửi mô tả lỗi để giảng viên
+ * thẩm định (PUT /questions/{id}/report) và ghi rating 0 (POST /rate).
+ * Báo lỗi gửi trước: nếu bước này hỏng thì không ghi 0 sao lẻ loi.
+ */
+export async function reportQuestionError(
+  questionId: number,
+  description: string,
+): Promise<void> {
+  const text = description.trim().slice(0, 500);
+  if (!text) throw new Error('Hãy chọn lý do hoặc mô tả lỗi.');
+  await practiceGateway.report(questionId, text);
+  await practiceGateway.rate(questionId, { rating: 0, comment: text });
+}

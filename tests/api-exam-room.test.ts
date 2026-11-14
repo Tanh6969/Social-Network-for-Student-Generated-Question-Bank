@@ -154,3 +154,47 @@ describe('phòng thi — dữ liệu thật', () => {
     expect(outcome.results['3']).toBeUndefined();
   });
 });
+
+describe('Minigame 5 — rate 0 sao kèm báo lỗi', () => {
+  it('gửi báo lỗi (PUT /report) trước, rồi rating 0 (POST /rate)', async () => {
+    respond = () => envelope({});
+    const { reportQuestionError } = await load();
+    await reportQuestionError(7, '  Sai đáp án. Đáp án đúng là C  ');
+
+    expect(requests).toEqual([
+      {
+        path: '/questions/7/report',
+        body: { description: 'Sai đáp án. Đáp án đúng là C' },
+      },
+      {
+        path: '/questions/7/rate',
+        body: { rating: 0, comment: 'Sai đáp án. Đáp án đúng là C' },
+      },
+    ]);
+  });
+
+  it('báo lỗi hỏng thì không ghi 0 sao lẻ loi', async () => {
+    respond = () => envelope(null, 400, '4000', 'Phiên chưa được xét duyệt');
+    const { reportQuestionError } = await load();
+    await expect(reportQuestionError(7, 'Sai đáp án')).rejects.toThrow(
+      'Phiên chưa được xét duyệt',
+    );
+    expect(requests.map((r) => r.path)).toEqual(['/questions/7/report']);
+  });
+
+  it('không có mô tả thì không gửi gì', async () => {
+    const { reportQuestionError } = await load();
+    await expect(reportQuestionError(7, '   ')).rejects.toThrow();
+    expect(requests).toHaveLength(0);
+  });
+
+  it('ghép lý do + ghi chú, tối đa 500 ký tự', async () => {
+    const { buildErrorDescription } =
+      await import('../src/features/bank/components/QuestionRatingBar');
+    expect(
+      buildErrorDescription(['Sai đáp án', 'Đề không rõ ràng'], ' C mới đúng '),
+    ).toBe('Sai đáp án, Đề không rõ ràng. C mới đúng');
+    expect(buildErrorDescription([], '')).toBe('');
+    expect(buildErrorDescription(['x'], 'y'.repeat(600))).toHaveLength(500);
+  });
+});

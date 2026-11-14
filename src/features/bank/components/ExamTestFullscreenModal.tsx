@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { StudentExamSet } from '../studentBankData';
-import { StarRating } from './StarRating';
+import { QuestionRatingBar } from './QuestionRatingBar';
+import { QuickRateOverlay } from './QuickRateOverlay';
 import { useLockPageScroll } from '../../../shared/lockPageScroll';
 import {
   Clock,
@@ -16,6 +17,8 @@ import {
   Minimize2,
   HelpCircle,
   Sparkles,
+  Flag,
+  Star,
 } from 'lucide-react';
 
 type OptionKey = 'A' | 'B' | 'C' | 'D';
@@ -41,6 +44,14 @@ interface ExamTestFullscreenModalProps {
   ) => Promise<Record<string, RemoteAnswerResult>>;
   /** Nội dung thêm dưới mỗi câu ở màn kết quả (vd. bình luận). */
   renderQuestionExtras?: (questionId: string) => React.ReactNode;
+  /**
+   * Minigame 5: "0 sao" = báo câu lỗi kèm mô tả. Không truyền (demo) thì
+   * ghi nhận như đánh giá 0 sao qua onRateQuestion.
+   */
+  onReportError?: (
+    questionId: string,
+    description: string,
+  ) => void | Promise<void>;
 }
 
 export const ExamTestFullscreenModal: React.FC<
@@ -52,7 +63,31 @@ export const ExamTestFullscreenModal: React.FC<
   currentUserId,
   onSubmitAnswers,
   renderQuestionExtras,
+  onReportError,
 }) => {
+  // Câu được gắn cờ "có vấn đề" khi đang làm bài → mở sẵn báo lỗi sau khi nộp.
+  const [flagged, setFlagged] = useState<Set<string>>(() => new Set());
+  const [showQuickRate, setShowQuickRate] = useState(false);
+  const toggleFlag = (questionId: string) =>
+    setFlagged((prev) => {
+      const next = new Set(prev);
+      if (next.has(questionId)) next.delete(questionId);
+      else next.add(questionId);
+      return next;
+    });
+  // Mức vừa chọn trong phòng thi, hiện ngay kể cả khi đề là dữ liệu tĩnh (demo).
+  const [myRatings, setMyRatings] = useState<Record<string, number>>({});
+  const ratingOf = (q: { id: string; userRatedStars?: number }) =>
+    myRatings[q.id] ?? q.userRatedStars;
+  const rateQuestion = async (questionId: string, rating: number) => {
+    setMyRatings((prev) => ({ ...prev, [questionId]: rating }));
+    await onRateQuestion(questionId, rating);
+  };
+  const reportError = async (questionId: string, description: string) => {
+    if (onReportError) await onReportError(questionId, description);
+    else onRateQuestion(questionId, 0, description);
+    setMyRatings((prev) => ({ ...prev, [questionId]: 0 }));
+  };
   // Test states
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -187,6 +222,7 @@ export const ExamTestFullscreenModal: React.FC<
     setAnswers({});
     setRemoteResults({});
     setSubmitError(null);
+    setFlagged(new Set());
     setCurrentQuestionIndex(0);
     setElapsedSeconds(0);
     setIsSubmitted(false);
@@ -219,6 +255,20 @@ export const ExamTestFullscreenModal: React.FC<
 
   // Score statistics after submission
   const correctCount = exam.questions.filter(isCorrectOf).length;
+  // Đánh giá (Minigame 5 & chấm chất lượng): tác giả không tự đánh giá.
+  const isAuthorOf = (q: (typeof exam.questions)[number]) =>
+    Boolean(q.creatorId) && q.creatorId === currentUserId;
+  const rateableCount = exam.questions.filter((q) => !isAuthorOf(q)).length;
+  const ratedCount = exam.questions.filter(
+    (q) => !isAuthorOf(q) && ratingOf(q) !== undefined,
+  ).length;
+  const flaggedQuestions = exam.questions
+    .map((q, idx) => ({ q, idx }))
+    .filter(({ q }) => flagged.has(q.id));
+  const flaggedPending = flaggedQuestions.filter(
+    ({ q }) => ratingOf(q) !== 0,
+  ).length;
+
   const scoreOutOf10 =
     exam.questions.length > 0
       ? Number(((correctCount / exam.questions.length) * 10).toFixed(1))
@@ -289,10 +339,33 @@ export const ExamTestFullscreenModal: React.FC<
           <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto flex flex-col justify-between">
             <div className="max-w-3xl mx-auto w-full space-y-4">
               {/* Question header */}
-              <div className="flex items-center justify-between pb-3 border-b border-fb-divider">
+              <div className="flex items-center justify-between gap-2 pb-3 border-b border-fb-divider">
                 <span className="font-semibold text-sm px-3 py-1 rounded-full bg-fb-blue-soft text-fb-blue">
                   Câu {currentQuestionIndex + 1} / {exam.questions.length}
                 </span>
+                {(() => {
+                  // Tác giả không tự báo lỗi câu của mình.
+                  if (isAuthorOf(currentQuestion)) return null;
+                  const isFlagged = flagged.has(currentQuestion.id);
+                  return (
+                    <button
+                      type="button"
+                      aria-pressed={isFlagged}
+                      onClick={() => toggleFlag(currentQuestion.id)}
+                      aria-label="Đánh dấu câu lỗi"
+                      title="Đánh dấu câu lỗi"
+                      className={`flex h-9 w-9 items-center justify-center rounded-full border transition cursor-pointer ${
+                        isFlagged
+                          ? 'border-fb-danger bg-fb-danger-soft text-fb-danger'
+                          : 'border-fb-divider text-fb-text-2 hover:border-fb-danger hover:text-fb-danger'
+                      }`}
+                    >
+                      <Flag
+                        className={`h-4 w-4 ${isFlagged ? 'fill-current' : ''}`}
+                      />
+                    </button>
+                  );
+                })()}
               </div>
 
               {/* Question text */}
@@ -303,8 +376,7 @@ export const ExamTestFullscreenModal: React.FC<
               {/* 4 Options */}
               <div className="space-y-2.5 pt-2">
                 {currentQuestion.options.map((opt) => {
-                  const isSelected =
-                    answers[currentQuestion.id] === opt.id;
+                  const isSelected = answers[currentQuestion.id] === opt.id;
                   return (
                     <div
                       key={opt.id}
@@ -326,7 +398,9 @@ export const ExamTestFullscreenModal: React.FC<
                       >
                         {opt.id}
                       </span>
-                      <span className="leading-snug [overflow-wrap:anywhere]">{opt.text}</span>
+                      <span className="leading-snug [overflow-wrap:anywhere]">
+                        {opt.text}
+                      </span>
                     </div>
                   );
                 })}
@@ -384,28 +458,36 @@ export const ExamTestFullscreenModal: React.FC<
                 {exam.questions.map((q, idx) => {
                   const isCurrent = idx === currentQuestionIndex;
                   const isAnswered = !!answers[q.id];
+                  const isFlagged = flagged.has(q.id);
 
                   return (
                     <button
                       key={q.id}
                       type="button"
                       onClick={() => setCurrentQuestionIndex(idx)}
-                      className={`h-9 rounded-md font-semibold text-sm tabular-nums transition flex items-center justify-center cursor-pointer ${
+                      aria-label={`Câu ${idx + 1}${isFlagged ? ' (đã đánh dấu có vấn đề)' : ''}`}
+                      className={`relative h-9 rounded-md font-semibold text-sm tabular-nums transition flex items-center justify-center cursor-pointer ${
                         isCurrent
                           ? 'bg-fb-blue text-white ring-2 ring-fb-blue ring-offset-2 ring-offset-fb-card'
                           : isAnswered
-                          ? 'bg-fb-blue-soft text-fb-blue ring-1 ring-inset ring-fb-blue/50'
-                          : 'bg-fb-btn text-fb-text-2 hover:bg-fb-btn-hover'
+                            ? 'bg-fb-blue-soft text-fb-blue ring-1 ring-inset ring-fb-blue/50'
+                            : 'bg-fb-btn text-fb-text-2 hover:bg-fb-btn-hover'
                       }`}
                     >
                       {idx + 1}
+                      {isFlagged && (
+                        <Flag
+                          className="absolute -right-1 -top-1 h-3.5 w-3.5 fill-fb-danger text-fb-danger"
+                          aria-hidden="true"
+                        />
+                      )}
                     </button>
                   );
                 })}
               </div>
 
               {/* Chú thích màu */}
-              <div className="flex items-center gap-4 mt-4 pt-3 border-t border-fb-divider text-sm text-fb-text-2">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4 pt-3 border-t border-fb-divider text-sm text-fb-text-2">
                 <div className="flex items-center gap-1.5">
                   <span className="w-3.5 h-3.5 rounded bg-fb-blue-soft ring-1 ring-inset ring-fb-blue/50" />
                   <span>Đã làm</span>
@@ -413,6 +495,10 @@ export const ExamTestFullscreenModal: React.FC<
                 <div className="flex items-center gap-1.5">
                   <span className="w-3.5 h-3.5 rounded bg-fb-btn" />
                   <span>Chưa làm</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Flag className="h-3.5 w-3.5 fill-fb-danger text-fb-danger" />
+                  <span>Có vấn đề</span>
                 </div>
               </div>
             </div>
@@ -467,7 +553,9 @@ export const ExamTestFullscreenModal: React.FC<
                   <span className="text-2xl font-bold text-fb-blue block">
                     {scoreOutOf10} / 10
                   </span>
-                  <span className="text-xs text-fb-text-2">Điểm số đạt được</span>
+                  <span className="text-xs text-fb-text-2">
+                    Điểm số đạt được
+                  </span>
                 </div>
 
                 <div className="p-4 rounded-lg bg-fb-success-soft border border-fb-success/60 text-center">
@@ -485,31 +573,82 @@ export const ExamTestFullscreenModal: React.FC<
                   <span className="text-2xl font-bold text-fb-blue block">
                     {formatTime(elapsedSeconds)}
                   </span>
-                  <span className="text-xs text-fb-text-2">Thời gian làm bài</span>
+                  <span className="text-xs text-fb-text-2">
+                    Thời gian làm bài
+                  </span>
                 </div>
               </div>
             </div>
 
+            {/* Câu đã gắn cờ khi làm bài: mời gửi báo lỗi (Minigame 5) */}
+            {flaggedQuestions.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 rounded-lg border border-fb-danger/40 bg-fb-danger-soft/50 px-4 py-3">
+                <Flag
+                  className="h-4 w-4 fill-fb-danger text-fb-danger"
+                  aria-label={`${flaggedPending} câu đã đánh dấu chưa gửi`}
+                />
+                <div className="flex flex-wrap gap-1.5">
+                  {flaggedQuestions.map(({ q, idx }) => (
+                    <button
+                      key={q.id}
+                      type="button"
+                      onClick={() =>
+                        document
+                          .getElementById(`exam-q-${q.id}`)
+                          ?.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start',
+                          })
+                      }
+                      className={`rounded-full px-3 py-1 text-xs font-semibold cursor-pointer ${
+                        ratingOf(q) === 0
+                          ? 'bg-fb-card text-fb-text-2 line-through'
+                          : 'bg-fb-danger text-white hover:bg-fb-danger/90'
+                      }`}
+                    >
+                      Câu {idx + 1}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Chi tiết từng câu hỏi & Đáp án & Chấm sao */}
             <div className="space-y-4">
-              <h3 className="font-bold text-sm text-fb-text flex items-center justify-between">
-                <span>Chi tiết đáp án & Giải thích từng câu</span>
-                <span className="text-xs text-fb-text-3 font-normal">
-                  Bạn có thể đánh giá từ 0 đến 4 sao cho từng câu hỏi bên dưới
-                </span>
-              </h3>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="font-bold text-sm text-fb-text">
+                  Chi tiết đáp án & Giải thích từng câu
+                </h3>
+                {rateableCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowQuickRate(true)}
+                    className="flex items-center gap-1.5 rounded-md bg-fb-warning-soft px-3 h-9 text-sm font-semibold text-fb-warning hover:brightness-95 cursor-pointer"
+                  >
+                    <Star className="h-4 w-4 fill-current" />
+                    Đánh giá nhanh
+                    <span className="font-normal tabular-nums">
+                      {ratedCount}/{rateableCount}
+                    </span>
+                  </button>
+                )}
+              </div>
 
               {exam.questions.map((q, idx) => {
                 const userAns = answers[q.id];
                 const isCorrect = isCorrectOf(q);
                 const correctKey = correctAnswerOf(q);
                 const explanation = explanationOf(q);
-                const isAuthor = Boolean(q.creatorId) && q.creatorId === currentUserId;
+                const isAuthor =
+                  Boolean(q.creatorId) && q.creatorId === currentUserId;
 
                 return (
                   <div
                     key={q.id}
-                    className="bg-fb-card rounded-lg p-5 shadow-fb-card space-y-3.5"
+                    id={`exam-q-${q.id}`}
+                    className={`bg-fb-card rounded-lg p-5 shadow-fb-card space-y-3.5 scroll-mt-4 ${
+                      flagged.has(q.id) ? 'ring-1 ring-fb-danger/50' : ''
+                    }`}
                   >
                     {/* Header câu */}
                     <div className="flex items-center justify-between text-xs pb-2 border-b border-fb-divider">
@@ -547,8 +686,7 @@ export const ExamTestFullscreenModal: React.FC<
                         const isThisCorrect = correctKey === opt.id;
                         const isUserChoice = userAns === opt.id;
 
-                        let borderStyle =
-                          'border-fb-divider bg-fb-card/50';
+                        let borderStyle = 'border-fb-divider bg-fb-card/50';
                         if (isThisCorrect) {
                           borderStyle =
                             'border-fb-success bg-fb-success-soft/80 text-fb-success font-semibold';
@@ -567,13 +705,15 @@ export const ExamTestFullscreenModal: React.FC<
                                 isThisCorrect
                                   ? 'bg-fb-success text-white'
                                   : isUserChoice
-                                  ? 'bg-fb-danger text-white'
-                                  : 'bg-fb-btn text-fb-text'
+                                    ? 'bg-fb-danger text-white'
+                                    : 'bg-fb-btn text-fb-text'
                               }`}
                             >
                               {opt.id}
                             </span>
-                            <span className="leading-snug [overflow-wrap:anywhere]">{opt.text}</span>
+                            <span className="leading-snug [overflow-wrap:anywhere]">
+                              {opt.text}
+                            </span>
                           </div>
                         );
                       })}
@@ -599,19 +739,16 @@ export const ExamTestFullscreenModal: React.FC<
                       </div>
                     )}
 
-                    {/* Đánh giá sao câu hỏi (0 - 4 sao) */}
-                    <div className="pt-2 border-t border-fb-divider">
-                      <StarRating
-                        ratingAverage={q.ratingAverage || 0}
-                        ratingCount={q.ratingCount || 0}
-                        userRatedStars={q.userRatedStars || 0}
-                        userComment={q.userComment}
-                        onRate={(stars, comment) =>
-                          onRateQuestion(q.id, stars, comment)
+                    {/* Đánh giá: 1–4 sao chất lượng, 0 sao = báo câu lỗi (Minigame 5) */}
+                    <div className="pt-3 border-t border-fb-divider">
+                      <QuestionRatingBar
+                        value={ratingOf(q)}
+                        disabled={isAuthor}
+                        startInReport={flagged.has(q.id)}
+                        onRate={(rating) => rateQuestion(q.id, rating)}
+                        onReportError={(description) =>
+                          reportError(q.id, description)
                         }
-                        isAuthor={isAuthor}
-                        size="md"
-                        allowComment={true}
                       />
                     </div>
 
@@ -622,6 +759,23 @@ export const ExamTestFullscreenModal: React.FC<
             </div>
           </div>
         </div>
+      )}
+
+      {/* ================= ĐÁNH GIÁ NHANH (không bắt buộc) ================= */}
+      {isSubmitted && showQuickRate && (
+        <QuickRateOverlay
+          questions={exam.questions.map((q) => ({
+            ...q,
+            userRatedStars: ratingOf(q),
+          }))}
+          answers={answers}
+          correctAnswerOf={correctAnswerOf}
+          isAuthorOf={isAuthorOf}
+          flagged={flagged}
+          onRate={rateQuestion}
+          onReportError={reportError}
+          onClose={() => setShowQuickRate(false)}
+        />
       )}
 
       {/* ================= MODAL XÁC NHẬN NỘP BÀI ================= */}
@@ -641,8 +795,8 @@ export const ExamTestFullscreenModal: React.FC<
                 {answeredCount} / {exam.questions.length}
               </strong>{' '}
               câu hỏi. Thời gian làm bài là{' '}
-              <strong>{formatTime(elapsedSeconds)}</strong>. Bạn có chắc chắn muốn nộp
-              bài không?
+              <strong>{formatTime(elapsedSeconds)}</strong>. Bạn có chắc chắn
+              muốn nộp bài không?
             </p>
 
             {submitError && (

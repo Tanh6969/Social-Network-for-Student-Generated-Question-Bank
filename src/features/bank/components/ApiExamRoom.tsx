@@ -5,7 +5,11 @@ import { errorMessage } from '../../../api';
 import { practiceGateway } from '../../proposals/practiceGateway';
 import type { SessionQuestionsResponse } from '../../proposals/types';
 import type { StudentExamSet } from '../studentBankData';
-import { examSetFromSession, submitAnswersToApi } from '../apiExamRoom';
+import {
+  examSetFromSession,
+  reportQuestionError,
+  submitAnswersToApi,
+} from '../apiExamRoom';
 import { ExamTestFullscreenModal } from './ExamTestFullscreenModal';
 import { QuestionComments } from '../../practice/components/QuestionComments';
 import { ExamRoomSkeleton } from '../../../shared/components/Skeleton';
@@ -50,7 +54,12 @@ export const ApiExamRoom: React.FC<ApiExamRoomProps> = ({
     void load();
   }, [load]);
 
-  const setUserRating = (questionId: string, stars: number, comment?: string) =>
+  /** stars: 0 = đã báo lỗi, 1–4 = sao, undefined = chưa đánh giá. */
+  const setUserRating = (
+    questionId: string,
+    stars: number | undefined,
+    comment?: string,
+  ) =>
     setExam((prev) =>
       prev
         ? {
@@ -64,35 +73,46 @@ export const ApiExamRoom: React.FC<ApiExamRoomProps> = ({
         : prev,
     );
 
-  const rateQuestion = async (
-    questionId: string,
-    stars: number,
-    comment?: string,
-  ) => {
-    // Thang sao 1–4 của giao diện = rating 1–4 của API (0 là "sai hoàn toàn").
-    // API không có thao tác huỷ đánh giá.
-    if (stars <= 0) {
-      showToast(
-        'Hệ thống chưa hỗ trợ bỏ đánh giá. Bạn có thể chọn lại số sao khác.',
-        'info',
-      );
-      return;
-    }
+  /** Chấm chất lượng 1–4 sao (rating 1–4 của POST /rate). */
+  const rateQuestion = async (questionId: string, stars: number) => {
+    if (stars < 1 || stars > 4) return;
     const previous = exam?.questions.find((q) => q.id === questionId);
-    setUserRating(questionId, stars, comment);
+    setUserRating(questionId, stars);
     try {
-      await practiceGateway.rate(Number(questionId), {
-        rating: stars,
-        comment: comment || undefined,
-      });
-      showToast('Cảm ơn bạn đã đánh giá!', 'success');
+      await practiceGateway.rate(Number(questionId), { rating: stars });
     } catch (err: unknown) {
       setUserRating(
         questionId,
-        previous?.userRatedStars ?? 0,
+        previous?.userRatedStars,
         previous?.userComment,
       );
       showToast(errorMessage(err, 'Không gửi được đánh giá.'), 'error');
+    }
+  };
+
+  /**
+   * Minigame 5: rate 0 sao kèm báo lỗi. Gửi mô tả qua PUT /report (để giảng
+   * viên thẩm định) và rating 0 qua POST /rate. Không cho biết kết quả — chỉ
+   * thông báo gần cuối kỳ.
+   */
+  const reportError = async (questionId: string, description: string) => {
+    const id = Number(questionId);
+    const previous = exam?.questions.find((q) => q.id === questionId);
+    try {
+      await reportQuestionError(id, description);
+      setUserRating(questionId, 0, description);
+      showToast(
+        'Đã gửi báo lỗi. Kết quả thẩm định sẽ được thông báo gần cuối kỳ.',
+        'success',
+      );
+    } catch (err: unknown) {
+      setUserRating(
+        questionId,
+        previous?.userRatedStars,
+        previous?.userComment,
+      );
+      showToast(errorMessage(err, 'Không gửi được báo lỗi.'), 'error');
+      throw err;
     }
   };
 
@@ -158,9 +178,8 @@ export const ApiExamRoom: React.FC<ApiExamRoomProps> = ({
       exam={exam}
       onClose={onClose}
       currentUserId={currentUserId}
-      onRateQuestion={(id, stars, comment) =>
-        void rateQuestion(id, stars, comment)
-      }
+      onRateQuestion={(id, stars) => void rateQuestion(id, stars)}
+      onReportError={reportError}
       onSubmitAnswers={async (answers) => {
         const outcome = await submitAnswersToApi(
           session.questions ?? [],
