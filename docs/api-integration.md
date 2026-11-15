@@ -13,7 +13,7 @@ The pinned Swagger snapshot was refreshed on 2026-11-14 and has **150 REST paths
 | Exams | Yes | API flows use typed endpoints; individual legacy screens still need a separate audit |
 | Auth refresh and change password | Yes | No |
 | Admin APIs | Yes, because they are in Swagger | No; the frontend does not invoke them |
-| Chat, notifications, full search, reports and cosmetics | Yes | API sessions use REST and STOMP for the implemented flows; demo sessions remain local |
+| Chat, notifications, full search, reports and cosmetics | Yes | Cosmetics shop and inventory use REST with cursor pagination, type/rarity/unlocked filters, sorting, collection summary and buy/equip/unequip responses; chat and notifications use REST/STOMP for implemented flows; demo sessions remain local |
 | Lecturer course classes and video posts | Yes | API sessions use their Swagger endpoints |
 | Devices and account settings | Yes | Device actions and API push preferences are connected; demo push preferences remain local |
 | STOMP chat destinations | Listed in `src/api/realtime-contract.ts` | Direct/group text chat connects to `/api/v1/ws`; chat attachments are not yet implemented |
