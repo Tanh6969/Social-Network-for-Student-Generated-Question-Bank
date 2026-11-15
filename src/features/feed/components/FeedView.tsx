@@ -139,7 +139,7 @@ export const FeedView: React.FC = () => {
               <p className="flex items-center gap-1 text-xs font-semibold text-fb-warning truncate">
                 <Trophy className="w-3.5 h-3.5 shrink-0" />
                 {currentUser.points.toLocaleString('vi-VN')} điểm
-                {myRank && <> · Hạng #{myRank}</>}
+                {myRank != null && myRank > 0 && <> · Hạng #{myRank}</>}
               </p>
             )}
           </div>
@@ -156,10 +156,6 @@ export const FeedView: React.FC = () => {
           )}
         </div>
 
-        <div className="pt-4 border-t border-fb-divider text-xs text-fb-text-2 space-y-1">
-          <p>© 2026 UniSocial & ExamBank Đại học</p>
-          <p>Mạng xã hội học tập & Ngân hàng đề thi chuẩn Quốc gia</p>
-        </div>
       </aside>
 
       {/* ================= CỘT GIỮA (cuộn nội dung, có khoảng trống 2 bên) ================= */}

@@ -16,11 +16,6 @@ const FeedView = React.lazy(() =>
     default: module.FeedView,
   })),
 );
-const VideoFeedView = React.lazy(() =>
-  import('../features/feed/components/VideoFeedView').then((module) => ({
-    default: module.VideoFeedView,
-  })),
-);
 const BankView = React.lazy(() =>
   import('../features/bank/components/BankView').then((module) => ({
     default: module.BankView,
@@ -175,7 +170,6 @@ const MainContent: React.FC = () => {
       <Suspense fallback={<PageSkeleton />}>
         <div className="flex-1">
           {activeTab === 'feed' && <FeedView />}
-          {activeTab === 'video' && <VideoFeedView />}
           {activeTab === 'bank' && <BankView />}
           {activeTab === 'propose' && <ProposeView />}
           {activeTab === 'game' && <MinigameView />}

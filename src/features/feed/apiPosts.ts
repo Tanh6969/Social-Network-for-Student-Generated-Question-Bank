@@ -215,17 +215,19 @@ export interface ApiFeedCursor {
   activity: { after?: number; hasNext: boolean };
   mine: { after?: number; hasNext: boolean };
   public: { after?: number; hasNext: boolean };
+  videos: { after?: number; hasNext: boolean };
 }
 
 export const initialApiFeedCursor: ApiFeedCursor = {
   activity: { hasNext: true },
   mine: { hasNext: true },
   public: { hasNext: true },
+  videos: { hasNext: true },
 };
 
-/** Nạp thêm từ cả ba nguồn theo cursor của backend, không cắt mảng có sẵn. */
+/** Nạp thêm bài viết và video theo cursor của backend. */
 export async function loadApiFeedPage(currentUser: User, cursor: ApiFeedCursor) {
-  const [activity, mine, publicPage] = await Promise.all([
+  const [activity, mine, publicPage, videos] = await Promise.all([
     cursor.activity.hasNext ? postsApi.getActivityFeed(cursor.activity.after, 10)
       : Promise.resolve({ items: [], hasNext: false, after: undefined }),
     cursor.mine.hasNext ? postsApi.getMyPosts(cursor.mine.after, 10)
@@ -233,6 +235,9 @@ export async function loadApiFeedPage(currentUser: User, cursor: ApiFeedCursor) 
     cursor.public.hasNext ? searchApi.search({ type: 'POST', after: cursor.public.after, limit: 10 })
       .catch(() => ({ items: [], hasNext: false, after: undefined, totalHits: 0 }))
       : Promise.resolve({ items: [], hasNext: false, after: undefined, totalHits: 0 }),
+    cursor.videos.hasNext ? postsApi.getVideoPosts(undefined, cursor.videos.after)
+      .catch(() => ({ items: [], hasNext: false, after: undefined }))
+      : Promise.resolve({ items: [], hasNext: false, after: undefined }),
   ]);
 
   const result = new Map<string, Post>();
@@ -243,6 +248,7 @@ export async function loadApiFeedPage(currentUser: User, cursor: ApiFeedCursor) 
     ...activity.items.filter((item) => item.target_type === 'POST' && item.target_id != null)
       .map((item) => item.target_id!),
     ...publicPage.items.map((item) => item.post?.post_id).filter((id): id is number => id != null),
+    ...videos.items.map((item) => item.post_id).filter((id): id is number => id != null),
   ].filter((id) => !result.has(String(id)));
   const details = await Promise.allSettled([...new Set(ids)].map((id) => postsApi.getPost(id)));
   for (const detail of details) {
@@ -260,7 +266,7 @@ export async function loadApiFeedPage(currentUser: User, cursor: ApiFeedCursor) 
   });
   return {
     posts: [...result.values()],
-    cursor: { activity: next(activity), mine: next(mine), public: next(publicPage) },
+    cursor: { activity: next(activity), mine: next(mine), public: next(publicPage), videos: next(videos) },
   };
 }
 

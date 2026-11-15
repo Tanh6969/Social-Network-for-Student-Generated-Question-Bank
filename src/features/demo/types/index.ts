@@ -313,7 +313,6 @@ export interface AppNotification {
 
 export type MainTab =
   | 'feed'
-  | 'video'
   | 'bank'
   | 'lecturer-bank'
   | 'propose'
