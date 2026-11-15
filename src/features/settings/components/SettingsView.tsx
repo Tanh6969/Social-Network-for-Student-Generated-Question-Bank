@@ -31,8 +31,18 @@ import {
   devicesApi,
   getDeviceId,
   isApiSession,
+  pushSettingsApi,
   type DeviceInfoDto,
+  type PushSettingsResponseDto,
+  type UpdatePushSettingsRequestDto,
 } from '../../../api';
+
+const pushCategoryLabels: Record<string, string> = {
+  SOCIAL: 'Xã hội',
+  ACADEMIC: 'Học tập',
+  GAMIFICATION: 'Gamification',
+  SYSTEM: 'Hệ thống',
+};
 
 export const SettingsView: React.FC = () => {
   const { currentUser } = useApp();
@@ -56,6 +66,12 @@ const SettingsContent: React.FC = () => {
     'ACCOUNT' | 'BLOCKING' | 'SECURITY' | 'PUSH' | 'DEVICES' | 'DELETE'
   >('ACCOUNT');
   const [initialPushSettings] = useState(() => {
+    if (isApiSession()) {
+      return {
+        preferences: createDefaultPushPreferences(),
+        error: null,
+      };
+    }
     try {
       return {
         preferences: loadPushPreferences(currentUser.id),
@@ -82,6 +98,10 @@ const SettingsContent: React.FC = () => {
   const [settingsError, setSettingsError] = useState<string | null>(
     initialPushSettings.error,
   );
+  const [apiPushSettings, setApiPushSettings] =
+    useState<PushSettingsResponseDto | null>(null);
+  const [isLoadingPushSettings, setIsLoadingPushSettings] = useState(false);
+  const [isSavingPushSettings, setIsSavingPushSettings] = useState(false);
   const [selectedBlockUserId, setSelectedBlockUserId] = useState('');
   const [blockReasonInput, setBlockReasonInput] = useState('');
 
@@ -111,7 +131,9 @@ const SettingsContent: React.FC = () => {
       setDevices(list);
     } catch (err) {
       showToast(
-        err instanceof Error ? err.message : 'Không thể tải danh sách thiết bị.',
+        err instanceof Error
+          ? err.message
+          : 'Không thể tải danh sách thiết bị.',
         'error',
       );
     } finally {
@@ -126,6 +148,40 @@ const SettingsContent: React.FC = () => {
   }, [activeTab, loadDevices]);
 
   useEffect(() => {
+    if (activeTab !== 'PUSH' || !isApiSession()) return;
+
+    let isMounted = true;
+    setIsLoadingPushSettings(true);
+    setSettingsError(null);
+    void pushSettingsApi
+      .get()
+      .then((settings) => {
+        if (isMounted) setApiPushSettings(settings);
+      })
+      .catch((error: unknown) => {
+        if (isMounted) {
+          setSettingsError(
+            error instanceof Error
+              ? error.message
+              : 'Không thể tải cài đặt thông báo.',
+          );
+        }
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingPushSettings(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activeTab, currentUser.id]);
+
+  useEffect(() => {
+    if (isApiSession()) {
+      setIsLoadingVoice(false);
+      return;
+    }
+
     let isMounted = true;
 
     void loadVoiceRecording(currentUser.id)
@@ -170,7 +226,10 @@ const SettingsContent: React.FC = () => {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!oldPassword || !newPassword || !confirmPassword) {
-      showToast('Vui lòng nhập đầy đủ mật khẩu hiện tại và mật khẩu mới.', 'warning');
+      showToast(
+        'Vui lòng nhập đầy đủ mật khẩu hiện tại và mật khẩu mới.',
+        'warning',
+      );
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -213,7 +272,10 @@ const SettingsContent: React.FC = () => {
     try {
       const ok = await authApi.refresh();
       if (ok) {
-        showToast('Đã làm mới phiên đăng nhập (Access Token) thành công!', 'success');
+        showToast(
+          'Đã làm mới phiên đăng nhập (Access Token) thành công!',
+          'success',
+        );
       } else {
         showToast('Không thể làm mới token. Vui lòng đăng nhập lại.', 'error');
       }
@@ -261,7 +323,10 @@ const SettingsContent: React.FC = () => {
     setIsSyncingFid(true);
     try {
       await devicesApi.unregisterFid();
-      showToast('Đã hủy đăng ký nhận thông báo đẩy (FID) trên thiết bị này.', 'info');
+      showToast(
+        'Đã hủy đăng ký nhận thông báo đẩy (FID) trên thiết bị này.',
+        'info',
+      );
     } catch (err) {
       showToast(
         err instanceof Error ? err.message : 'Không thể hủy đăng ký FID.',
@@ -313,6 +378,29 @@ const SettingsContent: React.FC = () => {
           : 'Không thể lưu cài đặt thông báo.';
       setSettingsError(message);
       showToast(message, 'error');
+    }
+  };
+
+  const updateApiPushSettings = async (
+    updates: UpdatePushSettingsRequestDto,
+  ) => {
+    if (!apiPushSettings || isSavingPushSettings) return;
+    const next = { ...apiPushSettings, ...updates };
+    setIsSavingPushSettings(true);
+    try {
+      const saved = await pushSettingsApi.update(next);
+      setApiPushSettings({ ...next, ...saved });
+      setSettingsError(null);
+      showToast('Đã lưu cài đặt thông báo.', 'success');
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Không thể lưu cài đặt thông báo.';
+      setSettingsError(message);
+      showToast(message, 'error');
+    } finally {
+      setIsSavingPushSettings(false);
     }
   };
 
@@ -703,9 +791,7 @@ const SettingsContent: React.FC = () => {
                             className="w-10 h-10 rounded-full object-cover grayscale"
                           />
                           <div>
-                            <p className="font-bold text-fb-text">
-                              {u.name}
-                            </p>
+                            <p className="font-bold text-fb-text">{u.name}</p>
                             <p className="text-xs text-fb-text-2 flex items-center gap-1">
                               <Clock className="w-3 h-3" /> {entry.blockedAt}
                               {entry.reason ? ` · ${entry.reason}` : ''}
@@ -804,7 +890,8 @@ const SettingsContent: React.FC = () => {
                   Làm mới phiên đăng nhập (Refresh Token)
                 </p>
                 <p className="text-fb-text-2 mt-0.5">
-                  Cấp mới Access Token cho thiết bị hiện tại (`{getDeviceId()}`).
+                  Cấp mới Access Token cho thiết bị hiện tại (`{getDeviceId()}
+                  `).
                 </p>
               </div>
               <button
@@ -828,12 +915,6 @@ const SettingsContent: React.FC = () => {
               Cài đặt thông báo đẩy (Push Notifications)
             </h3>
 
-            <p className="rounded-lg border border-fb-warning/30 bg-fb-warning-soft p-3 text-fb-warning">
-              Các lựa chọn và bản ghi được lưu riêng trên trình duyệt này.
-              Backend chưa kết nối nhận thông báo đẩy, nên thay đổi tại đây chưa
-              bật/tắt thông báo thật trên thiết bị.
-            </p>
-
             {settingsError && (
               <p
                 role="alert"
@@ -843,158 +924,336 @@ const SettingsContent: React.FC = () => {
               </p>
             )}
 
-            <label className="flex items-center justify-between gap-4 rounded-lg bg-fb-inset p-3">
-              <span>
-                <span className="block font-bold text-fb-text">
-                  Bật thông báo đẩy
-                </span>
-                <span className="text-xs text-fb-text-2">
-                  Tắt để lưu lựa chọn nhưng không muốn nhận thông báo.
-                </span>
-              </span>
-              <input
-                type="checkbox"
-                checked={pushPreferences.enabled}
-                onChange={(event) =>
-                  updatePushPreferences({
-                    ...pushPreferences,
-                    enabled: event.target.checked,
-                  })
-                }
-                className="h-4 w-4 rounded text-fb-blue"
-              />
-            </label>
-
-            <fieldset
-              disabled={!pushPreferences.enabled}
-              className="space-y-3 disabled:opacity-50"
-            >
-              <legend className="mb-2 font-bold text-fb-text">
-                Loại thông báo
-              </legend>
-              {pushNotificationTypes.map(({ id, label }) => (
-                <label
-                  key={id}
-                  className="flex items-center justify-between gap-4 rounded-lg bg-fb-inset p-3"
+            {isApiSession() ? (
+              isLoadingPushSettings ? (
+                <p role="status" className="text-fb-text-2">
+                  Đang tải cài đặt thông báo…
+                </p>
+              ) : apiPushSettings ? (
+                <fieldset
+                  disabled={isSavingPushSettings}
+                  className="space-y-4 disabled:opacity-60"
                 >
-                  <span className="font-semibold text-fb-text">
-                    {label}
+                  <label className="flex items-center justify-between gap-4 rounded-lg bg-fb-inset p-3">
+                    <span>
+                      <span className="block font-bold text-fb-text">
+                        Bật thông báo đẩy
+                      </span>
+                      <span className="text-xs text-fb-text-2">
+                        Lưu cấu hình nhận thông báo cho tài khoản của bạn.
+                      </span>
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={apiPushSettings.push_enabled ?? true}
+                      onChange={(event) =>
+                        void updateApiPushSettings({
+                          push_enabled: event.target.checked,
+                        })
+                      }
+                      className="h-4 w-4 rounded text-fb-blue"
+                    />
+                  </label>
+
+                  <fieldset
+                    disabled={
+                      isSavingPushSettings ||
+                      !(apiPushSettings.push_enabled ?? true)
+                    }
+                    className="space-y-3 disabled:opacity-50"
+                  >
+                    <legend className="mb-2 font-bold text-fb-text">
+                      Danh mục thông báo
+                    </legend>
+                    {Object.entries(apiPushSettings.categories ?? {}).map(
+                      ([category, setting]) => (
+                        <label
+                          key={category}
+                          className="flex items-center justify-between gap-4 rounded-lg bg-fb-inset p-3"
+                        >
+                          <span>
+                            <span className="block font-semibold text-fb-text">
+                              {pushCategoryLabels[category] ?? category}
+                            </span>
+                            {setting.description && (
+                              <span className="text-fb-text-2">
+                                {setting.description}
+                              </span>
+                            )}
+                          </span>
+                          <input
+                            type="checkbox"
+                            checked={setting.enabled ?? true}
+                            onChange={(event) =>
+                              void updateApiPushSettings({
+                                categories: {
+                                  ...apiPushSettings.categories,
+                                  [category]: {
+                                    ...setting,
+                                    enabled: event.target.checked,
+                                  },
+                                },
+                              })
+                            }
+                            className="h-4 w-4 rounded text-fb-blue"
+                          />
+                        </label>
+                      ),
+                    )}
+
+                    <fieldset className="space-y-3 rounded-lg border border-fb-divider p-3">
+                      <legend className="px-1 font-bold text-fb-text">
+                        Khung giờ yên tĩnh
+                      </legend>
+                      <label className="flex items-center justify-between gap-4">
+                        <span>Tắt thông báo trong khung giờ này</span>
+                        <input
+                          type="checkbox"
+                          checked={
+                            apiPushSettings.quiet_hours?.enabled ?? false
+                          }
+                          onChange={(event) =>
+                            void updateApiPushSettings({
+                              quiet_hours: {
+                                ...apiPushSettings.quiet_hours,
+                                enabled: event.target.checked,
+                              },
+                            })
+                          }
+                        />
+                      </label>
+                      <div className="flex flex-wrap gap-4">
+                        <label className="flex items-center gap-2">
+                          <span>Bắt đầu</span>
+                          <input
+                            type="time"
+                            value={
+                              apiPushSettings.quiet_hours?.start_time ?? '22:00'
+                            }
+                            onChange={(event) =>
+                              void updateApiPushSettings({
+                                quiet_hours: {
+                                  ...apiPushSettings.quiet_hours,
+                                  start_time: event.target.value,
+                                },
+                              })
+                            }
+                            className="rounded border border-fb-divider bg-fb-card p-1"
+                          />
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <span>Kết thúc</span>
+                          <input
+                            type="time"
+                            value={
+                              apiPushSettings.quiet_hours?.end_time ?? '07:00'
+                            }
+                            onChange={(event) =>
+                              void updateApiPushSettings({
+                                quiet_hours: {
+                                  ...apiPushSettings.quiet_hours,
+                                  end_time: event.target.value,
+                                },
+                              })
+                            }
+                            className="rounded border border-fb-divider bg-fb-card p-1"
+                          />
+                        </label>
+                      </div>
+                    </fieldset>
+
+                    <label className="flex items-center justify-between gap-4 rounded-lg bg-fb-inset p-3">
+                      <span className="font-semibold text-fb-text">
+                        Âm thanh thông báo
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={apiPushSettings.sound_enabled ?? true}
+                        onChange={(event) =>
+                          void updateApiPushSettings({
+                            sound_enabled: event.target.checked,
+                          })
+                        }
+                      />
+                    </label>
+                    <label className="flex items-center justify-between gap-4 rounded-lg bg-fb-inset p-3">
+                      <span className="font-semibold text-fb-text">
+                        Rung khi có thông báo
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={apiPushSettings.vibration_enabled ?? true}
+                        onChange={(event) =>
+                          void updateApiPushSettings({
+                            vibration_enabled: event.target.checked,
+                          })
+                        }
+                      />
+                    </label>
+                  </fieldset>
+                </fieldset>
+              ) : null
+            ) : (
+              <>
+                <p className="rounded-lg border border-fb-warning/30 bg-fb-warning-soft p-3 text-fb-warning">
+                  Các lựa chọn và bản ghi được lưu riêng trên trình duyệt này.
+                  Chế độ Demo không đồng bộ cài đặt với máy chủ.
+                </p>
+
+                <label className="flex items-center justify-between gap-4 rounded-lg bg-fb-inset p-3">
+                  <span>
+                    <span className="block font-bold text-fb-text">
+                      Bật thông báo đẩy
+                    </span>
+                    <span className="text-xs text-fb-text-2">
+                      Tắt để lưu lựa chọn nhưng không muốn nhận thông báo.
+                    </span>
                   </span>
                   <input
                     type="checkbox"
-                    checked={pushPreferences.notifications[id]}
+                    checked={pushPreferences.enabled}
                     onChange={(event) =>
                       updatePushPreferences({
                         ...pushPreferences,
-                        notifications: {
-                          ...pushPreferences.notifications,
-                          [id]: event.target.checked,
-                        },
+                        enabled: event.target.checked,
                       })
                     }
                     className="h-4 w-4 rounded text-fb-blue"
                   />
                 </label>
-              ))}
 
-              <fieldset className="space-y-3 rounded-lg border border-fb-divider p-3">
-                <legend className="px-1 font-bold text-fb-text">
-                  Âm thanh thông báo
-                </legend>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="push-sound-mode"
-                    checked={pushPreferences.soundMode === 'DEFAULT'}
-                    onChange={() =>
-                      updatePushPreferences({
-                        ...pushPreferences,
-                        soundMode: 'DEFAULT',
-                      })
-                    }
-                  />
-                  <span>Âm thanh mặc định</span>
-                </label>
-                <button
-                  type="button"
-                  onClick={previewDefaultSound}
+                <fieldset
                   disabled={!pushPreferences.enabled}
-                  className="rounded-lg border border-fb-divider px-3 py-1.5 font-semibold hover:bg-fb-hover disabled:cursor-not-allowed"
+                  className="space-y-3 disabled:opacity-50"
                 >
-                  Nghe thử âm mặc định
-                </button>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="push-sound-mode"
-                    checked={pushPreferences.soundMode === 'VOICE'}
-                    onChange={() =>
-                      updatePushPreferences({
-                        ...pushPreferences,
-                        soundMode: 'VOICE',
-                      })
-                    }
-                  />
-                  <span>Âm thanh bằng giọng nói của bạn</span>
-                </label>
-                {pushPreferences.soundMode === 'VOICE' && (
-                  <div className="space-y-3 rounded-lg bg-fb-inset p-3">
-                    <p className="text-fb-text-2">
-                      Ghi âm tối đa 30 giây. Bản ghi được lưu riêng trên trình
-                      duyệt này và chưa được phát cùng thông báo đẩy.
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={
-                          isRecordingVoice
-                            ? stopVoiceRecording
-                            : () => void startVoiceRecording()
+                  <legend className="mb-2 font-bold text-fb-text">
+                    Loại thông báo
+                  </legend>
+                  {pushNotificationTypes.map(({ id, label }) => (
+                    <label
+                      key={id}
+                      className="flex items-center justify-between gap-4 rounded-lg bg-fb-inset p-3"
+                    >
+                      <span className="font-semibold text-fb-text">
+                        {label}
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={pushPreferences.notifications[id]}
+                        onChange={(event) =>
+                          updatePushPreferences({
+                            ...pushPreferences,
+                            notifications: {
+                              ...pushPreferences.notifications,
+                              [id]: event.target.checked,
+                            },
+                          })
                         }
-                        disabled={isStartingVoiceRecording}
-                        className={`rounded-lg px-3 py-2 font-bold text-white ${
-                          isRecordingVoice
-                            ? 'bg-fb-danger hover:bg-fb-danger/90'
-                            : 'bg-fb-blue hover:bg-fb-blue-hover'
-                        } disabled:cursor-not-allowed disabled:opacity-60`}
-                      >
-                        {isStartingVoiceRecording
-                          ? 'Đang xin quyền micro…'
-                          : isRecordingVoice
-                            ? 'Dừng ghi âm'
-                            : 'Ghi âm giọng nói'}
-                      </button>
-                      {voicePreviewUrl && (
-                        <button
-                          type="button"
-                          onClick={() => void removeVoiceRecording()}
-                          className="rounded-lg border border-fb-divider px-3 py-2 font-semibold hover:bg-fb-hover"
-                        >
-                          Xóa bản ghi
-                        </button>
-                      )}
-                    </div>
-                    {isLoadingVoice ? (
-                      <p role="status" className="text-fb-text-2">
-                        Đang tải bản ghi đã lưu…
-                      </p>
-                    ) : voicePreviewUrl ? (
-                      <audio
-                        controls
-                        src={voicePreviewUrl}
-                        className="w-full"
-                        aria-label="Nghe thử bản ghi giọng nói"
+                        className="h-4 w-4 rounded text-fb-blue"
                       />
-                    ) : (
-                      <p className="text-fb-text-2">
-                        Bạn chưa có bản ghi. Cho phép sử dụng micro khi trình
-                        duyệt yêu cầu.
-                      </p>
+                    </label>
+                  ))}
+
+                  <fieldset className="space-y-3 rounded-lg border border-fb-divider p-3">
+                    <legend className="px-1 font-bold text-fb-text">
+                      Âm thanh thông báo
+                    </legend>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="push-sound-mode"
+                        checked={pushPreferences.soundMode === 'DEFAULT'}
+                        onChange={() =>
+                          updatePushPreferences({
+                            ...pushPreferences,
+                            soundMode: 'DEFAULT',
+                          })
+                        }
+                      />
+                      <span>Âm thanh mặc định</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={previewDefaultSound}
+                      disabled={!pushPreferences.enabled}
+                      className="rounded-lg border border-fb-divider px-3 py-1.5 font-semibold hover:bg-fb-hover disabled:cursor-not-allowed"
+                    >
+                      Nghe thử âm mặc định
+                    </button>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="push-sound-mode"
+                        checked={pushPreferences.soundMode === 'VOICE'}
+                        onChange={() =>
+                          updatePushPreferences({
+                            ...pushPreferences,
+                            soundMode: 'VOICE',
+                          })
+                        }
+                      />
+                      <span>Âm thanh bằng giọng nói của bạn</span>
+                    </label>
+                    {pushPreferences.soundMode === 'VOICE' && (
+                      <div className="space-y-3 rounded-lg bg-fb-inset p-3">
+                        <p className="text-fb-text-2">
+                          Ghi âm tối đa 30 giây. Bản ghi được lưu riêng trên
+                          trình duyệt này và chưa được phát cùng thông báo đẩy.
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={
+                              isRecordingVoice
+                                ? stopVoiceRecording
+                                : () => void startVoiceRecording()
+                            }
+                            disabled={isStartingVoiceRecording}
+                            className={`rounded-lg px-3 py-2 font-bold text-white ${
+                              isRecordingVoice
+                                ? 'bg-fb-danger hover:bg-fb-danger/90'
+                                : 'bg-fb-blue hover:bg-fb-blue-hover'
+                            } disabled:cursor-not-allowed disabled:opacity-60`}
+                          >
+                            {isStartingVoiceRecording
+                              ? 'Đang xin quyền micro…'
+                              : isRecordingVoice
+                                ? 'Dừng ghi âm'
+                                : 'Ghi âm giọng nói'}
+                          </button>
+                          {voicePreviewUrl && (
+                            <button
+                              type="button"
+                              onClick={() => void removeVoiceRecording()}
+                              className="rounded-lg border border-fb-divider px-3 py-2 font-semibold hover:bg-fb-hover"
+                            >
+                              Xóa bản ghi
+                            </button>
+                          )}
+                        </div>
+                        {isLoadingVoice ? (
+                          <p role="status" className="text-fb-text-2">
+                            Đang tải bản ghi đã lưu…
+                          </p>
+                        ) : voicePreviewUrl ? (
+                          <audio
+                            controls
+                            src={voicePreviewUrl}
+                            className="w-full"
+                            aria-label="Nghe thử bản ghi giọng nói"
+                          />
+                        ) : (
+                          <p className="text-fb-text-2">
+                            Bạn chưa có bản ghi. Cho phép sử dụng micro khi
+                            trình duyệt yêu cầu.
+                          </p>
+                        )}
+                      </div>
                     )}
-                  </div>
-                )}
-              </fieldset>
-            </fieldset>
+                  </fieldset>
+                </fieldset>
+              </>
+            )}
           </div>
         )}
 
@@ -1071,12 +1330,16 @@ const SettingsContent: React.FC = () => {
                         <p className="text-fb-text-2 mt-0.5">
                           Nền tảng: {device.platform || 'WEB'} · Hoạt động:{' '}
                           {device.last_active_at
-                            ? new Date(device.last_active_at).toLocaleString('vi-VN')
+                            ? new Date(device.last_active_at).toLocaleString(
+                                'vi-VN',
+                              )
                             : 'Vừa xong'}
                         </p>
                         <span
                           className={`font-semibold ${
-                            device.is_active ? 'text-fb-success' : 'text-fb-text-3'
+                            device.is_active
+                              ? 'text-fb-success'
+                              : 'text-fb-text-3'
                           }`}
                         >
                           {device.is_active ? 'Đang hoạt động' : 'Đã đăng xuất'}

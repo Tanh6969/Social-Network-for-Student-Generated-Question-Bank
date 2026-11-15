@@ -15,7 +15,7 @@ The pinned Swagger snapshot was refreshed on 2026-11-14 and has **150 REST paths
 | Admin APIs | Yes, because they are in Swagger | No; the frontend does not invoke them |
 | Chat, notifications, full search, reports and cosmetics | Yes | API sessions use REST and STOMP for the implemented flows; demo sessions remain local |
 | Lecturer course classes and video posts | Yes | API sessions use their Swagger endpoints |
-| Devices and account settings | Yes | Device list and device actions are connected; browser push preferences remain local |
+| Devices and account settings | Yes | Device actions and API push preferences are connected; demo push preferences remain local |
 | STOMP chat destinations | Listed in `src/api/realtime-contract.ts` | Direct/group text chat connects to `/api/v1/ws`; chat attachments are not yet implemented |
 
 The STOMP destinations and DTO names are written in OpenAPI `info.description`, not as machine-readable operations or component schemas. The chat client publishes text to `/app/chat.send`, read receipts to `/app/chat.read`, and listens on `/user/queue/messages`. Realtime behavior still needs a two-account browser test against the deployed backend.
@@ -32,6 +32,6 @@ Demo Feed/Profile create, edit, delete, comment, reply, media preview and friend
 
 Demo chat conversations are visible only to their listed participants, and demo messages are shared between those participants. Demo chat and feed changes synchronize between open same-origin browser tabs with `BroadcastChannel`; they are not persisted by a server and do not synchronize across devices. API chat lists conversations and history via REST, includes group and hidden chat actions, and sends text through STOMP. The feed uses `GET /activity-feeds/new-count` every 30 seconds while visible; the contract does not define a feed push destination.
 
-The Push tab in Settings currently stores the six notification preferences in browser `localStorage` and an optional voice recording in IndexedDB. This is local-only configuration: it does not register a push subscription, send or receive system notifications, or synchronize settings between browsers/devices. Real push delivery, per-event server preferences, and delivery of a user's voice recording require backend API support.
+The Push tab in Settings reads and updates API-account preferences through `GET/PUT /settings/push`, including the four server categories, quiet hours, sound and vibration. Demo preferences and an optional voice recording remain browser-local (`localStorage`/IndexedDB). Saving server preferences does not itself register a push subscription or send/receive system notifications; delivery and syncing a voice recording still require separate support.
 
 When a feature is connected, use the typed `api` client with its exact Swagger path and method, handle the `code/message/data` envelope through `expectEnvelope`, then update this table. Multipart endpoints require the `multipartBody` serializer. Export endpoints currently return a download URL in a JSON envelope rather than a binary response.

@@ -5,9 +5,11 @@ export type NotificationDto = components['schemas']['NotificationDto'];
 
 export const notificationsApi = {
   async list(after?: number) {
-    const data = expectEnvelope(await api.GET('/notifications', {
-      params: { query: { after, limit: 50 } },
-    })).data;
+    const data = expectEnvelope(
+      await api.GET('/notifications', {
+        params: { query: { after, limit: 50 } },
+      }),
+    ).data;
     return {
       items: data?.items ?? [],
       after: data?.pagination?.after,
@@ -15,10 +17,17 @@ export const notificationsApi = {
       unreadCount: data?.unread_count ?? 0,
     };
   },
-  async markRead(id: number): Promise<void> {
-    expectEnvelope(await api.POST('/notifications/{id}/read', {
-      params: { path: { id } },
-    }));
+  async markRead(id: number) {
+    const data = expectEnvelope(
+      await api.POST('/notifications/{id}/read', {
+        params: { path: { id } },
+      }),
+    ).data;
+    return {
+      unreadCount: data?.unread_count,
+      read: data?.read,
+      readAt: data?.read_at,
+    };
   },
   async markAllRead(): Promise<void> {
     expectEnvelope(await api.POST('/notifications/read-all'));

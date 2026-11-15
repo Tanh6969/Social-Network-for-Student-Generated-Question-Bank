@@ -4,6 +4,7 @@ export { isApiSession, errorMessage } from './session-mode';
 export { realtimeDestinations } from './realtime-contract';
 export { authApi, getDeviceId } from './auth';
 export { devicesApi } from './devices';
+export { pushSettingsApi } from './pushSettings';
 export { reportsApi } from './reports';
 export { chatApi } from './chat';
 export { chatStompClient, buildStompFrame, parseStompFrames } from './stompClient';
@@ -21,6 +22,11 @@ export type {
   SyncFidRequest,
   UnregisterFidRequest,
 } from './devices';
+export type {
+  PushSettingsResponseDto,
+  UpdatePushSettingsRequestDto,
+  PushCategorySettingDto,
+} from './pushSettings';
 export type {
   CreateReportRequestDto,
   ReportResponseDto,

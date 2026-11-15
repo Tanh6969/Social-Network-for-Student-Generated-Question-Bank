@@ -4925,9 +4925,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     if (sessionKind === 'api') {
       const notification = apiNotifications.find((item) => item.id === id);
       if (!notification || notification.isRead) return;
-      void notificationsApi.markRead(Number(id)).then(() => {
+      void notificationsApi.markRead(Number(id)).then((result) => {
         setApiNotifications((previous) => previous.map((item) => item.id === id ? { ...item, isRead: true } : item));
-        setApiUnreadCount((count) => Math.max(0, count - 1));
+        setApiUnreadCount((count) => result.unreadCount ?? Math.max(0, count - 1));
       }).catch((error: unknown) => showToast(errorMessage(error, 'Không đánh dấu được thông báo.'), 'error'));
       return;
     }
