@@ -61,11 +61,9 @@ export function userFromProfile(profile: ProfileResponse): User {
     coverImage: profile.cover_url || DEFAULT_COVER,
     bio: profile.bio || '',
     faculty: profile.school_faculty || '',
+    major: profile.major || undefined,
     classOrTitle:
-      profile.class_name ||
-      profile.major ||
-      profile.student_lecturer_code ||
-      (role === 'LECTURER' ? 'Giảng viên' : 'Sinh viên'),
+      profile.class_name || (role === 'LECTURER' ? 'Giảng viên' : ''),
     points: profile.gamification_points ?? 0,
     approvedQuestionsCount: profile.total_proposed_questions ?? 0,
     friendsCount: profile.friends_count ?? 0,
@@ -81,10 +79,11 @@ export function userFromSearch(result: UserSearchResultDto): User {
     email: result.email || '',
     bio: result.bio || '',
     faculty: result.school_faculty || '',
+    major: result.major || undefined,
     classOrTitle:
       result.major ||
       result.student_lecturer_code ||
-      (role === 'LECTURER' ? 'Giảng viên' : 'Sinh viên'),
+      (role === 'LECTURER' ? 'Giảng viên' : ''),
     approvedQuestionsCount: result.total_proposed_questions ?? 0,
     followersCount: result.followers_count ?? 0,
     verifiedLecturer: role === 'LECTURER' ? true : undefined,

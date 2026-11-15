@@ -28,6 +28,7 @@ export interface User {
   coverCrop?: ImageCrop;
   bio: string;
   faculty: string; // Khoa CNTT, v.v.
+  major?: string;
   classOrTitle: string; // K64 CNTT1 hoặc TS. Trưởng bộ môn
   points: number;
   approvedQuestionsCount: number;

@@ -43,7 +43,10 @@ export function applyProfile(
     frameUrl: profile.frame_url || undefined,
     bio: profile.bio ?? user.bio,
     faculty: profile.school_faculty || user.faculty,
-    classOrTitle: profile.class_name || user.classOrTitle,
+    major: profile.major || user.major,
+    classOrTitle:
+      profile.class_name ||
+      (user.role === 'LECTURER' ? 'Giảng viên' : ''),
     points: profile.gamification_points ?? user.points,
     friendsCount: profile.friends_count ?? user.friendsCount,
     followersCount: profile.followers_count ?? user.followersCount,

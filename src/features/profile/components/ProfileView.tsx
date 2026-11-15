@@ -364,7 +364,9 @@ export const ProfileView: React.FC = () => {
               </div>
 
               <p className="text-xs sm:text-sm text-fb-text-2 font-medium">
-                {targetUser.classOrTitle} · {targetUser.faculty}
+                {targetUser.classOrTitle ||
+                  (targetUser.role === 'LECTURER' ? 'Giảng viên' : 'Sinh viên')}
+                {targetUser.faculty && ` · ${targetUser.faculty}`}
               </p>
 
               <div className="flex items-center justify-center sm:justify-start gap-x-4 gap-y-1 flex-wrap text-xs text-fb-text-2 mt-1">
@@ -600,20 +602,58 @@ export const ProfileView: React.FC = () => {
               </p>
 
               <div className="pt-2 border-t border-fb-divider space-y-2 text-xs text-fb-text-2">
-                <p className="flex items-center gap-2">
-                  <GraduationCap className="w-4 h-4 shrink-0" />
-                  <span>Đang học tại:</span>{' '}
-                  <strong>{targetUser.faculty}</strong>
-                </p>
-                <p className="flex items-center gap-2">
-                  <Users className="w-4 h-4 shrink-0" />
-                  <span>Lớp sinh hoạt:</span>{' '}
-                  <strong>{targetUser.classOrTitle}</strong>
-                </p>
-                <p className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 shrink-0" />
-                  <span>Email trường:</span> <strong>{targetUser.email}</strong>
-                </p>
+                {targetUser.role === 'LECTURER' ? (
+                  <>
+                    {targetUser.faculty && (
+                      <p className="flex items-center gap-2">
+                        <GraduationCap className="w-4 h-4 shrink-0" />
+                        <span>Công tác tại:</span>{' '}
+                        <strong>{targetUser.faculty}</strong>
+                      </p>
+                    )}
+                    {targetUser.major && (
+                      <p className="flex items-center gap-2">
+                        <GraduationCap className="w-4 h-4 shrink-0" />
+                        <span>Chuyên môn:</span>{' '}
+                        <strong>{targetUser.major}</strong>
+                      </p>
+                    )}
+                    <p className="flex items-center gap-2">
+                      <Users className="w-4 h-4 shrink-0" />
+                      <span>Vai trò:</span> <strong>Giảng viên</strong>
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="flex items-center gap-2">
+                      <GraduationCap className="w-4 h-4 shrink-0" />
+                      <span>Đang học tại:</span>{' '}
+                      <strong>{targetUser.faculty || 'Chưa cập nhật'}</strong>
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <GraduationCap className="w-4 h-4 shrink-0" />
+                      <span>Chuyên ngành:</span>{' '}
+                      <strong>{targetUser.major || 'Chưa cập nhật'}</strong>
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <Users className="w-4 h-4 shrink-0" />
+                      <span>Lớp sinh hoạt:</span>{' '}
+                      <strong>
+                        {targetUser.classOrTitle || 'Chưa cập nhật'}
+                      </strong>
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <Mail className="w-4 h-4 shrink-0" />
+                      <span>Email trường:</span>{' '}
+                      <strong>
+                        {targetUser.email ||
+                          (isMe
+                            ? 'Chưa cập nhật'
+                            : 'Chỉ hiển thị với chủ tài khoản')}
+                      </strong>
+                    </p>
+                  </>
+                )}
               </div>
             </div>
 
