@@ -193,7 +193,7 @@ export const Navbar: React.FC = () => {
           onClick={() => handleTabClick('feed')}
           className="flex items-center gap-2 cursor-pointer group"
         >
-          <div className="w-10 h-10 rounded-full bg-fb-blue flex items-center justify-center text-white">
+          <div className="w-10 h-10 shrink-0 rounded-xl bg-fb-blue flex items-center justify-center text-white">
             <span className="font-bold text-xl tracking-tighter">U</span>
           </div>
           <span className="hidden sm:inline font-bold text-lg text-fb-text tracking-tight">
