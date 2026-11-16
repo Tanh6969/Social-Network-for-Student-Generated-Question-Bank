@@ -28,4 +28,10 @@ describe('profile relationship actions', () => {
       'NONE',
     );
   });
+
+  it('hides relationship actions until the target role is verified', () => {
+    expect(
+      getProfileRelationAction('STUDENT', 'STUDENT', 'NONE', false),
+    ).toBe('NONE');
+  });
 });

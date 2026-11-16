@@ -25,6 +25,7 @@ export function userFromAuthor(author: ApiAuthor, currentUser: User): User {
     id,
     name: author?.full_name || `Người dùng #${author?.user_id ?? '?'}`,
     role: 'STUDENT',
+    roleVerified: false,
     email: '',
     avatar: author?.avatar_url || DEFAULT_AVATAR,
     frameUrl: author?.frame_url || undefined,

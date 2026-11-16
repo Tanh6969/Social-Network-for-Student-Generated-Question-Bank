@@ -21,6 +21,7 @@ export interface User {
   id: string;
   name: string;
   role: Role;
+  roleVerified?: boolean;
   email: string;
   avatar: string;
   coverImage: string;

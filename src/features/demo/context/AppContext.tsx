@@ -860,6 +860,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
                 ? user.avatar
                 : old.avatar,
             role: user.role === 'LECTURER' ? 'LECTURER' : old.role,
+            roleVerified:
+              user.roleVerified === true
+                ? true
+                : (old.roleVerified ?? user.roleVerified),
             verifiedLecturer:
               user.role === 'LECTURER'
                 ? (user.verifiedLecturer ?? true)
@@ -878,6 +882,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
             merged.name === old.name &&
             merged.avatar === old.avatar &&
             merged.role === old.role &&
+            merged.roleVerified === old.roleVerified &&
             merged.faculty === old.faculty &&
             merged.classOrTitle === old.classOrTitle &&
             merged.followersCount === old.followersCount &&
@@ -1710,6 +1715,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
     const target = findRawUserById(userId);
+    if (target.role === 'LECTURER') {
+      showToast(
+        'Sinh viên không thể gửi lời mời kết bạn cho giảng viên.',
+        'error',
+      );
+      return;
+    }
+    if (sessionKind === 'api' && target.roleVerified === false) {
+      showToast(
+        'Chưa xác định được vai trò tài khoản; không thể gửi lời mời kết bạn.',
+        'error',
+      );
+      return;
+    }
     if (sessionKind === 'api') {
       relationshipsApi
         .sendFriendRequest(Number(userId))

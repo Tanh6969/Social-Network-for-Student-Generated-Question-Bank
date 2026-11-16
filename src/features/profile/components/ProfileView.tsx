@@ -128,6 +128,7 @@ export const ProfileView: React.FC = () => {
     role,
     targetUser.role,
     friendStatuses[targetUser.id] ?? 'NONE',
+    targetUser.roleVerified,
   );
   const isFollowing = followingIds.includes(targetUser.id);
 

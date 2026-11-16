@@ -12,7 +12,9 @@ export function getProfileRelationAction(
   viewerRole: Role,
   targetRole: Role,
   status: FriendStatus,
+  targetRoleVerified?: boolean,
 ): ProfileRelationAction {
+  if (targetRoleVerified === false) return 'NONE';
   if (targetRole === 'LECTURER') return 'FOLLOW';
   if (viewerRole !== 'STUDENT') return 'NONE';
   if (status === 'FRIEND') return 'ALREADY_FRIENDS';

@@ -36,6 +36,7 @@ export function basicUser(info: {
     id: String(info.user_id),
     name: info.full_name || `Người dùng #${info.user_id ?? '?'}`,
     role,
+    roleVerified: info.role === 'STUDENT' || info.role === 'LECTURER',
     email: '',
     avatar: info.avatar_url || DEFAULT_AVATAR,
     frameUrl: info.frame_url || undefined,
@@ -57,6 +58,7 @@ export function userFromProfile(profile: ProfileResponse): User {
   const role = toRole(profile.role);
   return {
     ...basicUser(profile),
+    roleVerified: profile.role === 'STUDENT' || profile.role === 'LECTURER',
     email: profile.email || '',
     coverImage: profile.cover_url || DEFAULT_COVER,
     bio: profile.bio || '',
@@ -76,6 +78,7 @@ export function userFromSearch(result: UserSearchResultDto): User {
   const role = toRole(result.role);
   return {
     ...basicUser(result),
+    roleVerified: result.role === 'STUDENT' || result.role === 'LECTURER',
     email: result.email || '',
     bio: result.bio || '',
     faculty: result.school_faculty || '',

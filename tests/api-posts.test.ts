@@ -205,6 +205,16 @@ describe('ánh xạ bài viết / bảng tin', () => {
     expect(post.comments).toBeUndefined(); // tải khi mở chi tiết
   });
 
+  it('tác giả bài viết không có vai trò xác minh cho tới khi tải hồ sơ hoặc tìm kiếm', async () => {
+    const { feed } = await load();
+    expect(
+      feed.userFromAuthor({ user_id: 25, full_name: 'Giảng viên' }, me),
+    ).toMatchObject({
+      role: 'STUDENT',
+      roleVerified: false,
+    });
+  });
+
   it('bảng tin: gộp bài của mình, tải chi tiết bài trong dòng hoạt động, giữ thẻ hoạt động', async () => {
     respond = (_m, url) => {
       if (url.pathname.endsWith('/activity-feeds'))

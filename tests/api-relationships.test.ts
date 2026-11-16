@@ -193,6 +193,7 @@ describe('quan hệ — phiên thật', () => {
     expect(user).toMatchObject({
       id: '25',
       name: 'Đồng Văn Hiếu',
+      roleVerified: true,
       classOrTitle: 'KHMT 03-K67',
       friendsCount: 1,
       followersCount: 12,
@@ -261,6 +262,7 @@ describe('quan hệ — phiên thật', () => {
         id: '163',
         name: 'Nguyễn Mạnh Tiếp',
         classOrTitle: 'KHMT',
+        roleVerified: false,
       }),
     ]);
     expect(requests[0].path).toBe(

@@ -131,6 +131,7 @@ export const FriendsView: React.FC = () => {
   );
   const suggestionsList = unblockedUsers.filter(
     (u) =>
+      u.roleVerified !== false &&
       u.role !== 'LECTURER' &&
       (friendStatuses[u.id] || 'NONE') === 'NONE' &&
       !dismissedSuggestionIds.includes(u.id),

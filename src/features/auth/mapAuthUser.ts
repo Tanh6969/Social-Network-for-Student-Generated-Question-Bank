@@ -14,6 +14,7 @@ export function mapAuthUser(account: AuthResponse): User {
     id: String(account.user_id),
     name: account.username.split('@')[0],
     role: account.role,
+    roleVerified: true,
     email: account.username,
     avatar: account.avatar_url || '/default-avatar.svg',
     coverImage: account.cover_url || '/default-cover.svg',
