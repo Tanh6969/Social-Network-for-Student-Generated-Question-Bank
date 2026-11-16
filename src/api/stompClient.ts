@@ -78,15 +78,33 @@ function parseStompFrames(raw: string): StompFrame[] {
 export function resolveStompWsUrls(): string[] {
   const apiBase =
     import.meta.env.VITE_API_BASE_URL ?? 'https://snsqb.duckdns.org/api/v1';
+  const wsBaseOverride = import.meta.env.VITE_WS_BASE_URL;
   let wsBase: string;
-  if (apiBase.startsWith('https://')) {
+  if (
+    wsBaseOverride?.startsWith('https://') ||
+    wsBaseOverride?.startsWith('wss://')
+  ) {
+    wsBase = wsBaseOverride.replace(/^https:\/\//, 'wss://').replace(/\/+$/, '');
+  } else if (
+    wsBaseOverride?.startsWith('http://') ||
+    wsBaseOverride?.startsWith('ws://')
+  ) {
+    wsBase = wsBaseOverride.replace(/^http:\/\//, 'ws://').replace(/\/+$/, '');
+  } else if (apiBase.startsWith('https://')) {
     wsBase = apiBase.replace(/^https:\/\//, 'wss://').replace(/\/+$/, '');
   } else if (apiBase.startsWith('http://')) {
     wsBase = apiBase.replace(/^http:\/\//, 'ws://').replace(/\/+$/, '');
   } else if (typeof window !== 'undefined') {
-    const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const path = apiBase.startsWith('/') ? apiBase : `/${apiBase}`;
-    wsBase = `${proto}//${window.location.host}${path.replace(/\/+$/, '')}`;
+    const isLocalHost = ['localhost', '127.0.0.1', '0.0.0.0'].includes(
+      window.location.hostname,
+    );
+    if (!isLocalHost) {
+      wsBase = 'wss://snsqb.duckdns.org/api/v1';
+    } else {
+      const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const path = apiBase.startsWith('/') ? apiBase : `/${apiBase}`;
+      wsBase = `${proto}//${window.location.host}${path.replace(/\/+$/, '')}`;
+    }
   } else {
     wsBase = 'wss://snsqb.duckdns.org/api/v1';
   }
@@ -95,12 +113,10 @@ export function resolveStompWsUrls(): string[] {
     : `${wsBase}${realtimeDestinations.handshake}`;
   const serverId = String(Math.floor(100 + Math.random() * 900));
   const sessionId = Math.random().toString(36).slice(2, 10);
-  // Ưu tiên `/api/v1/ws/websocket` (SockJS raw WebSocket transport) và
-  // `/api/v1/ws/{serverId}/{sessionId}/websocket` (SockJS framed transport)
-  // vì backend Spring Boot bật `.withSockJS()` trên `/api/v1/ws`.
+  // Spring SockJS requires both a server ID and session ID in the WebSocket URL.
   return [
-    `${primary}/websocket`,
     `${primary}/${serverId}/${sessionId}/websocket`,
+    `${primary}/websocket`,
     primary,
   ];
 }
@@ -316,6 +332,10 @@ export class ChatStompManager {
 
   /** Publish tới `/app/chat.send` */
   sendMessage(payload: SendWsMessageRequestDto): boolean {
+    if (!this.connected) {
+      this.connect();
+      return false;
+    }
     return this.publish(realtimeDestinations.send, payload);
   }
 

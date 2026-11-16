@@ -36,6 +36,7 @@ export const ChatDock: React.FC = () => {
   } = useApp();
 
   const [inputTexts, setInputTexts] = useState<Record<string, string>>({});
+  const [sendingIds, setSendingIds] = useState<string[]>([]);
   const [activeMessageMenu, setActiveMessageMenu] = useState<{
     convId: string;
     msgId: string;
@@ -49,19 +50,25 @@ export const ChatDock: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeDockKey]);
 
-  const handleSend = (convId: string) => {
+  const handleSend = async (convId: string) => {
     const text = inputTexts[convId] || '';
-    if (text.trim()) {
-      sendMessage(convId, text);
-      sendTyping(convId, false);
-      setInputTexts((prev) => ({ ...prev, [convId]: '' }));
+    if (!text.trim() || sendingIds.includes(convId)) return;
+    setSendingIds((prev) => [...prev, convId]);
+    try {
+      const sent = await sendMessage(convId, text);
+      if (sent) {
+        sendTyping(convId, false);
+        setInputTexts((prev) => ({ ...prev, [convId]: '' }));
+      }
+    } finally {
+      setSendingIds((prev) => prev.filter((id) => id !== convId));
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, convId: string) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSend(convId);
+      void handleSend(convId);
     }
   };
 
@@ -291,8 +298,10 @@ export const ChatDock: React.FC = () => {
                   className="flex-1 bg-fb-input text-xs px-3 py-2 rounded-full focus:outline-hidden focus:ring-1 focus:ring-fb-blue text-fb-text"
                 />
                 <button
-                  onClick={() => handleSend(convId)}
-                  disabled={!inputTexts[convId]?.trim()}
+                  onClick={() => void handleSend(convId)}
+                  disabled={
+                    !inputTexts[convId]?.trim() || sendingIds.includes(convId)
+                  }
                   className="p-2 rounded-full text-fb-blue hover:bg-fb-blue-soft disabled:text-fb-text-3 disabled:hover:bg-transparent transition"
                 >
                   <Send className="w-4 h-4" />

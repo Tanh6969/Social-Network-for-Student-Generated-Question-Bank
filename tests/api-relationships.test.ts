@@ -340,6 +340,20 @@ describe('quan hệ — phiên thật', () => {
       { destination: '/app/chat.send', 'content-type': 'application/json' },
       JSON.stringify({ conversation_id: 99, content: 'Xin chào' }),
     );
+    expect(stomp.resolveStompWsUrls()[0]).toMatch(
+      /\/ws\/\d+\/[a-z0-9]+\/websocket$/,
+    );
+    vi.stubEnv('VITE_WS_BASE_URL', 'wss://chat.example/api/v1');
+    expect(stomp.resolveStompWsUrls()[0]).toMatch(
+      /^wss:\/\/chat\.example\/api\/v1\/ws\/\d+\/[a-z0-9]+\/websocket$/,
+    );
+    expect(
+      new stomp.ChatStompManager().sendMessage({
+        conversation_id: 99,
+        content: 'Xin chào',
+        message_type: 'TEXT',
+      }),
+    ).toBe(false);
     const frames = stomp.parseStompFrames(rawFrame);
     expect(frames).toHaveLength(1);
     expect(frames[0].command).toBe('SEND');

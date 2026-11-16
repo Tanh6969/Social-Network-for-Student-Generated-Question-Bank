@@ -333,7 +333,7 @@ interface AppContextType {
   restoreChatDock: (conversationId: string) => void;
   activeDockIds: string[];
   minimizedDockIds: string[];
-  sendMessage: (conversationId: string, text: string) => void;
+  sendMessage: (conversationId: string, text: string) => Promise<boolean>;
   recallMessage: (
     conversationId: string,
     messageId: string,
@@ -3971,7 +3971,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         if (cancelled) return;
         return restoreAllHiddenConversations(activeIds);
       })
-      .catch(() => undefined);
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          showToast(
+            errorMessage(error, 'Không thể tải danh sách cuộc trò chuyện.'),
+            'error',
+          );
+        }
+      });
 
     chatStompClient.connect();
     const unsubscribe = chatStompClient.onUserMessage((wsPayload) => {
@@ -4238,7 +4245,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
           });
         }
       })
-      .catch(() => undefined)
+      .catch((error: unknown) =>
+        showToast(
+          errorMessage(error, 'Không thể tải lịch sử tin nhắn.'),
+          'error',
+        ),
+      )
       .finally(() => {
         loadingConvMessagesRef.current.delete(conversationId);
       });
@@ -4451,12 +4463,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const sendMessage = (conversationId: string, text: string) => {
-    if (!text.trim()) return;
-    const targetConv =
+  const sendMessage = async (
+    conversationId: string,
+    text: string,
+  ): Promise<boolean> => {
+    const content = text.trim();
+    if (!content) return false;
+    let resolvedConversationId = conversationId;
+    let targetConv =
       conversations.find((c) => c.id === conversationId) ??
       hiddenConversationRecords.find((c) => c.id === conversationId);
-    if (!targetConv) return;
+    if (!targetConv) return false;
     if (
       targetConv.type !== 'GROUP' &&
       isBlockedEitherWay(targetConv.partner.id)
@@ -4468,45 +4485,127 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return false;
     }
     if (sessionKind === 'api') {
-      const numericConvId = Number(conversationId);
+      let numericConvId = Number(resolvedConversationId);
+      if (!Number.isInteger(numericConvId) || numericConvId <= 0) {
+        const targetUserId = Number(targetConv.partner.id);
+        if (
+          targetConv.type === 'GROUP' ||
+          !Number.isInteger(targetUserId) ||
+          targetUserId <= 0
+        ) {
+          showToast(
+            'Cuộc trò chuyện chưa được máy chủ khởi tạo. Hãy mở lại cuộc trò chuyện rồi thử gửi.',
+            'error',
+          );
+          return false;
+        }
+
+        try {
+          const detail =
+            await chatApi.createDirectConversation(targetUserId);
+          if (detail?.conversation_id == null) {
+            throw new Error('Máy chủ không trả về mã cuộc trò chuyện.');
+          }
+          resolvedConversationId = String(detail.conversation_id);
+          numericConvId = detail.conversation_id;
+          const resolvedConv = conversationFromDetailDto(
+            detail,
+            currentUser.id,
+            apiUsersRef.current,
+            targetConv,
+          );
+          targetConv = resolvedConv;
+          setConversationRecords((prev) => [
+            resolvedConv,
+            ...prev.filter(
+              (item) =>
+                item.id !== conversationId &&
+                item.id !== resolvedConversationId,
+            ),
+          ]);
+          setActiveDockIds((prev) =>
+            prev.map((id) =>
+              id === conversationId ? resolvedConversationId : id,
+            ),
+          );
+          setMinimizedDockIds((prev) =>
+            prev.map((id) =>
+              id === conversationId ? resolvedConversationId : id,
+            ),
+          );
+        } catch (error: unknown) {
+          showToast(
+            errorMessage(error, 'Không thể khởi tạo cuộc trò chuyện.'),
+            'error',
+          );
+          return false;
+        }
+      }
+
       const tempMessage: MessageItem = {
         id: `temp_${Date.now()}`,
-        conversationId,
+        conversationId: resolvedConversationId,
         senderId: currentUser.id,
-        text: text.trim(),
+        text: content,
         timestamp: formatChatTime(new Date().toISOString()),
         status: 'SENDING',
         effect: currentUser.equippedChatEffectId,
       };
       const appendTemp = (c: Conversation): Conversation =>
-        c.id === conversationId
+        c.id === resolvedConversationId
           ? {
               ...c,
-              lastMessage: text.trim(),
+              lastMessage: content,
               lastMessageTime: tempMessage.timestamp,
               messages: [...c.messages, tempMessage],
             }
           : c;
       setConversationRecords((prev) => prev.map(appendTemp));
       setHiddenConversationRecords((prev) => prev.map(appendTemp));
-      if (Number.isInteger(numericConvId) && numericConvId > 0) {
-        chatStompClient.sendMessage({
-          conversation_id: numericConvId,
-          content: text.trim(),
-          message_type: 'TEXT',
-        });
-        setTimeout(() => {
-          loadConversationMessages(conversationId);
-        }, 1200);
+      const sent = chatStompClient.sendMessage({
+        conversation_id: numericConvId,
+        content,
+        message_type: 'TEXT',
+      });
+      if (!sent) {
+        const removeTemp = (c: Conversation): Conversation => {
+          if (c.id !== resolvedConversationId) return c;
+          const messages = c.messages.filter(
+            (message) => message.id !== tempMessage.id,
+          );
+          const latest = messages[messages.length - 1];
+          return {
+            ...c,
+            messages,
+            lastMessage:
+              c.lastMessage === content
+                ? (latest?.text ?? 'Bắt đầu cuộc trò chuyện')
+                : c.lastMessage,
+            lastMessageTime:
+              c.lastMessage === content
+                ? (latest?.timestamp ?? 'Vừa xong')
+                : c.lastMessageTime,
+          };
+        };
+        setConversationRecords((prev) => prev.map(removeTemp));
+        setHiddenConversationRecords((prev) => prev.map(removeTemp));
+        showToast(
+          'Chưa gửi được tin nhắn vì kết nối chat chưa sẵn sàng. Nội dung vẫn còn trong ô nhập.',
+          'error',
+        );
+        return false;
       }
-      return;
+      setTimeout(() => {
+        loadConversationMessages(resolvedConversationId);
+      }, 1200);
+      return true;
     }
 
     const newMessage: MessageItem = {
       id: 'm_' + Date.now(),
-      conversationId,
+      conversationId: resolvedConversationId,
       senderId: currentUser.id,
-      text: text.trim(),
+      text: content,
       timestamp: new Date().toLocaleTimeString('vi-VN', {
         hour: '2-digit',
         minute: '2-digit',
@@ -4517,10 +4616,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
     setConversationRecords((prev) =>
       prev.map((c) => {
-        if (c.id === conversationId) {
+        if (c.id === resolvedConversationId) {
           return {
             ...c,
-            lastMessage: text,
+            lastMessage: content,
             lastMessageTime: newMessage.timestamp,
             unreadCounts: {
               ...c.unreadCounts,
@@ -4617,7 +4716,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     if (!Number.isInteger(numericConvId) || numericConvId <= 0) return;
     chatStompClient.sendTyping({
       conversation_id: numericConvId,
-      is_typing: isTyping,
+      typing: isTyping,
     });
   };
 

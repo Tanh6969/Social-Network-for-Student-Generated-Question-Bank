@@ -59,6 +59,7 @@ export const MessengerFullView: React.FC = () => {
     conversations[0]?.id || '',
   );
   const [inputText, setInputText] = useState('');
+  const [isSending, setIsSending] = useState(false);
   const [filterTab, setFilterTab] = useState<'ALL' | 'UNREAD'>('ALL');
   const [searchPartner, setSearchPartner] = useState('');
   const [typingUserName, setTypingUserName] = useState<string | null>(null);
@@ -145,11 +146,17 @@ export const MessengerFullView: React.FC = () => {
     }, 2000);
   };
 
-  const handleSend = () => {
-    if (inputText.trim() && activeConv && !isPartnerBlocked) {
-      sendMessage(activeConv.id, inputText);
-      sendTyping(activeConv.id, false);
-      setInputText('');
+  const handleSend = async () => {
+    if (!inputText.trim() || !activeConv || isPartnerBlocked || isSending) return;
+    setIsSending(true);
+    try {
+      const sent = await sendMessage(activeConv.id, inputText);
+      if (sent) {
+        sendTyping(activeConv.id, false);
+        setInputText('');
+      }
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -404,7 +411,9 @@ export const MessengerFullView: React.FC = () => {
                         </div>
                       </div>
                       <span className="text-xs text-fb-text-3 mt-0.5 px-1">
-                        {msg.timestamp} {isMine && '✓'}
+                        {msg.timestamp}{' '}
+                        {isMine &&
+                          (msg.status === 'SENDING' ? 'Đang gửi…' : '✓')}
                       </span>
                     </div>
                   );
@@ -441,13 +450,13 @@ export const MessengerFullView: React.FC = () => {
                     value={inputText}
                     onChange={(e) => handleInputChange(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleSend();
+                      if (e.key === 'Enter') void handleSend();
                     }}
                     className="flex-1 bg-fb-input text-xs px-4 py-2.5 rounded-full border border-fb-divider"
                   />
                   <button
                     onClick={handleSend}
-                    disabled={!inputText.trim()}
+                    disabled={!inputText.trim() || isSending}
                     className="p-2.5 rounded-full bg-fb-blue text-white disabled:bg-fb-divider transition"
                   >
                     <Send className="w-4 h-4" />

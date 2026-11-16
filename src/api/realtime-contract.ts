@@ -27,7 +27,7 @@ export interface ReadWsMessageRequestDto {
 
 export interface TypingWsRequestDto {
   conversation_id: number;
-  is_typing: boolean;
+  typing: boolean;
 }
 
 // Swagger names these broadcast DTOs but does not define their fields as schemas.
