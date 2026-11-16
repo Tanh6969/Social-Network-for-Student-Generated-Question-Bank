@@ -125,9 +125,7 @@ export const FriendsView: React.FC = () => {
   const sentRequests = unblockedUsers.filter(
     (u) => friendStatuses[u.id] === 'REQUEST_SENT',
   );
-  const lecturersList = unblockedUsers.filter(
-    (u) => u.role === 'LECTURER' || followingIds.includes(u.id),
-  );
+  const lecturersList = unblockedUsers.filter((u) => u.role === 'LECTURER');
   const followersList = unblockedUsers.filter((u) =>
     followersIds.includes(u.id),
   );
@@ -621,7 +619,7 @@ export const FriendsView: React.FC = () => {
         {activeMenu === 'FOLLOWING' && (
           <>
             <section>
-              {renderSectionHeader('Giảng viên & Đang theo dõi', filteredLecturers.length)}
+              {renderSectionHeader('Giảng viên', filteredLecturers.length)}
               {filteredLecturers.length > 0 ? (
                 <div className={GRID_CLASS}>
                   {filteredLecturers.map(renderUserCard)}

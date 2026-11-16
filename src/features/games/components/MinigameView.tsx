@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { Award, Crown, Flame, Gamepad2, History, Trophy } from 'lucide-react';
 import { useApp } from '../../demo/context/AppContext';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
@@ -95,7 +96,18 @@ function BadgesPanel({
 export const MinigameView: React.FC = () => {
   const { role, currentUser, setViewingUserId, setActiveTab, showToast } =
     useApp();
-  const [menu, setMenu] = useState<StudentMenu>('CENTER');
+  const [searchParams] = useSearchParams();
+  const subtabParam = searchParams.get('subtab') || searchParams.get('tab');
+  const [menu, setMenu] = useState<StudentMenu>(
+    subtabParam?.toLowerCase() === 'leaderboard' ? 'LEADERBOARD' : 'CENTER',
+  );
+
+  useEffect(() => {
+    const sub = searchParams.get('subtab') || searchParams.get('tab');
+    if (sub?.toLowerCase() === 'leaderboard') {
+      setMenu('LEADERBOARD');
+    }
+  }, [searchParams]);
   const [predictions, setPredictions] = useState<
     GamePredictionResponse[] | null
   >(null);
@@ -232,7 +244,7 @@ export const MinigameView: React.FC = () => {
                 onOpenPropose={() => setActiveTab('propose')}
                 onOpenMyQuestionSets={() => {
                   setViewingUserId(null);
-                  setActiveTab('profile');
+                  setActiveTab('bank');
                 }}
               />
             ))}

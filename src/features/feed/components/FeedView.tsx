@@ -544,7 +544,7 @@ export const FeedView: React.FC = () => {
               <span className="flex items-center gap-1.5 text-xs font-semibold text-fb-text-2">
                 <Trophy className="h-3.5 w-3.5" /> Top cống hiến học kỳ
               </span>
-              <button type="button" onClick={() => setActiveTab('game')}
+              <button type="button" onClick={() => navigate('/games?subtab=leaderboard')}
                 className="text-xs font-medium text-fb-blue hover:underline">Bảng vàng</button>
             </div>
             {(apiLeaderboard.entries ?? []).slice(0, 3).map((entry) => (
@@ -570,7 +570,7 @@ export const FeedView: React.FC = () => {
               Top cống hiến tuần
             </span>
             <button
-              onClick={() => setActiveTab('game')}
+              onClick={() => navigate('/games?subtab=leaderboard')}
               className="text-xs text-fb-blue hover:underline font-medium"
             >
               Bảng vàng

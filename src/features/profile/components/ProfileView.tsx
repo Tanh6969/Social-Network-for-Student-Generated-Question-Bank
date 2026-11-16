@@ -55,6 +55,7 @@ export const ProfileView: React.FC = () => {
     cancelFriendRequest,
     acceptFriendRequest,
     declineFriendRequest,
+    unfriendUser,
     toggleFollowUser,
     openPostComposer,
     deletePost,
@@ -472,10 +473,15 @@ export const ProfileView: React.FC = () => {
                   )}
 
                   {relationAction === 'ALREADY_FRIENDS' && (
-                    <span className="px-4 py-2 bg-fb-blue-soft text-fb-blue rounded-lg text-xs font-bold flex items-center gap-1.5">
-                      <UserCheck className="w-4 h-4" />
-                      <span>Đã là bạn bè</span>
-                    </span>
+                    <button
+                      type="button"
+                      onClick={() => unfriendUser(targetUser.id)}
+                      className="px-4 py-2 bg-fb-input hover:bg-fb-danger-soft text-fb-text hover:text-fb-danger border border-fb-divider hover:border-fb-danger/30 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                      title="Hủy kết bạn"
+                    >
+                      <UserMinus className="w-4 h-4 text-fb-danger" />
+                      <span>Hủy kết bạn</span>
+                    </button>
                   )}
 
                   <button

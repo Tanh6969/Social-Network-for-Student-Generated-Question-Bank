@@ -53,6 +53,7 @@ export const Navbar: React.FC = () => {
     markNotificationAsRead,
     markAllNotificationsAsRead,
     unreadNotificationsCount,
+    pendingFriendRequestsCount,
     openPostById,
     sessions,
     questions,
@@ -426,6 +427,11 @@ export const Navbar: React.FC = () => {
           title="Bạn bè & Giảng viên"
         >
           <Users className={`w-6 h-6 ${activeTab === 'friends' ? 'stroke-[2.5]' : ''}`} />
+          {pendingFriendRequestsCount > 0 && (
+            <span className="absolute top-1.5 right-[calc(50%-18px)] bg-fb-danger text-white text-[11px] font-bold px-1 min-w-[18px] h-[18px] rounded-full flex items-center justify-center pointer-events-none shadow-xs">
+              {pendingFriendRequestsCount > 99 ? '99+' : pendingFriendRequestsCount}
+            </span>
+          )}
         </button>
       </nav>
 

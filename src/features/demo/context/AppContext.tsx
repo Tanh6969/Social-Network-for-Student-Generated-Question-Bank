@@ -5,6 +5,7 @@ import React, {
   useState,
   useEffect,
   useRef,
+  useMemo,
   ReactNode,
 } from 'react';
 import { useAuthSession } from '../../auth/useAuthSession';
@@ -204,6 +205,7 @@ interface AppContextType {
   setFriendStatuses: React.Dispatch<
     React.SetStateAction<Record<string, FriendStatus>>
   >;
+  pendingFriendRequestsCount: number;
   allUsers: User[];
   friendsList: User[];
   getFriendsOfUser: (userId: string) => User[];
@@ -612,6 +614,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     updateCurrentUser: updateAuthCurrentUser,
   } = useAuthSession(showToast);
 
+  const [apiRelationsReloadKey, setApiRelationsReloadKey] = useState(0);
+  const notifiedFriendRequestUsersRef = useRef<Set<string>>(new Set());
+
   const notificationFromApi = (dto: NotificationDto): AppNotification => ({
     id: String(dto.notification_id),
     recipientId: rawCurrentUser.id,
@@ -638,9 +643,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     setNotificationsHasMore(false);
     setApiUnreadCount(0);
     let cancelled = false;
+    let isInitialNotifLoad = true;
+    const knownNotifIds = new Set<string>();
+
     const load = () => notificationsApi.list().then((page) => {
       if (cancelled) return;
       const fresh = page.items.map(notificationFromApi);
+      let hasNewFriendRequest = false;
+
+      for (const item of fresh) {
+        if (!item.isRead && item.type === 'FRIEND_REQUEST' && !knownNotifIds.has(item.id)) {
+          hasNewFriendRequest = true;
+          const actorId = item.actor?.id;
+          if (!isInitialNotifLoad && actorId && !notifiedFriendRequestUsersRef.current.has(actorId)) {
+            notifiedFriendRequestUsersRef.current.add(actorId);
+            const senderName = item.actor?.name || 'Một người dùng';
+            showToast(`${senderName} đã gửi cho bạn một lời mời kết bạn!`, 'info');
+          }
+        }
+      }
+      for (const item of fresh) {
+        knownNotifIds.add(item.id);
+      }
+      isInitialNotifLoad = false;
+
+      if (hasNewFriendRequest) {
+        setApiRelationsReloadKey((k) => k + 1);
+      }
+
       setApiNotifications((previous) => {
         const ids = new Set(fresh.map((item) => item.id));
         return [...fresh, ...previous.filter((item) => !ids.has(item.id))];
@@ -1018,6 +1048,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return { ...previous, [rawCurrentUser.id]: next };
     });
   };
+
+  const pendingFriendRequestsCount = useMemo(() => {
+    return Object.values(friendStatuses).filter(
+      (status) => status === 'REQUEST_RECEIVED',
+    ).length;
+  }, [friendStatuses]);
+
   const notifications = sessionKind === 'api' ? apiNotifications :
     getNotificationsForAccount(notificationsByAccount[rawCurrentUser.id] ?? [], rawCurrentUser.id);
   const loadMoreNotifications = () => {
@@ -1359,7 +1396,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   // ---------------- Quan hệ trong phiên thật ----------------
-  const [apiRelationsReloadKey, setApiRelationsReloadKey] = useState(0);
   useEffect(() => {
     if (!apiFeedUserId) {
       setApiRelationsLoaded(false);
@@ -1368,38 +1404,84 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         setApiUsers({});
         setApiMutualCounts({});
         setBlockedUsers([]);
+        notifiedFriendRequestUsersRef.current.clear();
       }
       return;
     }
     relationsSourceRef.current = 'api';
     let cancelled = false;
-    loadApiRelationships()
-      .then((snapshot) => {
-        if (cancelled) return;
-        rememberApiUsers(snapshot.users);
-        setApiMutualCounts(snapshot.mutual);
-        setFriendStatusesByAccount((previous) => ({
-          ...previous,
-          [apiFeedUserId]: snapshot.statuses,
-        }));
-        setFollowingIdsByAccount((previous) => ({
-          ...previous,
-          [apiFeedUserId]: snapshot.following,
-        }));
-        setFollowersIdsByAccount((previous) => ({
-          ...previous,
-          [apiFeedUserId]: snapshot.followers,
-        }));
-        setBlockedUsers(snapshot.blocked);
-        setApiRelationsLoaded(true);
-      })
-      .catch((error: unknown) => {
-        if (!cancelled)
-          showToast(
-            errorMessage(error, 'Không tải được danh sách bạn bè.'),
-            'error',
-          );
-      });
+
+    const fetchRelations = (isBackgroundSync = false) => {
+      loadApiRelationships()
+        .then((snapshot) => {
+          if (cancelled) return;
+          rememberApiUsers(snapshot.users);
+          setApiMutualCounts(snapshot.mutual);
+
+          if (isBackgroundSync) {
+            setFriendStatusesByAccount((previous) => {
+              const currentStatuses = previous[apiFeedUserId] ?? {};
+              for (const [uid, st] of Object.entries(snapshot.statuses)) {
+                if (st === 'REQUEST_RECEIVED' && currentStatuses[uid] !== 'REQUEST_RECEIVED') {
+                  if (!notifiedFriendRequestUsersRef.current.has(uid)) {
+                    notifiedFriendRequestUsersRef.current.add(uid);
+                    const requester = snapshot.users.find((u) => u.id === uid);
+                    const name = requester?.name || 'Một người dùng';
+                    showToast(`${name} đã gửi cho bạn một lời mời kết bạn!`, 'info');
+                  }
+                }
+              }
+              return {
+                ...previous,
+                [apiFeedUserId]: snapshot.statuses,
+              };
+            });
+          } else {
+            for (const [uid, st] of Object.entries(snapshot.statuses)) {
+              if (st === 'REQUEST_RECEIVED') {
+                notifiedFriendRequestUsersRef.current.add(uid);
+              }
+            }
+            setFriendStatusesByAccount((previous) => ({
+              ...previous,
+              [apiFeedUserId]: snapshot.statuses,
+            }));
+          }
+
+          setFollowingIdsByAccount((previous) => ({
+            ...previous,
+            [apiFeedUserId]: snapshot.following,
+          }));
+          setFollowersIdsByAccount((previous) => ({
+            ...previous,
+            [apiFeedUserId]: snapshot.followers,
+          }));
+          setBlockedUsers(snapshot.blocked);
+          setApiRelationsLoaded(true);
+        })
+        .catch((error: unknown) => {
+          if (!cancelled && !isBackgroundSync)
+            showToast(
+              errorMessage(error, 'Không tải được danh sách bạn bè.'),
+              'error',
+            );
+        });
+    };
+
+    fetchRelations(false);
+
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchRelations(true);
+      }
+    }, 15_000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchRelations(true);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     // Đồng thời tải danh sách người dùng công khai (GET /search?type=USER)
     // để tab Gợi ý kết bạn & Giảng viên luôn có dữ liệu ngay cả khi tài khoản
@@ -1431,6 +1513,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
     return () => {
       cancelled = true;
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiFeedUserId, apiRelationsReloadKey]);
@@ -5025,6 +5109,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         addLecturerNote,
         friendStatuses,
         setFriendStatuses,
+        pendingFriendRequestsCount,
         allUsers,
         friendsList,
         getFriendsOfUser,
