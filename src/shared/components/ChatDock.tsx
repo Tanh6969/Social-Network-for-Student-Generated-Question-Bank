@@ -53,13 +53,22 @@ export const ChatDock: React.FC = () => {
   const handleSend = async (convId: string) => {
     const text = inputTexts[convId] || '';
     if (!text.trim() || sendingIds.includes(convId)) return;
+    setInputTexts((prev) => ({ ...prev, [convId]: '' }));
+    sendTyping(convId, false);
     setSendingIds((prev) => [...prev, convId]);
     try {
       const sent = await sendMessage(convId, text);
-      if (sent) {
-        sendTyping(convId, false);
-        setInputTexts((prev) => ({ ...prev, [convId]: '' }));
+      if (!sent) {
+        setInputTexts((prev) => ({
+          ...prev,
+          [convId]: prev[convId]?.trim() ? prev[convId] : text,
+        }));
       }
+    } catch {
+      setInputTexts((prev) => ({
+        ...prev,
+        [convId]: prev[convId]?.trim() ? prev[convId] : text,
+      }));
     } finally {
       setSendingIds((prev) => prev.filter((id) => id !== convId));
     }

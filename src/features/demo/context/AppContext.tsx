@@ -3555,6 +3555,62 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   }, [friendStatuses]);
 
   const probedHiddenPartnerIdsRef = useRef<Set<string>>(new Set());
+  const loadedMessagesByConvRef = useRef<Map<string, MessageItem[]>>(new Map());
+
+  const mergeMessageLists = (
+    existingMessages: MessageItem[] = [],
+    serverMessages: MessageItem[] = [],
+  ): MessageItem[] => {
+    const cleanExisting = existingMessages.filter(
+      (m) => !(m.id.startsWith('last_') && serverMessages.length > 0),
+    );
+    if (serverMessages.length === 0) return cleanExisting;
+    const extras = cleanExisting.filter((m) => {
+      if (m.id.startsWith('last_')) return false;
+      if (serverMessages.some((srv) => srv.id === m.id)) return false;
+      if (
+        m.id.startsWith('temp_') &&
+        serverMessages.some(
+          (srv) => srv.senderId === m.senderId && srv.text === m.text,
+        )
+      ) {
+        return false;
+      }
+      return true;
+    });
+    return [...serverMessages, ...extras];
+  };
+
+  const readCachedConversations = (accountId: string): Conversation[] => {
+    try {
+      const raw = localStorage.getItem(`unisocial_chat_cache_v1_${accountId}`);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw) as Conversation[];
+      if (!Array.isArray(parsed)) return [];
+      return parsed.filter(
+        (c) => c && typeof c.id === 'string' && !c.id.startsWith('conv_'),
+      );
+    } catch {
+      return [];
+    }
+  };
+
+  const writeCachedConversations = (
+    accountId: string,
+    records: Conversation[],
+  ) => {
+    try {
+      const apiOnly = records.filter(
+        (c) => c && typeof c.id === 'string' && !c.id.startsWith('conv_'),
+      );
+      localStorage.setItem(
+        `unisocial_chat_cache_v1_${accountId}`,
+        JSON.stringify(apiOnly),
+      );
+    } catch {
+      // ignore storage quota errors
+    }
+  };
 
   const syncConversationsFromServer = async (
     userId: string,
@@ -3565,19 +3621,36 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       conversationFromDto(dto, userId, apiUsersRef.current),
     );
     setConversationRecords((previous) => {
-      const byId = new Map(previous.map((item) => [item.id, item]));
+      const apiPrevious = previous.filter((item) => !item.id.startsWith('conv_'));
+      const byId = new Map(apiPrevious.map((item) => [item.id, item]));
       const serverIds = new Set(
         items.map((dto) => String(dto.conversation_id)),
       );
-      const fromServer = items.map((dto) =>
-        conversationFromDto(
+      const fromServer = items.map((dto) => {
+        const convId = String(dto.conversation_id);
+        const existing = byId.get(convId);
+        const base = conversationFromDto(
           dto,
           userId,
           apiUsersRef.current,
-          byId.get(String(dto.conversation_id)),
-        ),
-      );
-      const preservedRecovered = previous.filter(
+          existing,
+        );
+        const cachedMsgs = loadedMessagesByConvRef.current.get(convId) ?? [];
+        const mergedMsgs = mergeMessageLists(
+          existing?.messages ?? base.messages,
+          cachedMsgs,
+        );
+        const latestMsg = mergedMsgs[mergedMsgs.length - 1];
+        return {
+          ...base,
+          messages: mergedMsgs,
+          lastMessage: latestMsg ? latestMsg.text : base.lastMessage,
+          lastMessageTime: latestMsg
+            ? latestMsg.timestamp
+            : base.lastMessageTime,
+        };
+      });
+      const preservedRecovered = apiPrevious.filter(
         (item) => !serverIds.has(item.id),
       );
       return [...fromServer, ...preservedRecovered];
@@ -3983,6 +4056,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   useEffect(() => {
     if (!apiFeedUserId) {
       chatStompClient.disconnect();
+      loadedMessagesByConvRef.current.clear();
       if (chatSourceRef.current === 'api') {
         chatSourceRef.current = 'demo';
         setConversationRecords(mockConversations);
@@ -3992,6 +4066,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     }
     chatSourceRef.current = 'api';
     let cancelled = false;
+    loadedMessagesByConvRef.current.clear();
+    const cachedConvs = readCachedConversations(apiFeedUserId);
+    for (const conv of cachedConvs) {
+      if (conv.messages?.length > 0) {
+        loadedMessagesByConvRef.current.set(conv.id, conv.messages);
+      }
+    }
+    setConversationRecords(cachedConvs);
+    setHiddenConversationRecords([]);
 
     syncConversationsFromServer(apiFeedUserId)
       .then((activeIds) => {
@@ -4126,6 +4209,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiFeedUserId]);
 
+  useEffect(() => {
+    if (!apiFeedUserId || chatSourceRef.current !== 'api') return;
+    writeCachedConversations(apiFeedUserId, conversationRecords);
+    for (const conv of conversationRecords) {
+      if (conv.messages.length > 0) {
+        loadedMessagesByConvRef.current.set(conv.id, conv.messages);
+      }
+    }
+  }, [apiFeedUserId, conversationRecords]);
+
   const friendIdsKey = Object.entries(friendStatuses)
     .filter(([, status]) => status === 'FRIEND')
     .map(([id]) => id)
@@ -4152,7 +4245,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
           if (detail?.conversation_id != null) {
             const convIdStr = String(detail.conversation_id);
             setConversationRecords((prev) => {
-              if (prev.some((c) => c.id === convIdStr)) {
+              const existing = prev.find((c) => c.id === convIdStr);
+              if (existing) {
                 return prev.map((c) =>
                   c.id === convIdStr
                     ? {
@@ -4163,15 +4257,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
                     : c,
                 );
               }
+              const created = conversationFromDetailDto(
+                detail,
+                apiFeedUserId,
+                apiUsersRef.current,
+                existing,
+              );
+              const cachedMsgs =
+                loadedMessagesByConvRef.current.get(convIdStr) ?? [];
               return [
                 ...prev,
-                conversationFromDetailDto(
-                  detail,
-                  apiFeedUserId,
-                  apiUsersRef.current,
-                ),
+                cachedMsgs.length > 0
+                  ? {
+                      ...created,
+                      messages: cachedMsgs,
+                      lastMessage:
+                        cachedMsgs[cachedMsgs.length - 1]?.text ??
+                        created.lastMessage,
+                      lastMessageTime:
+                        cachedMsgs[cachedMsgs.length - 1]?.timestamp ??
+                        created.lastMessageTime,
+                    }
+                  : created,
               ];
             });
+            loadConversationMessages(convIdStr);
           }
         } catch (err: unknown) {
           const msg = errorMessage(err, '').toLowerCase();
@@ -4243,20 +4353,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
           (a, b) => (a.message_id ?? 0) - (b.message_id ?? 0),
         );
         const mapped = sorted.map((dto) => messageFromDto(dto, conversationId));
+        const cachedForConv =
+          loadedMessagesByConvRef.current.get(conversationId) ?? [];
+        loadedMessagesByConvRef.current.set(
+          conversationId,
+          mergeMessageLists(cachedForConv, mapped),
+        );
         const mergeConv = (c: Conversation): Conversation => {
           if (c.id !== conversationId) return c;
-          // Giữ lại các tin nhắn tạm (`temp_...`) vừa gửi nếu server chưa kịp trả về trong GET /messages
-          const pendingTemps = c.messages.filter(
-            (m) =>
-              m.id.startsWith('temp_') &&
-              !mapped.some(
-                (srv) => srv.senderId === m.senderId && srv.text === m.text,
-              ),
-          );
-          const mergedMessages =
-            mapped.length > 0 || pendingTemps.length > 0
-              ? [...mapped, ...pendingTemps]
-              : c.messages;
+          const mergedMessages = mergeMessageLists(c.messages, mapped);
+          loadedMessagesByConvRef.current.set(conversationId, mergedMessages);
           const latestMsg = mergedMessages[mergedMessages.length - 1];
           return {
             ...c,
@@ -4322,23 +4428,43 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         detail: Awaited<ReturnType<typeof chatApi.createDirectConversation>>,
       ) => {
         if (!detail || detail.conversation_id == null) return;
+        const convIdStr = String(detail.conversation_id);
         void chatApi
           .unhideConversation(detail.conversation_id)
           .catch(() => undefined);
-        const newConv = conversationFromDetailDto(
-          detail,
-          currentUser.id,
-          apiUsersRef.current,
-        );
-        setConversationRecords((prev) => [
-          newConv,
-          ...prev.filter((item) => item.id !== newConv.id),
-        ]);
-        loadConversationMessages(newConv.id);
+        setConversationRecords((prev) => {
+          const existing = prev.find((item) => item.id === convIdStr);
+          const newConv = conversationFromDetailDto(
+            detail,
+            currentUser.id,
+            apiUsersRef.current,
+            existing,
+          );
+          const cachedMsgs =
+            loadedMessagesByConvRef.current.get(convIdStr) ?? [];
+          const mergedMsgs = mergeMessageLists(
+            existing?.messages ?? newConv.messages,
+            cachedMsgs,
+          );
+          const latestMsg = mergedMsgs[mergedMsgs.length - 1];
+          const finalConv: Conversation = {
+            ...newConv,
+            messages: mergedMsgs,
+            lastMessage: latestMsg ? latestMsg.text : newConv.lastMessage,
+            lastMessageTime: latestMsg
+              ? latestMsg.timestamp
+              : newConv.lastMessageTime,
+          };
+          return [
+            finalConv,
+            ...prev.filter((item) => item.id !== finalConv.id),
+          ];
+        });
+        loadConversationMessages(convIdStr);
         setActiveDockIds((prev) =>
-          prev.includes(newConv.id) ? prev : [...prev.slice(-2), newConv.id],
+          prev.includes(convIdStr) ? prev : [...prev.slice(-2), convIdStr],
         );
-        setMinimizedDockIds((prev) => prev.filter((id) => id !== newConv.id));
+        setMinimizedDockIds((prev) => prev.filter((id) => id !== convIdStr));
       };
 
       chatApi

@@ -148,13 +148,18 @@ export const MessengerFullView: React.FC = () => {
 
   const handleSend = async () => {
     if (!inputText.trim() || !activeConv || isPartnerBlocked || isSending) return;
+    const textToSend = inputText;
+    const targetConvId = activeConv.id;
+    setInputText('');
+    sendTyping(targetConvId, false);
     setIsSending(true);
     try {
-      const sent = await sendMessage(activeConv.id, inputText);
-      if (sent) {
-        sendTyping(activeConv.id, false);
-        setInputText('');
+      const sent = await sendMessage(targetConvId, textToSend);
+      if (!sent) {
+        setInputText((prev) => (prev.trim() ? prev : textToSend));
       }
+    } catch {
+      setInputText((prev) => (prev.trim() ? prev : textToSend));
     } finally {
       setIsSending(false);
     }

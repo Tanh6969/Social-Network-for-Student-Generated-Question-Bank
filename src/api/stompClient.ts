@@ -121,15 +121,39 @@ export function resolveStompWsUrls(): string[] {
   ];
 }
 
+export function resolveSockJsHttpBase(): string {
+  if (
+    typeof window !== 'undefined' &&
+    window.location.hostname.endsWith('.vercel.app')
+  ) {
+    return '/api/v1/ws';
+  }
+  const apiBase = (
+    import.meta.env.VITE_API_BASE_URL || '/api/v1'
+  ).replace(/\/+$/, '');
+  return apiBase.endsWith('/ws') ? apiBase : `${apiBase}/ws`;
+}
+
+function shouldPreferXhrTransport(): boolean {
+  if (typeof window === 'undefined') return false;
+  if (import.meta.env.VITE_WS_BASE_URL) return false;
+  return window.location.hostname.endsWith('.vercel.app');
+}
+
 type MessageListener = (payload: WsMessageBroadcastDto) => void;
 type TypingListener = (payload: WsTypingBroadcastDto) => void;
 
 export class ChatStompManager {
   private ws: WebSocket | null = null;
+  private xhrSessionUrl: string | null = null;
+  private xhrAbort: AbortController | null = null;
+  private xhrConnecting = false;
+  private xhrSendChain: Promise<boolean> = Promise.resolve(true);
   private connected = false;
   private isSockJsFramed = false;
   private manualClose = false;
   private urlIndex = 0;
+  private wsFailCount = 0;
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private connectTimeoutTimer: ReturnType<typeof setTimeout> | null = null;
@@ -138,47 +162,93 @@ export class ChatStompManager {
   private activeTypingSubs = new Set<string>();
   private pendingFrames: string[] = [];
   private connectionListeners = new Set<(connected: boolean) => void>();
+  private connectWaiters = new Set<(connected: boolean) => void>();
+
+  private canUseXhrTransport(): boolean {
+    return (
+      typeof window !== 'undefined' &&
+      typeof fetch === 'function' &&
+      !import.meta.env.VITE_WS_BASE_URL
+    );
+  }
 
   onConnectionState(listener: (connected: boolean) => void): () => void {
-    listener(this.connected);
     this.connectionListeners.add(listener);
+    listener(this.connected);
     return () => this.connectionListeners.delete(listener);
   }
 
   private notifyConnectionState(): void {
     for (const listener of this.connectionListeners) listener(this.connected);
+    if (this.connected) {
+      this.resolveConnectWaiters(true);
+    }
+  }
+
+  private resolveConnectWaiters(ok: boolean): void {
+    if (this.connectWaiters.size === 0) return;
+    const list = Array.from(this.connectWaiters);
+    this.connectWaiters.clear();
+    for (const waiter of list) {
+      waiter(ok);
+    }
   }
 
   async waitForConnection(timeoutMs = 4500): Promise<boolean> {
     if (this.connected) return true;
+    if (!tokenStore.get()) return false;
+    if (typeof WebSocket === 'undefined' && !this.canUseXhrTransport()) {
+      return false;
+    }
     this.connect();
-    return new Promise((resolve) => {
+    if (this.connected) return true;
+
+    return new Promise<boolean>((resolve) => {
       let settled = false;
-      const finish = (connected: boolean) => {
+      let timer: ReturnType<typeof setTimeout> | null = null;
+      const waiter = (ok: boolean) => {
         if (settled) return;
         settled = true;
-        clearTimeout(timer);
-        unsubscribe();
-        resolve(connected);
+        if (timer !== null) clearTimeout(timer);
+        this.connectWaiters.delete(waiter);
+        resolve(ok);
       };
-      const unsubscribe = this.onConnectionState(finish);
-      const timer = setTimeout(() => finish(false), timeoutMs);
+      this.connectWaiters.add(waiter);
+      timer = setTimeout(() => {
+        waiter(this.connected);
+      }, timeoutMs);
     });
   }
 
   connect(): void {
-    if (typeof WebSocket === 'undefined') return;
     const token = tokenStore.get();
     if (!token) return;
     if (
-      this.ws &&
-      (this.ws.readyState === WebSocket.OPEN ||
-        this.ws.readyState === WebSocket.CONNECTING)
+      this.connected ||
+      this.xhrConnecting ||
+      this.xhrSessionUrl !== null ||
+      (this.ws &&
+        (this.ws.readyState === WebSocket.OPEN ||
+          this.ws.readyState === WebSocket.CONNECTING))
     ) {
       return;
     }
 
     this.manualClose = false;
+
+    if (
+      this.canUseXhrTransport() &&
+      (shouldPreferXhrTransport() || this.wsFailCount >= 1)
+    ) {
+      this.connectXhr(token);
+      return;
+    }
+
+    if (typeof WebSocket === 'undefined') {
+      this.resolveConnectWaiters(false);
+      return;
+    }
+
     const urls = resolveStompWsUrls();
     const targetUrl = urls[this.urlIndex % urls.length];
     const expectsSockJsFrame = /\/\d+\/[^/]+\/websocket$/.test(targetUrl);
@@ -219,47 +289,13 @@ export class ChatStompManager {
 
       socket.onmessage = (event: MessageEvent) => {
         if (typeof event.data !== 'string') return;
-        const raw = event.data;
-
-        // SockJS open frame
-        if (raw === 'o') {
-          this.isSockJsFramed = true;
-          sendConnectFrame();
-          return;
-        }
-        // SockJS heartbeat frame
-        if (raw === 'h') {
-          return;
-        }
-        // SockJS close frame `c[code,"reason"]`
-        if (raw.startsWith('c[')) {
+        this.processIncomingWireData(event.data, sendConnectFrame, () => {
           try {
             socket.close();
           } catch {
             // ignore
           }
-          return;
-        }
-        // SockJS array frame `a["..."]`
-        if (raw.startsWith('a[')) {
-          this.isSockJsFramed = true;
-          try {
-            const payloads = JSON.parse(raw.slice(1)) as string[];
-            for (const item of payloads) {
-              for (const frame of parseStompFrames(item)) {
-                this.handleFrame(frame);
-              }
-            }
-          } catch {
-            // ignore malformed SockJS frame
-          }
-          return;
-        }
-
-        const frames = parseStompFrames(raw);
-        for (const frame of frames) {
-          this.handleFrame(frame);
-        }
+        });
       };
 
       socket.onerror = () => {
@@ -271,15 +307,156 @@ export class ChatStompManager {
         this.cleanupSocket();
         if (!this.manualClose && tokenStore.get()) {
           if (!wasConnected) {
+            this.wsFailCount += 1;
             this.urlIndex = (this.urlIndex + 1) % urls.length;
+            if (this.canUseXhrTransport()) {
+              this.connect();
+              return;
+            }
+            this.resolveConnectWaiters(false);
           }
           this.reconnectTimer = setTimeout(() => {
             this.connect();
           }, 1500);
+        } else {
+          this.resolveConnectWaiters(false);
         }
       };
     } catch {
-      // Bỏ qua lỗi tạo WebSocket trong môi trường không hỗ trợ.
+      this.wsFailCount += 1;
+      if (this.canUseXhrTransport()) {
+        this.connectXhr(token);
+      } else {
+        this.resolveConnectWaiters(false);
+      }
+    }
+  }
+
+  private connectXhr(token: string): void {
+    if (this.xhrConnecting || this.xhrSessionUrl !== null) return;
+    const serverId = String(Math.floor(100 + Math.random() * 900));
+    const sessionId = Math.random().toString(36).slice(2, 10);
+    const sessionUrl = `${resolveSockJsHttpBase()}/${serverId}/${sessionId}`;
+    const abortController = new AbortController();
+
+    this.xhrSessionUrl = sessionUrl;
+    this.xhrAbort = abortController;
+    this.xhrConnecting = true;
+    this.isSockJsFramed = true;
+
+    const sendConnectFrame = () => {
+      const currentToken = tokenStore.get() ?? token;
+      const connectFrame = buildStompFrame('CONNECT', {
+        'accept-version': '1.2,1.1,1.0',
+        'heart-beat': '10000,10000',
+        Authorization: `Bearer ${currentToken}`,
+      });
+      void this.sendRawFrameAsync(connectFrame);
+    };
+
+    void this.runXhrPollLoop(
+      sessionUrl,
+      abortController.signal,
+      sendConnectFrame,
+    );
+  }
+
+  private async runXhrPollLoop(
+    sessionUrl: string,
+    signal: AbortSignal,
+    sendConnectFrame: () => void,
+  ): Promise<void> {
+    let shouldCloseSession = false;
+    try {
+      while (
+        !signal.aborted &&
+        !this.manualClose &&
+        this.xhrSessionUrl === sessionUrl
+      ) {
+        const res = await fetch(`${sessionUrl}/xhr?t=${Date.now()}`, {
+          method: 'POST',
+          signal,
+        });
+        if (!res.ok) {
+          break;
+        }
+        const rawText = await res.text();
+        if (
+          signal.aborted ||
+          this.manualClose ||
+          this.xhrSessionUrl !== sessionUrl
+        ) {
+          break;
+        }
+        const lines = rawText
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter(Boolean);
+        for (const line of lines) {
+          this.processIncomingWireData(line, sendConnectFrame, () => {
+            shouldCloseSession = true;
+          });
+          if (shouldCloseSession) break;
+        }
+        if (shouldCloseSession) break;
+      }
+    } catch {
+      // Lỗi mạng hoặc hủy poll khi disconnect/reconnect
+    } finally {
+      if (this.xhrSessionUrl === sessionUrl) {
+        const wasConnected = this.connected;
+        this.cleanupSocket();
+        if (!wasConnected) {
+          this.resolveConnectWaiters(false);
+        }
+        if (!this.manualClose && tokenStore.get()) {
+          this.reconnectTimer = setTimeout(() => {
+            this.connect();
+          }, 1200);
+        }
+      }
+    }
+  }
+
+  private processIncomingWireData(
+    raw: string,
+    onOpenFrame: () => void,
+    onCloseFrame: () => void,
+  ): void {
+    // SockJS open frame
+    if (raw === 'o') {
+      this.isSockJsFramed = true;
+      onOpenFrame();
+      return;
+    }
+    // SockJS heartbeat frame
+    if (raw === 'h') {
+      return;
+    }
+    // SockJS close frame `c[code,"reason"]`
+    if (raw.startsWith('c[')) {
+      onCloseFrame();
+      return;
+    }
+    // SockJS array frame `a["..."]`
+    if (raw.startsWith('a[')) {
+      this.isSockJsFramed = true;
+      try {
+        const payloads = JSON.parse(raw.slice(1)) as string[];
+        for (const item of payloads) {
+          for (const frame of parseStompFrames(item)) {
+            this.handleFrame(frame);
+          }
+        }
+      } catch {
+        // ignore malformed SockJS frame
+      }
+      return;
+    }
+
+    const frames = parseStompFrames(raw);
+    for (const frame of frames) {
+      this.handleFrame(frame);
     }
   }
 
@@ -304,6 +481,7 @@ export class ChatStompManager {
       }
     }
     this.cleanupSocket();
+    this.resolveConnectWaiters(false);
   }
 
   isConnected(): boolean {
@@ -362,7 +540,21 @@ export class ChatStompManager {
   async sendMessage(payload: SendWsMessageRequestDto): Promise<boolean> {
     if (!tokenStore.get()) return false;
     if (!this.connected && !(await this.waitForConnection())) return false;
-    return this.publish(realtimeDestinations.send, payload);
+    const frame = buildStompFrame(
+      'SEND',
+      {
+        destination: realtimeDestinations.send,
+        'content-type': 'application/json',
+      },
+      JSON.stringify(payload),
+    );
+    const sent = await this.sendRawFrameAsync(frame);
+    if (sent) return true;
+
+    // Nếu phiên XHR/WS vừa hết hạn trên máy chủ, mở lại phiên mới và thử lại 1 lần
+    this.cleanupSocket();
+    if (!(await this.waitForConnection())) return false;
+    return this.sendRawFrameAsync(frame);
   }
 
   /** Publish tới `/app/chat.read` */
@@ -377,7 +569,9 @@ export class ChatStompManager {
 
   private publish(destination: string, payload: unknown): boolean {
     if (!tokenStore.get()) return false;
-    if (typeof WebSocket === 'undefined') return false;
+    if (typeof WebSocket === 'undefined' && !this.canUseXhrTransport()) {
+      return false;
+    }
     const frame = buildStompFrame(
       'SEND',
       {
@@ -395,6 +589,10 @@ export class ChatStompManager {
   }
 
   private sendRawFrame(frame: string): boolean {
+    if (this.xhrSessionUrl) {
+      void this.sendRawFrameAsync(frame);
+      return true;
+    }
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return false;
     try {
       const wireData = this.isSockJsFramed ? JSON.stringify([frame]) : frame;
@@ -405,9 +603,33 @@ export class ChatStompManager {
     }
   }
 
+  private sendRawFrameAsync(frame: string): Promise<boolean> {
+    if (this.xhrSessionUrl) {
+      const targetSessionUrl = this.xhrSessionUrl;
+      const wireData = JSON.stringify([frame]);
+      const nextSend = this.xhrSendChain.then(async () => {
+        if (this.xhrSessionUrl !== targetSessionUrl) return false;
+        try {
+          const res = await fetch(`${targetSessionUrl}/xhr_send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: wireData,
+          });
+          return res.ok;
+        } catch {
+          return false;
+        }
+      });
+      this.xhrSendChain = nextSend.catch(() => false);
+      return nextSend;
+    }
+    return Promise.resolve(this.sendRawFrame(frame));
+  }
+
   private handleFrame(frame: StompFrame): void {
     if (frame.command === 'CONNECTED') {
       this.connected = true;
+      this.xhrConnecting = false;
       this.notifyConnectionState();
       if (this.connectTimeoutTimer) {
         clearTimeout(this.connectTimeoutTimer);
@@ -482,6 +704,16 @@ export class ChatStompManager {
   private cleanupSocket(): void {
     const wasConnected = this.connected;
     this.connected = false;
+    this.xhrConnecting = false;
+    this.xhrSessionUrl = null;
+    if (this.xhrAbort) {
+      try {
+        this.xhrAbort.abort();
+      } catch {
+        // ignore
+      }
+      this.xhrAbort = null;
+    }
     if (wasConnected) this.notifyConnectionState();
     this.activeTypingSubs.clear();
     if (this.connectTimeoutTimer) {
