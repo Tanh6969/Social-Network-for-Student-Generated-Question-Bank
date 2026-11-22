@@ -38,6 +38,7 @@ import type {
 import {
   appendComment,
   getPostContentIssue,
+  removeComment,
   removeOwnedPost,
   updateOwnedPost,
 } from '../../feed/postUtils';
@@ -2174,10 +2175,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   const filterVisibleComments = (comments?: CommentItem[]): CommentItem[] => {
     if (!comments) return [];
     return comments
-      .filter((c) => !isBlockedEitherWay(c.author.id))
+      .filter(
+        (c) => !c.deleted && !isBlockedEitherWay(c.author.id),
+      )
       .map((c) => ({
         ...c,
-        replies: c.replies?.filter((r) => !isBlockedEitherWay(r.author.id)),
+        replies: c.replies?.filter(
+          (r) => !r.deleted && !isBlockedEitherWay(r.author.id),
+        ),
       }));
   };
 
@@ -2709,6 +2714,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   }));
 
   const updateComment = async (postId: string, commentId: string, content: string) => {
+    if (!isApiSession()) {
+      const post = posts.find((item) => item.id === postId);
+      const comment = post?.comments?.flatMap((item) => [item, ...(item.replies ?? [])])
+        .find((item) => item.id === commentId);
+      if (!comment || comment.author.id !== currentUser.id || comment.deleted) {
+        return false;
+      }
+      replaceComment(postId, commentId, (item) => ({
+        ...item,
+        content: content.trim(),
+      }));
+      showToast('Đã sửa bình luận.', 'success');
+      return true;
+    }
     const id = ownComment(postId, commentId);
     if (!id || !content.trim()) return false;
     try {
@@ -2726,13 +2745,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const deleteComment = async (postId: string, commentId: string) => {
+    if (!isApiSession()) {
+      const post = posts.find((item) => item.id === postId);
+      const comment = post?.comments?.flatMap((item) => [item, ...(item.replies ?? [])])
+        .find((item) => item.id === commentId);
+      if (!comment || comment.author.id !== currentUser.id || comment.deleted) {
+        return false;
+      }
+      setPosts((previous) => removeComment(previous, postId, commentId));
+      showToast('Đã xóa bình luận.', 'success');
+      return true;
+    }
     const id = ownComment(postId, commentId);
     if (!id) return false;
     try {
       await postsApi.deleteComment(id);
-      replaceComment(postId, commentId, (comment) => ({
-        ...comment, content: 'Bình luận đã bị xoá.', deleted: true,
-      }));
+      setPosts((previous) => removeComment(previous, postId, commentId));
       showToast('Đã xóa bình luận.', 'success');
       return true;
     } catch (error: unknown) {

@@ -80,8 +80,10 @@ function CommentRow({
   const [draft, setDraft] = useState(comment.content);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
-  const canManage = sessionKind === 'api' && !comment.deleted &&
-    comment.author.id === currentUser.id && Number.isSafeInteger(Number(comment.id));
+  const canManage = !comment.deleted &&
+    comment.author.id === currentUser.id &&
+    (sessionKind !== 'api' ||
+      Number.isSafeInteger(Number(comment.id)));
   const save = async () => {
     if (!draft.trim() || draft.trim() === comment.content) {
       setEditing(false);

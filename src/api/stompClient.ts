@@ -332,9 +332,10 @@ export class ChatStompManager {
 
   /** Publish tới `/app/chat.send` */
   sendMessage(payload: SendWsMessageRequestDto): boolean {
+    if (!tokenStore.get()) return false;
     if (!this.connected) {
       this.connect();
-      return false;
+      return this.publish(realtimeDestinations.send, payload);
     }
     return this.publish(realtimeDestinations.send, payload);
   }
@@ -350,6 +351,8 @@ export class ChatStompManager {
   }
 
   private publish(destination: string, payload: unknown): boolean {
+    if (!tokenStore.get()) return false;
+    if (typeof WebSocket === 'undefined') return false;
     const frame = buildStompFrame(
       'SEND',
       {
@@ -361,7 +364,7 @@ export class ChatStompManager {
     if (!this.connected) {
       this.pendingFrames.push(frame);
       this.connect();
-      return false;
+      return true;
     }
     return this.sendRawFrame(frame);
   }

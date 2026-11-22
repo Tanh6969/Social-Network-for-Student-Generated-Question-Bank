@@ -10,6 +10,7 @@ import {
   MAX_POST_CHARACTERS,
   MAX_POST_WORD_CHARACTERS,
   removeOwnedPost,
+  removeComment,
   sortFeedPosts,
   updateOwnedPost,
 } from '../src/features/feed/postUtils';
@@ -155,6 +156,28 @@ describe('feed interactions', () => {
     expect(
       appendComment([original], 'post', comment('reply'), 'missing')[0],
     ).toBe(original);
+  });
+
+  it('removes a reply or an entire parent comment with its replies', () => {
+    const parent = {
+      ...comment('parent'),
+      replies: [comment('reply-1'), comment('reply-2')],
+    };
+    const original = {
+      ...post('post', 'me', '2026-10-16T11:00:00Z'),
+      comments: [parent, comment('second')],
+      commentsCount: 4,
+    };
+
+    const afterReply = removeComment([original], 'post', 'reply-1')[0];
+    expect(afterReply.comments?.[0].replies?.map((item) => item.id)).toEqual([
+      'reply-2',
+    ]);
+    expect(afterReply.commentsCount).toBe(3);
+
+    const afterParent = removeComment([afterReply], 'post', 'parent')[0];
+    expect(afterParent.comments?.map((item) => item.id)).toEqual(['second']);
+    expect(afterParent.commentsCount).toBe(1);
   });
 
   it('only edits or deletes posts owned by the current user', () => {

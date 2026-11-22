@@ -354,6 +354,16 @@ describe('quan hệ — phiên thật', () => {
         message_type: 'TEXT',
       }),
     ).toBe(false);
+    tokenStore.set('test-token');
+    vi.stubGlobal('WebSocket', undefined);
+    expect(
+      new stomp.ChatStompManager().sendMessage({
+        conversation_id: 99,
+        content: 'Tin nhắn đang kết nối',
+        message_type: 'TEXT',
+      }),
+    ).toBe(false);
+    tokenStore.set(null);
     const frames = stomp.parseStompFrames(rawFrame);
     expect(frames).toHaveLength(1);
     expect(frames[0].command).toBe('SEND');

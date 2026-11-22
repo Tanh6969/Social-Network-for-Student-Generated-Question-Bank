@@ -113,10 +113,10 @@ export const ChatDock: React.FC = () => {
         return (
           <div
             key={convId}
-            className="w-80 sm:w-84 h-96 bg-fb-card rounded-t-2xl shadow-2xl border border-fb-divider flex flex-col pointer-events-auto overflow-hidden animate-in slide-in-from-bottom-5 duration-200"
+            className="pointer-events-auto flex h-[420px] w-[328px] flex-col overflow-hidden rounded-t-xl border border-fb-divider bg-fb-card shadow-2xl animate-in slide-in-from-bottom-5 duration-200"
           >
             {/* Header */}
-            <div className="px-3 py-2.5 bg-fb-card border-b border-fb-divider flex items-center justify-between shadow-2xs">
+            <div className="flex h-14 shrink-0 items-center justify-between border-b border-fb-divider bg-fb-card px-3">
               <div
                 onClick={() => {
                   if (!isGroup) {
@@ -124,21 +124,21 @@ export const ChatDock: React.FC = () => {
                     setActiveTab('profile');
                   }
                 }}
-                className="flex items-center gap-2 truncate cursor-pointer"
+                className="flex min-w-0 items-center gap-2 cursor-pointer"
               >
-                <AvatarWithFrame user={conv.partner} size="sm" />
-                <div className="truncate">
-                  <h4 className="font-bold text-xs text-fb-text hover:underline truncate">
+                <AvatarWithFrame user={conv.partner} size="md" />
+                <div className="min-w-0">
+                  <h4 className="truncate text-sm font-bold leading-tight text-fb-text hover:underline">
                     {conv.partner.name}
                   </h4>
                   {isBlocked ? (
-                    <span className="text-xs text-fb-danger font-semibold">
+                    <span className="mt-0.5 block text-[11px] font-semibold text-fb-danger">
                       Không thể nhắn tin
                     </span>
                   ) : (
                     conv.partner.isOnline &&
                     isPresenceVisible(conv.partner.id) && (
-                      <span className="text-xs text-fb-success font-medium">
+                      <span className="mt-0.5 block text-[11px] font-medium text-fb-success">
                         Đang hoạt động
                       </span>
                     )
@@ -146,31 +146,31 @@ export const ChatDock: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-1 text-fb-text-2">
+              <div className="ml-2 flex shrink-0 items-center gap-0.5 text-fb-text-2">
                 {!isBlocked && !isGroup && (
                   <button
                     onClick={() =>
                       blockUser(conv.partner.id, 'Chặn từ cửa sổ Chat Dock')
                     }
-                    className="p-1 hover:bg-fb-danger-soft hover:text-fb-danger rounded-full transition"
+                    className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-fb-hover hover:text-fb-danger transition"
                     title={`Chặn ${conv.partner.name}`}
                   >
-                    <Ban className="w-3.5 h-3.5" />
+                    <Ban className="h-4 w-4" />
                   </button>
                 )}
                 <button
                   onClick={() => minimizeChatDock(convId)}
-                  className="p-1 hover:bg-fb-hover rounded-full transition"
+                  className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-fb-hover transition"
                   title="Thu nhỏ"
                 >
-                  <Minus className="w-4 h-4" />
+                  <Minus className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => closeChatDock(convId)}
-                  className="p-1 hover:bg-fb-hover rounded-full transition"
+                  className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-fb-hover transition"
                   title="Đóng chat"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -183,18 +183,22 @@ export const ChatDock: React.FC = () => {
                 conv.messages[conv.messages.length - 1]?.senderId ===
                 currentUser.id
               }
-              className="flex-1 p-3 overflow-y-auto space-y-2.5 text-xs bg-fb-inset"
+              className="flex-1 overflow-y-auto px-3 py-3 text-sm"
             >
               {conv.messages.map((msg) => {
                 const isMine = msg.senderId === currentUser.id;
                 return (
                   <div
                     key={msg.id}
-                    className={`flex flex-col group ${isMine ? 'items-end' : 'items-start'}`}
+                    className={`group mb-2 flex flex-col ${isMine ? 'items-end' : 'items-start'}`}
                   >
-                    <div className="flex items-center gap-1 max-w-[85%]">
+                    <div
+                      className={`flex max-w-[82%] items-center gap-1 ${
+                        isMine ? 'flex-row-reverse' : 'flex-row'
+                      }`}
+                    >
                       {!msg.isRecalled && (
-                        <div className="opacity-0 group-hover:opacity-100 transition relative">
+                        <div className="relative shrink-0 opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100">
                           <button
                             onClick={() =>
                               setActiveMessageMenu(
@@ -203,12 +207,16 @@ export const ChatDock: React.FC = () => {
                                   : { convId, msgId: msg.id },
                               )
                             }
-                            className="p-1 hover:bg-fb-btn-hover rounded-full text-fb-text-3"
+                            className="flex h-7 w-7 items-center justify-center rounded-full text-fb-text-3 hover:bg-fb-hover"
                           >
-                            <MoreVertical className="w-3 h-3" />
+                            <MoreVertical className="h-4 w-4" />
                           </button>
                           {activeMessageMenu?.msgId === msg.id && (
-                            <div className="absolute right-0 bottom-6 bg-fb-card shadow-lg rounded-lg border border-fb-divider py-1 z-10 w-32">
+                            <div
+                              className={`absolute bottom-8 z-10 w-36 rounded-lg border border-fb-divider bg-fb-card py-1 shadow-lg ${
+                                isMine ? 'right-0' : 'left-0'
+                              }`}
+                            >
                               {isMine && (
                                 <button
                                   onClick={() => {
@@ -219,9 +227,9 @@ export const ChatDock: React.FC = () => {
                                     );
                                     setActiveMessageMenu(null);
                                   }}
-                                  className="w-full text-left px-2 py-1 text-xs text-fb-danger hover:bg-fb-danger-soft flex items-center gap-1"
+                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-fb-danger hover:bg-fb-danger-soft"
                                 >
-                                  <Undo2 className="w-3 h-3" /> Thu hồi tin
+                                  <Undo2 className="h-3.5 w-3.5" /> Thu hồi tin
                                 </button>
                               )}
                               <button
@@ -229,9 +237,9 @@ export const ChatDock: React.FC = () => {
                                   recallMessage(convId, msg.id, 'ME');
                                   setActiveMessageMenu(null);
                                 }}
-                                className="w-full text-left px-2 py-1 text-xs text-fb-text hover:bg-fb-hover flex items-center gap-1"
+                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-fb-text hover:bg-fb-hover"
                               >
-                                <Trash2 className="w-3 h-3" /> Xóa ở phía tôi
+                                <Trash2 className="h-3.5 w-3.5" /> Xóa ở phía tôi
                               </button>
                             </div>
                           )}
@@ -239,12 +247,12 @@ export const ChatDock: React.FC = () => {
                       )}
 
                       <div
-                        className={`p-2.5 rounded-lg ${
+                        className={`max-w-full break-words px-3 py-2 leading-[1.35] ${
                           msg.isRecalled
-                            ? 'bg-fb-btn text-fb-text-2 italic'
+                            ? 'rounded-2xl bg-fb-btn text-fb-text-2 italic'
                             : isMine
-                              ? 'bg-fb-blue text-white rounded-br-xs shadow-fb-card'
-                              : 'bg-fb-card text-fb-text rounded-bl-xs shadow-xs'
+                              ? 'rounded-2xl rounded-br-md bg-fb-blue text-white'
+                              : 'rounded-2xl rounded-bl-md bg-fb-btn text-fb-text'
                         } ${
                           msg.effect === 'effect_glow' && isMine
                             ? 'ring-1 ring-fb-blue/30 shadow-[0_0_10px_rgba(6,182,212,0.5)]'
@@ -254,8 +262,13 @@ export const ChatDock: React.FC = () => {
                         {msg.text}
                       </div>
                     </div>
-                    <span className="text-xs text-fb-text-3 mt-0.5 px-1">
-                      {msg.timestamp} {isMine && !msg.isRecalled && '✓'}
+                    <span
+                      className={`mt-1 px-1 text-[11px] leading-none text-fb-text-3 ${
+                        isMine ? 'text-right' : 'text-left'
+                      }`}
+                    >
+                      {msg.timestamp}
+                      {isMine && !msg.isRecalled && ' · Đã gửi'}
                     </span>
                   </div>
                 );
@@ -281,10 +294,10 @@ export const ChatDock: React.FC = () => {
                 )}
               </div>
             ) : (
-              <div className="p-2 bg-fb-card border-t border-fb-divider flex items-center gap-1.5">
+              <div className="flex shrink-0 items-center gap-2 border-t border-fb-divider bg-fb-card px-3 py-2">
                 <input
                   type="text"
-                  placeholder="Aa (Gửi tin nhắn...)"
+                  placeholder="Aa"
                   value={inputTexts[convId] || ''}
                   onChange={(e) => {
                     const val = e.target.value;
@@ -295,16 +308,17 @@ export const ChatDock: React.FC = () => {
                     sendTyping(convId, val.trim().length > 0);
                   }}
                   onKeyDown={(e) => handleKeyDown(e, convId)}
-                  className="flex-1 bg-fb-input text-xs px-3 py-2 rounded-full focus:outline-hidden focus:ring-1 focus:ring-fb-blue text-fb-text"
+                  className="h-9 min-w-0 flex-1 rounded-full border-0 bg-fb-input px-3 text-sm text-fb-text outline-none placeholder:text-fb-text-2 focus:ring-1 focus:ring-fb-blue"
                 />
                 <button
                   onClick={() => void handleSend(convId)}
                   disabled={
                     !inputTexts[convId]?.trim() || sendingIds.includes(convId)
                   }
-                  className="p-2 rounded-full text-fb-blue hover:bg-fb-blue-soft disabled:text-fb-text-3 disabled:hover:bg-transparent transition"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-fb-blue transition hover:bg-fb-blue-soft disabled:text-fb-text-3 disabled:hover:bg-transparent"
+                  aria-label="Gửi tin nhắn"
                 >
-                  <Send className="w-4 h-4" />
+                  <Send className="h-5 w-5" />
                 </button>
               </div>
             )}

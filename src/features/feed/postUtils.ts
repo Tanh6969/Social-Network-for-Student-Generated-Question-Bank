@@ -110,6 +110,40 @@ export function appendComment(
   });
 }
 
+export function removeComment(
+  posts: Post[],
+  postId: string,
+  commentId: string,
+): Post[] {
+  return posts.map((post) => {
+    if (post.id !== postId || !post.comments) return post;
+
+    const root = post.comments.find((item) => item.id === commentId);
+    if (root) {
+      const removedCount = 1 + (root.replies?.length ?? 0);
+      return {
+        ...post,
+        comments: post.comments.filter((item) => item.id !== commentId),
+        commentsCount: Math.max(0, post.commentsCount - removedCount),
+      };
+    }
+
+    const hasReply = post.comments.some((item) =>
+      item.replies?.some((reply) => reply.id === commentId),
+    );
+    if (!hasReply) return post;
+
+    return {
+      ...post,
+      comments: post.comments.map((item) => ({
+        ...item,
+        replies: item.replies?.filter((reply) => reply.id !== commentId),
+      })),
+      commentsCount: Math.max(0, post.commentsCount - 1),
+    };
+  });
+}
+
 export function updateOwnedPost(
   posts: Post[],
   postId: string,
