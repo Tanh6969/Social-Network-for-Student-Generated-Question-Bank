@@ -45,7 +45,7 @@ interface GameSelectorBarProps {
   badges?: Partial<Record<GameId, string>>;
 }
 
-/** Hàng 6 ô trò chơi; bấm ô nào thì hiện trò chơi đó. */
+/** 6 ô trò chơi; bấm ô nào thì hiện trò chơi đó. */
 export const GameSelectorBar: React.FC<GameSelectorBarProps> = ({
   active,
   onSelect,
@@ -54,7 +54,7 @@ export const GameSelectorBar: React.FC<GameSelectorBarProps> = ({
   <div
     role="tablist"
     aria-label="Chọn trò chơi"
-    className="grid select-none grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6"
+    className="grid select-none grid-cols-2 gap-2 sm:grid-cols-3"
   >
     {GAME_TILES.map(({ id, icon: Icon, title, short }) => {
       const selected = id === active;
@@ -65,20 +65,26 @@ export const GameSelectorBar: React.FC<GameSelectorBarProps> = ({
           role="tab"
           aria-selected={selected}
           onClick={() => onSelect(id)}
-          className={`flex flex-col justify-between rounded-xl border p-3 text-left transition ${
+          className={`flex min-h-28 flex-col justify-between rounded-xl border px-3.5 py-3 text-left transition-colors ${
             selected
-              ? 'border-fb-blue bg-fb-blue-soft text-fb-blue shadow-xs ring-2 ring-fb-blue/20'
-              : 'border-fb-divider bg-fb-card text-fb-text hover:bg-fb-hover'
+              ? 'border-fb-blue bg-fb-blue-soft text-fb-blue ring-1 ring-fb-blue/20'
+              : 'border-fb-divider bg-fb-card text-fb-text hover:border-fb-blue/40 hover:bg-fb-hover'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider opacity-75">
+            <span className="text-xs font-bold uppercase tracking-wide opacity-70">
               Game {id}
             </span>
-            <Icon className="h-4 w-4" />
+            <span
+              className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                selected ? 'bg-white/70' : 'bg-fb-input'
+              }`}
+            >
+              <Icon className="h-4 w-4" aria-hidden="true" />
+            </span>
           </div>
-          <div className="mt-2">
-            <h4 className="line-clamp-1 text-sm font-bold">{title}</h4>
+          <div className="mt-2.5">
+            <h4 className="line-clamp-2 text-sm font-bold leading-snug">{title}</h4>
             <p className="mt-0.5 text-xs opacity-80">{short}</p>
             {badges?.[id] && (
               <span className="mt-1.5 inline-block rounded-full bg-fb-card px-2 py-0.5 text-xs font-semibold text-fb-blue">

@@ -50,17 +50,17 @@ function GameCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="space-y-3 rounded-lg bg-fb-card p-4 shadow-fb-card">
-      <div className="flex items-start gap-3">
-        <span className="rounded-lg bg-fb-blue-soft p-2 text-fb-blue">
+    <section className="rounded-lg border border-fb-divider bg-fb-card p-4">
+      <div className="flex items-start gap-3 border-b border-fb-divider pb-3">
+        <span className="shrink-0 rounded-lg bg-fb-blue-soft p-2.5 text-fb-blue">
           <Icon className="h-5 w-5" />
         </span>
-        <div>
-          <h3 className="font-bold text-fb-text">{title}</h3>
-          <p className="text-sm text-fb-text-2">{rule}</p>
+        <div className="min-w-0">
+          <h3 className="font-bold leading-snug text-fb-text">{title}</h3>
+          <p className="mt-1 text-sm leading-relaxed text-fb-text-2">{rule}</p>
         </div>
       </div>
-      {children}
+      <div className="pt-3">{children}</div>
     </section>
   );
 }
