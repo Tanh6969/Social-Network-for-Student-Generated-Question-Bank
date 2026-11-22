@@ -3583,6 +3583,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return [...fromServer, ...preservedRecovered];
     });
     for (const conv of mappedConvs) {
+      loadConversationMessages(conv.id);
       if (
         conv.type !== 'GROUP' &&
         conv.partner.id.startsWith('conv_partner_') &&
@@ -3991,8 +3992,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     }
     chatSourceRef.current = 'api';
     let cancelled = false;
-    setConversationRecords([]);
-    setHiddenConversationRecords([]);
 
     syncConversationsFromServer(apiFeedUserId)
       .then((activeIds) => {
@@ -4035,6 +4034,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       const convId = String(wsPayload.conversation_id);
       const incoming = messageFromWs(wsPayload, convId);
       const isFromMe = incoming.senderId === apiFeedUserId;
+      if (!conversationRecordsRef.current.some((c) => c.id === convId)) {
+        loadConversationMessages(convId);
+      }
 
       setConversationRecords((prev) => {
         const exists = prev.some((c) => c.id === convId);
