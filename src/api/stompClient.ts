@@ -137,6 +137,34 @@ export class ChatStompManager {
   private typingListeners = new Map<string, Set<TypingListener>>();
   private activeTypingSubs = new Set<string>();
   private pendingFrames: string[] = [];
+  private connectionListeners = new Set<(connected: boolean) => void>();
+
+  onConnectionState(listener: (connected: boolean) => void): () => void {
+    listener(this.connected);
+    this.connectionListeners.add(listener);
+    return () => this.connectionListeners.delete(listener);
+  }
+
+  private notifyConnectionState(): void {
+    for (const listener of this.connectionListeners) listener(this.connected);
+  }
+
+  async waitForConnection(timeoutMs = 4500): Promise<boolean> {
+    if (this.connected) return true;
+    this.connect();
+    return new Promise((resolve) => {
+      let settled = false;
+      const finish = (connected: boolean) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        unsubscribe();
+        resolve(connected);
+      };
+      const unsubscribe = this.onConnectionState(finish);
+      const timer = setTimeout(() => finish(false), timeoutMs);
+    });
+  }
 
   connect(): void {
     if (typeof WebSocket === 'undefined') return;
@@ -331,12 +359,9 @@ export class ChatStompManager {
   }
 
   /** Publish tới `/app/chat.send` */
-  sendMessage(payload: SendWsMessageRequestDto): boolean {
+  async sendMessage(payload: SendWsMessageRequestDto): Promise<boolean> {
     if (!tokenStore.get()) return false;
-    if (!this.connected) {
-      this.connect();
-      return this.publish(realtimeDestinations.send, payload);
-    }
+    if (!this.connected && !(await this.waitForConnection())) return false;
     return this.publish(realtimeDestinations.send, payload);
   }
 
@@ -383,6 +408,7 @@ export class ChatStompManager {
   private handleFrame(frame: StompFrame): void {
     if (frame.command === 'CONNECTED') {
       this.connected = true;
+      this.notifyConnectionState();
       if (this.connectTimeoutTimer) {
         clearTimeout(this.connectTimeoutTimer);
         this.connectTimeoutTimer = null;
@@ -454,7 +480,9 @@ export class ChatStompManager {
   }
 
   private cleanupSocket(): void {
+    const wasConnected = this.connected;
     this.connected = false;
+    if (wasConnected) this.notifyConnectionState();
     this.activeTypingSubs.clear();
     if (this.connectTimeoutTimer) {
       clearTimeout(this.connectTimeoutTimer);

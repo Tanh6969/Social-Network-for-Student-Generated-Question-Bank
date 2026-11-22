@@ -347,22 +347,22 @@ describe('quan hệ — phiên thật', () => {
     expect(stomp.resolveStompWsUrls()[0]).toMatch(
       /^wss:\/\/chat\.example\/api\/v1\/ws\/\d+\/[a-z0-9]+\/websocket$/,
     );
-    expect(
+    await expect(
       new stomp.ChatStompManager().sendMessage({
         conversation_id: 99,
         content: 'Xin chào',
         message_type: 'TEXT',
       }),
-    ).toBe(false);
+    ).resolves.toBe(false);
     tokenStore.set('test-token');
     vi.stubGlobal('WebSocket', undefined);
-    expect(
+    await expect(
       new stomp.ChatStompManager().sendMessage({
         conversation_id: 99,
         content: 'Tin nhắn đang kết nối',
         message_type: 'TEXT',
       }),
-    ).toBe(false);
+    ).resolves.toBe(false);
     tokenStore.set(null);
     const frames = stomp.parseStompFrames(rawFrame);
     expect(frames).toHaveLength(1);

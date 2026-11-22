@@ -4008,6 +4008,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       });
 
     chatStompClient.connect();
+    const historyPollingTimer = window.setInterval(() => {
+      if (cancelled) return;
+      void syncConversationsFromServer(apiFeedUserId).catch(() => undefined);
+    }, 10_000);
     const unsubscribe = chatStompClient.onUserMessage((wsPayload) => {
       if (cancelled) return;
       // Biên nhận đã đọc
@@ -4115,6 +4119,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
     return () => {
       cancelled = true;
+      window.clearInterval(historyPollingTimer);
       unsubscribe();
     };
     // Kết nối STOMP theo tài khoản, không tạo lại mỗi lần provider render.
@@ -4592,7 +4597,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
           : c;
       setConversationRecords((prev) => prev.map(appendTemp));
       setHiddenConversationRecords((prev) => prev.map(appendTemp));
-      const sent = chatStompClient.sendMessage({
+      const sent = await chatStompClient.sendMessage({
         conversation_id: numericConvId,
         content,
         message_type: 'TEXT',
