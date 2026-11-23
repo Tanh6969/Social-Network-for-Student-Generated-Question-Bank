@@ -260,6 +260,7 @@ export interface MessageItem {
   senderId: string;
   text: string;
   timestamp: string;
+  createdAt?: string;
   status: 'SENDING' | 'SENT' | 'DELIVERED' | 'READ';
   isRecalled?: boolean;
   effect?: string;

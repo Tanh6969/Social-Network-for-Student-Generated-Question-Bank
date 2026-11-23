@@ -24,8 +24,10 @@ export const ChatDock: React.FC = () => {
     sendMessage,
     recallMessage,
     loadConversationMessages,
+    markConversationRead,
     sendTyping,
     currentUser,
+    getUserById,
     blockUser,
     unblockUser,
     isBlockedByMe,
@@ -45,10 +47,27 @@ export const ChatDock: React.FC = () => {
   const activeDockKey = activeDockIds.join(',');
   useEffect(() => {
     activeDockIds.forEach((convId) => {
+      markConversationRead(convId);
       void loadConversationMessages(convId);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeDockKey]);
+
+  const activeDockUnreadKey = activeDockIds
+    .map(
+      (convId) =>
+        `${convId}:${conversations.find((c) => c.id === convId)?.unreadCount ?? 0}`,
+    )
+    .join(',');
+  useEffect(() => {
+    activeDockIds.forEach((convId) => {
+      const conv = conversations.find((c) => c.id === convId);
+      if (conv && conv.unreadCount > 0) {
+        markConversationRead(convId);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeDockUnreadKey]);
 
   const handleSend = async (convId: string) => {
     const text = inputTexts[convId] || '';
@@ -96,6 +115,11 @@ export const ChatDock: React.FC = () => {
               title={`Mở lại đoạn chat với ${conv.partner.name}`}
             >
               <AvatarWithFrame user={conv.partner} size="lg" />
+              {conv.unreadCount > 0 && (
+                <span className="absolute -top-1 -left-1 min-w-4 h-4 px-1 bg-fb-danger text-white rounded-full flex items-center justify-center shadow-xs text-[10px] font-bold">
+                  {conv.unreadCount > 99 ? '99+' : conv.unreadCount}
+                </span>
+              )}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -194,94 +218,139 @@ export const ChatDock: React.FC = () => {
               }
               className="flex-1 overflow-y-auto px-3 py-3 text-sm"
             >
-              {conv.messages.map((msg) => {
-                const isMine = msg.senderId === currentUser.id;
-                return (
-                  <div
-                    key={msg.id}
-                    className={`group mb-2 flex flex-col ${isMine ? 'items-end' : 'items-start'}`}
-                  >
-                    <div
-                      className={`flex max-w-[82%] items-center gap-1 ${
-                        isMine ? 'flex-row-reverse' : 'flex-row'
-                      }`}
-                    >
-                      {!msg.isRecalled && (
-                        <div className="relative shrink-0 opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100">
-                          <button
-                            onClick={() =>
-                              setActiveMessageMenu(
-                                activeMessageMenu?.msgId === msg.id
-                                  ? null
-                                  : { convId, msgId: msg.id },
-                              )
-                            }
-                            className="flex h-7 w-7 items-center justify-center rounded-full text-fb-text-3 hover:bg-fb-hover"
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </button>
-                          {activeMessageMenu?.msgId === msg.id && (
-                            <div
-                              className={`absolute bottom-8 z-10 w-36 rounded-lg border border-fb-divider bg-fb-card py-1 shadow-lg ${
-                                isMine ? 'right-0' : 'left-0'
-                              }`}
-                            >
-                              {isMine && (
-                                <button
-                                  onClick={() => {
-                                    recallMessage(
-                                      convId,
-                                      msg.id,
-                                      'EVERYONE',
-                                    );
-                                    setActiveMessageMenu(null);
-                                  }}
-                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-fb-danger hover:bg-fb-danger-soft"
-                                >
-                                  <Undo2 className="h-3.5 w-3.5" /> Thu hồi tin
-                                </button>
-                              )}
-                              <button
-                                onClick={() => {
-                                  recallMessage(convId, msg.id, 'ME');
-                                  setActiveMessageMenu(null);
-                                }}
-                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-fb-text hover:bg-fb-hover"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" /> Xóa ở phía tôi
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      )}
+              {conv.messages
+                .filter(
+                  (msg) =>
+                    Boolean(
+                      msg &&
+                        (msg.isRecalled ||
+                          msg.text?.trim() ||
+                          msg.attachmentUrl),
+                    ),
+                )
+                .map((msg) => {
+                  const isMine = msg.senderId === currentUser.id;
+                  const memberSender = isGroup
+                    ? conv.members?.find((m) => m.userId === msg.senderId)
+                    : undefined;
+                  const senderUser = !isGroup
+                    ? conv.partner
+                    : memberSender
+                      ? {
+                          ...conv.partner,
+                          id: memberSender.userId,
+                          name: memberSender.name,
+                          avatar: memberSender.avatar,
+                        }
+                      : msg.senderId
+                        ? getUserById(msg.senderId)
+                        : conv.partner;
 
+                  return (
+                    <div
+                      key={msg.id}
+                      className={`group mb-2.5 flex flex-col ${isMine ? 'items-end' : 'items-start'}`}
+                    >
                       <div
-                        className={`max-w-full break-words px-3 py-2 leading-[1.35] ${
-                          msg.isRecalled
-                            ? 'rounded-2xl bg-fb-btn text-fb-text-2 italic'
-                            : isMine
-                              ? 'rounded-2xl rounded-br-md bg-fb-blue text-white'
-                              : 'rounded-2xl rounded-bl-md bg-fb-btn text-fb-text'
-                        } ${
-                          msg.effect === 'effect_glow' && isMine
-                            ? 'ring-1 ring-fb-blue/30 shadow-[0_0_10px_rgba(6,182,212,0.5)]'
-                            : ''
+                        className={`flex max-w-[86%] items-end gap-2 ${
+                          isMine ? 'flex-row-reverse' : 'flex-row'
                         }`}
                       >
-                        {msg.text}
+                        {!isMine && (
+                          <div
+                            onClick={() => {
+                              if (
+                                senderUser.id &&
+                                !senderUser.id.startsWith('group_') &&
+                                !senderUser.id.startsWith('conv_partner_')
+                              ) {
+                                setViewingUserId(senderUser.id);
+                                setActiveTab('profile');
+                              }
+                            }}
+                            className="shrink-0 cursor-pointer"
+                            title={senderUser.name}
+                          >
+                            <AvatarWithFrame user={senderUser} size="xs" />
+                          </div>
+                        )}
+
+                        <div
+                          className={`max-w-full break-words px-3 py-2 leading-[1.35] ${
+                            msg.isRecalled
+                              ? 'rounded-2xl bg-fb-btn text-fb-text-2 italic'
+                              : isMine
+                                ? 'rounded-2xl rounded-br-md bg-fb-blue text-white'
+                                : 'rounded-2xl rounded-bl-md bg-fb-btn text-fb-text'
+                          } ${
+                            msg.effect === 'effect_glow' && isMine
+                              ? 'ring-1 ring-fb-blue/30 shadow-[0_0_10px_rgba(6,182,212,0.5)]'
+                              : ''
+                          }`}
+                        >
+                          {msg.text}
+                        </div>
+
+                        {!msg.isRecalled && (
+                          <div className="relative shrink-0 opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100">
+                            <button
+                              onClick={() =>
+                                setActiveMessageMenu(
+                                  activeMessageMenu?.msgId === msg.id
+                                    ? null
+                                    : { convId, msgId: msg.id },
+                                )
+                              }
+                              className="flex h-7 w-7 items-center justify-center rounded-full text-fb-text-3 hover:bg-fb-hover"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </button>
+                            {activeMessageMenu?.msgId === msg.id && (
+                              <div
+                                className={`absolute bottom-8 z-10 w-36 rounded-lg border border-fb-divider bg-fb-card py-1 shadow-lg ${
+                                  isMine ? 'right-0' : 'left-0'
+                                }`}
+                              >
+                                {isMine && (
+                                  <button
+                                    onClick={() => {
+                                      recallMessage(
+                                        convId,
+                                        msg.id,
+                                        'EVERYONE',
+                                      );
+                                      setActiveMessageMenu(null);
+                                    }}
+                                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-fb-danger hover:bg-fb-danger-soft"
+                                  >
+                                    <Undo2 className="h-3.5 w-3.5" /> Thu hồi tin
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => {
+                                    recallMessage(convId, msg.id, 'ME');
+                                    setActiveMessageMenu(null);
+                                  }}
+                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-fb-text hover:bg-fb-hover"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" /> Xóa ở phía tôi
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
+                      <span
+                        className={`mt-1 text-[11px] leading-none text-fb-text-3 ${
+                          isMine ? 'pr-1 text-right' : 'pl-9 text-left'
+                        }`}
+                      >
+                        {msg.timestamp}
+                        {isMine && !msg.isRecalled && ' · Đã gửi'}
+                      </span>
                     </div>
-                    <span
-                      className={`mt-1 px-1 text-[11px] leading-none text-fb-text-3 ${
-                        isMine ? 'text-right' : 'text-left'
-                      }`}
-                    >
-                      {msg.timestamp}
-                      {isMine && !msg.isRecalled && ' · Đã gửi'}
-                    </span>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </AutoScrollArea>
 
             {/* Input Bar hoặc Thông báo bị chặn (Slide 24) */}

@@ -3574,21 +3574,33 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const probedHiddenPartnerIdsRef = useRef<Set<string>>(new Set());
   const loadedMessagesByConvRef = useRef<Map<string, MessageItem[]>>(new Map());
+  const activeDockIdsRef = useRef<string[]>(activeDockIds);
+  useEffect(() => {
+    activeDockIdsRef.current = activeDockIds;
+  }, [activeDockIds]);
+
+  const isMeaningfulMessage = (m?: MessageItem | null): m is MessageItem =>
+    Boolean(m && (m.isRecalled || m.text?.trim() || m.attachmentUrl));
 
   const mergeMessageLists = (
     existingMessages: MessageItem[] = [],
     serverMessages: MessageItem[] = [],
   ): MessageItem[] => {
-    const cleanExisting = existingMessages.filter(
-      (m) => !(m.id.startsWith('last_') && serverMessages.length > 0),
-    );
-    if (serverMessages.length === 0) return cleanExisting;
+    const validServer = serverMessages.filter(isMeaningfulMessage);
+    const cleanExisting = existingMessages
+      .filter(isMeaningfulMessage)
+      .filter((m) => !(m.id.startsWith('last_') && validServer.length > 0))
+      .map((m) => ({
+        ...m,
+        timestamp: formatChatTime(m.createdAt ?? m.timestamp),
+      }));
+    if (validServer.length === 0) return cleanExisting;
     const extras = cleanExisting.filter((m) => {
       if (m.id.startsWith('last_')) return false;
-      if (serverMessages.some((srv) => srv.id === m.id)) return false;
+      if (validServer.some((srv) => srv.id === m.id)) return false;
       if (
         m.id.startsWith('temp_') &&
-        serverMessages.some(
+        validServer.some(
           (srv) => srv.senderId === m.senderId && srv.text === m.text,
         )
       ) {
@@ -3596,18 +3608,37 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       }
       return true;
     });
-    return [...serverMessages, ...extras];
+    return [...validServer, ...extras];
   };
 
   const readCachedConversations = (accountId: string): Conversation[] => {
     try {
-      const raw = localStorage.getItem(`unisocial_chat_cache_v1_${accountId}`);
+      const raw = localStorage.getItem(`unisocial_chat_cache_v2_${accountId}`);
       if (!raw) return [];
       const parsed = JSON.parse(raw) as Conversation[];
       if (!Array.isArray(parsed)) return [];
-      return parsed.filter(
-        (c) => c && typeof c.id === 'string' && !c.id.startsWith('conv_'),
-      );
+      return parsed
+        .filter(
+          (c) => c && typeof c.id === 'string' && !c.id.startsWith('conv_'),
+        )
+        .map((c) => {
+          const cleanMsgs = (c.messages ?? [])
+            .filter(isMeaningfulMessage)
+            .map((m) => ({
+              ...m,
+              timestamp: formatChatTime(m.createdAt ?? m.timestamp),
+            }));
+          const latest = cleanMsgs[cleanMsgs.length - 1];
+          return {
+            ...c,
+            messages: cleanMsgs,
+            lastMessage:
+              latest?.text ?? (c.lastMessage?.trim() || 'Bắt đầu cuộc trò chuyện'),
+            lastMessageTime: formatChatTime(
+              latest?.createdAt ?? latest?.timestamp ?? c.lastMessageTime,
+            ),
+          };
+        });
     } catch {
       return [];
     }
@@ -3622,7 +3653,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         (c) => c && typeof c.id === 'string' && !c.id.startsWith('conv_'),
       );
       localStorage.setItem(
-        `unisocial_chat_cache_v1_${accountId}`,
+        `unisocial_chat_cache_v2_${accountId}`,
         JSON.stringify(apiOnly),
       );
     } catch {
@@ -3632,12 +3663,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const syncConversationsFromServer = async (
     userId: string,
+    isBackgroundPoll = false,
   ): Promise<Set<number>> => {
     const res = await chatApi.getConversations({ limit: 50 });
     const items = res?.items ?? [];
     const mappedConvs = items.map((dto) =>
       conversationFromDto(dto, userId, apiUsersRef.current),
     );
+    const convIdsToLoadMessages = new Set<string>();
+
     setConversationRecords((previous) => {
       const apiPrevious = previous.filter((item) => !item.id.startsWith('conv_'));
       const byId = new Map(apiPrevious.map((item) => [item.id, item]));
@@ -3659,8 +3693,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
           cachedMsgs,
         );
         const latestMsg = mergedMsgs[mergedMsgs.length - 1];
+        const isDockOpen = activeDockIdsRef.current.includes(convId);
+        const nextUnread = isDockOpen
+          ? 0
+          : (dto.unread_count ?? existing?.unreadCount ?? 0);
+
+        const serverLastMsgId =
+          dto.last_message?.message_id != null
+            ? String(dto.last_message.message_id)
+            : null;
+        const hasServerLastMsg =
+          !serverLastMsgId ||
+          mergedMsgs.some((m) => m.id === serverLastMsgId);
+        if (
+          !isBackgroundPoll ||
+          mergedMsgs.length === 0 ||
+          !hasServerLastMsg ||
+          isDockOpen
+        ) {
+          convIdsToLoadMessages.add(convId);
+        }
+
         return {
           ...base,
+          unreadCount: nextUnread,
+          unreadCounts: {
+            ...existing?.unreadCounts,
+            [userId]: nextUnread,
+          },
           messages: mergedMsgs,
           lastMessage: latestMsg ? latestMsg.text : base.lastMessage,
           lastMessageTime: latestMsg
@@ -3674,7 +3734,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       return [...fromServer, ...preservedRecovered];
     });
     for (const conv of mappedConvs) {
-      loadConversationMessages(conv.id);
+      if (!isBackgroundPoll || convIdsToLoadMessages.has(conv.id)) {
+        loadConversationMessages(conv.id);
+      }
       if (
         conv.type !== 'GROUP' &&
         conv.partner.id.startsWith('conv_partner_') &&
@@ -4111,36 +4173,71 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     chatStompClient.connect();
     const historyPollingTimer = window.setInterval(() => {
       if (cancelled) return;
-      void syncConversationsFromServer(apiFeedUserId).catch(() => undefined);
+      void syncConversationsFromServer(apiFeedUserId, true).catch(
+        () => undefined,
+      );
     }, 10_000);
     const unsubscribe = chatStompClient.onUserMessage((wsPayload) => {
       if (cancelled) return;
-      // Biên nhận đã đọc
+      // 1. Biên nhận đã đọc (Read Receipt) trên `/user/queue/messages`
       if (
-        wsPayload.reader_id != null &&
-        wsPayload.conversation_id != null &&
-        wsPayload.message_id == null
+        wsPayload.reader_id != null ||
+        wsPayload.last_read_message_id != null ||
+        wsPayload.read_at != null
       ) {
-        const convId = String(wsPayload.conversation_id);
-        setConversationRecords((prev) =>
-          prev.map((c) =>
-            c.id === convId
-              ? {
-                  ...c,
-                  messages: c.messages.map((m) => ({ ...m, status: 'READ' })),
-                }
-              : c,
-          ),
-        );
+        if (wsPayload.conversation_id != null) {
+          const convId = String(wsPayload.conversation_id);
+          const isReadByMe =
+            String(wsPayload.reader_id ?? '') === apiFeedUserId;
+          setConversationRecords((prev) =>
+            prev.map((c) =>
+              c.id === convId
+                ? {
+                    ...c,
+                    unreadCount: isReadByMe ? 0 : c.unreadCount,
+                    unreadCounts: isReadByMe
+                      ? { ...c.unreadCounts, [apiFeedUserId]: 0 }
+                      : c.unreadCounts,
+                    messages: c.messages.map((m) => ({ ...m, status: 'READ' })),
+                  }
+                : c,
+            ),
+          );
+        }
         return;
       }
 
       if (wsPayload.conversation_id == null) return;
+      // 2. Bỏ qua mọi frame hệ thống / biên nhận rỗng không có nội dung tin nhắn hoặc thiếu sender_id
+      const rawText = (
+        wsPayload.content ??
+        (wsPayload as { text?: string }).text ??
+        ''
+      ).trim();
+      const hasMedia = (wsPayload.media_urls?.length ?? 0) > 0;
+      const isRevoked = Boolean(wsPayload.revoked);
+      if (!rawText && !hasMedia && !isRevoked) {
+        return;
+      }
+      const rawSenderId =
+        wsPayload.sender_id ??
+        (wsPayload as { sender?: { user_id?: number } }).sender?.user_id;
+      if (rawSenderId == null || String(rawSenderId).trim() === '') {
+        return;
+      }
+
       const convId = String(wsPayload.conversation_id);
       const incoming = messageFromWs(wsPayload, convId);
       const isFromMe = incoming.senderId === apiFeedUserId;
+      const isDockOpen = activeDockIdsRef.current.includes(convId);
       if (!conversationRecordsRef.current.some((c) => c.id === convId)) {
         loadConversationMessages(convId);
+      }
+      if (!isFromMe && isDockOpen && wsPayload.message_id != null) {
+        chatStompClient.sendReadReceipt({
+          conversation_id: Number(convId),
+          message_id: wsPayload.message_id,
+        });
       }
 
       setConversationRecords((prev) => {
@@ -4159,6 +4256,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
                 full_name: wsPayload.sender_name || `Hội thoại #${convId}`,
                 avatar_url: wsPayload.avatar_url,
               });
+          const initialUnread = isFromMe || isDockOpen ? 0 : 1;
           const newConv: Conversation = {
             id: convId,
             type: 'DIRECT',
@@ -4166,8 +4264,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
             partner,
             lastMessage: incoming.text,
             lastMessageTime: incoming.timestamp,
-            unreadCount: isFromMe ? 0 : 1,
-            unreadCounts: { [apiFeedUserId]: isFromMe ? 0 : 1 },
+            unreadCount: initialUnread,
+            unreadCounts: { [apiFeedUserId]: initialUnread },
             messages: [incoming],
           };
           return [newConv, ...prev];
@@ -4199,9 +4297,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
             updatedMessages = [...c.messages, incoming];
           }
 
-          const nextUnread = isFromMe
-            ? 0
-            : (c.unreadCounts?.[apiFeedUserId] ?? c.unreadCount ?? 0) + 1;
+          const nextUnread =
+            isFromMe || isDockOpen
+              ? 0
+              : hasExactId
+                ? (c.unreadCounts?.[apiFeedUserId] ?? c.unreadCount ?? 0)
+                : (c.unreadCounts?.[apiFeedUserId] ?? c.unreadCount ?? 0) + 1;
 
           return {
             ...c,
@@ -4382,6 +4483,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
           const mergedMessages = mergeMessageLists(c.messages, mapped);
           loadedMessagesByConvRef.current.set(conversationId, mergedMessages);
           const latestMsg = mergedMessages[mergedMessages.length - 1];
+          const isDockOpen = activeDockIdsRef.current.includes(conversationId);
           return {
             ...c,
             type: res?.conversation_type ?? c.type,
@@ -4390,14 +4492,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
             lastMessageTime: latestMsg
               ? latestMsg.timestamp
               : c.lastMessageTime,
-            unreadCount: 0,
-            unreadCounts: { ...c.unreadCounts, [currentUser.id]: 0 },
+            unreadCount: isDockOpen ? 0 : c.unreadCount,
+            unreadCounts: isDockOpen
+              ? { ...c.unreadCounts, [currentUser.id]: 0 }
+              : c.unreadCounts,
           };
         };
         setConversationRecords((prev) => prev.map(mergeConv));
         setHiddenConversationRecords((prev) => prev.map(mergeConv));
         const latestMsgId = sorted[sorted.length - 1]?.message_id;
-        if (latestMsgId != null) {
+        if (
+          latestMsgId != null &&
+          activeDockIdsRef.current.includes(conversationId)
+        ) {
           chatStompClient.sendReadReceipt({
             conversation_id: numericId,
             message_id: latestMsgId,
