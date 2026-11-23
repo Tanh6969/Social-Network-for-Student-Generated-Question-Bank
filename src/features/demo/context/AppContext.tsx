@@ -69,6 +69,7 @@ import {
 import {
   buildMediaItems,
   commentFromApi,
+  loadApiPostComments,
   loadApiFeedPage,
   initialApiFeedCursor,
   type ApiFeedCursor,
@@ -2652,19 +2653,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     const target = posts.find((post) => post.id === postId)?.apiTarget;
     if (!target) return;
     loadingCommentsRef.current.add(postId);
-    const collect = async () => {
-      const all: CommentItem[] = [];
-      let after: number | undefined;
-      // Tối đa 5 trang × 50 bình luận gốc cho một lần mở bài.
-      for (let page = 0; page < 5; page += 1) {
-        const res = await postsApi.getComments(target.type, target.id, after);
-        all.push(...res.items.map((dto) => commentFromApi(dto, currentUser)));
-        if (!res.hasNext || res.after == null) break;
-        after = res.after;
-      }
-      return all;
-    };
-    collect()
+    loadApiPostComments(target, currentUser)
       .then((comments) =>
         setPosts((previous) =>
           previous.map((post) =>

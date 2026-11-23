@@ -144,6 +144,64 @@ export function commentFromApi(
   };
 }
 
+export async function loadApiPostComments(
+  target: NonNullable<Post['apiTarget']>,
+  currentUser: User,
+): Promise<CommentItem[]> {
+  const all: CommentItem[] = [];
+  let after: number | undefined;
+  for (let page = 0; page < 5; page += 1) {
+    const res = await postsApi.getComments(target.type, target.id, after);
+    all.push(...res.items.map((dto) => commentFromApi(dto, currentUser)));
+    if (!res.hasNext || res.after == null) break;
+    after = res.after;
+  }
+  return all;
+}
+
+async function loadCommentsForCountedPosts(
+  posts: Post[],
+  currentUser: User,
+): Promise<Post[]> {
+  // The post count may include soft-deleted comments; use /comments for display.
+  const countedPosts = posts.filter(
+    (
+      post,
+    ): post is Post & { apiTarget: NonNullable<Post['apiTarget']> } =>
+      post.commentsCount > 0 && post.apiTarget !== undefined,
+  );
+  const updatedPosts = new Map<string, CommentItem[]>();
+  for (let index = 0; index < countedPosts.length; index += 5) {
+    const batch = countedPosts.slice(index, index + 5);
+    const comments = await Promise.all(
+      batch.map((post) =>
+        loadApiPostComments(post.apiTarget, currentUser),
+      ),
+    );
+    batch.forEach((post, batchIndex) =>
+      updatedPosts.set(post.id, comments[batchIndex]),
+    );
+  }
+  return posts.map((post) =>
+    updatedPosts.has(post.id)
+      ? {
+          ...post,
+          comments: updatedPosts.get(post.id),
+          commentsCount: (updatedPosts.get(post.id) ?? []).reduce(
+            (count, comment) =>
+              count +
+              (comment.deleted
+                ? 0
+                : 1 +
+                  (comment.replies?.filter((reply) => !reply.deleted).length ??
+                    0)),
+            0,
+          ),
+        }
+      : post,
+  );
+}
+
 /** Số bài công khai mới nhất của mọi người gộp vào bảng tin. */
 export const PUBLIC_POSTS_LIMIT = 30;
 
@@ -209,7 +267,7 @@ export async function loadApiFeed(currentUser: User): Promise<Post[]> {
     const post = activityToPost(item, currentUser);
     posts.set(post.id, post);
   }
-  return [...posts.values()];
+  return loadCommentsForCountedPosts([...posts.values()], currentUser);
 }
 
 export interface ApiFeedCursor {
@@ -266,7 +324,7 @@ export async function loadApiFeedPage(currentUser: User, cursor: ApiFeedCursor) 
     hasNext: page.hasNext && page.after != null,
   });
   return {
-    posts: [...result.values()],
+    posts: await loadCommentsForCountedPosts([...result.values()], currentUser),
     cursor: { activity: next(activity), mine: next(mine), public: next(publicPage), videos: next(videos) },
   };
 }
