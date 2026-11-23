@@ -11,7 +11,12 @@ import React, {
 import { useAuthSession } from '../../auth/useAuthSession';
 import { applyProfile } from '../../auth/mapAuthUser';
 import { useLocation, useNavigate } from 'react-router';
-import { tabFromPath, tabPaths } from '../../../app/routes';
+import {
+  profilePath,
+  profileUserIdFromPath,
+  tabFromPath,
+  tabPaths,
+} from '../../../app/routes';
 import {
   User,
   Role,
@@ -439,9 +444,33 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [viewingUserId, setViewingUserId] = useState<string | null>(null);
+  const initialViewingUserId = profileUserIdFromPath(location.pathname);
+  const [viewingUserId, setViewingUserIdState] = useState<string | null>(
+    initialViewingUserId,
+  );
+  const viewingUserIdRef = useRef(initialViewingUserId);
+  const setViewingUserId = (id: string | null) => {
+    viewingUserIdRef.current = id;
+    setViewingUserIdState(id);
+  };
   const activeTab = tabFromPath(location.pathname) ?? 'feed';
-  const setActiveTab = (tab: MainTab) => navigate(tabPaths[tab]);
+  const setActiveTab = (tab: MainTab) =>
+    navigate(
+      tab === 'profile'
+        ? profilePath(viewingUserIdRef.current)
+        : tabPaths[tab],
+    );
+
+  useEffect(() => {
+    const routeUserId =
+      tabFromPath(location.pathname) === 'profile'
+        ? profileUserIdFromPath(location.pathname)
+        : null;
+    if (viewingUserIdRef.current !== routeUserId) {
+      viewingUserIdRef.current = routeUserId;
+      setViewingUserIdState(routeUserId);
+    }
+  }, [location.pathname]);
   const [selectedSubject, setSelectedSubject] =
     useState<string>('Tất cả môn học');
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {

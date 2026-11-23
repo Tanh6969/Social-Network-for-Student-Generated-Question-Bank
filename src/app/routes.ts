@@ -17,7 +17,27 @@ export const tabPaths: Record<MainTab, string> = {
   search: '/search',
 };
 
+export function profilePath(userId: string | null): string {
+  return userId
+    ? `${tabPaths.profile}/${encodeURIComponent(userId)}`
+    : tabPaths.profile;
+}
+
+export function profileUserIdFromPath(pathname: string): string | null {
+  const match = pathname.match(/^\/profile\/([^/]+)\/?$/u);
+  if (!match) return null;
+
+  try {
+    return decodeURIComponent(match[1]) || null;
+  } catch {
+    return null;
+  }
+}
+
 export function tabFromPath(pathname: string): MainTab | null {
+  if (pathname === tabPaths.profile || profileUserIdFromPath(pathname))
+    return 'profile';
+
   return (
     (Object.entries(tabPaths).find(
       ([, path]) => pathname === path,

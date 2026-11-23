@@ -1,5 +1,26 @@
 import { describe, expect, it } from 'vitest';
-import { canAccessTab, postLoginDestination } from '../src/app/routes';
+import {
+  canAccessTab,
+  postLoginDestination,
+  profilePath,
+  profileUserIdFromPath,
+  tabFromPath,
+} from '../src/app/routes';
+
+describe('profile routes', () => {
+  it('encodes the user ID in the profile URL and restores it from the path', () => {
+    expect(profilePath('student/42')).toBe('/profile/student%2F42');
+    expect(profileUserIdFromPath('/profile/student%2F42')).toBe('student/42');
+    expect(tabFromPath('/profile/student%2F42')).toBe('profile');
+  });
+
+  it('keeps the legacy profile path for the signed-in user', () => {
+    expect(profilePath(null)).toBe('/profile');
+    expect(profileUserIdFromPath('/profile')).toBeNull();
+    expect(tabFromPath('/profile')).toBe('profile');
+    expect(profileUserIdFromPath('/profile/user/extra')).toBeNull();
+  });
+});
 
 describe('post-login navigation', () => {
   it('returns to an internal post link after login', () => {
