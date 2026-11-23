@@ -138,7 +138,7 @@ describe('phân trang bảng tin từ backend', () => {
       });
       if (url.pathname.endsWith('/posts/me')) return envelope({
         items: after ? [{ post_id: 12, author: { user_id: 144 } }] :
-          [{ post_id: 11, author: { user_id: 144 } }],
+          [{ post_id: 11, author: { user_id: 144 }, comment_count: 2 }],
         pagination: after ? { has_next: false } : { has_next: true, after: 11 },
       });
       if (url.pathname.endsWith('/search')) return envelope({
@@ -150,12 +150,21 @@ describe('phân trang bảng tin từ backend', () => {
         items: after ? [{ post_id: 42 }] : [{ post_id: 41 }],
         pagination: after ? { has_next: false } : { has_next: true, after: 41 },
       });
+      if (url.pathname.endsWith('/comments'))
+        return envelope({ items: [], pagination: { has_next: false } });
       const id = Number(url.pathname.split('/').pop());
       return envelope({ post_id: id, author: { user_id: 7 }, visibility: 'PUBLIC' });
     };
     const { feed } = await load();
     const first = await feed.loadApiFeedPage(me, feed.initialApiFeedCursor);
     expect(first.posts.map((post) => post.id).sort()).toEqual(['11', '21', '31', '41']);
+    expect(first.posts.find((post) => post.id === '11')).toMatchObject({
+      commentsCount: 0,
+      comments: [],
+    });
+    expect(requests.some((item) =>
+      item.path.startsWith('/api/v1/comments?target_type=POST&target_id=11'),
+    )).toBe(true);
     expect(first.cursor).toMatchObject({
       activity: { after: 1, hasNext: true },
       mine: { after: 11, hasNext: true },
@@ -277,6 +286,17 @@ describe('ánh xạ bài viết / bảng tin', () => {
           author: { user_id: 7, full_name: 'Bạn A' },
           content: 'Bài A',
         });
+      if (url.pathname.endsWith('/comments'))
+        return envelope({
+          items: [
+            {
+              comment_id: 31,
+              content: 'Bình luận còn lại',
+              author: { user_id: 7, full_name: 'Bạn A' },
+            },
+          ],
+          pagination: { has_next: false },
+        });
       return envelope(null, 404, '2001', 'POST_NOT_FOUND'); // bài 30 đã bị xoá
     };
     const { feed } = await load();
@@ -296,6 +316,7 @@ describe('ánh xạ bài viết / bảng tin', () => {
       subjectTag: 'Web',
       likesCount: 2,
       commentsCount: 1,
+      comments: [expect.objectContaining({ id: '31' })],
       apiTarget: { type: 'SESSION', id: 302 },
       isActivity: true,
     });
