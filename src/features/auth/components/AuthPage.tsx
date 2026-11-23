@@ -9,9 +9,7 @@ import {
   EyeOff,
   Mail,
   Lock,
-  KeyRound,
 } from 'lucide-react';
-import { mockDemoPassword } from '../../../mocks/mockData';
 
 export const AuthPage: React.FC = () => {
   const { loginWithCredentials, showToast } = useApp();
@@ -214,88 +212,6 @@ export const AuthPage: React.FC = () => {
                     {isSubmitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
                   </button>
                 </form>
-
-                {/* Ghi chú tài khoản test cho team */}
-                <div className="mt-4 pt-4 border-t border-fb-divider space-y-3">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-fb-text flex items-center gap-1.5">
-                      <KeyRound className="w-3.5 h-3.5 text-fb-blue" />
-                      Tài khoản test (Mật khẩu:{' '}
-                      <code className="bg-fb-input px-1.5 py-0.5 rounded text-fb-blue tabular-nums font-bold">
-                        {mockDemoPassword}
-                      </code>
-                      )
-                    </span>
-                    <span className="text-xs text-fb-text-3">
-                      Nhấn để điền
-                    </span>
-                  </div>
-
-                  {/* Nhóm Giảng viên */}
-                  <div className="space-y-1">
-                    <span className="text-xs font-semibold text-fb-blue block">
-                      Giảng viên:
-                    </span>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {[
-                        { email: 'gv1@gmail.com', name: 'TS. Trần Minh Đức' },
-                        { email: 'gv2@gmail.com', name: 'PGS. TS. Vũ Hải Yến' },
-                      ].map((acc) => (
-                        <button
-                          key={acc.email}
-                          type="button"
-                          onClick={() => {
-                            setEmail(acc.email);
-                            setPassword(mockDemoPassword);
-                            setLoginError('');
-                          }}
-                          className="px-2 py-1.5 bg-fb-blue-soft hover:bg-fb-blue/20 border border-fb-blue/30 rounded-lg text-left transition cursor-pointer"
-                        >
-                          <p className="text-xs font-bold text-fb-blue truncate tabular-nums">
-                            {acc.email}
-                          </p>
-                          <p className="text-xs text-fb-text-2 truncate">
-                            {acc.name}
-                          </p>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Nhóm Sinh viên */}
-                  <div className="space-y-1">
-                    <span className="text-xs font-semibold text-fb-blue block">
-                      Sinh viên:
-                    </span>
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {[
-                        { email: 'sv1@gmail.com', name: 'Văn Nam' },
-                        { email: 'sv2@gmail.com', name: 'Thuỳ Dung' },
-                        { email: 'sv3@gmail.com', name: 'Quang Huy' },
-                        { email: 'sv4@gmail.com', name: 'Mai Anh' },
-                        { email: 'sv5@gmail.com', name: 'Quốc Bảo' },
-                      ].map((acc) => (
-                        <button
-                          key={acc.email}
-                          type="button"
-                          onClick={() => {
-                            setEmail(acc.email);
-                            setPassword(mockDemoPassword);
-                            setLoginError('');
-                          }}
-                          className="px-2 py-1.5 bg-fb-blue-soft hover:bg-fb-blue/20 border border-fb-blue/30 rounded-lg text-left transition cursor-pointer"
-                        >
-                          <p className="text-xs font-bold text-fb-blue truncate tabular-nums">
-                            {acc.email}
-                          </p>
-                          <p className="text-xs text-fb-text-2 truncate">
-                            {acc.name}
-                          </p>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
