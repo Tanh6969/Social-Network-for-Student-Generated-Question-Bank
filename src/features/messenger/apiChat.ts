@@ -17,12 +17,49 @@ const DEFAULT_AVATAR = '/default-avatar.svg';
 
 export function formatChatTime(iso?: string): string {
   if (!iso) return 'Vừa xong';
-  const time = Date.parse(iso);
-  if (Number.isNaN(time)) return iso;
-  return new Date(time).toLocaleTimeString('vi-VN', {
+  const trimmed = iso.trim();
+  if (!trimmed || trimmed === 'Vừa xong') return 'Vừa xong';
+  if (/^\d{1,2}:\d{2}(\s|$|·)/.test(trimmed) && !trimmed.includes('T')) {
+    return trimmed;
+  }
+  const normalizedIso =
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?$/.test(trimmed)
+      ? `${trimmed}Z`
+      : trimmed;
+  const time = Date.parse(normalizedIso);
+  if (Number.isNaN(time)) return trimmed;
+
+  const msgDate = new Date(time);
+  const now = new Date();
+  const hhmm = msgDate.toLocaleTimeString('vi-VN', {
     hour: '2-digit',
     minute: '2-digit',
   });
+
+  const isSameDay =
+    msgDate.getFullYear() === now.getFullYear() &&
+    msgDate.getMonth() === now.getMonth() &&
+    msgDate.getDate() === now.getDate();
+  if (isSameDay) {
+    return hhmm;
+  }
+
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const isYesterday =
+    msgDate.getFullYear() === yesterday.getFullYear() &&
+    msgDate.getMonth() === yesterday.getMonth() &&
+    msgDate.getDate() === yesterday.getDate();
+  if (isYesterday) {
+    return `${hhmm} · Hôm qua`;
+  }
+
+  const dd = String(msgDate.getDate()).padStart(2, '0');
+  const mm = String(msgDate.getMonth() + 1).padStart(2, '0');
+  if (msgDate.getFullYear() === now.getFullYear()) {
+    return `${hhmm} · ${dd}/${mm}`;
+  }
+  return `${hhmm} · ${dd}/${mm}/${msgDate.getFullYear()}`;
 }
 
 export function memberFromDto(
@@ -57,6 +94,7 @@ export function messageFromDto(
         dto.text ??
         (dto.media_urls?.[0] ? '[Đính kèm phương tiện]' : '')),
     timestamp: formatChatTime(dto.created_at),
+    createdAt: dto.created_at,
     status: 'DELIVERED',
     isRecalled: isRevoked,
     attachmentUrl: dto.media_urls?.[0],
@@ -75,6 +113,7 @@ export function messageFromWs(
   const isRevoked = Boolean(dto.revoked);
   const msgId = dto.message_id ?? dto.id ?? Date.now();
   const senderId = dto.sender_id ?? dto.sender?.user_id ?? '';
+  const createdAt = dto.created_at || new Date().toISOString();
   return {
     id: String(msgId),
     conversationId: convId,
@@ -82,7 +121,8 @@ export function messageFromWs(
     text: isRevoked
       ? 'Tin nhắn đã được thu hồi'
       : (dto.content ?? dto.text ?? ''),
-    timestamp: formatChatTime(dto.created_at),
+    timestamp: formatChatTime(createdAt),
+    createdAt,
     status: 'DELIVERED',
     isRecalled: isRevoked,
     attachmentUrl: dto.media_urls?.[0],

@@ -31,6 +31,7 @@ export const MessengerFullView: React.FC = () => {
     conversations,
     allUsers,
     currentUser,
+    getUserById,
     markConversationRead,
     sendMessage,
     recallMessage,
@@ -101,6 +102,13 @@ export const MessengerFullView: React.FC = () => {
     // Chỉ chạy khi đổi cuộc trò chuyện đang chọn, không gọi lại mỗi khi state hội thoại thay đổi.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeConvIdToRead, activeConv?.type]);
+
+  useEffect(() => {
+    if (activeConvIdToRead && (activeConv?.unreadCount ?? 0) > 0) {
+      markConversationRead(activeConvIdToRead);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeConvIdToRead, activeConv?.unreadCount]);
 
   // Subscribe to realtime STOMP typing indicator for active conversation
   useEffect(() => {
@@ -361,68 +369,122 @@ export const MessengerFullView: React.FC = () => {
                 }
                 className="flex-1 p-4 overflow-y-auto space-y-3 text-xs"
               >
-                {activeConv.messages.map((msg) => {
-                  const isMine = msg.senderId === currentUser.id;
+                {activeConv.messages
+                  .filter(
+                    (msg) =>
+                      Boolean(
+                        msg &&
+                          (msg.isRecalled ||
+                            msg.text?.trim() ||
+                            msg.attachmentUrl),
+                      ),
+                  )
+                  .map((msg) => {
+                    const isMine = msg.senderId === currentUser.id;
+                    const memberSender = isGroupConv
+                      ? activeConv.members?.find(
+                          (m) => m.userId === msg.senderId,
+                        )
+                      : undefined;
+                    const senderUser = !isGroupConv
+                      ? activeConv.partner
+                      : memberSender
+                        ? {
+                            ...activeConv.partner,
+                            id: memberSender.userId,
+                            name: memberSender.name,
+                            avatar: memberSender.avatar,
+                          }
+                        : msg.senderId
+                          ? getUserById(msg.senderId)
+                          : activeConv.partner;
 
-                  return (
-                    <div
-                      key={msg.id}
-                      className={`flex flex-col group ${isMine ? 'items-end' : 'items-start'}`}
-                    >
-                      <div className="flex items-center gap-1.5 max-w-[70%]">
-                        {!msg.isRecalled && (
-                          <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1">
-                            {isMine && (
-                              <button
-                                onClick={() =>
-                                  recallMessage(
-                                    activeConv.id,
-                                    msg.id,
-                                    'EVERYONE',
-                                  )
-                                }
-                                className="text-fb-text-3 hover:text-fb-danger p-1"
-                                title="Thu hồi với mọi người (EVERYONE)"
-                              >
-                                <Undo2 className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                            <button
-                              onClick={() =>
-                                recallMessage(activeConv.id, msg.id, 'ME')
-                              }
-                              className="text-fb-text-3 hover:text-fb-danger p-1"
-                              title="Xóa ở phía tôi (ME)"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        )}
-
+                    return (
+                      <div
+                        key={msg.id}
+                        className={`flex flex-col group ${isMine ? 'items-end' : 'items-start'}`}
+                      >
                         <div
-                          className={`p-3 rounded-lg ${
-                            msg.isRecalled
-                              ? 'bg-fb-btn text-fb-text-2 italic'
-                              : isMine
-                                ? 'bg-fb-blue text-white rounded-br-xs shadow-fb-card'
-                                : 'bg-fb-card text-fb-text rounded-bl-xs shadow-xs'
-                          } ${
-                            msg.effect === 'effect_glow' && isMine
-                              ? 'ring-2 ring-fb-blue/30 shadow-[0_0_10px_rgba(6,182,212,0.6)]'
-                              : ''
+                          className={`flex items-end gap-2 max-w-[75%] ${
+                            isMine ? 'flex-row-reverse' : 'flex-row'
                           }`}
                         >
-                          {msg.text}
+                          {!isMine && (
+                            <div
+                              onClick={() => {
+                                if (
+                                  senderUser.id &&
+                                  !senderUser.id.startsWith('group_') &&
+                                  !senderUser.id.startsWith('conv_partner_')
+                                ) {
+                                  setViewingUserId(senderUser.id);
+                                  setActiveTab('profile');
+                                }
+                              }}
+                              className="shrink-0 cursor-pointer"
+                              title={senderUser.name}
+                            >
+                              <AvatarWithFrame user={senderUser} size="sm" />
+                            </div>
+                          )}
+
+                          <div
+                            className={`p-3 rounded-2xl break-words ${
+                              msg.isRecalled
+                                ? 'bg-fb-btn text-fb-text-2 italic'
+                                : isMine
+                                  ? 'bg-fb-blue text-white rounded-br-xs shadow-fb-card'
+                                  : 'bg-fb-card text-fb-text rounded-bl-xs shadow-xs'
+                            } ${
+                              msg.effect === 'effect_glow' && isMine
+                                ? 'ring-2 ring-fb-blue/30 shadow-[0_0_10px_rgba(6,182,212,0.6)]'
+                                : ''
+                            }`}
+                          >
+                            {msg.text}
+                          </div>
+
+                          {!msg.isRecalled && (
+                            <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 shrink-0 transition">
+                              {isMine && (
+                                <button
+                                  onClick={() =>
+                                    recallMessage(
+                                      activeConv.id,
+                                      msg.id,
+                                      'EVERYONE',
+                                    )
+                                  }
+                                  className="text-fb-text-3 hover:text-fb-danger p-1"
+                                  title="Thu hồi với mọi người (EVERYONE)"
+                                >
+                                  <Undo2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                              <button
+                                onClick={() =>
+                                  recallMessage(activeConv.id, msg.id, 'ME')
+                                }
+                                className="text-fb-text-3 hover:text-fb-danger p-1"
+                                title="Xóa ở phía tôi (ME)"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
                         </div>
+                        <span
+                          className={`text-xs text-fb-text-3 mt-1 ${
+                            isMine ? 'pr-1 text-right' : 'pl-11 text-left'
+                          }`}
+                        >
+                          {msg.timestamp}{' '}
+                          {isMine &&
+                            (msg.status === 'SENDING' ? '· Đang gửi…' : '· Đã gửi')}
+                        </span>
                       </div>
-                      <span className="text-xs text-fb-text-3 mt-0.5 px-1">
-                        {msg.timestamp}{' '}
-                        {isMine &&
-                          (msg.status === 'SENDING' ? 'Đang gửi…' : '✓')}
-                      </span>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
               </AutoScrollArea>
 
               {/* Input Footer hoặc Thông báo bị chặn */}
