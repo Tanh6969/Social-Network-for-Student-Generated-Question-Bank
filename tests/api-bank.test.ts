@@ -14,6 +14,18 @@ const envelope = (
 let respond: (url: URL) => Response;
 const requests: string[] = [];
 
+const practiceItem = (id: number, extra: Record<string, unknown> = {}) => ({
+  session_id: id,
+  title: `Bộ ${id}`,
+  subject_code: 'IT4409',
+  subject_name: 'Công nghệ Web',
+  question_counts: 4,
+  react_count: 1,
+  comment_count: 2,
+  created_at: '2026-10-30T09:01:22Z',
+  ...extra,
+});
+
 const session = (id: number, extra: Record<string, unknown> = {}) => ({
   type: 'SESSION',
   relevance_score: 1,
@@ -55,20 +67,18 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-describe('/bank — kho bộ câu hỏi từ GET /search', () => {
-  it('đọc hết các trang theo offset, bỏ trùng, gọi với từ khoá trống', async () => {
+describe('/bank — kho bộ câu hỏi từ GET /sessions/practice-catalog', () => {
+  it('đọc hết các trang theo cursor after, bỏ trùng', async () => {
     respond = (url) => {
       const after = url.searchParams.get('after');
       if (!after)
         return envelope({
-          items: [session(1), session(2)],
+          contents: [practiceItem(1), practiceItem(2)],
           pagination: { after: 2, has_next: true },
-          total_hits: 3,
         });
       return envelope({
-        items: [session(2), session(3)],
+        contents: [practiceItem(2), practiceItem(3)],
         pagination: { after: null, has_next: false },
-        total_hits: 3,
       });
     };
     const { bankGateway } = await load();
@@ -76,9 +86,19 @@ describe('/bank — kho bộ câu hỏi từ GET /search', () => {
 
     expect(sets.map((s) => s.sessionId)).toEqual([1, 2, 3]);
     expect(requests).toEqual([
-      '/search?type=SESSION&limit=50',
-      '/search?type=SESSION&after=2&limit=50',
+      '/sessions/practice-catalog?limit=50',
+      '/sessions/practice-catalog?after=2&limit=50',
     ]);
+  });
+
+  it('bỏ các phiên chưa chốt (PENDING/REVIEWING) khi chuyển đổi kết quả tìm kiếm', async () => {
+    const { bankSetFromSearch } = await load();
+    expect(bankSetFromSearch(session(7, { status: 'PENDING' }).session)).toBeNull();
+    expect(bankSetFromSearch(session(8, { status: 'REVIEWING' }).session)).toBeNull();
+    const resolved = bankSetFromSearch(session(9, { status: 'RESOLVED' }).session);
+    expect(resolved).not.toBeNull();
+    expect(resolved).not.toHaveProperty('status');
+    expect(JSON.stringify(resolved)).not.toContain('RESOLVED');
   });
 
   it('không đưa trạng thái duyệt ra giao diện', async () => {
@@ -98,9 +118,10 @@ describe('/bank — kho bộ câu hỏi từ GET /search', () => {
   });
 
   it('điền giá trị mặc định khi thiếu tiêu đề / môn, bỏ mục không có id', async () => {
-    const { bankSetFromSearch } = await load();
+    const { bankSetFromPractice, bankSetFromSearch } = await load();
     expect(bankSetFromSearch({ title: 'x' })).toBeNull();
-    expect(bankSetFromSearch({ session_id: 5, title: '  ' })).toMatchObject({
+    expect(bankSetFromPractice({ title: 'x' })).toBeNull();
+    expect(bankSetFromPractice({ session_id: 5, title: '  ' })).toMatchObject({
       title: 'Bộ câu hỏi #5',
       subjectName: 'Chưa rõ môn học',
       indexedQuestionCount: 0,

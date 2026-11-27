@@ -59,6 +59,8 @@ const AutoGrowTextarea: React.FC<
 
 interface EditQuestionItem {
   question_id?: number;
+  topic_id?: number;
+  difficulty?: 'UNCLASSIFIED' | 'EASY' | 'MEDIUM' | 'HARD';
   content: string;
   image_urls: string[];
   options: {
@@ -111,6 +113,8 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
       if (detail.questions && detail.questions.length > 0) {
         const mapped: EditQuestionItem[] = detail.questions.map((q) => ({
           question_id: q.question_id,
+          topic_id: q.topic_id,
+          difficulty: q.difficulty,
           content: q.content || '',
           image_urls: q.image_urls || [],
           options: (q.options || []).map((opt) => ({
@@ -242,6 +246,8 @@ const EditSubmissionContent: React.FC<Omit<EditSubmissionModalProps, 'sessionId'
         course_class_id: courseClassId,
         questions: questions.map((q) => ({
           question_id: q.question_id,
+          topic_id: q.topic_id,
+          difficulty: q.difficulty,
           content: q.content,
           media_urls: q.image_urls,
           options: q.options.map((opt) => ({

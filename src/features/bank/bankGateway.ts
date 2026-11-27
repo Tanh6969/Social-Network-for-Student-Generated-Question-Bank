@@ -1,16 +1,15 @@
 /**
- * /bank của sinh viên = kho chung các bộ câu hỏi sinh viên đã đăng, để cùng
- * luyện tập, chấm sao và bình luận. Đây KHÔNG phải ngân hàng đề của giảng viên.
+ * /bank của sinh viên = kho chung các bộ câu hỏi đã được giảng viên xem xét xong
+ * (RESOLVED), để cùng luyện tập, chấm sao và bình luận. Đây KHÔNG phải ngân hàng
+ * đề dùng để sinh đề thi của giảng viên.
  *
- * Danh sách: GET /search?type=SESSION (từ khoá trống = tất cả). Backend chỉ trả
- * các bộ đã được giảng viên xem xét xong (RESOLVED). Trạng thái phiên KHÔNG được
- * đưa ra giao diện, và không có thông tin câu nào được chọn vào ngân hàng đề.
+ * Danh sách: GET /sessions/practice-catalog (backend chỉ trả các phiên đã chốt
+ * RESOLVED, không lộ danh tính người nộp hay kết quả duyệt).
  *
- * Số liệu tương tác: chỉ mục tìm kiếm KHÔNG cập nhật comment_count/react_count
- * (luôn 0 trên backend thật, đã kiểm tra 2026-11-13), nên thống kê lấy từ
- * GET /sessions/{id}/questions — nguồn dữ liệu sống.
+ * Số liệu tương tác: thống kê sống lấy từ GET /sessions/{id}/questions.
  */
-import { searchApi, type SessionSearchResultDto } from '../../api/search';
+import { sessionsApi, type PracticeSetDto } from '../../api/sessions';
+import { type SessionSearchResultDto } from '../../api/search';
 import { collectAllPages, PAGE_LIMIT } from '../proposals/proposalGateway';
 import { practiceGateway } from '../proposals/practiceGateway';
 import type { SessionQuestionsResponse } from '../proposals/types';
@@ -20,8 +19,9 @@ export interface BankSet {
   title: string;
   content?: string;
   subjectId?: number;
+  subjectCode?: string;
   subjectName: string;
-  /** Số câu theo chỉ mục tìm kiếm — chỉ dùng khi chưa có thống kê sống. */
+  /** Số câu theo danh mục — chỉ dùng khi chưa có thống kê sống. */
   indexedQuestionCount: number;
   createdAt?: string;
 }
@@ -45,9 +45,24 @@ export function progressOf(stats: BankSetStats): Progress {
   return stats.answeredCount >= stats.questionCount ? 'DONE' : 'IN_PROGRESS';
 }
 
-/** Chuyển kết quả tìm kiếm thành bộ câu hỏi; cố ý bỏ `status` và các số đếm sai. */
+/** Chuyển mục danh mục luyện tập (đã chốt RESOLVED) thành bộ câu hỏi. */
+export function bankSetFromPractice(dto: PracticeSetDto): BankSet | null {
+  if (dto.session_id === undefined) return null;
+  return {
+    sessionId: dto.session_id,
+    title: dto.title?.trim() || `Bộ câu hỏi #${dto.session_id}`,
+    content: dto.content || undefined,
+    subjectCode: dto.subject_code || undefined,
+    subjectName: dto.subject_name || 'Chưa rõ môn học',
+    indexedQuestionCount: dto.question_counts ?? 0,
+    createdAt: dto.created_at,
+  };
+}
+
+/** Chuyển kết quả tìm kiếm thành bộ câu hỏi; lọc chỉ giữ phiên đã chốt RESOLVED và cố ý bỏ `status`. */
 export function bankSetFromSearch(dto: SessionSearchResultDto): BankSet | null {
   if (dto.session_id === undefined) return null;
+  if (dto.status && dto.status.toUpperCase() !== 'RESOLVED') return null;
   return {
     sessionId: dto.session_id,
     title: dto.title?.trim() || `Bộ câu hỏi #${dto.session_id}`,
@@ -101,21 +116,24 @@ async function forEachLimited<T>(
 }
 
 export const bankGateway = {
-  /** Đọc hết các trang GET /search?type=SESSION (chỉ phiên thật). */
+  /** Đọc hết các trang GET /sessions/practice-catalog (chỉ các phiên đã chốt RESOLVED). */
   async loadSets(): Promise<BankSet[]> {
     const items = await collectAllPages(async (after) => {
-      const page = await searchApi.search({
-        type: 'SESSION',
+      const page = await sessionsApi.getPracticeCatalog({
         after,
         limit: PAGE_LIMIT,
       });
-      return { items: page.items, hasNext: page.hasNext, after: page.after };
+      return {
+        items: page.contents ?? [],
+        hasNext: page.pagination?.has_next ?? false,
+        after: page.pagination?.after ?? undefined,
+      };
     });
 
     const seen = new Set<number>();
     const sets: BankSet[] = [];
     for (const item of items) {
-      const set = item.session ? bankSetFromSearch(item.session) : null;
+      const set = bankSetFromPractice(item);
       if (set && !seen.has(set.sessionId)) {
         seen.add(set.sessionId);
         sets.push(set);

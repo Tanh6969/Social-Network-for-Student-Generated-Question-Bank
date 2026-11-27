@@ -31,11 +31,25 @@ const STORAGE_PREFIX = 'sqb_bank_v1_';
 export const bankQueryKey = (userId: string) => ['bank', userId] as const;
 
 export async function fetchBankSnapshot(): Promise<BankSnapshot> {
-  const [sets, subjects] = await Promise.all([
+  const [rawSets, subjects] = await Promise.all([
     bankGateway.loadSets(),
     // Danh mục môn chỉ để hiện cả môn chưa có bộ nào: lỗi thì bỏ qua.
     examsApi.getAllSubjects().catch(() => [] as SubjectResponse[]),
   ]);
+  const byCode = new Map<string, number>();
+  const byName = new Map<string, number>();
+  for (const s of subjects) {
+    if (s.subject_id === undefined) continue;
+    if (s.code) byCode.set(s.code.trim().toLowerCase(), s.subject_id);
+    if (s.name) byName.set(s.name.trim().toLowerCase(), s.subject_id);
+  }
+  const sets = rawSets.map((set) => {
+    if (set.subjectId !== undefined) return set;
+    const resolved =
+      (set.subjectCode ? byCode.get(set.subjectCode.trim().toLowerCase()) : undefined) ??
+      byName.get(set.subjectName.trim().toLowerCase());
+    return resolved !== undefined ? { ...set, subjectId: resolved } : set;
+  });
   const stats: StatsState = {};
   await bankGateway.loadAllStats(
     sets.map((s) => s.sessionId),

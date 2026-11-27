@@ -412,4 +412,40 @@ describe('phiên thật: chỉ gọi API, lỗi được báo đúng', () => {
     await expect(g.getAllSubjects()).rejects.toThrow(/hết hạn/);
     expect(requests[0].path).toBe('/api/v1/subjects');
   });
+
+  it('đếm phiên chờ duyệt thực tế và chuẩn hoá trạng thái cho Navbar/ReviewDashboard', async () => {
+    vi.resetModules();
+    const { countPendingReviewable, normalizedSessionStatus } =
+      await import('../src/features/proposals/reviewQuery');
+    expect(normalizedSessionStatus(undefined)).toBe('PENDING');
+    expect(normalizedSessionStatus('pending')).toBe('PENDING');
+    expect(normalizedSessionStatus('reviewing')).toBe('REVIEWING');
+    expect(normalizedSessionStatus('resolved')).toBe('RESOLVED');
+    expect(
+      countPendingReviewable([
+        { session_id: 1, status: 'PENDING' },
+        { session_id: 2, status: 'REVIEWING' },
+      ]),
+    ).toBe(1);
+    expect(countPendingReviewable([])).toBe(0);
+  });
+
+  it('lấy chủ đề môn học và gửi phân loại độ khó / chủ đề qua PUT /lecturer/questions/{id}', async () => {
+    respond = (_m, url) => {
+      if (url.pathname.endsWith('/subjects/10/topics')) {
+        return envelope([{ id: 37, name: 'Định thời CPU', active: true }]);
+      }
+      return envelope({ question_id: 105, status: 'PENDING' });
+    };
+    const { proposalGateway: g } = await load('token');
+    const topics = await g.getSubjectTopics(10);
+    expect(topics).toEqual([{ id: 37, name: 'Định thời CPU', active: true }]);
+
+    await g.editQuestion(105, { difficulty: 'HARD', topic_id: 37 });
+    expect(requests.map((r) => `${r.method} ${r.path}`)).toEqual([
+      'GET /api/v1/subjects/10/topics',
+      'PUT /api/v1/lecturer/questions/105',
+    ]);
+    expect(requests[1].body).toEqual({ difficulty: 'HARD', topic_id: 37 });
+  });
 });

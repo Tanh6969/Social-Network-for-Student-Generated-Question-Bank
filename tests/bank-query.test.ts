@@ -41,20 +41,19 @@ beforeEach(() => {
       maxInFlight = Math.max(maxInFlight, inFlight);
       await new Promise((r) => setTimeout(r, 5));
       inFlight -= 1;
-      if (path === '/search') {
+      if (path === '/sessions/practice-catalog') {
         return envelope({
-          items: Array.from({ length: 20 }, (_, i) => ({
-            session: {
-              session_id: i + 1,
-              title: `Bộ ${i + 1}`,
-              subject_name: 'Web',
-            },
+          contents: Array.from({ length: 20 }, (_, i) => ({
+            session_id: i + 1,
+            title: `Bộ ${i + 1}`,
+            subject_code: 'IT4409',
+            subject_name: 'Web',
           })),
           pagination: { has_next: false },
         });
       }
       if (path === '/subjects')
-        return envelope([{ subject_id: 2, name: 'Web' }]);
+        return envelope([{ subject_id: 2, code: 'IT4409', name: 'Web' }]);
       return envelope({
         questions: [{ question_id: 1, comment_count: 1, my_interaction: {} }],
       });
@@ -77,8 +76,12 @@ describe('/bank — tải một lượt, song song', () => {
     const { fetchBankSnapshot } = await load();
     const snap = await fetchBankSnapshot();
 
-    expect(started.slice(0, 2).sort()).toEqual(['/search', '/subjects']);
+    expect(started.slice(0, 2).sort()).toEqual([
+      '/sessions/practice-catalog',
+      '/subjects',
+    ]);
     expect(snap.sets).toHaveLength(20);
+    expect(snap.sets[0].subjectId).toBe(2);
     expect(snap.subjects).toHaveLength(1);
     expect(Object.keys(snap.stats)).toHaveLength(20);
     expect(maxInFlight).toBe(8);

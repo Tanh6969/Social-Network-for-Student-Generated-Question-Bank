@@ -1,7 +1,17 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router';
 import { useApp } from '../../demo/context/AppContext';
-import { errorMessage, CourseClassOption, ProposeSessionRequest } from '../../../api';
+import {
+  errorMessage,
+  isApiSession,
+  CourseClassOption,
+  ProposeSessionRequest,
+  TopicResponse,
+} from '../../../api';
+import {
+  QUESTION_DIFFICULTY_OPTIONS,
+  type QuestionDifficultyValue,
+} from '../../proposals/difficulty';
 import {
   proposalGateway,
   subjectsOfCourseClasses,
@@ -82,9 +92,12 @@ export const ProposeView: React.FC = () => {
     (c) => c.course_class_id === selectedCourseClassId,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [topics, setTopics] = useState<TopicResponse[]>([]);
 
   interface LocalQuestion {
     content: string;
+    topic_id?: number;
+    difficulty: QuestionDifficultyValue;
     media_urls: string[];
     options: { key: string; text: string; is_correct: boolean; media_url?: string }[];
     explanation: string;
@@ -95,6 +108,7 @@ export const ProposeView: React.FC = () => {
   const [questions, setQuestions] = useState<LocalQuestion[]>([
     {
       content: 'Trong giao thức TCP, cờ (Flag) nào được sử dụng để khởi tạo quá trình bắt tay 3 bước?',
+      difficulty: 'UNCLASSIFIED',
       media_urls: [],
       options: [
         { key: 'A', text: 'SYN', is_correct: true },
@@ -115,17 +129,41 @@ export const ProposeView: React.FC = () => {
     try {
       const data = await proposalGateway.getEnrolledCourseClasses();
       setCourseClasses(data);
-      const firstProposable = data.find((c) => c.can_propose);
-      setSelectedCourseClassId(
-        (current) => current || firstProposable?.course_class_id || 0,
+      const proposable = data.filter((c) => c.can_propose);
+      const firstProposable = proposable[0];
+      setSelectedCourseClassId((current) =>
+        proposable.some((c) => c.course_class_id === current)
+          ? current
+          : (firstProposable?.course_class_id || 0),
       );
     } catch (err: unknown) {
       setCourseClasses([]);
+      setSelectedCourseClassId(0);
       showToast(errorMessage(err, 'Không tải được danh sách môn học đang tham gia'), 'error');
     } finally {
       setLoadingSubjects(false);
     }
   }, [showToast]);
+
+  const selectedSubjectId = selectedCourseClass?.subject_id;
+  useEffect(() => {
+    if (!selectedSubjectId) {
+      setTopics([]);
+      return;
+    }
+    let cancelled = false;
+    proposalGateway
+      .getSubjectTopics(selectedSubjectId)
+      .then((list) => {
+        if (!cancelled) setTopics(list.filter((t) => t.active !== false));
+      })
+      .catch(() => {
+        if (!cancelled) setTopics([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedSubjectId]);
 
   // Load My Submissions (mọi trang, kèm trạng thái — xem proposalGateway)
   const fetchMySubmissions = useCallback(async () => {
@@ -198,6 +236,7 @@ export const ProposeView: React.FC = () => {
   const handleAddQuestion = () => {
     const newQ: LocalQuestion = {
       content: '',
+      difficulty: 'UNCLASSIFIED',
       media_urls: [],
       options: [
         { key: 'A', text: '', is_correct: true },
@@ -233,6 +272,10 @@ export const ProposeView: React.FC = () => {
       showToast('Vui lòng chọn lớp học phần đang tham gia', 'warning');
       return;
     }
+    if (isApiSession() && questions.length < 3) {
+      showToast('Mỗi phiên đề xuất cần tối thiểu 3 câu hỏi trước khi gửi.', 'warning');
+      return;
+    }
 
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
@@ -256,6 +299,8 @@ export const ProposeView: React.FC = () => {
         course_class_id: selectedCourseClassId,
         questions: questions.map((q) => ({
           content: q.content,
+          topic_id: q.topic_id,
+          difficulty: q.difficulty,
           media_urls: q.media_urls,
           options: q.options.map((opt) => ({
             key: opt.key,
@@ -281,6 +326,7 @@ export const ProposeView: React.FC = () => {
       setQuestions([
         {
           content: '',
+          difficulty: 'UNCLASSIFIED',
           media_urls: [],
           options: [
             { key: 'A', text: '', is_correct: true },
@@ -419,7 +465,29 @@ export const ProposeView: React.FC = () => {
       {/* ================= CỘT PHẢI (MAIN CONTENT): NỘI DUNG THEO TAB ================= */}
       <main className="flex-1 min-w-0 px-4 sm:px-6 lg:px-8 py-4 space-y-6 md:min-h-[calc(100vh-3.5rem)] flex flex-col">
         {/* ================= NỘI DUNG TAB 1: SOẠN PHIÊN ĐỀ XUẤT MỚI ================= */}
-        {activeTab === 'create' && (
+        {activeTab === 'create' && !loadingSubjects && proposableClasses.length === 0 && (
+          <div className="bg-fb-card rounded-lg shadow-fb-card p-10 text-center space-y-3 max-w-xl mx-auto my-8">
+            <div className="w-14 h-14 rounded-full bg-fb-warning-soft text-fb-warning flex items-center justify-center mx-auto">
+              <GraduationCap className="w-7 h-7" />
+            </div>
+            <h3 className="text-lg font-bold text-fb-text">
+              Chưa có lớp học phần nào đang mở đề xuất
+            </h3>
+            <p className="text-sm text-fb-text-2 leading-relaxed">
+              Bạn chỉ có thể đề xuất câu hỏi cho các lớp học phần trong học kỳ hiện tại mà bạn đã được thêm vào. Hãy liên hệ giảng viên để được thêm vào lớp học phần.
+            </p>
+            <button
+              type="button"
+              onClick={() => void fetchEnrolledSubjects()}
+              className="px-4 py-2 rounded-lg bg-fb-blue hover:bg-fb-blue-hover text-white text-sm font-semibold inline-flex items-center gap-2 transition cursor-pointer"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span>Kiểm tra lại danh sách lớp</span>
+            </button>
+          </div>
+        )}
+
+        {activeTab === 'create' && (loadingSubjects || proposableClasses.length > 0) && (
           <form onSubmit={handleSubmitProposal} className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               {/* Form soạn thảo (7 cols) */}
@@ -456,7 +524,12 @@ export const ProposeView: React.FC = () => {
                       </label>
                       <select
                         value={selectedCourseClassId}
-                        onChange={(e) => setSelectedCourseClassId(Number(e.target.value))}
+                        onChange={(e) => {
+                          setSelectedCourseClassId(Number(e.target.value));
+                          setQuestions((prev) =>
+                            prev.map((q) => ({ ...q, topic_id: undefined })),
+                          );
+                        }}
                         className="w-full px-3 py-2 text-body rounded-lg border border-fb-divider bg-fb-inset/50 text-fb-text focus:outline-hidden focus:ring-2 focus:ring-fb-blue transition font-medium"
                       >
                         {proposableClasses.length === 0 && (
@@ -510,7 +583,7 @@ export const ProposeView: React.FC = () => {
                         Danh sách câu hỏi
                       </span>
                       <span className="text-sm text-fb-text-2">
-                        ({questions.length} câu)
+                        ({questions.length} câu{isApiSession() && questions.length < 3 ? ' · tối thiểu 3 câu' : ''})
                       </span>
                     </div>
 
@@ -631,6 +704,57 @@ export const ProposeView: React.FC = () => {
                           placeholder="Giải thích nguyên lý hoặc tài liệu tham khảo..."
                           className="w-full p-2.5 text-body rounded-lg border border-fb-divider bg-fb-card text-fb-text focus:outline-hidden"
                         />
+                      </div>
+
+                      {/* Difficulty & Topic classification */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-body font-semibold text-fb-text mb-1">
+                            Độ khó đề xuất
+                          </label>
+                          <select
+                            value={currentQ.difficulty}
+                            onChange={(e) =>
+                              handleUpdateCurrentQ({
+                                difficulty: e.target.value as QuestionDifficultyValue,
+                              })
+                            }
+                            className="w-full px-3 py-2 rounded-lg border border-fb-divider bg-fb-card text-sm font-medium text-fb-text focus:outline-hidden"
+                          >
+                            {QUESTION_DIFFICULTY_OPTIONS.map((opt) => (
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-body font-semibold text-fb-text mb-1">
+                            Chủ đề (tùy chọn)
+                          </label>
+                          <select
+                            value={currentQ.topic_id ?? ''}
+                            onChange={(e) =>
+                              handleUpdateCurrentQ({
+                                topic_id: e.target.value ? Number(e.target.value) : undefined,
+                              })
+                            }
+                            disabled={topics.length === 0}
+                            className="w-full px-3 py-2 rounded-lg border border-fb-divider bg-fb-card text-sm font-medium text-fb-text focus:outline-hidden disabled:opacity-60"
+                          >
+                            <option value="">
+                              {topics.length === 0
+                                ? 'Môn học chưa có chủ đề'
+                                : 'Chưa gắn chủ đề'}
+                            </option>
+                            {topics.map((t) => (
+                              <option key={t.id} value={t.id}>
+                                {t.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
 
                       {/* Additional settings */}
