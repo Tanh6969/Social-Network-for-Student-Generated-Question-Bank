@@ -6,6 +6,7 @@ import React, {
   useEffect,
   useRef,
   useMemo,
+  useCallback,
   ReactNode,
 } from 'react';
 import { useAuthSession } from '../../auth/useAuthSession';
@@ -617,16 +618,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   const [isOfflineSimulated, setIsOfflineSimulated] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const showToast = (
-    message: string,
-    type: 'success' | 'info' | 'warning' | 'error' = 'info',
-  ) => {
-    const id = Date.now().toString() + Math.random().toString();
-    setToasts((prev) => [...prev, { id, message, type }]);
-    setTimeout(() => {
-      removeToast(id);
-    }, 4000);
-  };
+  // Ổn định tham chiếu: nhiều màn đưa showToast vào deps của useCallback/useEffect,
+  // nếu đổi mỗi lần render sẽ gây vòng lặp gọi API vô hạn.
+  const showToast = useCallback(
+    (
+      message: string,
+      type: 'success' | 'info' | 'warning' | 'error' = 'info',
+    ) => {
+      const id = Date.now().toString() + Math.random().toString();
+      setToasts((prev) =>
+        // Đang hiện đúng thông báo này rồi thì không chồng thêm.
+        prev.some((t) => t.message === message && t.type === type)
+          ? prev
+          : [...prev, { id, message, type }],
+      );
+      setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+      }, 4000);
+    },
+    [],
+  );
 
   const removeToast = (id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));

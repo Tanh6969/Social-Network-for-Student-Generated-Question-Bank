@@ -7,14 +7,12 @@ import {
   ChevronDown,
   Calendar,
   CheckCircle2,
-  Info,
   Library,
   MessageCircle,
   PlayCircle,
   Plus,
   RotateCcw,
   Search,
-  Sparkles,
   Star,
 } from 'lucide-react';
 import { useApp } from '../../demo/context/AppContext';
@@ -74,6 +72,11 @@ function subjectKey(set: { subjectId?: number; subjectName: string }) {
     : `name:${set.subjectName}`;
 }
 
+/** Tên hiển thị gọn: bỏ các thẻ dạng #SQB_SEED ở tiêu đề. */
+function displayTitle(title: string) {
+  return title.replace(/s*#S+/gu, '').trim() || title;
+}
+
 const SubjectItem: React.FC<{
   label: string;
   count: number;
@@ -127,15 +130,77 @@ const Stat: React.FC<{
   <span className="flex items-center gap-1" title={label}>
     {icon}
     {value === undefined ? <Skeleton className="h-3 w-5" /> : value}
-    <span className="sr-only sm:not-sr-only sm:ml-0.5">{label}</span>
+    <span className="sr-only">{label}</span>
   </span>
+);
+
+/** Vòng tròn tiến độ: số bộ đã làm xong / tổng số bộ. */
+const ProgressRing: React.FC<{ done: number; total: number }> = ({
+  done,
+  total,
+}) => {
+  const r = 34;
+  const c = 2 * Math.PI * r;
+  const ratio = total > 0 ? Math.min(1, done / total) : 0;
+  return (
+    <div
+      className="relative h-20 w-20 shrink-0"
+      role="img"
+      aria-label={`Đã làm xong ${done}/${total} bộ`}
+    >
+      <svg viewBox="0 0 80 80" className="h-full w-full -rotate-90">
+        <circle
+          cx="40"
+          cy="40"
+          r={r}
+          fill="none"
+          strokeWidth="7"
+          className="stroke-fb-input"
+        />
+        <circle
+          cx="40"
+          cy="40"
+          r={r}
+          fill="none"
+          strokeWidth="7"
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={c * (1 - ratio)}
+          className="stroke-fb-success transition-[stroke-dashoffset] duration-500"
+        />
+      </svg>
+      <span className="absolute inset-0 flex flex-col items-center justify-center leading-none">
+        <span className="text-lg font-bold text-fb-text tabular-nums">
+          {Math.round(ratio * 100)}%
+        </span>
+        <span className="mt-0.5 text-[11px] text-fb-text-2 tabular-nums">
+          {done}/{total}
+        </span>
+      </span>
+    </div>
+  );
+};
+
+const MiniStat: React.FC<{
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+}> = ({ icon, label, value }) => (
+  <div className="flex items-center justify-between gap-2">
+    <dt className="flex items-center gap-1.5 text-fb-text-2">
+      {icon}
+      {label}
+    </dt>
+    <dd className="font-semibold text-fb-text tabular-nums">{value}</dd>
+  </div>
 );
 
 const SetCard: React.FC<{
   set: BankSet;
   stats: BankSetStats | 'error' | undefined;
+  showSubject: boolean;
   onPractice: () => void;
-}> = ({ set, stats, onPractice }) => {
+}> = ({ set, stats, showSubject, onPractice }) => {
   const live = stats && stats !== 'error' ? stats : undefined;
   const questionCount = live?.questionCount ?? set.indexedQuestionCount;
   const progress = live ? progressOf(live) : 'NOT_STARTED';
@@ -148,34 +213,41 @@ const SetCard: React.FC<{
 
   return (
     <article className="bg-fb-card rounded-lg shadow-fb-card p-4 flex flex-col gap-2">
-      <div className="flex items-start justify-between gap-2">
+      {showSubject && (
         <span
-          className={`w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold ${getSubjectTone(set.subjectName)}`}
+          className={`w-fit max-w-full truncate rounded-full px-2.5 py-0.5 text-xs font-semibold ${getSubjectTone(set.subjectName)}`}
         >
           {set.subjectName}
         </span>
+      )}
+      <h3
+        title={set.title}
+        className="text-card-title font-bold text-fb-text line-clamp-2 [overflow-wrap:anywhere]"
+      >
         {progress === 'DONE' && (
-          <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-fb-success">
-            <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-            Đã làm xong
-          </span>
+          <CheckCircle2
+            className="mr-1.5 -mt-0.5 inline h-4 w-4 text-fb-success"
+            aria-label="Đã làm xong"
+          />
         )}
-      </div>
-      <h3 className="text-card-title font-bold text-fb-text [overflow-wrap:anywhere]">
-        {set.title}
+        {displayTitle(set.title)}
       </h3>
       {set.content && (
-        <p className="line-clamp-2 text-body text-fb-text-2 [overflow-wrap:anywhere]">
+        <p
+          title={set.content}
+          className="line-clamp-1 text-sm text-fb-text-2 [overflow-wrap:anywhere]"
+        >
           {set.content}
         </p>
       )}
 
       {live && progress === 'IN_PROGRESS' && (
-        <div className="space-y-1">
-          <p className="text-xs text-fb-text-2">
-            Bạn đã làm {live.answeredCount}/{live.questionCount} câu
-          </p>
+        <div
+          className="flex items-center gap-2 text-xs tabular-nums text-fb-text-2"
+          title={`Đã làm ${live.answeredCount}/${live.questionCount} câu`}
+        >
           <ProgressBar value={live.answeredCount} max={live.questionCount} />
+          {live.answeredCount}/{live.questionCount}
         </div>
       )}
 
@@ -197,15 +269,16 @@ const SetCard: React.FC<{
             label="bình luận"
           />
           {set.createdAt && (
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1" title="Ngày đăng">
               <Calendar className="h-4 w-4" aria-hidden="true" />
-              {new Date(set.createdAt).toLocaleDateString('vi-VN')}
+              {new Date(set.createdAt).toLocaleDateString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+              })}
             </span>
           )}
           {stats === 'error' && (
-            <span className="text-xs text-fb-danger">
-              Không tải được số liệu
-            </span>
+            <span className="text-xs text-fb-danger">Lỗi số liệu</span>
           )}
         </span>
         <button
@@ -234,18 +307,19 @@ const SideSetItem: React.FC<{
 }> = ({ set, meta, onClick }) => (
   <button
     onClick={onClick}
-    className="w-full flex items-start gap-3 p-2 rounded-lg hover:bg-fb-hover text-left transition-colors cursor-pointer"
+    title={set.title}
+    className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-fb-hover text-left transition-colors cursor-pointer"
   >
     <span
-      className={`w-10 h-10 shrink-0 rounded-lg flex items-center justify-center ${getSubjectTone(set.subjectName)}`}
+      className={`w-8 h-8 shrink-0 rounded-lg flex items-center justify-center ${getSubjectTone(set.subjectName)}`}
     >
-      <BookOpen className="w-5 h-5" aria-hidden="true" />
+      <BookOpen className="w-4 h-4" aria-hidden="true" />
     </span>
     <span className="min-w-0 flex-1">
-      <span className="block text-body font-medium text-fb-text leading-snug line-clamp-2 [overflow-wrap:anywhere]">
-        {set.title}
+      <span className="block truncate text-sm font-medium text-fb-text">
+        {displayTitle(set.title)}
       </span>
-      <span className="block text-sm text-fb-text-2">{meta}</span>
+      <span className="block text-xs text-fb-text-2">{meta}</span>
     </span>
   </button>
 );
@@ -272,9 +346,17 @@ export const ApiBankView: React.FC = () => {
     const params = new URLSearchParams(location.search);
     const sessionId = Number(params.get('session'));
     const subjectId = Number(params.get('subject'));
-    if (params.has('session') && Number.isSafeInteger(sessionId) && sessionId > 0)
+    if (
+      params.has('session') &&
+      Number.isSafeInteger(sessionId) &&
+      sessionId > 0
+    )
       setPracticeId(sessionId);
-    if (params.has('subject') && Number.isSafeInteger(subjectId) && subjectId > 0)
+    if (
+      params.has('subject') &&
+      Number.isSafeInteger(subjectId) &&
+      subjectId > 0
+    )
       setSubject(`id:${subjectId}`);
   }, [location.search]);
 
@@ -293,7 +375,8 @@ export const ApiBankView: React.FC = () => {
   const closeExamRoom = () => {
     const id = practiceId;
     setPracticeId(null);
-    if (new URLSearchParams(location.search).has('session')) navigate('/bank', { replace: true });
+    if (new URLSearchParams(location.search).has('session'))
+      navigate('/bank', { replace: true });
     if (id === null) return;
     // Cập nhật số liệu của bộ vừa làm (đã làm / đánh giá / bình luận).
     refreshSetStats(queryClient, currentUser.id, id).catch(() => undefined);
@@ -410,21 +493,6 @@ export const ApiBankView: React.FC = () => {
     [sets, liveStats],
   );
 
-  const mostDiscussed = useMemo(
-    () =>
-      (sets ?? [])
-        .map((set) => ({ set, s: liveStats(set.sessionId) }))
-        .filter(({ s }) => s && s.ratingCount + s.commentCount > 0)
-        .sort(
-          (a, b) =>
-            b.s!.ratingCount +
-            b.s!.commentCount -
-            (a.s!.ratingCount + a.s!.commentCount),
-        )
-        .slice(0, 5),
-    [sets, liveStats],
-  );
-
   const suggestions = useMemo(
     () =>
       [...(sets ?? [])]
@@ -433,7 +501,7 @@ export const ApiBankView: React.FC = () => {
           return s && s.questionCount > 0 && progressOf(s) === 'NOT_STARTED';
         })
         .sort(byNewest)
-        .slice(0, 3),
+        .slice(0, 5),
     [sets, liveStats],
   );
 
@@ -465,11 +533,6 @@ export const ApiBankView: React.FC = () => {
       <aside className="scrollbar-hover hidden lg:block w-[280px] xl:w-[300px] shrink-0 sticky top-18 max-h-[calc(100vh-5rem)] overflow-y-auto select-none space-y-3">
         <div className="bg-fb-card rounded-lg shadow-fb-card p-3">
           <h1 className="px-1 text-2xl font-bold text-fb-text">Ngân hàng đề</h1>
-          <p className="mt-1 flex items-start gap-1.5 px-1 text-xs leading-relaxed text-fb-text-2">
-            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            Bộ câu hỏi hiện ở đây sau khi giảng viên xem xét xong. Làm thử, chấm
-            sao và bình luận để góp ý cho bạn học.
-          </p>
           {searchInput('mt-3')}
           <button
             onClick={() => setActiveTab('propose')}
@@ -504,81 +567,6 @@ export const ApiBankView: React.FC = () => {
             </>
           )}
         </div>
-
-        <section className="bg-fb-card rounded-lg shadow-fb-card p-3 space-y-3">
-          <h2 className="px-1 text-card-title font-semibold text-fb-text">
-            Tiến độ của bạn
-          </h2>
-          {statsPending || (sets === null && !error) ? (
-            <SkeletonRegion
-              label="Đang tải tiến độ…"
-              className="space-y-3 px-1"
-            >
-              <div className="flex items-end justify-between">
-                <Skeleton className="h-7 w-32" />
-                <Skeleton className="h-3 w-8" />
-              </div>
-              <Skeleton className="h-1.5 w-full rounded-full" />
-              <div className="space-y-3 pt-1">
-                <div className="flex justify-between">
-                  <Skeleton className="h-3 w-24" />
-                  <Skeleton className="h-3 w-10" />
-                </div>
-                <div className="flex justify-between">
-                  <Skeleton className="h-3 w-24" />
-                  <Skeleton className="h-3 w-10" />
-                </div>
-              </div>
-            </SkeletonRegion>
-          ) : (
-            <>
-              <div className="space-y-2 px-1">
-                <p className="flex items-baseline justify-between gap-2">
-                  <span className="text-sm text-fb-text-2">
-                    <span className="text-2xl font-bold text-fb-text tabular-nums">
-                      {myProgress.done}
-                    </span>
-                    <span className="text-fb-text-2">/{myProgress.total}</span>{' '}
-                    bộ đã làm xong
-                  </span>
-                  <span className="text-sm font-semibold text-fb-success tabular-nums">
-                    {myProgress.total > 0
-                      ? Math.round((myProgress.done / myProgress.total) * 100)
-                      : 0}
-                    %
-                  </span>
-                </p>
-                <ProgressBar value={myProgress.done} max={myProgress.total} />
-              </div>
-              <dl className="divide-y divide-fb-divider px-1 text-sm">
-                <div className="flex items-center justify-between py-2">
-                  <dt className="flex items-center gap-2 text-fb-text-2">
-                    <PlayCircle
-                      className="h-4 w-4 text-fb-blue"
-                      aria-hidden="true"
-                    />
-                    Đang làm dở
-                  </dt>
-                  <dd className="font-semibold text-fb-text tabular-nums">
-                    {myProgress.inProgress} bộ
-                  </dd>
-                </div>
-                <div className="flex items-center justify-between py-2">
-                  <dt className="flex items-center gap-2 text-fb-text-2">
-                    <Star
-                      className="h-4 w-4 text-fb-warning"
-                      aria-hidden="true"
-                    />
-                    Đã chấm sao
-                  </dt>
-                  <dd className="font-semibold text-fb-text tabular-nums">
-                    {myProgress.rated} bộ
-                  </dd>
-                </div>
-              </dl>
-            </>
-          )}
-        </section>
       </aside>
 
       {/* CỘT GIỮA: DANH SÁCH BỘ CÂU HỎI */}
@@ -592,7 +580,7 @@ export const ApiBankView: React.FC = () => {
               </h2>
               {sets ? (
                 <p className="text-sm text-fb-text-2">
-                  {visibleSets.length} bộ câu hỏi do sinh viên đóng góp
+                  {visibleSets.length} bộ
                 </p>
               ) : (
                 <Skeleton className="mt-1.5 h-3 w-56" />
@@ -711,6 +699,7 @@ export const ApiBankView: React.FC = () => {
               key={set.sessionId}
               set={set}
               stats={stats[set.sessionId]}
+              showSubject={subject === ALL}
               onPractice={() => setPracticeId(set.sessionId)}
             />
           ))}
@@ -741,85 +730,92 @@ export const ApiBankView: React.FC = () => {
         )}
       </main>
 
-      {/* CỘT PHẢI: LÀM TIẾP, THẢO LUẬN NHIỀU, GỢI Ý */}
-      <aside className="scrollbar-hover hidden xl:block w-[300px] shrink-0 sticky top-18 max-h-[calc(100vh-5rem)] overflow-y-auto space-y-3">
-        {continueSets.length > 0 && (
-          <section className="bg-fb-card rounded-lg shadow-fb-card p-3">
-            <h2 className="px-1 mb-1 text-card-title font-semibold text-fb-text">
-              Làm tiếp
-            </h2>
-            {continueSets.map((set) => {
-              const s = liveStats(set.sessionId)!;
-              return (
-                <SideSetItem
-                  key={set.sessionId}
-                  set={set}
-                  onClick={() => setPracticeId(set.sessionId)}
-                  meta={
-                    <span className="mt-1 block space-y-1">
-                      <span className="block">
-                        Đã làm {s.answeredCount}/{s.questionCount} câu
-                      </span>
-                      <ProgressBar
-                        value={s.answeredCount}
-                        max={s.questionCount}
-                      />
-                    </span>
+      {/* CỘT PHẢI: TIẾN ĐỘ (VÒNG TRÒN) + LÀM TIẾP / GỢI Ý */}
+      <aside className="scrollbar-hover hidden xl:block w-[280px] shrink-0 sticky top-18 max-h-[calc(100vh-5rem)] overflow-y-auto space-y-3">
+        <section className="bg-fb-card rounded-lg shadow-fb-card p-4">
+          {statsPending || (sets === null && !error) ? (
+            <SkeletonRegion
+              label="Đang tải tiến độ…"
+              className="flex items-center gap-4"
+            >
+              <Skeleton className="h-20 w-20 rounded-full" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-2/3" />
+              </div>
+            </SkeletonRegion>
+          ) : (
+            <div className="flex items-center gap-4">
+              <ProgressRing done={myProgress.done} total={myProgress.total} />
+              <dl className="flex-1 space-y-2 text-sm">
+                <MiniStat
+                  icon={
+                    <CheckCircle2
+                      className="h-4 w-4 text-fb-success"
+                      aria-hidden="true"
+                    />
                   }
+                  label="Đã xong"
+                  value={myProgress.done}
                 />
-              );
-            })}
-          </section>
-        )}
-
-        <section className="bg-fb-card rounded-lg shadow-fb-card p-3">
-          <h2 className="px-1 mb-1 text-card-title font-semibold text-fb-text">
-            Được thảo luận nhiều
-          </h2>
-          {(statsPending || (sets === null && !error)) &&
-            mostDiscussed.length === 0 && (
-              <SkeletonRows count={3} avatar="square" />
-            )}
-          {!statsPending && sets !== null && mostDiscussed.length === 0 && (
-            <p className="px-1 py-2 text-sm text-fb-text-2">
-              Chưa có bộ câu hỏi nào được đánh giá hay bình luận.
-            </p>
+                <MiniStat
+                  icon={
+                    <PlayCircle
+                      className="h-4 w-4 text-fb-blue"
+                      aria-hidden="true"
+                    />
+                  }
+                  label="Đang làm"
+                  value={myProgress.inProgress}
+                />
+                <MiniStat
+                  icon={
+                    <Star
+                      className="h-4 w-4 text-fb-warning"
+                      aria-hidden="true"
+                    />
+                  }
+                  label="Đã chấm"
+                  value={myProgress.rated}
+                />
+              </dl>
+            </div>
           )}
-          {mostDiscussed.map(({ set, s }) => (
-            <SideSetItem
-              key={set.sessionId}
-              set={set}
-              onClick={() => setPracticeId(set.sessionId)}
-              meta={
-                <span className="flex items-center gap-3">
-                  <span className="flex items-center gap-1">
-                    <Star className="w-3.5 h-3.5" aria-hidden="true" />
-                    {s!.ratingCount} đánh giá
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <MessageCircle className="w-3.5 h-3.5" aria-hidden="true" />
-                    {s!.commentCount}
-                  </span>
-                </span>
-              }
-            />
-          ))}
         </section>
 
-        {suggestions.length > 0 && (
-          <section className="bg-fb-card rounded-lg shadow-fb-card p-3">
-            <h2 className="flex items-center gap-1.5 px-1 mb-1 text-card-title font-semibold text-fb-text">
-              <Sparkles className="h-4 w-4 text-fb-blue" aria-hidden="true" />
-              Bạn chưa làm
+        {(continueSets.length > 0 || suggestions.length > 0) && (
+          <section className="bg-fb-card rounded-lg shadow-fb-card p-2">
+            <h2 className="px-2 pt-1 pb-1 text-sm font-semibold text-fb-text-2">
+              {continueSets.length > 0 ? 'Làm tiếp' : 'Thử bộ mới'}
             </h2>
-            {suggestions.map((set) => (
-              <SideSetItem
-                key={set.sessionId}
-                set={set}
-                onClick={() => setPracticeId(set.sessionId)}
-                meta={`${set.subjectName} · ${liveStats(set.sessionId)?.questionCount ?? 0} câu`}
-              />
-            ))}
+            {continueSets.length > 0
+              ? continueSets.map((set) => {
+                  const s = liveStats(set.sessionId)!;
+                  return (
+                    <SideSetItem
+                      key={set.sessionId}
+                      set={set}
+                      onClick={() => setPracticeId(set.sessionId)}
+                      meta={
+                        <span className="mt-1 flex items-center gap-2 tabular-nums">
+                          <ProgressBar
+                            value={s.answeredCount}
+                            max={s.questionCount}
+                          />
+                          {s.answeredCount}/{s.questionCount}
+                        </span>
+                      }
+                    />
+                  );
+                })
+              : suggestions.map((set) => (
+                  <SideSetItem
+                    key={set.sessionId}
+                    set={set}
+                    onClick={() => setPracticeId(set.sessionId)}
+                    meta={`${liveStats(set.sessionId)?.questionCount ?? 0} câu`}
+                  />
+                ))}
           </section>
         )}
       </aside>
