@@ -1,19 +1,47 @@
 import React, { useState, useEffect } from 'react';
-import { X, Edit3, HelpCircle, CheckCircle2 } from 'lucide-react';
-import { SessionQuestionReviewDto, EditQuestionRequest, EditQuestionResponse } from '../../../api';
+import { X, Edit3, HelpCircle, CheckCircle2, Plus } from 'lucide-react';
+import {
+  EditQuestionRequest,
+  EditQuestionResponse,
+  TopicResponse,
+} from '../../../api';
 import { proposalGateway } from '../../proposals/proposalGateway';
+import {
+  isClassifiedDifficulty,
+  normalizeDifficulty,
+  QUESTION_DIFFICULTY_OPTIONS,
+  type QuestionDifficultyValue,
+} from '../../proposals/difficulty';
+
+export interface EditedQuestionValues {
+  content: string;
+  options: { key: string; text: string; is_correct: boolean }[];
+  explanation: string;
+  difficulty: QuestionDifficultyValue;
+  topic_id?: number;
+  topic_name?: string;
+}
 
 interface EditQuestionModalProps {
   question: any;
   sessionId?: string;
+  subjectId?: number;
+  topics?: TopicResponse[];
+  onTopicCreated?: (topic: TopicResponse) => void;
   isOpen: boolean;
   onClose: () => void;
-  onSaved?: (updatedQuestion: EditQuestionResponse, newContent: { content: string; options: any[]; explanation: string }) => void;
+  onSaved?: (
+    updatedQuestion: EditQuestionResponse,
+    newContent: EditedQuestionValues,
+  ) => void;
   showToast?: (message: string, type: 'success' | 'info' | 'warning' | 'error') => void;
 }
 
 export const EditQuestionModal: React.FC<EditQuestionModalProps> = ({
   question,
+  subjectId,
+  topics: externalTopics,
+  onTopicCreated,
   isOpen,
   onClose,
   onSaved,
@@ -27,15 +55,43 @@ export const EditQuestionModal: React.FC<EditQuestionModalProps> = ({
     { key: 'D', text: '', is_correct: false },
   ]);
   const [explanation, setExplanation] = useState('');
+  const [difficulty, setDifficulty] = useState<QuestionDifficultyValue>('UNCLASSIFIED');
+  const [topicId, setTopicId] = useState<number | ''>('');
+  const [localTopics, setLocalTopics] = useState<TopicResponse[]>([]);
+  const [newTopicName, setNewTopicName] = useState('');
+  const [creatingTopic, setCreatingTopic] = useState(false);
   const [autoApprove, setAutoApprove] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  const topics = externalTopics && externalTopics.length > 0 ? externalTopics : localTopics;
+
+  useEffect(() => {
+    if (!isOpen || !subjectId || (externalTopics && externalTopics.length > 0)) {
+      return;
+    }
+    let cancelled = false;
+    proposalGateway
+      .getSubjectTopics(subjectId)
+      .then((list) => {
+        if (!cancelled) setLocalTopics(list.filter((t) => t.active !== false));
+      })
+      .catch(() => {
+        if (!cancelled) setLocalTopics([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, subjectId, externalTopics]);
 
   useEffect(() => {
     if (question) {
       setContent(question.content || '');
       setExplanation(question.explanation || '');
-      setAutoApprove(false);
+      setDifficulty(normalizeDifficulty(question.difficulty));
+      setTopicId(question.topic_id ?? '');
+      setNewTopicName('');
+      setAutoApprove(question.status === 'APPROVED');
       setValidationError(null);
 
       // Populate options from question
@@ -81,6 +137,36 @@ export const EditQuestionModal: React.FC<EditQuestionModalProps> = ({
     );
   };
 
+  const handleCreateTopic = async () => {
+    if (!subjectId || !newTopicName.trim() || creatingTopic) return;
+    setCreatingTopic(true);
+    try {
+      const created = await proposalGateway.createSubjectTopic(
+        subjectId,
+        newTopicName.trim(),
+      );
+      if (created?.id != null) {
+        const topicItem: TopicResponse = {
+          id: created.id,
+          name: created.name ?? newTopicName.trim(),
+          active: true,
+        };
+        setLocalTopics((prev) => [...prev, topicItem]);
+        onTopicCreated?.(topicItem);
+        setTopicId(created.id);
+        setNewTopicName('');
+        showToast?.(`Đã tạo chủ đề "${topicItem.name}"`, 'success');
+      }
+    } catch (err: unknown) {
+      showToast?.(
+        err instanceof Error ? err.message : 'Không thể tạo chủ đề mới.',
+        'error',
+      );
+    } finally {
+      setCreatingTopic(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setValidationError(null);
@@ -102,6 +188,13 @@ export const EditQuestionModal: React.FC<EditQuestionModalProps> = ({
       return;
     }
 
+    if (autoApprove && !isClassifiedDifficulty(difficulty)) {
+      setValidationError(
+        'Vui lòng phân loại độ khó (Dễ / Trung bình / Khó) trước khi phê duyệt câu hỏi vào ngân hàng đề.',
+      );
+      return;
+    }
+
     const qId =
       question.question_id ??
       (typeof question.id === 'number' ? question.id : parseInt(question.id, 10));
@@ -113,23 +206,35 @@ export const EditQuestionModal: React.FC<EditQuestionModalProps> = ({
 
     setIsSubmitting(true);
     try {
+      const normalizedOptions = options.map((opt) => ({
+        key: opt.key,
+        text: opt.text.trim(),
+        is_correct: opt.is_correct,
+      }));
+      const resolvedTopicId = topicId === '' ? undefined : Number(topicId);
+      const selectedTopic = topics.find((t) => t.id === resolvedTopicId);
       const payload: EditQuestionRequest = {
         content: content.trim(),
-        options: options.map((opt) => ({
-          key: opt.key,
-          text: opt.text.trim(),
-          is_correct: opt.is_correct,
-        })),
+        options: normalizedOptions,
         explanation: explanation.trim() || undefined,
+        difficulty,
+        ...(resolvedTopicId !== undefined
+          ? { topic_id: resolvedTopicId }
+          : question.topic_id != null
+            ? { clear_topic: true }
+            : {}),
         auto_approve: autoApprove,
       };
 
       const res = await proposalGateway.editQuestion(qId, payload);
-      showToast?.('Đã lưu chỉnh sửa câu hỏi thành công', 'success');
+      showToast?.('Đã lưu chỉnh sửa & phân loại câu hỏi thành công', 'success');
       onSaved?.(res, {
         content: payload.content || '',
-        options: payload.options || [],
+        options: normalizedOptions,
         explanation: payload.explanation || '',
+        difficulty,
+        topic_id: resolvedTopicId,
+        topic_name: selectedTopic?.name,
       });
       onClose();
     } catch (err: unknown) {
@@ -258,6 +363,71 @@ export const EditQuestionModal: React.FC<EditQuestionModalProps> = ({
             />
           </div>
 
+          {/* Classification: Difficulty & Topic */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-lg bg-fb-input border border-fb-divider">
+            <div>
+              <label className="block text-xs font-bold text-fb-text mb-1">
+                Phân loại độ khó:
+              </label>
+              <select
+                value={difficulty}
+                onChange={(e) =>
+                  setDifficulty(e.target.value as QuestionDifficultyValue)
+                }
+                disabled={isSubmitting}
+                className="w-full px-3 py-2 rounded-lg border border-fb-divider bg-fb-card text-xs font-semibold text-fb-text focus:outline-hidden"
+              >
+                {QUESTION_DIFFICULTY_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-fb-text">
+                Chủ đề (Topic):
+              </label>
+              <select
+                value={topicId}
+                onChange={(e) =>
+                  setTopicId(e.target.value ? Number(e.target.value) : '')
+                }
+                disabled={isSubmitting}
+                className="w-full px-3 py-2 rounded-lg border border-fb-divider bg-fb-card text-xs font-semibold text-fb-text focus:outline-hidden"
+              >
+                <option value="">Chưa gắn chủ đề</option>
+                {topics.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+              {subjectId && (
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="text"
+                    value={newTopicName}
+                    onChange={(e) => setNewTopicName(e.target.value)}
+                    placeholder="Hoặc tạo chủ đề mới..."
+                    disabled={isSubmitting || creatingTopic}
+                    className="flex-1 min-w-0 px-2.5 py-1 rounded-md border border-fb-divider bg-fb-card text-xs text-fb-text focus:outline-hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void handleCreateTopic()}
+                    disabled={!newTopicName.trim() || creatingTopic || isSubmitting}
+                    className="px-2.5 py-1 rounded-md bg-fb-blue text-white text-xs font-semibold hover:bg-fb-blue-hover disabled:opacity-50 inline-flex items-center gap-1 cursor-pointer shrink-0"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>Thêm</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Auto Approve Checkbox */}
           <div className="p-3.5 rounded-lg bg-fb-blue-soft/70 border border-fb-blue/30 flex items-start gap-2.5">
             <input
@@ -273,7 +443,7 @@ export const EditQuestionModal: React.FC<EditQuestionModalProps> = ({
             >
               <span className="font-bold block">Tự động phê duyệt vào ngân hàng đề (auto_approve)</span>
               <span>
-                Nếu tích chọn, câu hỏi sẽ được phê duyệt ngay sau khi lưu thay vì giữ ở trạng thái chờ duyệt.
+                Nếu tích chọn, câu hỏi bắt buộc phải được phân loại độ khó (Dễ / Trung bình / Khó) và sẽ được phê duyệt ngay sau khi lưu.
               </span>
             </label>
           </div>

@@ -25,6 +25,10 @@ import {
 } from 'lucide-react';
 import { MainTab } from '../../features/demo/types';
 import { proposalGateway } from '../../features/proposals/proposalGateway';
+import {
+  countPendingReviewable,
+  useReviewableSessions,
+} from '../../features/proposals/reviewQuery';
 import { useQueryClient } from '@tanstack/react-query';
 import { isApiSession } from '../../api/session-mode';
 import { prefetchBank } from '../../features/bank/bankQuery';
@@ -67,6 +71,11 @@ export const Navbar: React.FC = () => {
   const prefetchBankData = () => {
     if (isApiSession()) void prefetchBank(queryClient, currentUser.id);
   };
+  const apiSession = isApiSession();
+  const reviewableQuery = useReviewableSessions(
+    currentUser.id,
+    apiSession && role === 'LECTURER',
+  );
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMessengerOpen, setIsMessengerOpen] = useState(false);
@@ -103,9 +112,16 @@ export const Navbar: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Phiên demo: đếm từ kho demo dùng chung; phiên thật: chưa có số liệu → 0.
+  // Phiên thật: đếm từ GET /lecturer/sessions/reviewable; phiên demo: đếm từ kho demo.
   const mockPendingCount = proposalGateway.countPendingSessions() ?? 0;
-  const pendingSessionsCount = Math.max(sessions.filter((s) => s.status === 'PENDING').length, mockPendingCount);
+  const pendingSessionsCount = apiSession
+    ? role === 'LECTURER'
+      ? countPendingReviewable(reviewableQuery.data)
+      : 0
+    : Math.max(
+        sessions.filter((s) => s.status === 'PENDING').length,
+        mockPendingCount,
+      );
   const needEditCount = questions.filter((q) => q.status === 'NEED_EDIT').length;
   const unreadMessagesCount = conversations.reduce((acc, c) => acc + c.unreadCount, 0);
 

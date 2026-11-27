@@ -103,6 +103,7 @@ export function useAuthSession(notify: Notify) {
     tokenStore.set(null);
     // Không để lại dữ liệu của tài khoản này cho người dùng sau (máy dùng chung).
     queryClient.removeQueries({ queryKey: ['bank'] });
+    queryClient.removeQueries({ queryKey: ['lecturer-reviewable-sessions'] });
     clearStoredSnapshots();
     setSessionHint(false);
     setSessionKind(null);

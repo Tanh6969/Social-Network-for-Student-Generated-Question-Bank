@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../../demo/context/AppContext';
 import { examsApi, errorMessage, CourseClassResponse } from '../../../api';
-import { proposalGateway } from '../../proposals/proposalGateway';
+import { useReviewableSessions } from '../../proposals/reviewQuery';
 import { ClassStudentsModal } from '../../lecturer/components/ClassStudentsModal';
 import { ChevronRight, ClipboardCheck, Gamepad2 } from 'lucide-react';
 import { SkeletonRows } from '../../../shared/components/Skeleton';
@@ -17,21 +17,20 @@ const SUBJECT_COLORS = [
 ];
 
 export const LecturerSidebarSections: React.FC = () => {
-  const { setActiveTab } = useApp();
-  const [pendingCount, setPendingCount] = useState<string | null>(null);
+  const { setActiveTab, currentUser, role } = useApp();
+  const reviewableQuery = useReviewableSessions(
+    currentUser.id,
+    role === 'LECTURER',
+  );
+  const pendingCount = reviewableQuery.data
+    ? String(reviewableQuery.data.length)
+    : null;
   const [classes, setClasses] = useState<CourseClassResponse[] | null>(null);
   const [openClass, setOpenClass] = useState<CourseClassResponse | null>(null);
   const [classesError, setClassesError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    // Phiên PENDING/REVIEWING (đọc hết các trang; phiên demo dùng kho demo)
-    proposalGateway
-      .getPendingSessions()
-      .then((items) => {
-        if (!cancelled) setPendingCount(String(items.length));
-      })
-      .catch(() => !cancelled && setPendingCount(null));
     examsApi
       .getMyCourseClasses()
       .then((data) => !cancelled && setClasses(data))

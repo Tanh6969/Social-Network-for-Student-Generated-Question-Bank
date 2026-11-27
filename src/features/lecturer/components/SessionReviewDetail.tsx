@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Filter,
+  Tag,
 } from 'lucide-react';
 import {
   PendingSessionItemDto,
@@ -25,11 +26,23 @@ import {
   SessionQuestionReviewDto,
   DuplicateWarning,
   EditQuestionResponse,
+  TopicResponse,
 } from '../../../api';
 import { proposalGateway } from '../../proposals/proposalGateway';
+import {
+  difficultyBadgeClasses,
+  difficultyLabel,
+  isClassifiedDifficulty,
+  normalizeDifficulty,
+  QUESTION_DIFFICULTY_OPTIONS,
+  type QuestionDifficultyValue,
+} from '../../proposals/difficulty';
 import { RejectReasonModal } from './RejectReasonModal';
 import { CompleteReviewModal } from './CompleteReviewModal';
-import { EditQuestionModal } from './EditQuestionModal';
+import {
+  EditQuestionModal,
+  type EditedQuestionValues,
+} from './EditQuestionModal';
 import { QuestionAiRefineModal, type RefinedContent } from './QuestionAiRefineModal';
 import type { BasketItem } from './ReviewBasketBar';
 import { QuestionListSkeleton } from '../../../shared/components/Skeleton';
@@ -44,6 +57,8 @@ interface SessionReviewDetailProps {
   basketIds: number[];
   onToggleBasket: (item: BasketItem) => void;
   onAddToBasket: (items: BasketItem[]) => void;
+  /** Đồng bộ độ khó mới vào giỏ khi giảng viên phân loại câu hỏi. */
+  onQuestionClassified?: (questionId: number, difficulty: QuestionDifficultyValue) => void;
   /** Báo cho giỏ biết các câu đã được quyết định (chọn/không chọn) để gỡ khỏi giỏ. */
   onQuestionsDecided: (questionIds: number[]) => void;
   /** Tăng giá trị để tải lại phiên (ví dụ sau khi xử lý từ giỏ). */
@@ -59,6 +74,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
   basketIds,
   onToggleBasket,
   onAddToBasket,
+  onQuestionClassified,
   onQuestionsDecided,
   refreshKey = 0,
 }) => {
@@ -66,6 +82,8 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [questions, setQuestions] = useState<SessionQuestionReviewDto[]>([]);
   const [duplicateWarnings, setDuplicateWarnings] = useState<DuplicateWarning[]>([]);
+  const [subjectTopics, setSubjectTopics] = useState<TopicResponse[]>([]);
+  const [classifyingId, setClassifyingId] = useState<number | null>(null);
 
 
   // Action modals
@@ -111,6 +129,25 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
     fetchSessionDetail();
   }, [fetchSessionDetail, refreshKey]);
 
+  useEffect(() => {
+    if (!session.subject_id) {
+      setSubjectTopics([]);
+      return;
+    }
+    let cancelled = false;
+    proposalGateway
+      .getSubjectTopics(session.subject_id)
+      .then((list) => {
+        if (!cancelled) setSubjectTopics(list.filter((t) => t.active !== false));
+      })
+      .catch(() => {
+        if (!cancelled) setSubjectTopics([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [session.subject_id]);
+
   // Ngân hàng đích = ngân hàng đề của môn mà sinh viên chọn khi đăng bộ (Swagger
   // không cho đổi môn khi duyệt), nên mọi nút đều ghi rõ tên môn.
   const bankName = session.topic || 'môn của bộ câu hỏi này';
@@ -123,6 +160,7 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
     session_id: session.session_id!,
     session_title: session.title || `Bộ câu hỏi #${session.session_id}`,
     topic: session.topic,
+    difficulty: normalizeDifficulty(q.difficulty),
   });
   const pendingInBasket = pendingQuestions.filter(
     (q) => q.question_id && basketIds.includes(q.question_id),
@@ -138,9 +176,22 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
     );
   };
 
-  // Approve questions
+  // Approve questions — bắt buộc phải phân loại độ khó (Dễ / Trung bình / Khó)
   const handleApprove = async (ids: number[]) => {
     if (ids.length === 0) return;
+    const targets = questions.filter(
+      (q) => q.question_id && ids.includes(q.question_id),
+    );
+    const unclassifiedCount = targets.filter(
+      (q) => !isClassifiedDifficulty(q.difficulty),
+    ).length;
+    if (unclassifiedCount > 0) {
+      showToast(
+        'Vui lòng phân loại độ khó (Dễ / Trung bình / Khó) trước khi chọn câu hỏi vào ngân hàng đề.',
+        'warning',
+      );
+      return;
+    }
     setIsApproving(true);
     try {
       const res = await proposalGateway.approveQuestions(ids);
@@ -192,8 +243,11 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
   // Edit question saved
   const handleQuestionEdited = (
     updatedResponse: EditQuestionResponse,
-    newContent: { content: string; options: any[]; explanation: string },
+    newContent: EditedQuestionValues,
   ) => {
+    if (updatedResponse.question_id != null) {
+      onQuestionClassified?.(updatedResponse.question_id, newContent.difficulty);
+    }
     setQuestions((prev) =>
       prev.map((q) => {
         if (q.question_id === updatedResponse.question_id) {
@@ -202,12 +256,82 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
             content: newContent.content,
             options: newContent.options,
             explanation: newContent.explanation,
+            difficulty: newContent.difficulty,
+            topic_id: newContent.topic_id,
+            topic_name: newContent.topic_name,
             status: (updatedResponse.status as any) || q.status,
           };
         }
         return q;
       }),
     );
+  };
+
+  // Phân loại nhanh độ khó / chủ đề trực tiếp trên thẻ câu hỏi
+  const handleQuickClassify = async (
+    q: SessionQuestionReviewDto,
+    patch: { difficulty?: QuestionDifficultyValue; topic_id?: number | '' },
+  ) => {
+    if (!q.question_id || classifyingId === q.question_id) return;
+    const nextDifficulty =
+      patch.difficulty ?? normalizeDifficulty(q.difficulty);
+    if (
+      q.status === 'APPROVED' &&
+      patch.difficulty !== undefined &&
+      !isClassifiedDifficulty(nextDifficulty)
+    ) {
+      showToast(
+        'Câu đã chọn vào ngân hàng đề bắt buộc phải có độ khó (Dễ / Trung bình / Khó).',
+        'warning',
+      );
+      return;
+    }
+    setClassifyingId(q.question_id);
+    try {
+      const hasTopicPatch = Object.prototype.hasOwnProperty.call(patch, 'topic_id');
+      const nextTopicId = hasTopicPatch
+        ? patch.topic_id === ''
+          ? undefined
+          : patch.topic_id
+        : q.topic_id;
+      const matchedTopic = subjectTopics.find((t) => t.id === nextTopicId);
+
+      const res = await proposalGateway.editQuestion(q.question_id, {
+        difficulty: nextDifficulty,
+        ...(hasTopicPatch
+          ? nextTopicId !== undefined
+            ? { topic_id: nextTopicId }
+            : q.topic_id != null
+              ? { clear_topic: true }
+              : {}
+          : {}),
+        ...(q.status === 'APPROVED' ? { auto_approve: true } : {}),
+      });
+      onQuestionClassified?.(q.question_id, nextDifficulty);
+      setQuestions((prev) =>
+        prev.map((item) =>
+          item.question_id === q.question_id
+            ? {
+                ...item,
+                difficulty: nextDifficulty,
+                topic_id: nextTopicId,
+                topic_name: hasTopicPatch
+                  ? matchedTopic?.name
+                  : item.topic_name,
+                status: (res.status as any) || item.status,
+              }
+            : item,
+        ),
+      );
+      showToast('Đã cập nhật phân loại câu hỏi', 'success');
+    } catch (err: unknown) {
+      showToast(
+        err instanceof Error ? err.message : 'Không thể phân loại câu hỏi.',
+        'error',
+      );
+    } finally {
+      setClassifyingId(null);
+    }
   };
 
   // Áp dụng bản tinh chỉnh của AI vào câu hỏi đang hiển thị
@@ -563,6 +687,17 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                               ID: #{q.question_id}
                             </span>
                           )}
+                          <span
+                            className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${difficultyBadgeClasses(q.difficulty)}`}
+                          >
+                            {difficultyLabel(q.difficulty)}
+                          </span>
+                          {q.topic_name && (
+                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-fb-blue-soft text-fb-blue border border-fb-blue/30 inline-flex items-center gap-1">
+                              <Tag className="w-3 h-3" />
+                              <span>{q.topic_name}</span>
+                            </span>
+                          )}
                         </div>
 
                         {/* Status Badge */}
@@ -682,9 +817,68 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                         </div>
                       )}
 
-                      {/* Question Single Actions */}
+                      {/* Quick Classification + Question Single Actions */}
                       {!readOnly && (
-                        <div className="pt-3 border-t border-fb-divider flex flex-wrap items-center justify-end gap-2 text-xs">
+                        <div className="pt-3 border-t border-fb-divider flex flex-wrap items-center justify-between gap-2 text-xs">
+                          {q.question_id ? (
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-fb-text-2 font-semibold">
+                                Phân loại:
+                              </span>
+                              <select
+                                aria-label={`Độ khó câu ${globalIdx + 1}`}
+                                value={normalizeDifficulty(q.difficulty)}
+                                disabled={classifyingId === q.question_id}
+                                onChange={(e) =>
+                                  void handleQuickClassify(q, {
+                                    difficulty: e.target.value as QuestionDifficultyValue,
+                                  })
+                                }
+                                title={
+                                  isPending && !isClassifiedDifficulty(q.difficulty)
+                                    ? 'Bắt buộc chọn độ khó (Dễ / Trung bình / Khó) trước khi đưa vào ngân hàng đề'
+                                    : undefined
+                                }
+                                className={`px-2.5 py-1.5 rounded-lg border font-semibold focus:outline-hidden cursor-pointer disabled:opacity-50 ${
+                                  isPending && !isClassifiedDifficulty(q.difficulty)
+                                    ? 'border-fb-warning bg-fb-warning-soft text-fb-warning'
+                                    : 'border-fb-divider bg-fb-input text-fb-text'
+                                }`}
+                              >
+                                {QUESTION_DIFFICULTY_OPTIONS.map((opt) => (
+                                  <option key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                  </option>
+                                ))}
+                              </select>
+                              <select
+                                aria-label={`Chủ đề câu ${globalIdx + 1}`}
+                                value={q.topic_id ?? ''}
+                                disabled={classifyingId === q.question_id || subjectTopics.length === 0}
+                                onChange={(e) =>
+                                  void handleQuickClassify(q, {
+                                    topic_id: e.target.value ? Number(e.target.value) : '',
+                                  })
+                                }
+                                className="px-2.5 py-1.5 rounded-lg border border-fb-divider bg-fb-input text-fb-text font-semibold focus:outline-hidden cursor-pointer disabled:opacity-50 max-w-[180px]"
+                              >
+                                <option value="">
+                                  {subjectTopics.length === 0
+                                    ? 'Chưa có chủ đề'
+                                    : 'Chưa gắn chủ đề'}
+                                </option>
+                                {subjectTopics.map((t) => (
+                                  <option key={t.id} value={t.id}>
+                                    {t.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          ) : (
+                            <span />
+                          )}
+
+                          <div className="flex flex-wrap items-center justify-end gap-2 ml-auto">
                           {q.question_id && (
                             <button
                               type="button"
@@ -720,13 +914,23 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                                 type="button"
                                 onClick={() => handleApprove([q.question_id!])}
                                 disabled={isApproving}
-                                className="px-3.5 py-1.5 rounded-lg bg-fb-success hover:bg-fb-success/90 text-white font-bold transition shadow-2xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                                title={
+                                  !isClassifiedDifficulty(q.difficulty)
+                                    ? 'Cần phân loại độ khó trước khi chọn vào ngân hàng đề'
+                                    : undefined
+                                }
+                                className={`px-3.5 py-1.5 rounded-lg font-bold transition shadow-2xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50 ${
+                                  !isClassifiedDifficulty(q.difficulty)
+                                    ? 'bg-fb-success/60 text-white hover:bg-fb-success/75'
+                                    : 'bg-fb-success hover:bg-fb-success/90 text-white'
+                                }`}
                               >
                                 <CheckCircle2 className="w-3.5 h-3.5" />
                                 <span>Chọn vào ngân hàng đề {bankName}</span>
                               </button>
                             </>
                           )}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -810,6 +1014,13 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
       <EditQuestionModal
         isOpen={editingQuestion !== null}
         question={editingQuestion}
+        subjectId={session.subject_id}
+        topics={subjectTopics}
+        onTopicCreated={(topic) =>
+          setSubjectTopics((prev) =>
+            prev.some((t) => t.id === topic.id) ? prev : [...prev, topic],
+          )
+        }
         onClose={() => setEditingQuestion(null)}
         onSaved={handleQuestionEdited}
         showToast={showToast}

@@ -15,14 +15,21 @@ import {
   Info,
   FileQuestion,
 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useApp } from '../../demo/context/AppContext';
 import { errorMessage, PendingSessionItemDto, SubjectResponse } from '../../../api';
 import { proposalGateway } from '../../proposals/proposalGateway';
+import {
+  invalidateReviewableSessions,
+  normalizedSessionStatus,
+} from '../../proposals/reviewQuery';
+import { type QuestionDifficultyValue } from '../../proposals/difficulty';
 import { SessionReviewDetail } from './SessionReviewDetail';
 import {
   describeBankGroups,
   groupByBank,
   ReviewBasketBar,
+  unclassifiedBasketItems,
   type BasketItem,
 } from './ReviewBasketBar';
 import { RejectReasonModal } from './RejectReasonModal';
@@ -31,6 +38,7 @@ type ReviewSidebarTab = 'PENDING' | 'REVIEWING' | 'HISTORY';
 
 export const ReviewDashboardView: React.FC = () => {
   const { showToast } = useApp();
+  const queryClient = useQueryClient();
 
   // Active sidebar tab (exactly 3 tabs as required)
   const [activeTab, setActiveTabSidebar] = useState<ReviewSidebarTab>('PENDING');
@@ -66,10 +74,25 @@ export const ReviewDashboardView: React.FC = () => {
     ]);
   const removeFromBasket = (questionIds: number[]) =>
     setBasket((prev) => prev.filter((i) => !questionIds.includes(i.question_id)));
+  const updateBasketItemDifficulty = (
+    questionId: number,
+    difficulty: QuestionDifficultyValue,
+  ) =>
+    setBasket((prev) =>
+      prev.map((i) => (i.question_id === questionId ? { ...i, difficulty } : i)),
+    );
 
   const approveBasket = async () => {
     const ids = basket.map((i) => i.question_id);
     if (ids.length === 0) return;
+    const unclassified = unclassifiedBasketItems(basket);
+    if (unclassified.length > 0) {
+      showToast(
+        `Có ${unclassified.length} câu trong giỏ chưa phân loại độ khó (Dễ / Trung bình / Khó). Vui lòng phân loại trước khi chọn vào ngân hàng đề.`,
+        'warning',
+      );
+      return;
+    }
     const summary = describeBankGroups(groupByBank(basket));
     setBasketBusy(true);
     try {
@@ -118,7 +141,7 @@ export const ReviewDashboardView: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(6);
 
-  // Fetch pending sessions from GET /sessions/pending
+  // Fetch pending sessions from GET /lecturer/sessions/reviewable
   const fetchSessions = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -128,6 +151,7 @@ export const ReviewDashboardView: React.FC = () => {
         proposalGateway.getReviewHistory(),
       ]);
       setRawSessions([...pending, ...history]);
+      void invalidateReviewableSessions(queryClient);
     } catch (err: unknown) {
       const msg = errorMessage(err, 'Không thể tải danh sách bộ câu hỏi cần xem xét.');
       setError(msg);
@@ -135,7 +159,7 @@ export const ReviewDashboardView: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [showToast]);
+  }, [queryClient, showToast]);
 
   // Fetch subjects for subject filter
   const fetchSubjects = useCallback(async () => {
@@ -158,19 +182,19 @@ export const ReviewDashboardView: React.FC = () => {
     setCurrentPage(1);
   }, [activeTab, searchQuery, selectedSubjectId, sortBy, historyResultFilter, itemsPerPage]);
 
-  // Separate sessions strictly by status
+  // Separate sessions strictly by normalized status
   const pendingSessions = useMemo(
-    () => rawSessions.filter((s) => s.status === 'PENDING'),
+    () => rawSessions.filter((s) => normalizedSessionStatus(s.status) === 'PENDING'),
     [rawSessions]
   );
 
   const reviewingSessions = useMemo(
-    () => rawSessions.filter((s) => s.status === 'REVIEWING'),
+    () => rawSessions.filter((s) => normalizedSessionStatus(s.status) === 'REVIEWING'),
     [rawSessions]
   );
 
   const resolvedSessions = useMemo(
-    () => rawSessions.filter((s) => s.status === 'RESOLVED'),
+    () => rawSessions.filter((s) => normalizedSessionStatus(s.status) === 'RESOLVED'),
     [rawSessions]
   );
 
@@ -201,6 +225,7 @@ export const ReviewDashboardView: React.FC = () => {
     setRawSessions((prev) => prev.filter((s) => s.session_id !== sessionId));
     setBasket((prev) => prev.filter((i) => i.session_id !== sessionId));
     setSelectedSession(null);
+    void invalidateReviewableSessions(queryClient);
     showToast('Bộ câu hỏi đã chuyển sang mục "Đã xem xét xong".', 'info');
   };
 
@@ -422,6 +447,7 @@ export const ReviewDashboardView: React.FC = () => {
               basketIds={basketIds}
               onToggleBasket={toggleBasketItem}
               onAddToBasket={addBasketItems}
+              onQuestionClassified={updateBasketItemDifficulty}
               onQuestionsDecided={removeFromBasket}
               refreshKey={detailRefreshKey}
             />

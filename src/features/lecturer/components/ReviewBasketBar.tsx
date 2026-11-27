@@ -12,6 +12,12 @@ import {
   XCircle,
 } from 'lucide-react';
 
+import {
+  difficultyBadgeClasses,
+  difficultyLabel,
+  isClassifiedDifficulty,
+} from '../../proposals/difficulty';
+
 /** Một câu hỏi giảng viên đã tích chọn (có thể đến từ nhiều bộ câu hỏi khác nhau). */
 export interface BasketItem {
   question_id: number;
@@ -20,6 +26,12 @@ export interface BasketItem {
   session_title: string;
   /** Môn học của bộ câu hỏi = ngân hàng đề đích khi được chọn. */
   topic?: string;
+  /** Độ khó hiện tại của câu hỏi (bắt buộc khác UNCLASSIFIED mới được duyệt). */
+  difficulty?: string;
+}
+
+export function unclassifiedBasketItems(items: BasketItem[]): BasketItem[] {
+  return items.filter((item) => !isClassifiedDifficulty(item.difficulty));
 }
 
 export interface BankGroup {
@@ -64,11 +76,13 @@ interface ReviewBasketBarProps {
 /** Hộp xác nhận: liệt kê từng ngân hàng đích và số câu trước khi chọn. */
 function ConfirmBanksModal({
   groups,
+  unclassifiedCount,
   busy,
   onCancel,
   onConfirm,
 }: {
   groups: BankGroup[];
+  unclassifiedCount: number;
   busy: boolean;
   onCancel: () => void;
   onConfirm: () => void;
@@ -95,6 +109,11 @@ function ConfirmBanksModal({
             câu hỏi.
           </p>
         </div>
+        {unclassifiedCount > 0 && (
+          <div className="mx-4 mt-3 rounded-lg border border-fb-warning/30 bg-fb-warning-soft p-3 text-xs font-medium text-fb-warning">
+            Còn <b>{unclassifiedCount}</b> câu trong giỏ chưa phân loại độ khó (Dễ / Trung bình / Khó). Vui lòng phân loại trước khi xác nhận chọn vào ngân hàng đề.
+          </div>
+        )}
         <ul className="flex-1 space-y-3 overflow-y-auto p-4">
           {groups.map((g) => (
             <li
@@ -110,8 +129,13 @@ function ConfirmBanksModal({
               </p>
               <ul className="mt-2 space-y-1 pl-6 text-xs text-fb-text-2">
                 {g.items.map((item) => (
-                  <li key={item.question_id} className="line-clamp-1">
-                    {item.content}
+                  <li key={item.question_id} className="flex items-center justify-between gap-2">
+                    <span className="line-clamp-1">{item.content}</span>
+                    <span
+                      className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${difficultyBadgeClasses(item.difficulty)}`}
+                    >
+                      {difficultyLabel(item.difficulty)}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -130,7 +154,7 @@ function ConfirmBanksModal({
           <button
             type="button"
             onClick={onConfirm}
-            disabled={busy}
+            disabled={busy || unclassifiedCount > 0}
             className="flex items-center gap-1.5 rounded-lg bg-fb-success px-4 py-2 text-sm font-bold text-white hover:bg-fb-success/90 disabled:opacity-50"
           >
             <CheckCircle2 className="h-4 w-4" /> Xác nhận chọn
@@ -160,6 +184,7 @@ export const ReviewBasketBar: React.FC<ReviewBasketBarProps> = ({
   if (items.length === 0) return null;
 
   const groups = groupByBank(items);
+  const unclassified = unclassifiedBasketItems(items);
 
   return (
     <div className="sticky top-18 z-20 rounded-lg border border-fb-blue/40 bg-fb-card shadow-fb-card">
@@ -173,6 +198,11 @@ export const ReviewBasketBar: React.FC<ReviewBasketBarProps> = ({
           <ShoppingBasket className="h-4 w-4 shrink-0 text-fb-blue" />
           <span>
             Giỏ câu hỏi: <b>{items.length}</b> câu
+            {unclassified.length > 0 && (
+              <span className="ml-1.5 rounded-full bg-fb-warning-soft px-2 py-0.5 text-[11px] font-semibold text-fb-warning">
+                {unclassified.length} chưa phân loại độ khó
+              </span>
+            )}
             <span className="ml-1 font-normal text-fb-text-2">
               {groups.map((g) => ` → ${g.bank}: ${g.items.length}`).join(' ·')}
             </span>
@@ -230,9 +260,14 @@ export const ReviewBasketBar: React.FC<ReviewBasketBarProps> = ({
                       <p className="line-clamp-2 text-fb-text [overflow-wrap:anywhere]">
                         {item.content}
                       </p>
-                      <p className="mt-0.5 text-fb-text-3">
-                        Từ bộ “{item.session_title}”
-                      </p>
+                      <div className="mt-0.5 flex flex-wrap items-center gap-2 text-fb-text-3">
+                        <span>Từ bộ “{item.session_title}”</span>
+                        <span
+                          className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${difficultyBadgeClasses(item.difficulty)}`}
+                        >
+                          {difficultyLabel(item.difficulty)}
+                        </span>
+                      </div>
                     </div>
                     <button
                       type="button"
@@ -254,6 +289,7 @@ export const ReviewBasketBar: React.FC<ReviewBasketBarProps> = ({
       {confirming && (
         <ConfirmBanksModal
           groups={groups}
+          unclassifiedCount={unclassified.length}
           busy={busy}
           onCancel={() => setConfirming(false)}
           onConfirm={() => {
