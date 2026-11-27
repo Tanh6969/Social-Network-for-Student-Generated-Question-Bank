@@ -23,6 +23,8 @@ export type EditQuestionResponse =
   components['schemas']['EditQuestionResponse'];
 export type QuestionOption = components['schemas']['QuestionOption'];
 export type CursorPaginationDto = components['schemas']['CursorPaginationDto'];
+export type ManagedTopicResponse =
+  components['schemas']['ManagedTopicResponse'];
 
 export interface GetPendingSessionsParams {
   after?: number;
@@ -92,5 +94,41 @@ export const reviewApi = {
       params: { path: { sessionId } },
     });
     expectEnvelope(result);
+  },
+
+  /** GET /lecturer/subjects/{subjectId}/topics — danh sách chủ đề của môn */
+  async getSubjectTopics(subjectId: number): Promise<ManagedTopicResponse[]> {
+    const result = await api.GET('/lecturer/subjects/{subjectId}/topics', {
+      params: { path: { subjectId } },
+    });
+    return expectEnvelope(result).data ?? [];
+  },
+
+  /** POST /lecturer/subjects/{subjectId}/topics — tạo chủ đề mới cho môn */
+  async createSubjectTopic(
+    subjectId: number,
+    name: string,
+  ): Promise<ManagedTopicResponse | null> {
+    const result = await api.POST('/lecturer/subjects/{subjectId}/topics', {
+      params: { path: { subjectId } },
+      body: { name: name.trim(), active: true },
+    });
+    return expectEnvelope(result).data ?? null;
+  },
+
+  /** PUT /lecturer/subjects/{subjectId}/topics/{topicId} — cập nhật chủ đề */
+  async updateSubjectTopic(
+    subjectId: number,
+    topicId: number,
+    body: { name: string; active?: boolean; version: number },
+  ): Promise<ManagedTopicResponse | null> {
+    const result = await api.PUT(
+      '/lecturer/subjects/{subjectId}/topics/{topicId}',
+      {
+        params: { path: { subjectId, topicId } },
+        body,
+      },
+    );
+    return expectEnvelope(result).data ?? null;
   },
 };

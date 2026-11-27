@@ -125,6 +125,30 @@ export const proposalGateway = {
       : demoProposalStore.listSubjects();
   },
 
+  async getSubjectTopics(subjectId: number) {
+    return isApiSession() ? sessionsApi.getSubjectTopics(subjectId) : [];
+  },
+
+  async createSubjectTopic(subjectId: number, name: string) {
+    return isApiSession()
+      ? reviewApi.createSubjectTopic(subjectId, name)
+      : { id: Date.now(), name: name.trim(), active: true, version: 1 };
+  },
+
+  async getLecturerSubjectTopics(subjectId: number) {
+    return isApiSession() ? reviewApi.getSubjectTopics(subjectId) : [];
+  },
+
+  async updateSubjectTopic(
+    subjectId: number,
+    topicId: number,
+    body: { name: string; active?: boolean; version: number },
+  ) {
+    return isApiSession()
+      ? reviewApi.updateSubjectTopic(subjectId, topicId, body)
+      : { id: topicId, name: body.name, active: body.active ?? true, version: body.version + 1 };
+  },
+
   /**
    * Phiên đề xuất của tôi kèm trạng thái. Swagger không trả trạng thái trong
    * từng phần tử, nên khi không lọc theo trạng thái ta gọi riêng từng trạng thái.

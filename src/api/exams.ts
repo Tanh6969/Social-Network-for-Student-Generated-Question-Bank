@@ -30,6 +30,8 @@ export type CourseClassResponse = components['schemas']['CourseClassResponse'];
 export type ClassStudentResponse =
   components['schemas']['ClassStudentResponse'];
 export type SubjectResponse = components['schemas']['SubjectResponse'];
+export type ExamBankSummary = components['schemas']['ExamBankSummary'];
+export type ExamBankTopicStock = components['schemas']['ExamBankTopicStock'];
 
 export interface GetMyExamsParams {
   after?: number;
@@ -243,6 +245,24 @@ export const examsApi = {
     return envelope.data ?? [];
   },
 
+  /** GET /lecturer/exams/question-bank/{subjectId}/summary — thống kê câu đã duyệt theo độ khó & chủ đề */
+  async getBankSummary(subjectId: number): Promise<ExamBankSummary | null> {
+    if (!isApiSession()) return null;
+
+    const envelope = expectEnvelope(
+      await api.GET('/lecturer/exams/question-bank/{subjectId}/summary', {
+        params: { path: { subjectId } },
+      }),
+    );
+    return envelope.data ?? null;
+  },
+
+  /** Môn học giảng viên được phân công trong học kỳ hiện tại (suy ra từ my-classes). */
+  async getAssignedSubjects(): Promise<SubjectResponse[]> {
+    const classes = await examsApi.getMyCourseClasses();
+    return subjectsFromCourseClasses(classes);
+  },
+
   /** GET /subjects — danh mục tất cả môn học */
   async getAllSubjects(): Promise<SubjectResponse[]> {
     if (!isApiSession()) return MOCK_SUBJECTS;
@@ -251,3 +271,21 @@ export const examsApi = {
     return envelope.data ?? [];
   },
 };
+
+/** Rút gọn danh sách môn học duy nhất từ các lớp học phần (ưu tiên học kỳ đang kích hoạt). */
+export function subjectsFromCourseClasses(
+  classes: CourseClassResponse[],
+): SubjectResponse[] {
+  const active = classes.filter((c) => c.active_semester !== false);
+  const source = active.length > 0 ? active : classes;
+  const map = new Map<number, SubjectResponse>();
+  for (const cls of source) {
+    if (cls.subject_id == null || map.has(cls.subject_id)) continue;
+    map.set(cls.subject_id, {
+      subject_id: cls.subject_id,
+      code: cls.subject_code,
+      name: cls.subject_name,
+    });
+  }
+  return [...map.values()];
+}

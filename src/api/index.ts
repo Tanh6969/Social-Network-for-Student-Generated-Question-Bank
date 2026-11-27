@@ -11,7 +11,7 @@ export { chatStompClient, buildStompFrame, parseStompFrames } from './stompClien
 export { relationshipsApi } from './relationships';
 export { sessionsApi } from './sessions';
 export { reviewApi } from './review';
-export { examsApi } from './exams';
+export { examsApi, subjectsFromCourseClasses } from './exams';
 export { questionsApi } from './questions';
 
 export type { ChangePasswordRequest } from './auth';
@@ -48,6 +48,10 @@ export type {
   UpdateSubmissionSessionRequest,
   QuestionProposeDto,
   QuestionOption,
+  PracticeSetDto,
+  PracticeCatalogResponse,
+  PracticeCatalogParams,
+  TopicResponse,
 } from './sessions';
 export type {
   PendingSessionsResponse,
@@ -61,6 +65,7 @@ export type {
   EditQuestionRequest,
   EditQuestionResponse,
   CursorPaginationDto,
+  ManagedTopicResponse,
 } from './review';
 export type {
   DifficultyDistribution,
@@ -74,6 +79,8 @@ export type {
   ExportResponse,
   CourseClassResponse,
   ClassStudentResponse,
+  ExamBankSummary,
+  ExamBankTopicStock,
   GetMyExamsParams,
   ExportExamParams,
   ExportQuestionsParams,

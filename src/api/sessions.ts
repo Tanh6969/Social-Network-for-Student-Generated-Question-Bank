@@ -15,6 +15,17 @@ export type UpdateSubmissionSessionRequest =
   components['schemas']['UpdateSubmissionSessionRequest'];
 export type QuestionProposeDto = components['schemas']['QuestionProposeDto'];
 export type QuestionOption = components['schemas']['QuestionOption'];
+export type PracticeSetDto = components['schemas']['PracticeSetDto'];
+export type PracticeCatalogResponse =
+  components['schemas']['PracticeCatalogResponse'];
+export type TopicResponse = components['schemas']['TopicResponse'];
+
+export interface PracticeCatalogParams {
+  after?: number;
+  limit?: number;
+  subject_id?: number;
+  q?: string;
+}
 
 export interface MySubmissionsParams {
   after?: number;
@@ -30,6 +41,14 @@ export const sessionsApi = {
     return expectEnvelope(result).data ?? [];
   },
 
+  /** GET /subjects/{subjectId}/topics — danh sách chủ đề đang hoạt động của môn học. */
+  async getSubjectTopics(subjectId: number): Promise<TopicResponse[]> {
+    const result = await api.GET('/subjects/{subjectId}/topics', {
+      params: { path: { subjectId } },
+    });
+    return expectEnvelope(result).data ?? [];
+  },
+
   /**
    * GET /sessions/my-enrolled-course-classes — lớp học phần đang/đã tham gia.
    * Chỉ lớp thuộc học kỳ hiện tại có can_propose=true.
@@ -37,6 +56,29 @@ export const sessionsApi = {
   async getMyEnrolledCourseClasses(): Promise<CourseClassOption[]> {
     const result = await api.GET('/sessions/my-enrolled-course-classes');
     return expectEnvelope(result).data ?? [];
+  },
+
+  /**
+   * Lấy danh sách bộ câu hỏi đã chốt (RESOLVED) trong kho luyện tập
+   */
+  async getPracticeCatalog(
+    params?: PracticeCatalogParams,
+  ): Promise<PracticeCatalogResponse> {
+    const query: PracticeCatalogParams = {};
+    if (params?.after !== undefined) query.after = params.after;
+    if (params?.limit !== undefined) query.limit = params.limit;
+    if (params?.subject_id !== undefined) query.subject_id = params.subject_id;
+    if (params?.q?.trim()) query.q = params.q.trim();
+
+    const result = await api.GET('/sessions/practice-catalog', {
+      params: { query },
+    });
+    return (
+      expectEnvelope(result).data ?? {
+        contents: [],
+        pagination: { has_next: false, has_prev: false },
+      }
+    );
   },
 
   /**
