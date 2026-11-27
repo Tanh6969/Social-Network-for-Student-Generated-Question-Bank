@@ -417,7 +417,7 @@ export const ProposeView: React.FC = () => {
       </aside>
 
       {/* ================= CỘT PHẢI (MAIN CONTENT): NỘI DUNG THEO TAB ================= */}
-      <main className="flex-1 min-w-0 px-4 sm:px-6 lg:px-8 py-4 space-y-6">
+      <main className="flex-1 min-w-0 px-4 sm:px-6 lg:px-8 py-4 space-y-6 md:min-h-[calc(100vh-3.5rem)] flex flex-col">
         {/* ================= NỘI DUNG TAB 1: SOẠN PHIÊN ĐỀ XUẤT MỚI ================= */}
         {activeTab === 'create' && (
           <form onSubmit={handleSubmitProposal} className="space-y-6">
@@ -769,7 +769,7 @@ export const ProposeView: React.FC = () => {
 
         {/* ================= NỘI DUNG TAB 2: DANH SÁCH PHIÊN CỦA TÔI ================= */}
         {activeTab === 'my-submissions' && (
-          <div className="space-y-4">
+          <div className="flex flex-1 flex-col gap-4">
             {/* Filter Bar */}
             <div className="bg-fb-card rounded-lg shadow-fb-card p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-2.5 flex-1">
@@ -874,7 +874,7 @@ export const ProposeView: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="flex flex-1 flex-col">
                 <div className="space-y-3">
                   {paginatedSubmissions.map((sub) => {
                     const status = sub.status || 'PENDING';
@@ -1006,7 +1006,7 @@ export const ProposeView: React.FC = () => {
 
                 {/* Phân trang (Pagination) */}
                 {submissions.length > 0 && (
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 pb-1 px-1 text-sm text-fb-text-2 border-t border-fb-divider/60 mt-4">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 pb-1 px-1 text-sm text-fb-text-2 border-t border-fb-divider/60 mt-auto">
                     <div className="flex items-center gap-3 flex-wrap">
                       <span>
                         Hiển thị{' '}

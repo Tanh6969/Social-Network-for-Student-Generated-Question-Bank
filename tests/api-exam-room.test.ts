@@ -94,6 +94,51 @@ describe('phòng thi — dữ liệu thật', () => {
     expect(JSON.stringify(exam)).not.toContain('LLM');
   });
 
+  it('khôi phục đáp án gần nhất và kết quả để xem lại mà không nộp lại bài', async () => {
+    const { previousAttemptFromSession } = await load();
+    const completedSession = {
+      ...session,
+      questions: [
+        question(1, {
+          my_interaction: { answered: true, rated: false },
+          hidden_fields: {
+            selected_options: [{ key: 'A', text: 'a' }],
+            correct_answer: 'B',
+            was_correct: false,
+          },
+        }),
+        question(2, {
+          my_interaction: { answered: true, rated: true, my_rating: 3 },
+          hidden_fields: {
+            selected_options: [{ key: 'B', text: 'b' }],
+            correct_answer: 'B',
+            was_correct: true,
+          },
+        }),
+        question(3, {
+          my_interaction: { answered: false, rated: false },
+          hidden_fields: { correct_answer: 'A' },
+        }),
+      ],
+    };
+
+    expect(previousAttemptFromSession(completedSession)).toEqual({
+      answers: { '1': 'A', '2': 'B' },
+      results: {
+        '1': {
+          correctAnswer: 'B',
+          explanation: undefined,
+          isCorrect: false,
+        },
+        '2': {
+          correctAnswer: 'B',
+          explanation: undefined,
+          isCorrect: true,
+        },
+      },
+    });
+  });
+
   it('nộp bài gửi POST /answer cho từng câu đã chọn và trả đáp án máy chủ', async () => {
     respond = (url) =>
       url.pathname.endsWith('/questions/1/answer')

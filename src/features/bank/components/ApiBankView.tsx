@@ -8,6 +8,7 @@ import {
   Calendar,
   CheckCircle2,
   Library,
+  Eye,
   MessageCircle,
   PlayCircle,
   Plus,
@@ -200,7 +201,8 @@ const SetCard: React.FC<{
   stats: BankSetStats | 'error' | undefined;
   showSubject: boolean;
   onPractice: () => void;
-}> = ({ set, stats, showSubject, onPractice }) => {
+  onReview: () => void;
+}> = ({ set, stats, showSubject, onPractice, onReview }) => {
   const live = stats && stats !== 'error' ? stats : undefined;
   const questionCount = live?.questionCount ?? set.indexedQuestionCount;
   const progress = live ? progressOf(live) : 'NOT_STARTED';
@@ -281,19 +283,35 @@ const SetCard: React.FC<{
             <span className="text-xs text-fb-danger">Lỗi số liệu</span>
           )}
         </span>
-        <button
-          type="button"
-          onClick={onPractice}
-          disabled={questionCount === 0}
-          className="flex items-center gap-1.5 rounded-md bg-fb-blue px-3 h-9 font-semibold text-white hover:bg-fb-blue-hover disabled:opacity-50 cursor-pointer"
-        >
-          {progress === 'DONE' ? (
-            <RotateCcw className="h-4 w-4" aria-hidden="true" />
-          ) : (
-            <PlayCircle className="h-4 w-4" aria-hidden="true" />
+        <div className="flex flex-wrap items-center gap-2">
+          {progress === 'DONE' && (
+            <button
+              type="button"
+              onClick={onReview}
+              className="flex h-9 items-center gap-1.5 rounded-md bg-fb-blue px-3 font-semibold text-white hover:bg-fb-blue-hover cursor-pointer"
+            >
+              <Eye className="h-4 w-4" aria-hidden="true" />
+              Xem lại
+            </button>
           )}
-          {actionLabel}
-        </button>
+          <button
+            type="button"
+            onClick={onPractice}
+            disabled={questionCount === 0}
+            className={`flex h-9 items-center gap-1.5 rounded-md px-3 font-semibold disabled:opacity-50 cursor-pointer ${
+              progress === 'DONE'
+                ? 'bg-fb-btn text-fb-text hover:bg-fb-btn-hover'
+                : 'bg-fb-blue text-white hover:bg-fb-blue-hover'
+            }`}
+          >
+            {progress === 'DONE' ? (
+              <RotateCcw className="h-4 w-4" aria-hidden="true" />
+            ) : (
+              <PlayCircle className="h-4 w-4" aria-hidden="true" />
+            )}
+            {actionLabel}
+          </button>
+        </div>
       </div>
     </article>
   );
@@ -341,6 +359,7 @@ export const ApiBankView: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<SortKey>('NEWEST');
   const [practiceId, setPracticeId] = useState<number | null>(null);
+  const [reviewMode, setReviewMode] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -375,6 +394,7 @@ export const ApiBankView: React.FC = () => {
   const closeExamRoom = () => {
     const id = practiceId;
     setPracticeId(null);
+    setReviewMode(false);
     if (new URLSearchParams(location.search).has('session'))
       navigate('/bank', { replace: true });
     if (id === null) return;
@@ -700,7 +720,14 @@ export const ApiBankView: React.FC = () => {
               set={set}
               stats={stats[set.sessionId]}
               showSubject={subject === ALL}
-              onPractice={() => setPracticeId(set.sessionId)}
+              onPractice={() => {
+                setReviewMode(false);
+                setPracticeId(set.sessionId);
+              }}
+              onReview={() => {
+                setReviewMode(true);
+                setPracticeId(set.sessionId);
+              }}
             />
           ))}
 
@@ -825,6 +852,7 @@ export const ApiBankView: React.FC = () => {
           sessionId={practiceId}
           currentUserId={currentUser.id}
           onClose={closeExamRoom}
+          reviewMode={reviewMode}
           showToast={showToast}
         />
       )}

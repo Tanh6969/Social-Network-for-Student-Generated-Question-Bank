@@ -19,6 +19,7 @@ import {
   Sparkles,
   Flag,
   Star,
+  MessageCircle,
 } from 'lucide-react';
 
 type OptionKey = 'A' | 'B' | 'C' | 'D';
@@ -33,6 +34,10 @@ export interface RemoteAnswerResult {
 interface ExamTestFullscreenModalProps {
   exam: StudentExamSet;
   onClose: () => void;
+  /** Chỉ mở phần xem lại của bộ đã hoàn thành; không bắt đầu lượt làm mới. */
+  reviewMode?: boolean;
+  initialAnswers?: Record<string, OptionKey>;
+  initialResults?: Record<string, RemoteAnswerResult>;
   onRateQuestion: (questionId: string, stars: number, comment?: string) => void;
   currentUserId: string;
   /**
@@ -59,6 +64,9 @@ export const ExamTestFullscreenModal: React.FC<
 > = ({
   exam,
   onClose,
+  reviewMode = false,
+  initialAnswers,
+  initialResults,
   onRateQuestion,
   currentUserId,
   onSubmitAnswers,
@@ -68,6 +76,9 @@ export const ExamTestFullscreenModal: React.FC<
   // Câu được gắn cờ "có vấn đề" khi đang làm bài → mở sẵn báo lỗi sau khi nộp.
   const [flagged, setFlagged] = useState<Set<string>>(() => new Set());
   const [showQuickRate, setShowQuickRate] = useState(false);
+  const [expandedComments, setExpandedComments] = useState<Set<string>>(
+    () => new Set(),
+  );
   const toggleFlag = (questionId: string) =>
     setFlagged((prev) => {
       const next = new Set(prev);
@@ -89,14 +100,14 @@ export const ExamTestFullscreenModal: React.FC<
     setMyRatings((prev) => ({ ...prev, [questionId]: 0 }));
   };
   // Test states
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(reviewMode);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [remoteResults, setRemoteResults] = useState<
     Record<string, RemoteAnswerResult>
-  >({});
-  const [answers, setAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>(
-    {},
+  >(initialResults ?? {});
+  const [answers, setAnswers] = useState<Record<string, OptionKey>>(
+    initialAnswers ?? {},
   );
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
@@ -129,7 +140,7 @@ export const ExamTestFullscreenModal: React.FC<
 
   // Enter browser fullscreen on mount (with catch for browser permissions)
   useEffect(() => {
-    enterFullscreen();
+    if (!reviewMode) enterFullscreen();
 
     const onFullscreenChange = () => {
       const fullscreen = !!document.fullscreenElement;
@@ -145,11 +156,11 @@ export const ExamTestFullscreenModal: React.FC<
     document.addEventListener('fullscreenchange', onFullscreenChange);
     return () => {
       document.removeEventListener('fullscreenchange', onFullscreenChange);
-      if (document.fullscreenElement && document.exitFullscreen) {
+      if (!reviewMode && document.fullscreenElement && document.exitFullscreen) {
         document.exitFullscreen().catch(() => {});
       }
     };
-  }, []);
+  }, [reviewMode]);
 
   // Prevent leaving / accidental tab close while test is active
   useEffect(() => {
@@ -285,10 +296,12 @@ export const ExamTestFullscreenModal: React.FC<
           </span>
           <div className="truncate max-w-[200px] sm:max-w-md">
             <h2 className="font-bold text-sm text-fb-text truncate">
-              {exam.title}
+              {reviewMode ? 'Xem lại' : exam.title}
             </h2>
             <p className="text-xs text-fb-text-3 truncate">
-              {exam.subject} · {exam.chapter}
+              {reviewMode
+                ? `${exam.title} · ${exam.subject}`
+                : `${exam.subject} · ${exam.chapter}`}
             </p>
           </div>
         </div>
@@ -326,7 +339,7 @@ export const ExamTestFullscreenModal: React.FC<
               onClick={onClose}
               className="px-4 py-2 bg-fb-blue hover:bg-fb-blue-hover text-white font-bold text-xs rounded-lg shadow-xs transition cursor-pointer"
             >
-              Thoát phòng thi
+              {reviewMode ? 'Quay lại ngân hàng' : 'Thoát phòng thi'}
             </button>
           )}
         </div>
@@ -520,14 +533,16 @@ export const ExamTestFullscreenModal: React.FC<
       {isSubmitted && (
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-4xl mx-auto space-y-5">
-            {/* Thống kê kết quả bài thi */}
+            {/* Kết quả lần hiện tại hoặc lần làm gần nhất đã lưu */}
             <div className="bg-fb-card rounded-lg p-6 shadow-fb-card space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
                     <Award className="w-6 h-6 text-fb-warning" />
                     <h2 className="text-xl font-bold text-fb-text">
-                      Kết quả bài thi thử
+                      {reviewMode
+                        ? 'Kết quả lần làm gần nhất'
+                        : 'Kết quả bài thi thử'}
                     </h2>
                   </div>
                   <p className="text-xs text-fb-text-2 mt-1">
@@ -535,16 +550,18 @@ export const ExamTestFullscreenModal: React.FC<
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleRestartExam}
-                    className="px-4 py-2 rounded-lg text-xs font-bold border border-fb-divider text-fb-text hover:bg-fb-hover transition flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    <span>Làm lại đề</span>
-                  </button>
-                </div>
+                {!reviewMode && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleRestartExam}
+                      className="px-4 py-2 rounded-lg text-xs font-bold border border-fb-divider text-fb-text hover:bg-fb-hover transition flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Làm lại đề</span>
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* 3 Thẻ thống kê điểm & thời gian */}
@@ -571,7 +588,7 @@ export const ExamTestFullscreenModal: React.FC<
 
                 <div className="p-4 rounded-lg bg-fb-blue-soft border border-fb-blue/60 text-center">
                   <span className="text-2xl font-bold text-fb-blue block">
-                    {formatTime(elapsedSeconds)}
+                    {reviewMode ? 'Không lưu' : formatTime(elapsedSeconds)}
                   </span>
                   <span className="text-xs text-fb-text-2">
                     Thời gian làm bài
@@ -734,8 +751,9 @@ export const ExamTestFullscreenModal: React.FC<
                       </div>
                     ) : (
                       <div className="p-3.5 rounded-lg bg-fb-input border border-fb-divider text-xs text-fb-text-2">
-                        Bạn chưa làm câu này nên đáp án và lời giải vẫn được ẩn.
-                        Làm lại đề và trả lời câu này để xem.
+                        {reviewMode
+                          ? 'Không có đáp án được lưu cho lần làm trước. Bạn vẫn có thể đánh giá hoặc bình luận câu này.'
+                          : 'Bạn chưa làm câu này nên đáp án và lời giải vẫn được ẩn. Làm lại đề và trả lời câu này để xem.'}
                       </div>
                     )}
 
@@ -752,7 +770,47 @@ export const ExamTestFullscreenModal: React.FC<
                       />
                     </div>
 
-                    {renderQuestionExtras?.(q.id)}
+                    {renderQuestionExtras && (
+                      <div className="border-t border-fb-divider pt-2">
+                        <button
+                          type="button"
+                          aria-expanded={expandedComments.has(q.id)}
+                          aria-controls={
+                            expandedComments.has(q.id)
+                              ? `comments-${q.id}`
+                              : undefined
+                          }
+                          onClick={() =>
+                            setExpandedComments((previous) => {
+                              const next = new Set(previous);
+                              if (next.has(q.id)) next.delete(q.id);
+                              else next.add(q.id);
+                              return next;
+                            })
+                          }
+                          className="flex min-h-9 items-center gap-2 rounded-md px-2 text-sm font-semibold text-fb-text-2 hover:bg-fb-hover hover:text-fb-blue cursor-pointer"
+                        >
+                          <MessageCircle
+                            className="h-4 w-4"
+                            aria-hidden="true"
+                          />
+                          {expandedComments.has(q.id)
+                            ? 'Ẩn bình luận'
+                            : 'Bình luận'}
+                          <ChevronRight
+                            className={`h-4 w-4 transition-transform ${
+                              expandedComments.has(q.id) ? 'rotate-90' : ''
+                            }`}
+                            aria-hidden="true"
+                          />
+                        </button>
+                        {expandedComments.has(q.id) && (
+                          <div id={`comments-${q.id}`} className="mt-2">
+                            {renderQuestionExtras(q.id)}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}

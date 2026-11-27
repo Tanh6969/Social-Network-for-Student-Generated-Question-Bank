@@ -84,6 +84,40 @@ export function examSetFromSession(
   };
 }
 
+export interface PreviousAttempt {
+  answers: Record<string, OptionKey>;
+  results: Record<string, RemoteAnswerResult>;
+}
+
+/** Khôi phục kết quả mới nhất API lưu cho mỗi câu đã trả lời. */
+export function previousAttemptFromSession(
+  session: SessionQuestionsResponse,
+): PreviousAttempt {
+  const answers: Record<string, OptionKey> = {};
+  const results: Record<string, RemoteAnswerResult> = {};
+  for (const question of session.questions ?? []) {
+    if (question.question_id === undefined || !question.my_interaction?.answered)
+      continue;
+    const id = String(question.question_id);
+    const previous = question.hidden_fields;
+    const key = question.hidden_fields?.selected_options?.[0]?.key;
+    if (key === 'A' || key === 'B' || key === 'C' || key === 'D') {
+      answers[id] = key;
+    }
+    const correctAnswer = previous?.correct_answer;
+    const isCorrect =
+      typeof previous?.was_correct === 'boolean'
+        ? previous.was_correct
+        : key && correctAnswer
+          ? key === correctAnswer
+          : undefined;
+    if (correctAnswer || previous?.explanation || isCorrect !== undefined) {
+      results[id] = { correctAnswer, explanation: previous?.explanation, isCorrect };
+    }
+  }
+  return { answers, results };
+}
+
 export interface SubmitOutcome {
   results: Record<string, RemoteAnswerResult>;
   /** Số câu máy chủ không chấm được (đã có kết quả dự phòng thì không tính). */

@@ -7,6 +7,7 @@ import type { SessionQuestionsResponse } from '../../proposals/types';
 import type { StudentExamSet } from '../studentBankData';
 import {
   examSetFromSession,
+  previousAttemptFromSession,
   reportQuestionError,
   submitAnswersToApi,
 } from '../apiExamRoom';
@@ -18,6 +19,7 @@ interface ApiExamRoomProps {
   sessionId: number;
   currentUserId: string;
   onClose: () => void;
+  reviewMode?: boolean;
   showToast: (
     message: string,
     type: 'success' | 'info' | 'warning' | 'error',
@@ -33,6 +35,7 @@ export const ApiExamRoom: React.FC<ApiExamRoomProps> = ({
   sessionId,
   currentUserId,
   onClose,
+  reviewMode = false,
   showToast,
 }) => {
   const [session, setSession] = useState<SessionQuestionsResponse | null>(null);
@@ -173,11 +176,18 @@ export const ApiExamRoom: React.FC<ApiExamRoomProps> = ({
     );
   }
 
+  const previousAttempt = reviewMode
+    ? previousAttemptFromSession(session)
+    : undefined;
+
   return (
     <ExamTestFullscreenModal
       exam={exam}
       onClose={onClose}
       currentUserId={currentUserId}
+      reviewMode={reviewMode}
+      initialAnswers={previousAttempt?.answers}
+      initialResults={previousAttempt?.results}
       onRateQuestion={(id, stars) => void rateQuestion(id, stars)}
       onReportError={reportError}
       onSubmitAnswers={async (answers) => {
