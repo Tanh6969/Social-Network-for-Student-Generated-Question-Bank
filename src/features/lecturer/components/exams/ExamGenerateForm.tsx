@@ -18,10 +18,12 @@ import {
 import {
   examsApi,
   errorMessage,
+  subjectsFromCourseClasses,
   GenerateExamRequest,
   ExamDetailResponse,
   SubjectResponse,
   CourseClassResponse,
+  ExamBankSummary,
 } from '../../../../api';
 
 interface ExamGenerateFormProps {
@@ -31,7 +33,8 @@ interface ExamGenerateFormProps {
 
 interface TopicWeightItem {
   id: string;
-  topic: string;
+  topicKey: string;
+  label: string;
   weight: number;
 }
 
@@ -56,8 +59,9 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
   const [unclassifiedPercent, setUnclassifiedPercent] = useState<number>(0);
 
   // Topic weights list
+  const [bankSummary, setBankSummary] = useState<ExamBankSummary | null>(null);
   const [topicWeights, setTopicWeights] = useState<TopicWeightItem[]>([]);
-  const [newTopicName, setNewTopicName] = useState('');
+  const [newTopicKey, setNewTopicKey] = useState('');
   const [newTopicWeight, setNewTopicWeight] = useState<number>(0.2);
 
   // Options
@@ -71,21 +75,19 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Load subjects and lecturer's course classes
+  // Load lecturer's course classes and derive assigned subjects
   useEffect(() => {
     let isMounted = true;
     const init = async () => {
       setLoadingData(true);
       try {
-        const [subs, classes] = await Promise.all([
-          examsApi.getAllSubjects(),
-          examsApi.getMyCourseClasses(),
-        ]);
+        const classes = await examsApi.getMyCourseClasses();
+        const subs = subjectsFromCourseClasses(classes);
         if (isMounted) {
-          setSubjects(subs);
           setCourseClasses(classes);
-          if (subs.length > 0 && subjectId === '') {
-            setSubjectId(subs[0].subject_id || '');
+          setSubjects(subs);
+          if (subs.length > 0) {
+            setSubjectId((prev) => (prev === '' ? subs[0].subject_id || '' : prev));
           }
         }
       } catch (err: unknown) {
@@ -102,6 +104,35 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
       isMounted = false;
     };
   }, []);
+
+  // Load bank summary (approved question counts & real topic IDs) for selected subject
+  useEffect(() => {
+    if (!subjectId) {
+      setBankSummary(null);
+      return;
+    }
+    let cancelled = false;
+    examsApi
+      .getBankSummary(Number(subjectId))
+      .then((summary) => {
+        if (cancelled) return;
+        setBankSummary(summary);
+        const firstTopic = summary?.topics?.[0];
+        if (firstTopic) {
+          setNewTopicKey(
+            firstTopic.topic_id != null ? String(firstTopic.topic_id) : 'untagged',
+          );
+        } else {
+          setNewTopicKey('');
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setBankSummary(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [subjectId]);
 
   // Filter available classes for selected subject
   const availableClasses = courseClasses.filter((c) => {
@@ -124,27 +155,73 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
     setUnclassifiedPercent(0);
   };
 
-  // Add a topic weight
+  // Match difficulty distribution (and cap question count) to available APPROVED stock
+  const handleMatchBankStock = () => {
+    const total = bankSummary?.total_questions ?? 0;
+    const stat = bankSummary?.statistic;
+    if (!stat || total <= 0) return;
+
+    const counts = [
+      stat.easy_count ?? 0,
+      stat.medium_count ?? 0,
+      stat.hard_count ?? 0,
+      stat.unclassified_count ?? 0,
+    ];
+    const sum = counts.reduce((a, b) => a + b, 0) || total;
+    const raw = counts.map((c) => (c / sum) * 100);
+    const floors = raw.map((v) => Math.floor(v));
+    let remainder = 100 - floors.reduce((a, b) => a + b, 0);
+    const order = raw
+      .map((v, i) => ({ i, frac: v - floors[i] }))
+      .sort((a, b) => b.frac - a.frac);
+    for (let k = 0; k < order.length && remainder > 0; k += 1) {
+      floors[order[k].i] += 1;
+      remainder -= 1;
+    }
+
+    setEasyPercent(floors[0]);
+    setMediumPercent(floors[1]);
+    setHardPercent(floors[2]);
+    setUnclassifiedPercent(floors[3]);
+    if (questionCount > total) setQuestionCount(total);
+    showToast('Đã tự động cân chỉnh ma trận theo số câu hiện có trong kho.', 'info');
+  };
+
+  const availableTopics = bankSummary?.topics ?? [];
+  const topicWeightSum = topicWeights.reduce((sum, t) => sum + t.weight, 0);
+
+  // Add a topic weight (key phải là ID chủ đề hoặc 'untagged')
   const handleAddTopicWeight = () => {
-    if (!newTopicName.trim()) {
-      showToast('Vui lòng nhập tên chủ đề / chương.', 'warning');
+    const cleanKey = newTopicKey.trim();
+    if (!cleanKey) {
+      showToast('Vui lòng chọn chủ đề hoặc nhập ID chủ đề ("untagged" cho câu chưa gắn chủ đề).', 'warning');
       return;
     }
-    const cleanName = newTopicName.trim();
-    if (topicWeights.some((t) => t.topic.toLowerCase() === cleanName.toLowerCase())) {
+    if (!/^(\d+|untagged)$/u.test(cleanKey)) {
+      showToast('Khóa trọng số phải là ID chủ đề (số) hoặc "untagged".', 'warning');
+      return;
+    }
+    if (topicWeights.some((t) => t.topicKey === cleanKey)) {
       showToast('Chủ đề này đã có trong danh sách trọng số.', 'warning');
       return;
     }
+    const matched = availableTopics.find(
+      (t) => (t.topic_id != null ? String(t.topic_id) : 'untagged') === cleanKey,
+    );
+    const label =
+      matched?.topic_name ||
+      (cleanKey === 'untagged' ? 'Chưa phân loại chủ đề (untagged)' : `Chủ đề #${cleanKey}`);
 
     setTopicWeights((prev) => [
       ...prev,
       {
         id: 'tw_' + Date.now(),
-        topic: cleanName,
+        topicKey: cleanKey,
+        label,
         weight: Math.max(0, Math.min(1, newTopicWeight)),
       },
     ]);
-    setNewTopicName('');
+    if (availableTopics.length === 0) setNewTopicKey('');
     setNewTopicWeight(0.2);
   };
 
@@ -197,12 +274,18 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
       return;
     }
 
-    // Build topic_weights map if any
+    // Build topic_weights map if any (keys: topic ID or 'untagged', sum = 1.0)
     let topicWeightsMap: Record<string, number> | undefined = undefined;
     if (topicWeights.length > 0) {
+      if (Math.abs(topicWeightSum - 1) > 0.01) {
+        setFormError(
+          `Tổng trọng số chủ đề hiện tại là ${topicWeightSum.toFixed(2)}. Khi đã chọn trọng số chủ đề, tổng phải bằng đúng 1.0 (hoặc xóa hết để bốc đều).`,
+        );
+        return;
+      }
       topicWeightsMap = {};
       topicWeights.forEach((t) => {
-        topicWeightsMap![t.topic] = t.weight;
+        topicWeightsMap![t.topicKey] = Number(t.weight.toFixed(2));
       });
     }
 
@@ -279,6 +362,7 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
                 onChange={(e) => {
                   setSubjectId(Number(e.target.value));
                   setSelectedClassIds([]); // Reset class selection on subject change
+                  setTopicWeights([]);
                 }}
                 disabled={loadingData || isSubmitting}
                 className="w-full px-3.5 py-2.5 rounded-lg bg-fb-input border border-fb-divider text-fb-text font-semibold focus:ring-2 focus:ring-fb-blue focus:outline-hidden cursor-pointer"
@@ -293,6 +377,32 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
                   ))
                 )}
               </select>
+              {bankSummary && (
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-fb-text-2">
+                  <span>
+                    Kho đã duyệt sẵn sàng:{' '}
+                    <strong className="text-fb-text">{bankSummary.total_questions ?? 0} câu</strong>
+                  </span>
+                  {bankSummary.statistic && (
+                    <>
+                      <span className="px-2 py-0.5 rounded bg-fb-success-soft text-fb-success font-semibold">
+                        Dễ: {bankSummary.statistic.easy_count ?? 0}
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-fb-warning-soft text-fb-warning font-semibold">
+                        TB: {bankSummary.statistic.medium_count ?? 0}
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-fb-danger-soft text-fb-danger font-semibold">
+                        Khó: {bankSummary.statistic.hard_count ?? 0}
+                      </span>
+                      {(bankSummary.statistic.unclassified_count ?? 0) > 0 && (
+                        <span className="px-2 py-0.5 rounded bg-fb-input text-fb-text-2 font-semibold">
+                          Chưa PL: {bankSummary.statistic.unclassified_count}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Exam Title */}
@@ -348,17 +458,39 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
                   ))}
                 </div>
               </div>
+              {bankSummary &&
+                (bankSummary.total_questions ?? 0) === 0 && (
+                  <p className="text-xs text-fb-danger font-medium">
+                    Môn học này hiện chưa có câu hỏi APPROVED nào trong phiên đã chốt để tạo đề.
+                  </p>
+                )}
+              {bankSummary &&
+                (bankSummary.total_questions ?? 0) > 0 &&
+                questionCount > (bankSummary.total_questions ?? 0) && (
+                  <p className="text-xs text-fb-warning font-medium">
+                    Số câu yêu cầu ({questionCount}) đang lớn hơn số câu sẵn sàng trong kho ({bankSummary.total_questions}).
+                  </p>
+                )}
             </div>
           </div>
 
           {/* Section 2: Ma trận phân bố độ khó */}
           <div className="bg-fb-card rounded-lg shadow-fb-card p-5 sm:p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-fb-divider pb-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-fb-divider pb-2.5">
               <h3 className="text-sm font-bold text-fb-text flex items-center gap-2">
                 <Sliders className="w-4 h-4 text-fb-blue" />
                 <span>2. Phân bố ma trận độ khó câu hỏi</span>
               </h3>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                {bankSummary && (bankSummary.total_questions ?? 0) > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleMatchBankStock}
+                    className="text-xs px-2.5 py-1 rounded-md bg-fb-blue-soft text-fb-blue hover:bg-fb-blue/20 cursor-pointer font-semibold transition"
+                  >
+                    Khớp theo kho hiện có
+                  </button>
+                )}
                 <span
                   className={`text-xs font-bold px-2 py-0.5 rounded-full ${
                     difficultySum === 100
@@ -382,76 +514,124 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Easy */}
-              <div className="p-3.5 rounded-lg bg-fb-success-soft/70 border border-fb-success/30 space-y-2">
-                <div className="flex justify-between items-center font-bold text-fb-success">
-                  <span>Mức độ Dễ (Easy):</span>
-                  <span>{easyPercent}% (~{Math.round((questionCount * easyPercent) / 100)} câu)</span>
-                </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  step={5}
-                  value={easyPercent}
-                  onChange={(e) => setEasyPercent(Number(e.target.value))}
-                  disabled={isSubmitting}
-                  className="w-full accent-emerald-600 cursor-pointer"
-                />
-              </div>
+              {(() => {
+                const needed = Math.round((questionCount * easyPercent) / 100);
+                const avail = bankSummary?.statistic?.easy_count;
+                const short = avail !== undefined && needed > avail;
+                return (
+                  <div className="p-3.5 rounded-lg bg-fb-success-soft/70 border border-fb-success/30 space-y-2">
+                    <div className="flex justify-between items-center font-bold text-fb-success">
+                      <span>Mức độ Dễ (Easy):</span>
+                      <span>{easyPercent}% (~{needed} câu)</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      step={1}
+                      value={easyPercent}
+                      onChange={(e) => setEasyPercent(Number(e.target.value))}
+                      disabled={isSubmitting}
+                      className="w-full accent-emerald-600 cursor-pointer"
+                    />
+                    {avail !== undefined && (
+                      <p className={`text-xs font-medium ${short ? 'text-fb-danger' : 'text-fb-text-2'}`}>
+                        Trong kho: {avail} câu{short ? ' (không đủ cho tỉ lệ này)' : ''}
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Medium */}
-              <div className="p-3.5 rounded-lg bg-fb-warning-soft/70 border border-fb-warning/30 space-y-2">
-                <div className="flex justify-between items-center font-bold text-fb-warning">
-                  <span>Mức độ Trung bình (Medium):</span>
-                  <span>{mediumPercent}% (~{Math.round((questionCount * mediumPercent) / 100)} câu)</span>
-                </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  step={5}
-                  value={mediumPercent}
-                  onChange={(e) => setMediumPercent(Number(e.target.value))}
-                  disabled={isSubmitting}
-                  className="w-full accent-amber-600 cursor-pointer"
-                />
-              </div>
+              {(() => {
+                const needed = Math.round((questionCount * mediumPercent) / 100);
+                const avail = bankSummary?.statistic?.medium_count;
+                const short = avail !== undefined && needed > avail;
+                return (
+                  <div className="p-3.5 rounded-lg bg-fb-warning-soft/70 border border-fb-warning/30 space-y-2">
+                    <div className="flex justify-between items-center font-bold text-fb-warning">
+                      <span>Mức độ Trung bình (Medium):</span>
+                      <span>{mediumPercent}% (~{needed} câu)</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      step={1}
+                      value={mediumPercent}
+                      onChange={(e) => setMediumPercent(Number(e.target.value))}
+                      disabled={isSubmitting}
+                      className="w-full accent-amber-600 cursor-pointer"
+                    />
+                    {avail !== undefined && (
+                      <p className={`text-xs font-medium ${short ? 'text-fb-danger' : 'text-fb-text-2'}`}>
+                        Trong kho: {avail} câu{short ? ' (không đủ cho tỉ lệ này)' : ''}
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Hard */}
-              <div className="p-3.5 rounded-lg bg-fb-danger-soft/70 border border-fb-danger/30 space-y-2">
-                <div className="flex justify-between items-center font-bold text-fb-danger">
-                  <span>Mức độ Khó (Hard):</span>
-                  <span>{hardPercent}% (~{Math.round((questionCount * hardPercent) / 100)} câu)</span>
-                </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  step={5}
-                  value={hardPercent}
-                  onChange={(e) => setHardPercent(Number(e.target.value))}
-                  disabled={isSubmitting}
-                  className="w-full accent-red-600 cursor-pointer"
-                />
-              </div>
+              {(() => {
+                const needed = Math.round((questionCount * hardPercent) / 100);
+                const avail = bankSummary?.statistic?.hard_count;
+                const short = avail !== undefined && needed > avail;
+                return (
+                  <div className="p-3.5 rounded-lg bg-fb-danger-soft/70 border border-fb-danger/30 space-y-2">
+                    <div className="flex justify-between items-center font-bold text-fb-danger">
+                      <span>Mức độ Khó (Hard):</span>
+                      <span>{hardPercent}% (~{needed} câu)</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      step={1}
+                      value={hardPercent}
+                      onChange={(e) => setHardPercent(Number(e.target.value))}
+                      disabled={isSubmitting}
+                      className="w-full accent-red-600 cursor-pointer"
+                    />
+                    {avail !== undefined && (
+                      <p className={`text-xs font-medium ${short ? 'text-fb-danger' : 'text-fb-text-2'}`}>
+                        Trong kho: {avail} câu{short ? ' (không đủ cho tỉ lệ này)' : ''}
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Unclassified */}
-              <div className="p-3.5 rounded-lg bg-fb-input border border-fb-divider space-y-2">
-                <div className="flex justify-between items-center font-bold text-fb-text">
-                  <span>Chưa phân loại (Unclassified):</span>
-                  <span>{unclassifiedPercent}% (~{Math.round((questionCount * unclassifiedPercent) / 100)} câu)</span>
-                </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  step={5}
-                  value={unclassifiedPercent}
-                  onChange={(e) => setUnclassifiedPercent(Number(e.target.value))}
-                  disabled={isSubmitting}
-                  className="w-full accent-gray-600 cursor-pointer"
-                />
-              </div>
+              {(() => {
+                const needed = Math.round((questionCount * unclassifiedPercent) / 100);
+                const avail = bankSummary?.statistic?.unclassified_count;
+                const short = avail !== undefined && needed > avail;
+                return (
+                  <div className="p-3.5 rounded-lg bg-fb-input border border-fb-divider space-y-2">
+                    <div className="flex justify-between items-center font-bold text-fb-text">
+                      <span>Chưa phân loại (Unclassified):</span>
+                      <span>{unclassifiedPercent}% (~{needed} câu)</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      step={1}
+                      value={unclassifiedPercent}
+                      onChange={(e) => setUnclassifiedPercent(Number(e.target.value))}
+                      disabled={isSubmitting}
+                      className="w-full accent-gray-600 cursor-pointer"
+                    />
+                    {avail !== undefined && (
+                      <p className={`text-xs font-medium ${short ? 'text-fb-danger' : 'text-fb-text-2'}`}>
+                        Trong kho: {avail} câu{short ? ' (không đủ cho tỉ lệ này)' : ''}
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
@@ -462,11 +642,23 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
                 <Layers className="w-4 h-4 text-fb-blue" />
                 <span>3. Trọng số chủ đề / chương (Tùy chọn)</span>
               </h3>
-              <span className="text-fb-text-3 text-xs">topic_weights</span>
+              {topicWeights.length > 0 ? (
+                <span
+                  className={`text-xs font-bold px-2 py-0.5 rounded-full tabular-nums ${
+                    Math.abs(topicWeightSum - 1) <= 0.01
+                      ? 'bg-fb-success-soft text-fb-success'
+                      : 'bg-fb-danger-soft text-fb-danger'
+                  }`}
+                >
+                  Tổng: {topicWeightSum.toFixed(2)} / 1.00
+                </span>
+              ) : (
+                <span className="text-fb-text-3 text-xs">topic_weights</span>
+              )}
             </div>
 
             <p className="text-xs text-fb-text-2 leading-relaxed">
-              Nếu bạn muốn ưu tiên số lượng câu hỏi nhiều hơn cho các chương trọng tâm, hãy thêm tên chủ đề và trọng số (0.0 đến 1.0). Nếu bỏ qua, hệ thống sẽ bốc đều theo các chủ đề hiện có.
+              Nếu muốn ưu tiên tỷ trọng cho từng chủ đề, hãy chọn chủ đề và gán trọng số sao cho tổng bằng <strong>1.0</strong>. Nếu bỏ qua, hệ thống sẽ bốc đều theo các chủ đề hiện có.
             </p>
 
             {/* Existing Topic Weights List */}
@@ -478,7 +670,8 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
                     className="p-2.5 rounded-lg bg-fb-input border border-fb-divider flex items-center justify-between gap-3"
                   >
                     <span className="font-semibold text-fb-text truncate">
-                      {tw.topic}
+                      {tw.label}{' '}
+                      <span className="text-fb-text-3 font-normal">({tw.topicKey})</span>
                     </span>
                     <div className="flex items-center gap-2 shrink-0">
                       <span className="px-2 py-0.5 rounded-md bg-fb-blue-soft text-fb-blue tabular-nums font-bold text-xs">
@@ -500,14 +693,32 @@ export const ExamGenerateForm: React.FC<ExamGenerateFormProps> = ({
 
             {/* Add new topic weight inline */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1">
-              <input
-                type="text"
-                placeholder="Tên chủ đề / Chương (Ví dụ: Định thời CPU)"
-                value={newTopicName}
-                onChange={(e) => setNewTopicName(e.target.value)}
-                disabled={isSubmitting}
-                className="flex-1 px-3 py-2 rounded-lg bg-fb-input border border-fb-divider text-fb-text placeholder-fb-text-3 focus:outline-hidden"
-              />
+              {availableTopics.length > 0 ? (
+                <select
+                  value={newTopicKey}
+                  onChange={(e) => setNewTopicKey(e.target.value)}
+                  disabled={isSubmitting}
+                  className="flex-1 px-3 py-2 rounded-lg bg-fb-input border border-fb-divider text-fb-text font-medium focus:outline-hidden cursor-pointer"
+                >
+                  {availableTopics.map((t) => {
+                    const key = t.topic_id != null ? String(t.topic_id) : 'untagged';
+                    return (
+                      <option key={key} value={key}>
+                        {t.topic_name || 'Chưa phân loại chủ đề'} ({t.total_questions ?? 0} câu)
+                      </option>
+                    );
+                  })}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  placeholder='ID chủ đề (ví dụ: 12) hoặc "untagged"'
+                  value={newTopicKey}
+                  onChange={(e) => setNewTopicKey(e.target.value)}
+                  disabled={isSubmitting}
+                  className="flex-1 px-3 py-2 rounded-lg bg-fb-input border border-fb-divider text-fb-text placeholder-fb-text-3 focus:outline-hidden"
+                />
+              )}
               <div className="flex items-center gap-2">
                 <input
                   type="number"

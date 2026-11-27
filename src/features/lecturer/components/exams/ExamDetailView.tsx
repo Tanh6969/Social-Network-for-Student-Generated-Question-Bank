@@ -42,8 +42,14 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
 
   useEffect(() => {
     let isMounted = true;
+    const hasInitial = initialData?.exam_id === examId;
+    if (hasInitial) {
+      setExam(initialData);
+      setLoading(false);
+      setError(null);
+    }
     const fetchDetail = async () => {
-      setLoading(true);
+      if (!hasInitial) setLoading(true);
       setError(null);
       try {
         const data = await examsApi.getExamDetail(examId);
@@ -53,7 +59,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
       } catch (err: unknown) {
         if (isMounted) {
           const msg = err instanceof Error ? err.message : 'Không thể tải chi tiết đề thi.';
-          setError(msg);
+          if (!hasInitial) setError(msg);
           showToast(msg, 'error');
         }
       } finally {
@@ -65,7 +71,7 @@ export const ExamDetailView: React.FC<ExamDetailViewProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [examId, showToast]);
+  }, [examId, initialData, showToast]);
 
   return (
     <div className="space-y-4">

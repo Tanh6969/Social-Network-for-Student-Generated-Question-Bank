@@ -146,6 +146,9 @@ const MainContent: React.FC = () => {
     );
   }
 
+  if (location.pathname === '/exam' || location.pathname === '/exam/')
+    return <Navigate to={`/exams${location.search}`} replace />;
+
   if (!tabFromPath(location.pathname))
     return <Navigate to={postLoginDestination(location.search)} replace />;
 

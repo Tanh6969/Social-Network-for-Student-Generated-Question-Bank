@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useApp } from '../../demo/context/AppContext';
 import {
@@ -25,14 +25,22 @@ export const ExamsView: React.FC = () => {
 
   // Active sub-tab (mở thẳng được qua /exams?view=GENERATE | EXPORT_BANK)
   const [searchParams] = useSearchParams();
-  const [activeSubTab, setActiveSubTab] = useState<ExamViewTab>(() => {
-    const view = searchParams.get('view');
-    return view === 'GENERATE' || view === 'EXPORT_BANK' ? view : 'LIST';
-  });
+  const viewParam = searchParams.get('view');
+  const [activeSubTab, setActiveSubTab] = useState<ExamViewTab>(() =>
+    viewParam === 'GENERATE' || viewParam === 'EXPORT_BANK' ? viewParam : 'LIST',
+  );
 
   // Currently viewing exam detail (null = show tab views)
   const [viewingExamId, setViewingExamId] = useState<number | null>(null);
   const [newlyCreatedExam, setNewlyCreatedExam] = useState<ExamDetailResponse | null>(null);
+
+  useEffect(() => {
+    if (viewParam === 'GENERATE' || viewParam === 'EXPORT_BANK') {
+      setActiveSubTab(viewParam);
+      setViewingExamId(null);
+      setNewlyCreatedExam(null);
+    }
+  }, [viewParam]);
 
   // If user is not LECTURER, prevent access and show helpful notice
   if (role !== 'LECTURER') {

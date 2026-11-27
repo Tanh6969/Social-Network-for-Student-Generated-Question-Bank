@@ -12,7 +12,15 @@ import {
   Layers,
   Database,
 } from 'lucide-react';
-import { examsApi, errorMessage, ExportResponse, SubjectResponse } from '../../../../api';
+import {
+  examsApi,
+  errorMessage,
+  subjectsFromCourseClasses,
+  CourseClassResponse,
+  ExamBankSummary,
+  ExportResponse,
+  SubjectResponse,
+} from '../../../../api';
 
 interface QuestionBankExportViewProps {
   showToast: (message: string, type: 'success' | 'info' | 'warning' | 'error') => void;
@@ -20,8 +28,10 @@ interface QuestionBankExportViewProps {
 
 export const QuestionBankExportView: React.FC<QuestionBankExportViewProps> = ({ showToast }) => {
   const [subjects, setSubjects] = useState<SubjectResponse[]>([]);
+  const [assignedClasses, setAssignedClasses] = useState<CourseClassResponse[]>([]);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
   const [selectedSubjectId, setSelectedSubjectId] = useState<number | ''>('');
+  const [bankSummary, setBankSummary] = useState<ExamBankSummary | null>(null);
   const [format, setFormat] = useState<'pdf' | 'excel'>('pdf');
   const [includeAnswer, setIncludeAnswer] = useState(true);
 
@@ -29,26 +39,50 @@ export const QuestionBankExportView: React.FC<QuestionBankExportViewProps> = ({ 
   const [error, setError] = useState<string | null>(null);
   const [exportResult, setExportResult] = useState<ExportResponse | null>(null);
 
-  // Load all subjects for selector
+  // Tải số câu đã duyệt thực tế trong ngân hàng (GET /lecturer/exams/question-bank/{subjectId}/summary)
+  useEffect(() => {
+    setExportResult(null);
+    setError(null);
+    if (!selectedSubjectId) {
+      setBankSummary(null);
+      return;
+    }
+    let cancelled = false;
+    examsApi
+      .getBankSummary(Number(selectedSubjectId))
+      .then((summary) => {
+        if (!cancelled) setBankSummary(summary);
+      })
+      .catch(() => {
+        if (!cancelled) setBankSummary(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedSubjectId]);
+
+  // Chỉ tải các môn thuộc lớp học phần giảng viên được phân công trong học kỳ hiện tại
   useEffect(() => {
     let isMounted = true;
-    const fetchSubjects = async () => {
+    const fetchAssignedSubjects = async () => {
       setLoadingSubjects(true);
       try {
-        const list = await examsApi.getAllSubjects();
+        const classes = await examsApi.getMyCourseClasses();
+        const list = subjectsFromCourseClasses(classes);
         if (isMounted) {
+          setAssignedClasses(classes);
           setSubjects(list);
-          if (list.length > 0 && selectedSubjectId === '') {
-            setSelectedSubjectId(list[0].subject_id || '');
+          if (list.length > 0) {
+            setSelectedSubjectId((prev) => (prev === '' ? list[0].subject_id || '' : prev));
           }
         }
       } catch (err: unknown) {
-        if (isMounted) setError(errorMessage(err, 'Không tải được danh sách môn học.'));
+        if (isMounted) setError(errorMessage(err, 'Không tải được danh sách môn học được phân công.'));
       } finally {
         if (isMounted) setLoadingSubjects(false);
       }
     };
-    fetchSubjects();
+    fetchAssignedSubjects();
     return () => {
       isMounted = false;
     };
@@ -90,18 +124,25 @@ export const QuestionBankExportView: React.FC<QuestionBankExportViewProps> = ({ 
   };
 
   const selectedSubjectObj = subjects.find((s) => s.subject_id === Number(selectedSubjectId));
+  const classesForSelectedSubject = assignedClasses.filter(
+    (c) =>
+      c.subject_id === Number(selectedSubjectId) &&
+      c.active_semester !== false,
+  );
+  const approvedQuestionCount =
+    bankSummary?.total_questions ?? exportResult?.questions_count;
 
   return (
     <div className="space-y-5">
       {/* Scope Disclaimer / Banner */}
-      <div className="p-4 rounded-lg bg-fb-warning-soft border border-fb-warning/30 text-xs text-fb-warning flex items-start gap-3">
-        <Info className="w-5 h-5 text-fb-warning shrink-0 mt-0.5" />
+      <div className="p-4 rounded-lg bg-fb-blue-soft border border-fb-blue/30 text-xs text-fb-blue flex items-start gap-3">
+        <Info className="w-5 h-5 text-fb-blue shrink-0 mt-0.5" />
         <div className="space-y-1">
           <p className="font-bold text-sm">
-            Phân biệt: Xuất toàn bộ ngân hàng câu hỏi theo Môn học
+            Xuất ngân hàng câu hỏi theo Môn học (chỉ tính câu hỏi đã duyệt)
           </p>
           <p className="leading-relaxed">
-            Chức năng này trích xuất <strong>toàn bộ kho câu hỏi</strong> đã được duyệt thuộc một môn học cụ thể (dành cho lưu trữ thư viện giáo trình hoặc kiểm định chất lượng), <strong>không phải</strong> xuất một đề thi đơn lẻ với số câu giới hạn.
+            Thống kê hiển thị các câu hỏi đã được duyệt (<code>APPROVED</code>) trong các phiên đã chốt thuộc môn học bạn phụ trách. Nếu muốn xuất một đề thi với số lượng câu cố định cho lớp của mình, hãy dùng mục <strong>Sinh đề tự động</strong> rồi xuất file đề thi.
           </p>
         </div>
       </div>
@@ -118,7 +159,7 @@ export const QuestionBankExportView: React.FC<QuestionBankExportViewProps> = ({ 
               <span>Cấu hình xuất ngân hàng câu hỏi</span>
             </h3>
             <p className="text-fb-text-2 text-xs mt-0.5">
-              Chọn môn học và định dạng file bạn muốn kết xuất từ hệ thống.
+              Chỉ hiển thị các môn học thuộc lớp học phần bạn được phân công trong học kỳ hiện tại.
             </p>
           </div>
 
@@ -135,7 +176,11 @@ export const QuestionBankExportView: React.FC<QuestionBankExportViewProps> = ({ 
                 className="w-full px-3.5 py-2.5 rounded-lg bg-fb-input border border-fb-divider text-fb-text font-semibold focus:ring-2 focus:ring-fb-blue focus:outline-hidden disabled:opacity-60 cursor-pointer"
               >
                 {subjects.length === 0 ? (
-                  <option value="">{loadingSubjects ? 'Đang tải danh mục môn học...' : 'Chưa có môn học'}</option>
+                  <option value="">
+                    {loadingSubjects
+                      ? 'Đang tải môn học được phân công...'
+                      : 'Bạn chưa được phân công lớp học phần nào trong học kỳ hiện tại'}
+                  </option>
                 ) : (
                   subjects.map((sub) => (
                     <option key={sub.subject_id} value={sub.subject_id}>
@@ -145,6 +190,22 @@ export const QuestionBankExportView: React.FC<QuestionBankExportViewProps> = ({ 
                 )}
               </select>
             </div>
+            {classesForSelectedSubject.length > 0 && (
+              <p className="text-xs text-fb-text-3">
+                Lớp bạn phụ trách thuộc môn này:{' '}
+                <span className="font-semibold text-fb-text-2">
+                  {classesForSelectedSubject.map((c) => c.class_code).filter(Boolean).join(', ')}
+                </span>
+              </p>
+            )}
+            {bankSummary?.total_questions !== undefined && (
+              <p className="text-xs text-fb-text-3">
+                Số câu đã duyệt trong ngân hàng đề (chỉ tính phiên đã chốt):{' '}
+                <span className="font-bold text-fb-success">
+                  {bankSummary.total_questions} câu
+                </span>
+              </p>
+            )}
           </div>
 
           {/* Format selection */}
@@ -261,11 +322,11 @@ export const QuestionBankExportView: React.FC<QuestionBankExportViewProps> = ({ 
                     {format}
                   </span>
                 </div>
-                {exportResult.questions_count !== undefined && (
+                {approvedQuestionCount !== undefined && (
                   <div className="flex justify-between items-center py-1 border-b border-fb-success/50">
-                    <span className="text-fb-text-2">Tổng số câu hỏi:</span>
-                    <span className="font-bold text-fb-text">
-                      {exportResult.questions_count} câu
+                    <span className="text-fb-text-2">Tổng số câu hỏi đã duyệt:</span>
+                    <span className="font-bold text-fb-success">
+                      {approvedQuestionCount} câu
                     </span>
                   </div>
                 )}
@@ -309,7 +370,7 @@ export const QuestionBankExportView: React.FC<QuestionBankExportViewProps> = ({ 
                 <li className="flex items-start gap-2">
                   <span className="font-bold text-fb-blue">•</span>
                   <span>
-                    Chỉ các câu hỏi có trạng thái <strong>Đã duyệt (APPROVED)</strong> mới được đưa vào danh sách xuất.
+                    Xuất file ngân hàng câu hỏi <strong>đã được duyệt</strong> của môn học bạn phụ trách (PDF hoặc Excel).
                   </span>
                 </li>
                 <li className="flex items-start gap-2">

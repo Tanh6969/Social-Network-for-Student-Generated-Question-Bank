@@ -114,6 +114,59 @@ describe('đề thi — phiên thật không bao giờ dùng mock', () => {
       'https://files/x.pdf',
     );
   });
+  it('lấy thống kê ngân hàng câu hỏi theo môn', async () => {
+    respond = () =>
+      envelope({
+        subject_id: 10,
+        total_questions: 18,
+        topics: [{ topic_id: 12, topic_name: 'TCP', total_questions: 10 }],
+      });
+    const examsApi = await load();
+    const summary = await examsApi.getBankSummary(10);
+    expect(summary?.total_questions).toBe(18);
+    expect(summary?.topics?.[0].topic_id).toBe(12);
+    expect(requests[0].path).toBe('/lecturer/exams/question-bank/10/summary');
+  });
+
+  it('lọc môn học được phân công từ các lớp phụ trách trong học kỳ hiện tại', async () => {
+    respond = () =>
+      envelope([
+        {
+          course_class_id: 101,
+          class_code: '171146',
+          subject_id: 10,
+          subject_code: 'IT4409',
+          subject_name: 'Công nghệ Web và dịch vụ trực tuyến',
+          active_semester: true,
+        },
+        {
+          course_class_id: 102,
+          class_code: '171147',
+          subject_id: 10,
+          subject_code: 'IT4409',
+          subject_name: 'Công nghệ Web và dịch vụ trực tuyến',
+          active_semester: true,
+        },
+        {
+          course_class_id: 99,
+          class_code: '160000',
+          subject_id: 20,
+          subject_code: 'IT3080',
+          subject_name: 'Hệ điều hành',
+          active_semester: false,
+        },
+      ]);
+    const examsApi = await load();
+    const subjects = await examsApi.getAssignedSubjects();
+    expect(subjects).toEqual([
+      {
+        subject_id: 10,
+        code: 'IT4409',
+        name: 'Công nghệ Web và dịch vụ trực tuyến',
+      },
+    ]);
+    expect(requests[0].path).toBe('/lecturer/course-classes/my-classes');
+  });
 });
 
 describe('đề thi — phiên demo', () => {
