@@ -309,7 +309,7 @@ export const QuestionStatsModal: React.FC<QuestionStatsModalProps> = ({
                           </span>
                         </span>
                         <div className="flex items-center gap-1 text-fb-warning font-bold text-xs">
-                          <Star className="w-3 h-3 fill-amber-400 text-fb-warning" />
+                         <Star className="w-3 h-3 fill-amber-400 text-fb-warning" />
                           <span>{item.rating} / 4.0</span>
                         </div>
                       </div>
