@@ -80,26 +80,10 @@ export const ExamsView: React.FC = () => {
 
   return (
     <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-4 space-y-4">
-      {/* Top Banner Header */}
-      <div className="bg-fb-card rounded-lg shadow-fb-card p-5">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="p-2.5 rounded-lg bg-fb-blue text-white shadow-xs">
-                <FileCode className="w-5 h-5" />
-              </span>
-              <h1 className="text-xl sm:text-2xl font-bold text-fb-text tracking-tight">
-                Quản lý Đề thi & Xuất dữ liệu
-              </h1>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-fb-blue-soft text-fb-blue">
-                Dành cho Giảng viên
-              </span>
-            </div>
-            <p className="text-xs text-fb-text-2">
-              Sinh đề thi tự động từ câu hỏi đã duyệt, quản lý danh sách đề thi đã tạo và xuất dữ liệu ra định dạng PDF / Excel.
-            </p>
-          </div>
-
+      {/* Top Banner Header: chỉ còn tab + nút tạo đề, cùng một hàng */}
+      {!viewingExamId && (
+      <div className="bg-fb-card rounded-lg shadow-fb-card p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="order-last">
           {/* Quick Header CTA */}
           {!viewingExamId && (
             <div className="flex items-center gap-2 flex-wrap">
@@ -122,7 +106,7 @@ export const ExamsView: React.FC = () => {
 
         {/* 3 Main Area Navigation Tabs (Only when not in exam detail view) */}
         {!viewingExamId && (
-          <div className="flex items-center gap-2 border-t border-fb-divider pt-4 mt-4 overflow-x-auto">
+          <div className="flex items-center gap-2 overflow-x-auto">
             <button
               type="button"
               onClick={() => setActiveSubTab('LIST')}
@@ -164,6 +148,7 @@ export const ExamsView: React.FC = () => {
           </div>
         )}
       </div>
+      )}
 
       {/* Main Content Area */}
       <main className="w-full">

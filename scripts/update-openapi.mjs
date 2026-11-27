@@ -20,5 +20,22 @@ if (
   throw new Error('Downloaded file is not the expected OpenAPI contract');
 }
 
+/**
+ * Springdoc sinh đa hình dạng: cha có oneOf [con...], mỗi con lại allOf [cha, ...].
+ * openapi-typescript biến cặp này thành kiểu tự tham chiếu (TS2502), nên bỏ
+ * tham chiếu ngược con → cha; con đã tự khai báo đủ trường (kể cả `type`).
+ */
+function breakPolymorphicCycles(schemas) {
+  for (const [parent, schema] of Object.entries(schemas)) {
+    const parentRef = `#/components/schemas/${parent}`;
+    for (const option of schema.oneOf ?? []) {
+      const child = schemas[option.$ref?.split('/').pop()];
+      if (!child?.allOf) continue;
+      child.allOf = child.allOf.filter((part) => part.$ref !== parentRef);
+    }
+  }
+}
+breakPolymorphicCycles(spec.components.schemas);
+
 writeFileSync(destination, `${JSON.stringify(spec)}\n`);
 console.log(`Updated ${destination} from ${source}`);

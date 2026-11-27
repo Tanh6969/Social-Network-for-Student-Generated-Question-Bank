@@ -55,7 +55,7 @@ export const ApiReferenceModal: React.FC = () => {
     { api: '(31) GET /games/my-predictions', screen: 'GAME.06 Lịch sử dự đoán', tab: 'game' },
     { api: '(32) GET /games/leaderboard', screen: 'GAME.07 Bảng xếp hạng Podium', tab: 'game' },
     { api: '(33) GET /questions/export', screen: 'EXPORT.01 Xuất file Excel/Word/PDF', tab: 'bank', action: () => setIsExportQuestionsOpen(true) },
-    { api: '(34) POST /exams/generate', screen: 'EXAM.01 Sinh đề thi Wizard 2 cột', tab: 'exams', action: () => setIsExamWizardOpen(true) },
+    { api: '(34) POST /lecturer/exams/generate', screen: 'EXAM.01 Sinh đề thi Wizard 2 cột', tab: 'exams', action: () => setIsExamWizardOpen(true) },
     { api: '(38) POST /posts', screen: 'SOC.02 Tạo bài viết mới', tab: 'feed' },
     { api: '(39) GET /posts/{id}', screen: 'SOC.04 Chi tiết bài viết Theater', tab: 'feed' },
     { api: '(41) PUT /posts/{id}/lecturer-notes', screen: 'SOC.06 Ghi chú của giảng viên', tab: 'feed' },

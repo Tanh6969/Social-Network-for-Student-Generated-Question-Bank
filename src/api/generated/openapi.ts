@@ -152,6 +152,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/lecturer/subjects/{subjectId}/topics/{topicId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Cập nhật chủ đề của môn học
+         * @description Đổi tên hoặc trạng thái sử dụng bằng phiên bản đã đọc. Câu hỏi đã gắn chủ đề vẫn giữ liên kết khi chủ đề ngừng sử dụng.
+         */
+        put: operations["update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/lecturer/questions/{questionId}": {
         parameters: {
             query?: never;
@@ -179,9 +199,21 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /**
+         * Xem tiến độ tải video để tiếp tục
+         * @description Đọc các phần đã tồn tại trên R2 và media đã xác minh nếu hoàn tất. Chỉ chủ phiên giảng viên/ADMIN được truy cập; không dùng kết quả local của client làm bằng chứng tải thành công.
+         */
         get: operations["status"];
+        /**
+         * Khởi tạo hoặc khôi phục phiên tải video
+         * @description Client sinh UUID ổn định cho một tệp. Gọi lại cùng UUID/metadata trả trạng thái hiện có; metadata khác hoặc phiên đã hủy bị từ chối. Nhận MP4/WebM, dung lượng tối đa theo LECTURE_VIDEO_MAX_FILE_SIZE (mặc định 2 GiB); phiên sống 24 giờ, mỗi phần 16 MiB trừ phần cuối. Giữ chỗ quota trước khi cấp quyền ghi; chưa upload binary ở request này.
+         */
         put: operations["start"];
         post?: never;
+        /**
+         * Hủy phiên tải video
+         * @description Chủ phiên hủy multipart đang tải; gọi lại an toàn. UUID chưa khởi tạo cũng được đánh dấu hủy để tránh race khi start đến muộn. Không xóa video đã gắn vào bài. Phản hồi không có GlobalResponse/body.
+         */
         delete: operations["cancel"];
         options?: never;
         head?: never;
@@ -469,6 +501,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /**
+         * Tải một ảnh bằng chứng vào kho riêng tư
+         * @description Người dùng đăng nhập gửi multipart field file, ảnh PNG/JPEG/GIF/WebP hợp lệ, tối đa 5 MiB. Nhận object key thuộc chính tài khoản để gửi evidence_keys khi tạo báo cáo trong 23 giờ; tối đa một ảnh/báo cáo, không gửi đồng thời evidence_keys và evidence_urls. Đây không phải URL xem ảnh công khai. Có giới hạn số lần tải và quota R2.
+         */
         post: operations["uploadEvidence"];
         delete?: never;
         options?: never;
@@ -570,6 +606,32 @@ export interface paths {
          * @description Sử dụng LLM để hoàn thiện nội dung câu hỏi, điều chỉnh phương án nhiễu, viết giải thích chi tiết và tự động chạy quy trình kiểm định ảo giác Btprop.
          */
         post: operations["refineQuestion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/questions/{questionId}/ai-refine/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Nhận bản tinh chỉnh AI qua SSE
+         * @description Mỗi sự kiện có một dòng `data:` chứa JSON với hai trường `type` và `data`.
+         *
+         *     - `proposal` gửi bản xem trước khi BTProp hoàn tất kiểm chứng.
+         *     - `complete` gửi kết quả kiểm chứng và bản đề xuất đã lưu.
+         *     - `error` gửi thông báo trong `data.message` nếu lỗi xảy ra sau khi luồng bắt đầu.
+         *
+         *     Lỗi trước khi bắt đầu luồng trả về phản hồi HTTP thông thường.
+         */
+        post: operations["streamRefinement"];
         delete?: never;
         options?: never;
         head?: never;
@@ -716,6 +778,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/lecturer/subjects/{subjectId}/topics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Liệt kê chủ đề để quản lý
+         * @description Trả về cả chủ đề đang dùng và đã ngừng sử dụng theo tên, kèm phiên bản của từng chủ đề.
+         */
+        get: operations["list"];
+        put?: never;
+        /**
+         * Tạo chủ đề cho môn học
+         * @description Tạo chủ đề và trả về phiên bản ban đầu. Chủ đề mới ở trạng thái đang dùng nếu bỏ qua active.
+         */
+        post: operations["create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/lecturer/sessions/{sessionId}/complete-review": {
         parameters: {
             query?: never;
@@ -776,6 +862,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/lecturer/questions/{questionId}/retry-duplicate-check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Yêu cầu dò trùng câu hỏi lại
+         * @description Đưa câu hỏi đang chờ duyệt và đã có lượt dò lỗi trở lại hàng chờ xử lý. Dành cho quản trị viên hoặc giảng viên có quyền duyệt câu hỏi.
+         */
+        post: operations["retryDuplicateCheck"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/lecturer/medias/lecture-uploads/{id}/parts/{number}": {
         parameters: {
             query?: never;
@@ -785,6 +891,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /**
+         * Xin URL PUT cho một phần video
+         * @description Chủ phiên nhận URL có chữ ký, tối đa 15 phút và không vượt hạn phiên. Client PUT đúng byte của phần trực tiếp lên URL này, không gửi Bearer SQB sang R2; số phần bắt đầu từ 1, phần cuối có thể nhỏ hơn part_size. URL ràng buộc độ dài phần. Có thể xin lại URL để retry phần chưa xong.
+         */
         post: operations["partUrl"];
         delete?: never;
         options?: never;
@@ -801,7 +911,31 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /**
+         * Ghép và xác minh video đã tải đủ
+         * @description Chỉ gọi sau khi tất cả PUT phần thành công. Backend tự đọc manifest/ETag từ R2, kiểm số phần/kích thước rồi hoàn tất và xác minh object. Có thể gọi lại khi đã READY để nhận cùng media. Gắn MediaItem trả về vào bài giảng qua API bài viết; complete chưa đồng nghĩa video đã được gắn vĩnh viễn vào một bài.
+         */
         post: operations["complete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lecturer/exams/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Tự động sinh đề thi từ ngân hàng câu hỏi
+         * @description Dành cho giảng viên: bốc ngẫu nhiên câu hỏi đã được duyệt (APPROVED) theo môn học, số lượng yêu cầu, tỉ lệ độ khó và trọng số chủ đề, đồng thời gán vào các lớp học phần.
+         */
+        post: operations["generateExam"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1044,26 +1178,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/exams/generate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Tự động sinh đề thi từ ngân hàng câu hỏi
-         * @description Dành cho giảng viên: bốc ngẫu nhiên câu hỏi đã được duyệt (APPROVED) theo môn học, số lượng yêu cầu, tỉ lệ độ khó và trọng số chủ đề, đồng thời gán vào các lớp học phần.
-         */
-        post: operations["generateExam"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/devices/{deviceId}/logout": {
         parameters: {
             query?: never;
@@ -1217,7 +1331,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Khóa kho trò chuyện ẩn của phiên hiện tại */
+        /**
+         * Khóa kho trò chuyện ẩn của phiên hiện tại
+         * @description Thu hồi quyền mở kho ẩn của session JWT đang gọi. Không xóa PIN, hội thoại hoặc tin nhắn; sau đó phải unlock bằng PIN để xem lại. Không khóa thay phiên khác của cùng tài khoản.
+         */
         post: operations["lockHiddenChat"];
         delete?: never;
         options?: never;
@@ -1254,7 +1371,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Chấp nhận lời mời và nhận ID hội thoại */
+        /**
+         * Chấp nhận lời mời và nhận ID hội thoại
+         * @description Chỉ người nhận được chấp nhận lời mời còn hạn; giới hạn nhóm 200 thành viên. Thêm vào nhóm với vai trò VILLAGER, xóa lời mời và trả conversation_id trong data. Lời mời không còn hợp lệ trả 404.
+         */
         post: operations["accept"];
         delete?: never;
         options?: never;
@@ -1340,10 +1460,70 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Cấp mới Access Token (Refresh)
-         * @description Sử dụng Refresh Token còn hiệu lực để cấp phát lại Access Token mới mà không cần người dùng nhập lại mật khẩu.
+         * Web: refresh cookie; có chế độ JSON tương thích tạm thời
+         * @description Luồng chuẩn: không body, RT WEB/legacy trong cookie, RT mới chỉ Set-Cookie. Khi AUTH_LEGACY_JSON_ENABLED=true: cookie luôn ưu tiên; nếu không có cookie, nhận body refresh_token thuộc LEGACY_JSON hoặc RT cũ thiếu kênh, rotate trả AT/RT JSON với message cảnh báo. RT đã ký WEB/NATIVE không đổi sang LEGACY_JSON. Khi tắt, mọi body RT tại endpoint này bị từ chối. Native mới dùng /auth/native/refresh.
          */
         post: operations["refreshToken"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/native/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Native: xoay refresh token qua JSON
+         * @description Body {"refresh_token":"..."}. Chỉ nhận RT NATIVE, không đọc cookie. Thay cả AT/RT bằng cặp mới sau mỗi lần thành công và gom request refresh đồng thời. RT WEB hoặc RT legacy thiếu kênh bị từ chối; đăng nhập lại native/login.
+         */
+        post: operations["refresh"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/native/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Native: đăng xuất phiên hiện tại
+         * @description Gửi Bearer AT NATIVE; thu hồi RT/thiết bị rồi app xóa token đã lưu. AT hết hạn thì refresh trước. Không thay đổi cookie WEB.
+         */
+        post: operations["logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/native/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Native: đăng nhập nhận AT/RT JSON
+         * @description Gửi email, password, device_id ổn định và platform ANDROID/IOS/DESKTOP. Server gắn kênh NATIVE vào JWT. Tài khoản chưa hoàn tất thiết lập chỉ nhận ONBOARDING AT, không RT; hoàn tất thiết lập rồi đăng nhập lại.
+         */
+        post: operations["login"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1360,10 +1540,10 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Đăng xuất tài khoản
-         * @description Xóa phiên đăng nhập hiện tại trên thiết bị, thu hồi Refresh Token trong Redis và vô hiệu hóa FCM Token đẩy thông báo.
+         * Web: đăng xuất và xóa cookie
+         * @description Gửi Bearer AT WEB để thu hồi RT/thiết bị và xóa cookie. AT LEGACY_JSON dùng endpoint này để thu hồi phiên JSON, không sửa cookie, kể cả sau khi tắt chế độ tương thích. Native dùng /auth/native/logout.
          */
-        post: operations["logout"];
+        post: operations["logout_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1380,10 +1560,10 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Đăng nhập hệ thống
-         * @description Xác thực tài khoản bằng Email và Mật khẩu. Hỗ trợ đa nền tảng (Web, Android, iOS), tự động lưu thông tin thiết bị và sinh cặp mã JWT Access Token & Refresh Token.
+         * Web: đăng nhập; có chế độ JSON tương thích tạm thời
+         * @description WEB nhận AT JSON, RT cookie HttpOnly/Secure/SameSite Strict. Khi AUTH_LEGACY_JSON_ENABLED=true, endpoint cũ còn nhận ANDROID/IOS/DESKTOP và trả RT JSON cho client chưa chuyển đổi, message thành công có cảnh báo. Khi tắt, non-WEB bị từ chối. Native mới dùng /auth/native/login. Xem trạng thái thực ở đầu Swagger.
          */
-        post: operations["login"];
+        post: operations["login_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1481,7 +1661,7 @@ export interface paths {
         put?: never;
         /**
          * Đặt lại mật khẩu cho người dùng (Reset Password)
-         * @description Quản trị viên đặt lại mật khẩu cho tài khoản người dùng về mật khẩu chỉ định hoặc mật khẩu mặc định của trường. Tự động xóa sạch Refresh Token trên Redis để đăng xuất khỏi tất cả thiết bị.
+         * @description Quản trị viên đặt lại mật khẩu cho tài khoản người dùng về mật khẩu chỉ định hoặc mật khẩu ngẫu nhiên. Buộc đổi mật khẩu, tăng sessionEpoch để vô hiệu AT/RT cũ và trả mật khẩu tạm một lần cho ADMIN.
          */
         post: operations["adminResetPassword"];
         delete?: never;
@@ -1623,23 +1803,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /**
+         * Đóng báo cáo và áp dụng quyết định kiểm duyệt
+         * @description Gửi version mới nhất từ Detail cùng action/reason. Chỉ PENDING được xử lý; version/trạng thái đã thay đổi trả 409. HIDE_CONTENT cho POST/COMMENT; WARN_ACCOUNT/SUSPEND_ACCOUNT cho USER, không xử phạt ADMIN. SUSPEND_ACCOUNT yêu cầu suspension_days thuộc 1/7/30; action khác phải bỏ trường này. Trả Detail mới, ghi lịch sử và thông báo người liên quan.
+         */
         post: operations["resolve"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/admin/reports/{id}/evidence/import": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["importEvidence"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1655,6 +1823,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /**
+         * Hoàn tác biện pháp ẩn nội dung hoặc đình chỉ
+         * @description ID ở đây là moderation action, không phải report ID. Chỉ hoàn tác HIDE_CONTENT/SUSPEND_ACCOUNT còn đang áp dụng; thay đổi đồng thời trả 409. Ghi một biện pháp khôi phục mới và gửi thông báo, không xóa lịch sử cũ. WARN_ACCOUNT không hỗ trợ hoàn tác bằng API này.
+         */
         post: operations["reverse"];
         delete?: never;
         options?: never;
@@ -1735,7 +1907,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Thu hồi huy hiệu của các tài khoản đã chọn */
+        /**
+         * Thu hồi huy hiệu của các tài khoản đã chọn
+         * @description ADMIN thu hồi các lượt trao đang hiệu lực cho user_ids, giảm thống kê huy hiệu và gửi thông báo người bị thu hồi. Tài khoản không đang giữ huy hiệu được bỏ qua; giữ lịch sử trao/thu hồi. Gọi lại không trừ số lượng nhiều lần.
+         */
         post: operations["revokeBadge"];
         delete?: never;
         options?: never;
@@ -1949,6 +2124,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/subjects/{subjectId}/topics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Liệt kê chủ đề của môn học
+         * @description Trả về chủ đề đang dùng theo tên để người dùng đã đăng nhập chọn khi gán chủ đề cho câu hỏi.
+         */
+        get: operations["list_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/sessions/{sessionId}/questions": {
         parameters: {
             query?: never;
@@ -2149,6 +2344,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/lecturer/sessions/{sessionId}/questions/{questionId}/duplicate-matches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Xem chi tiết các câu đối sánh khi duyệt
+         * @description Đọc phương án, đáp án đúng và lời giải cho các cảnh báo đã lưu của một câu. Dành cho giảng viên phụ trách phiên hoặc Admin.
+         */
+        get: operations["getDuplicateMatches"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/lecturer/sessions/reviewable": {
         parameters: {
             query?: never;
@@ -2177,10 +2392,90 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Giảng viên xuất toàn bộ câu hỏi môn học
-         * @description Xuất danh sách tất cả câu hỏi của một môn học ra định dạng PDF hoặc Excel (có kèm đáp án và lời giải hoặc chỉ đề bài), hỗ trợ cơ chế lưu cache S3/MinIO.
+         * Xuất tài liệu ôn tập theo môn
+         * @description Xuất câu hỏi của môn ở mọi trạng thái và học kỳ ra PDF hoặc Excel, tùy chọn kèm đáp án và lời giải. Giảng viên chỉ xuất được môn được phân công trong học kỳ hiện tại. Admin có thể xuất mọi môn.
          */
         get: operations["exportQuestions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lecturer/exams/{examId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Xem chi tiết đề thi
+         * @description Giảng viên tạo đề và Admin có thể xem câu hỏi, phương án, hình ảnh và thống kê độ khó của đề.
+         */
+        get: operations["getExamDetail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lecturer/exams/{examId}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Xuất file đề thi (PDF / Excel)
+         * @description Giảng viên tạo đề và Admin có thể xuất PDF hoặc Excel, tùy chọn kèm đáp án, và nhận URL tải có thời hạn.
+         */
+        get: operations["exportExam"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lecturer/exams/question-bank/{subjectId}/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Thống kê ngân hàng câu hỏi có thể dùng để tạo đề
+         * @description Dành cho giảng viên phụ trách môn học và Admin. Đếm câu đã duyệt trong các phiên đã chốt theo độ khó và chủ đề.
+         */
+        get: operations["getBankSummary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lecturer/exams/my-exams": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lấy danh sách đề thi của giảng viên
+         * @description Truy vấn danh sách các đề thi do giảng viên hiện tại tạo ra, hỗ trợ lọc theo môn học và phân trang con trỏ cursor.
+         */
+        get: operations["getMyExams"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2429,66 +2724,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/exams/{examId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Xem chi tiết đề thi
-         * @description Lấy toàn bộ thông tin đề thi bao gồm danh sách câu hỏi theo thứ tự, các phương án đáp án, hình ảnh và thống kê tỷ lệ độ khó.
-         */
-        get: operations["getExamDetail"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/exams/{examId}/export": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Xuất file đề thi (PDF / Excel)
-         * @description Biên dịch và kết xuất file đề thi ra định dạng PDF hoặc Excel (tùy chọn kèm bảng đáp án), lưu trữ trên S3/MinIO và trả về presigned URL tải về.
-         */
-        get: operations["exportExam"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/exams/my-exams": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Lấy danh sách đề thi của giảng viên
-         * @description Truy vấn danh sách các đề thi do giảng viên hiện tại tạo ra, hỗ trợ lọc theo môn học và phân trang con trỏ cursor.
-         */
-        get: operations["getMyExams"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/devices": {
         parameters: {
             query?: never;
@@ -2578,9 +2813,29 @@ export interface paths {
         };
         /**
          * Lấy lịch sử tin nhắn trong cuộc hội thoại
-         * @description Đọc tin nhắn theo phân trang con trỏ (cursor pagination). Tự động cập nhật biên nhận đã đọc (Read Receipt) cho người xem.
+         * @description Đọc tin nhắn và dòng hệ thống theo phân trang con trỏ. Thành viên đang hoạt động xem được toàn bộ dòng hệ thống của nhóm. Trang mới nhất cập nhật mốc đã đọc cho người xem.
          */
         get: operations["getMessages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/conversations/presence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lấy trạng thái hoạt động trong chat trực tiếp
+         * @description Trả trạng thái theo lô cho tối đa 100 cuộc hội thoại trực tiếp thường mà người gọi được phép xem.
+         */
+        get: operations["snapshot"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2756,6 +3011,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /**
+         * Lọc hàng đợi báo cáo vi phạm
+         * @description ADMIN đọc báo cáo mới trước theo ID giảm dần, phân trang after/limit. Có thể kết hợp trạng thái, loại đối tượng và loại vi phạm. Trả snapshot tóm tắt, tình trạng đối tượng hiện tại và số báo cáo PENDING cùng đối tượng; không tự đổi trạng thái khi xem.
+         */
         get: operations["queue"];
         put?: never;
         post?: never;
@@ -2772,6 +3031,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /**
+         * Xem chi tiết báo cáo và các quyết định hợp lệ
+         * @description Trả snapshot lúc báo cáo, snapshot hiện tại, người báo cáo/duyệt, version để xử lý đồng thời, allowed_actions và lịch sử biện pháp. Chỉ gửi resolve với action đang có trong allowed_actions; không dùng ID đối tượng thay ID báo cáo.
+         */
         get: operations["detail"];
         put?: never;
         post?: never;
@@ -2788,6 +3051,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /**
+         * Xem các báo cáo khác cùng đối tượng
+         * @description Đọc các đơn cùng target_type/target_id, loại trừ đơn đang xem; phân trang ID giảm dần. Không xử lý hàng loạt các báo cáo liên quan khi mở danh sách.
+         */
         get: operations["related"];
         put?: never;
         post?: never;
@@ -2804,6 +3071,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /**
+         * Cấp URL ngắn hạn xem bằng chứng riêng tư
+         * @description Chỉ ADMIN đọc ảnh đã gắn vào báo cáo. URL GET có chữ ký sống 120 giây, response no-store; không lưu URL dài hạn hoặc công khai. Hết hạn gọi lại API này. Báo cáo không có private evidence trả 404.
+         */
         get: operations["evidence"];
         put?: never;
         post?: never;
@@ -2820,7 +3091,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Tìm tài khoản để trao hoặc thu hồi huy hiệu */
+        /**
+         * Tìm tài khoản để trao hoặc thu hồi huy hiệu
+         * @description ADMIN tìm theo tên/email, tối đa 100 ký tự. holders=true chỉ người đang giữ huy hiệu, false chọn tài khoản hoạt động chưa giữ để trao. Mỗi trang tối đa 20 tài khoản theo ID tăng dần; gửi pagination.after cho trang kế tiếp. Huy hiệu không tồn tại trả 404.
+         */
         get: operations["searchBadgeAccounts"];
         put?: never;
         post?: never;
@@ -2839,7 +3113,7 @@ export interface paths {
         };
         /**
          * Lấy dòng hoạt động cá nhân hóa
-         * @description Trả về bảng tin sự kiện được cá nhân hóa theo mạng lưới bạn bè và người đang theo dõi của người dùng hiện tại (có loại trừ người bị chặn).
+         * @description Trả về bảng tin cá nhân hóa theo bạn bè/theo dõi, loại người bị chặn. Mỗi item có target_type/target_id/action_type và content là map metadata/tương tác, không phải một PostResponseDto đầy đủ. Dựa vào target_type/action_type để dựng đúng thẻ; cần chi tiết thì gọi API đối tượng. Sự kiện duyệt phiên legacy có thể được chuẩn hóa sang target POST khi bài thông báo đã tồn tại.
          */
         get: operations["getActivityFeeds"];
         put?: never;
@@ -3000,7 +3274,10 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Từ chối lời mời gửi tới tài khoản hiện tại */
+        /**
+         * Từ chối lời mời gửi tới tài khoản hiện tại
+         * @description Xóa lời mời thuộc người đang đăng nhập mà không tham gia nhóm. ID không tồn tại hoặc không thuộc người gọi trả 404; không dùng conversation_id thay invitation ID.
+         */
         delete: operations["decline"];
         options?: never;
         head?: never;
@@ -3059,11 +3336,11 @@ export interface components {
              */
             timezone?: string;
             /**
-             * @description Giới tính (chỉ nhận MALE hoặc FEMALE)
+             * @description Giới tính do người dùng chọn. PREFER_NOT_TO_SAY giữ lựa chọn này riêng tư.
              * @example MALE
              * @enum {string}
              */
-            gender?: "MALE" | "FEMALE" | "MALE" | "FEMALE";
+            gender?: "MALE" | "FEMALE" | "OTHER" | "PREFER_NOT_TO_SAY";
             /**
              * Format: date
              * @description Ngày tháng năm sinh
@@ -3071,8 +3348,17 @@ export interface components {
              */
             date_of_birth?: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseProfileResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["ProfileResponse"];
         };
@@ -3110,11 +3396,11 @@ export interface components {
              */
             frame_url?: string;
             /**
-             * @description Giới tính
+             * @description Giới tính. PREFER_NOT_TO_SAY chỉ trả về khi xem hồ sơ của chính mình.
              * @example MALE
              * @enum {string}
              */
-            gender?: "MALE" | "FEMALE";
+            gender?: "MALE" | "FEMALE" | "OTHER" | "PREFER_NOT_TO_SAY";
             /**
              * Format: date
              * @description Ngày tháng năm sinh (chỉ hiển thị khi xem chính mình)
@@ -3211,18 +3497,32 @@ export interface components {
             /**
              * Format: date-time
              * @description Thời điểm khởi tạo tài khoản
+             * @example 2026-11-19T07:00:00Z
              */
             created_at?: string;
             relationships?: components["schemas"]["Relationship"];
         };
-        /** @description Quan hệ xã hội giữa người xem và tài khoản này (bạn bè, theo dõi...) */
+        /** @description Quan hệ bạn bè/theo dõi giữa người gọi và hồ sơ đang xem */
         Relationship: {
+            /**
+             * @description Hai tài khoản đã là bạn bè được chấp nhận
+             * @example true
+             */
             is_friend?: boolean;
-            /** @description Người được xem hồ sơ đang theo dõi người đăng nhập */
+            /**
+             * @description Người được xem hồ sơ đang theo dõi người đăng nhập
+             * @example true
+             */
             is_following?: boolean;
-            /** @description Người đăng nhập đang theo dõi người được xem hồ sơ */
+            /**
+             * @description Người đăng nhập đang theo dõi người được xem hồ sơ
+             * @example true
+             */
             is_followed?: boolean;
-            /** @enum {string} */
+            /**
+             * @description Trạng thái lời mời kết bạn giữa hai tài khoản; null nếu không có
+             * @enum {string}
+             */
             friend_request_status?: "NONE" | "PENDING" | "ACCEPTED" | "DECLINED";
         };
         /** @description Cấu hình chi tiết cho một danh mục thông báo */
@@ -3279,8 +3579,17 @@ export interface components {
              */
             vibration_enabled?: boolean;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponsePushSettingsResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["PushSettingsResponseDto"];
         };
@@ -3345,6 +3654,17 @@ export interface components {
              */
             question_id?: number;
             /**
+             * Format: int64
+             * @description ID chủ đề cần gán, thuộc môn học của lớp sau khi cập nhật phiên
+             * @example 37
+             */
+            topic_id?: number;
+            /**
+             * @description Đặt true để gỡ chủ đề khi bỏ trống topic_id. Nếu bỏ qua cả hai trường khi đổi môn học, chủ đề cũ sẽ được gỡ.
+             * @example true
+             */
+            clear_topic?: boolean;
+            /**
              * @description Nội dung câu hỏi (hỗ trợ LaTeX/Markdown)
              * @example Thuật toán định thời nào sau đây có thể dẫn đến hiện tượng đói CPU (starvation)?
              */
@@ -3363,6 +3683,12 @@ export interface components {
              * @example SJF ưu tiên tiến trình ngắn hơn, các tiến trình dài có thể bị đói CPU nếu tiến trình ngắn liên tục tới.
              */
             explanation?: string;
+            /**
+             * @description Độ khó đề xuất. Bỏ qua để giữ giá trị hiện tại, gửi UNCLASSIFIED để bỏ phân loại.
+             * @example MEDIUM
+             * @enum {string}
+             */
+            difficulty?: "UNCLASSIFIED" | "EASY" | "MEDIUM" | "HARD";
             /**
              * @description Nguồn gốc tạo câu hỏi
              * @example HOMO_SAPIENS
@@ -3402,9 +3728,19 @@ export interface components {
             /** @description Danh sách câu hỏi cần cập nhật hoặc thêm mới */
             questions?: components["schemas"]["QuestionUpdateDto"][];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseVoid: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
+            /** @description Payload nghiệp vụ theo kiểu response của endpoint; có thể null với thao tác không trả dữ liệu */
             data?: Record<string, never>;
         };
         /** @description Nội dung báo lỗi câu hỏi */
@@ -3415,21 +3751,56 @@ export interface components {
              */
             description: string;
         };
-        /** @description Danh sách tệp tin đính kèm mới (thay thế danh sách cũ) */
+        /** @description Metadata tệp đính kèm; key là object key, url để hiển thị, các kích thước có thể null khi không áp dụng */
         MediaItem: {
+            /**
+             * @description Object key trong bucket; dùng key do API upload trả về để tham chiếu media
+             * @example lecture-videos/550e8400-e29b-41d4-a716-446655440000/video.mp4
+             */
             key?: string;
+            /**
+             * @description URL tài nguyên hoặc đích điều hướng theo schema
+             * @example https://media.example.com/document.pdf
+             */
             url?: string;
-            /** @enum {string} */
+            /**
+             * @description Loại media: IMAGE, VIDEO hoặc DOCUMENT
+             * @enum {string}
+             */
             type?: "IMAGE" | "VIDEO" | "DOCUMENT";
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Chiều rộng ảnh/video theo pixel, null khi không áp dụng
+             * @example 1280
+             */
             width?: number;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Chiều cao ảnh/video theo pixel, null khi không áp dụng
+             * @example 720
+             */
             height?: number;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description Dung lượng media theo byte
+             * @example 1048576
+             */
             size?: number;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Metadata thời lượng tùy chọn; không dùng trường này để xác minh dung lượng multipart
+             * @example 300
+             */
             duration?: number;
+            /**
+             * @description Tên tệp gốc, có thể null
+             * @example bai-giang-01.mp4
+             */
             name?: string;
+            /**
+             * @description URL ảnh xem trước video/ảnh, có thể null khi không có
+             * @example https://media.example.com/thumbnail.jpg
+             */
             thumbnail_url?: string;
         };
         /** @description Yêu cầu cập nhật nội dung bài viết */
@@ -3448,15 +3819,33 @@ export interface components {
              */
             visibility: "PUBLIC" | "ONLY_ME" | "FRIENDS";
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseUpdatePostResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["UpdatePostResponseDto"];
         };
+        /** @description ID bài viết và thời điểm cập nhật thành công */
         UpdatePostResponseDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID bài viết
+             * @example 42
+             */
             post_id?: number;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm cập nhật gần nhất, ISO-8601 UTC; có thể null nếu chưa ghi nhận
+             * @example 2026-11-19T07:00:00Z
+             */
             updated_at?: string;
         };
         /** @description Yêu cầu thêm hoặc cập nhật ghi chú chuyên môn của Giảng viên cho bài viết */
@@ -3467,8 +3856,77 @@ export interface components {
              */
             content: string;
         };
+        /** @description Yêu cầu cập nhật chủ đề dựa trên phiên bản đã đọc */
+        UpdateTopicRequest: {
+            /**
+             * @description Tên duy nhất trong môn học khi đối chiếu không phân biệt hoa thường, tối đa 100 ký tự
+             * @example Định thời CPU
+             */
+            name: string;
+            /**
+             * @description Trạng thái sử dụng. Bỏ qua để giữ trạng thái hiện tại.
+             * @example false
+             */
+            active?: boolean;
+            /**
+             * Format: int64
+             * @description Phiên bản chủ đề nhận được khi đọc danh mục quản lý hoặc lưu lần trước
+             * @example 2
+             */
+            version: number;
+        };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
+        GlobalResponseManagedTopicResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
+            code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
+            message?: string;
+            data?: components["schemas"]["ManagedTopicResponse"];
+        };
+        /** @description Chủ đề kèm phiên bản để quản trị viên và giảng viên quản lý */
+        ManagedTopicResponse: {
+            /**
+             * Format: int64
+             * @description ID của chủ đề
+             * @example 37
+             */
+            id?: number;
+            /**
+             * @description Tên hiển thị của chủ đề
+             * @example Định thời CPU
+             */
+            name?: string;
+            /**
+             * @description Chủ đề đang được sử dụng
+             * @example true
+             */
+            active?: boolean;
+            /**
+             * Format: int64
+             * @description Phiên bản hiện tại, cần gửi lại khi cập nhật chủ đề
+             * @example 2
+             */
+            version?: number;
+        };
         /** @description Yêu cầu giảng viên chỉnh sửa nội dung câu hỏi */
         EditQuestionRequest: {
+            /**
+             * Format: int64
+             * @description ID chủ đề cần gán. Chủ đề phải thuộc môn học của câu hỏi.
+             * @example 37
+             */
+            topic_id?: number;
+            /**
+             * @description Đặt true để gỡ chủ đề khi bỏ trống topic_id. Bỏ qua cả hai trường để giữ chủ đề hiện tại.
+             * @example true
+             */
+            clear_topic?: boolean;
             /**
              * @description Nội dung câu hỏi được biên tập lại
              * @example Thuật toán định thời CPU nào sau đây có thể gây hiện tượng đói tiến trình?
@@ -3481,6 +3939,12 @@ export interface components {
              * @example SJF ưu tiên tiến trình ngắn, tiến trình dài có thể bị đói tài nguyên CPU.
              */
             explanation?: string;
+            /**
+             * @description Độ khó do giảng viên chọn. Bỏ qua để giữ giá trị hiện tại.
+             * @example HARD
+             * @enum {string}
+             */
+            difficulty?: "UNCLASSIFIED" | "EASY" | "MEDIUM" | "HARD";
             /**
              * @description Quyết định sau khi lưu (true: phê duyệt, false: chuyển về chờ). Câu đã duyệt chỉ dùng để tạo đề sau khi chốt phiên.
              * @example true
@@ -3513,27 +3977,74 @@ export interface components {
              */
             reviewed_at?: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseEditQuestionResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["EditQuestionResponse"];
         };
+        /** @description Metadata khởi tạo phiên video MP4/WebM; payload video được PUT trực tiếp lên R2 */
         StartRequest: {
+            /**
+             * @description Tên tệp gốc do người dùng chọn, gồm phần mở rộng
+             * @example bai-giang-01.mp4
+             */
             file_name: string;
+            /**
+             * @description MIME video, chỉ video/mp4 hoặc video/webm
+             * @example video/mp4
+             */
             content_type: string;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description Kích thước tệp byte, >0 và không vượt cấu hình LECTURE_VIDEO_MAX_FILE_SIZE (mặc định 2 GiB)
+             * @example 104857600
+             */
             file_size?: number;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseStatus: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["Status"];
         };
+        /** @description Trạng thái phiên multipart; media chỉ có sau khi object hoàn tất và được xác minh */
         Status: {
-            /** Format: uuid */
+            /**
+             * Format: uuid
+             * @description UUID do client sinh để định danh và tiếp tục phiên multipart
+             * @example 550e8400-e29b-41d4-a716-446655440000
+             */
             id?: string;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description Kích thước chuẩn mỗi phần video theo byte; phần cuối có thể nhỏ hơn
+             * @example 16777216
+             */
             part_size?: number;
+            /**
+             * @description Các số thứ tự phần đã tồn tại trên R2, bắt đầu từ 1
+             * @example [
+             *       1,
+             *       2
+             *     ]
+             */
             uploaded_parts?: number[];
             media?: components["schemas"]["MediaItem"];
         };
@@ -3546,8 +4057,17 @@ export interface components {
              */
             cosmetic_id: number;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseUnequipCosmeticResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["UnequipCosmeticResponseDto"];
         };
@@ -3637,8 +4157,17 @@ export interface components {
                 [key: string]: string;
             };
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseEquipCosmeticResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["EquipCosmeticResponseDto"];
         };
@@ -3655,17 +4184,42 @@ export interface components {
              */
             avatar_url?: string;
         };
+        /** @description Chi tiết cuộc hội thoại và các thành viên hiện có */
         ConversationDetailDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID cuộc hội thoại mà người gọi là thành viên hoặc được phép truy cập
+             * @example 42
+             */
             conversation_id?: number;
-            /** @enum {string} */
+            /**
+             * @description Loại đối tượng theo enum của schema
+             * @enum {string}
+             */
             type?: "DIRECT" | "GROUP";
+            /**
+             * @description Tên hiển thị theo ngữ cảnh của schema
+             * @example Nhóm ôn tập Cơ sở dữ liệu
+             */
             name?: string;
+            /**
+             * @description URL ảnh đại diện công khai; có thể null/rỗng khi chưa đặt ảnh
+             * @example https://media.example.com/avatar.png
+             */
             avatar_url?: string;
+            /** @description Thành viên hiện có của cuộc hội thoại */
             members?: components["schemas"]["ConversationMemberDto"][];
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm tạo dữ liệu, ISO-8601 UTC
+             * @example 2026-11-19T07:00:00Z
+             */
             created_at?: string;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Số tài khoản được gửi lời mời thay vì thêm trực tiếp
+             * @example 3
+             */
             invited_member_count?: number;
         };
         /** @description Thông tin thành viên trong cuộc hội thoại / nhóm chat */
@@ -3700,11 +4254,21 @@ export interface components {
             /**
              * Format: date-time
              * @description Thời điểm tham gia nhóm chat
+             * @example 2026-11-19T07:00:00Z
              */
             created_at?: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseConversationDetailDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["ConversationDetailDto"];
         };
@@ -3730,36 +4294,107 @@ export interface components {
              */
             media_url?: string;
         };
+        /** @description Thông tin công khai của tác giả; không bao gồm credential hoặc dữ liệu tài khoản riêng tư */
         AuthorDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID tài khoản trong SQB
+             * @example 42
+             */
             user_id?: number;
+            /**
+             * @description Tên hiển thị của tài khoản
+             * @example Nguyễn Minh Anh
+             */
             full_name?: string;
+            /**
+             * @description URL ảnh đại diện công khai; có thể null/rỗng khi chưa đặt ảnh
+             * @example https://media.example.com/avatar.png
+             */
             avatar_url?: string;
+            /**
+             * @description URL khung trang trí avatar, null/rỗng khi không có
+             * @example https://media.example.com/frame.png
+             */
             frame_url?: string;
+            /**
+             * @description Vai trò hiển thị của tác giả bài viết hoặc sự kiện Bảng tin
+             * @example STUDENT
+             * @enum {string}
+             */
+            role?: "STUDENT" | "LECTURER" | "ADMIN" | "SYSTEM";
         };
+        /** @description Bình luận hoặc phản hồi, tác giả và dữ liệu cây phản hồi hiển thị cho người gọi */
         CommentResponseDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID bình luận hoặc phản hồi
+             * @example 42
+             */
             comment_id?: number;
+            /**
+             * @description Loại đối tượng được tham chiếu; dùng giá trị enum API công bố
+             * @example POST
+             */
             target_type?: string;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID đối tượng được tham chiếu; diễn giải cùng target_type/type của API
+             * @example 42
+             */
             target_id?: number;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID bình luận cha; null với bình luận gốc
+             * @example 42
+             */
             parent_comment_id?: number;
+            /**
+             * @description Nội dung văn bản theo ngữ cảnh của đối tượng
+             * @example Nội dung trao đổi về bài học
+             */
             content?: string;
+            /**
+             * @description URL tệp/ảnh đính kèm, có thể null khi không có
+             * @example https://media.example.com/image.png
+             */
             media_url?: string;
             author?: components["schemas"]["AuthorDto"];
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm tạo dữ liệu, ISO-8601 UTC
+             * @example 2026-11-19T07:00:00Z
+             */
             created_at?: string;
+            /**
+             * @description Bình luận đã xóa, client hiển thị placeholder thay nội dung gốc nếu API giữ nút cây
+             * @example false
+             */
             deleted?: boolean;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Tổng số phản hồi theo thống kê của bình luận
+             * @example 3
+             */
             reply_count?: number;
+            /** @description Các phản hồi có sẵn trong kết quả; tải tiếp theo API replies khi cần */
             replies?: components["schemas"]["CommentResponseDto"][];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseCommentResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["CommentResponseDto"];
         };
+        /** @description Ngày bắt đầu học kỳ cần cập nhật bởi quản trị viên */
         UpdateSemesterStartDateRequest: {
             /**
              * Format: date
@@ -3768,8 +4403,17 @@ export interface components {
              */
             start_date: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseSemesterResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["SemesterResponse"];
         };
@@ -3805,58 +4449,160 @@ export interface components {
             /**
              * Format: date-time
              * @description Thời điểm khởi tạo học kỳ
+             * @example 2026-11-19T07:00:00Z
              */
             created_at?: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseString: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
+            /** @description Payload nghiệp vụ theo kiểu response của endpoint; có thể null với thao tác không trả dữ liệu */
             data?: string;
         };
-        /** @description Tiêu chí điều kiện xét duyệt huy hiệu */
+        /** @description Tiêu chí xét huy hiệu có phân loại bằng type; chọn đúng subtype và trigger_event tương ứng */
         BadgeCriteria: {
-            /** @enum {string} */
+            /**
+             * @description Discriminator bắt buộc trong JSON, tương ứng với subtype tiêu chí
+             * @enum {string}
+             */
             type?: "COUNTER_THRESHOLD" | "STREAK" | "SUBJECT_MASTERY" | "LEADERBOARD_RANK" | "MANUAL_GRANT";
-        };
+        } & (components["schemas"]["CounterThresholdCriteria"] | components["schemas"]["StreakCriteria"] | components["schemas"]["SubjectMasteryCriteria"] | components["schemas"]["LeaderboardRankCriteria"] | components["schemas"]["ManualGrantCriteria"]);
+        /** @description Xét ngưỡng bộ đếm; dùng với sự kiện số câu duyệt/đề xuất, phiên đã duyệt, bạn bè hoặc điểm công khai */
         CounterThresholdCriteria: {
-            type: "CounterThresholdCriteria";
-        } & (Omit<components["schemas"]["BadgeCriteria"], "type"> & {
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Ngưỡng cần đạt, phải >=1
+             * @example 10
+             */
             threshold?: number;
-            /** @enum {string} */
+            /**
+             * @description Phạm vi vai trò được xét, mặc định ALL
+             * @example ALL
+             * @enum {string}
+             */
             target_role?: "ALL" | "STUDENT" | "LECTURER" | "ADMIN";
-        });
+            /**
+             * @description Loại tiêu chí cố định
+             * @example COUNTER_THRESHOLD
+             * @enum {string}
+             */
+            type?: "COUNTER_THRESHOLD" | "STREAK" | "SUBJECT_MASTERY" | "LEADERBOARD_RANK" | "MANUAL_GRANT";
+        } & {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "COUNTER_THRESHOLD";
+        };
+        /** @description Huy hiệu thứ hạng toàn trường theo học kỳ; ghép với trigger_event LEADERBOARD_RANK */
         LeaderboardRankCriteria: {
-            type: "LeaderboardRankCriteria";
-        } & (Omit<components["schemas"]["BadgeCriteria"], "type"> & {
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Top cần đạt trong 1..10
+             * @example 3
+             */
             target_rank?: number;
             /**
              * @description Phạm vi bảng xếp hạng
+             * @example SEMESTER
              * @enum {string}
              */
-            period?: "SUBJECT" | "SEMESTER";
-        });
+            period?: "SUBJECT" | "SEMESTER" | "SEMESTER";
+            /**
+             * @description Loại tiêu chí cố định
+             * @example LEADERBOARD_RANK
+             * @enum {string}
+             */
+            type?: "COUNTER_THRESHOLD" | "STREAK" | "SUBJECT_MASTERY" | "LEADERBOARD_RANK" | "MANUAL_GRANT";
+        } & {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "LEADERBOARD_RANK";
+        };
+        /** @description Huy hiệu trao thủ công bởi ADMIN, ghép với trigger_event MANUAL_GRANT */
         ManualGrantCriteria: {
-            type: "ManualGrantCriteria";
-        } & (Omit<components["schemas"]["BadgeCriteria"], "type"> & {
+            /**
+             * @description Ghi chú tùy chọn cho tiêu chí trao thủ công
+             * @example Trao cho đóng góp nổi bật trong học kỳ
+             */
             description?: string;
-        });
+            /**
+             * @description Loại tiêu chí cố định
+             * @example MANUAL_GRANT
+             * @enum {string}
+             */
+            type?: "COUNTER_THRESHOLD" | "STREAK" | "SUBJECT_MASTERY" | "LEADERBOARD_RANK" | "MANUAL_GRANT";
+        } & {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "MANUAL_GRANT";
+        };
+        /** @description Tiêu chí chuỗi học liên tiếp, ghép với trigger_event STUDY_STREAK */
         StreakCriteria: {
-            type: "StreakCriteria";
-        } & (Omit<components["schemas"]["BadgeCriteria"], "type"> & {
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Số ngày liên tiếp cần đạt, >=1
+             * @example 7
+             */
             streak_days?: number;
-        });
+            /**
+             * @description Loại tiêu chí cố định
+             * @example STREAK
+             * @enum {string}
+             */
+            type?: "COUNTER_THRESHOLD" | "STREAK" | "SUBJECT_MASTERY" | "LEADERBOARD_RANK" | "MANUAL_GRANT";
+        } & {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "STREAK";
+        };
+        /** @description Ngưỡng câu hỏi được duyệt trong một môn, ghép với trigger_event APPROVED_QUESTIONS */
         SubjectMasteryCriteria: {
-            type: "SubjectMasteryCriteria";
-        } & (Omit<components["schemas"]["BadgeCriteria"], "type"> & {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID môn học đang tồn tại; bắt buộc cho tiêu chí này
+             * @example 42
+             */
             subject_id?: number;
-            subject_code?: string;
-            /** Format: int32 */
+            /**
+             * @description Mã môn do server lấy từ subject_id, không dùng giá trị client để quyết định môn
+             * @example IT3290
+             */
+            readonly subject_code?: string;
+            /**
+             * Format: int32
+             * @description Số câu hỏi được duyệt cần đạt, >=1
+             * @example 10
+             */
             approved_questions_count?: number;
-        });
+            /**
+             * @description Loại tiêu chí cố định
+             * @example SUBJECT_MASTERY
+             * @enum {string}
+             */
+            type?: "COUNTER_THRESHOLD" | "STREAK" | "SUBJECT_MASTERY" | "LEADERBOARD_RANK" | "MANUAL_GRANT";
+        } & {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "SUBJECT_MASTERY";
+        };
         /** @description Yêu cầu cập nhật thông tin huy hiệu danh hiệu */
         UpdateBadgeRequestDto: {
             /**
@@ -3876,8 +4622,8 @@ export interface components {
              */
             badge_tier?: "BRONZE" | "SILVER" | "GOLD" | "PLATINUM";
             /**
-             * @description Sự kiện kích hoạt trao huy hiệu
-             * @example PROPOSE_QUESTION
+             * @description Sự kiện kích hoạt trao huy hiệu, phải khớp kiểu criteria
+             * @example APPROVED_QUESTIONS
              * @enum {string}
              */
             badge_trigger_event?: "APPROVED_QUESTIONS" | "PROPOSED_QUESTIONS" | "REVIEWED_SESSIONS" | "ACCEPTED_FRIENDS" | "PUBLIC_POINTS" | "STUDY_STREAK" | "LEADERBOARD_RANK" | "MANUAL_GRANT";
@@ -3886,7 +4632,7 @@ export interface components {
              * @example https://sqb.s3.ap-southeast-1.amazonaws.com/badges/proposer_platinum.png
              */
             icon_url?: string;
-            criteria?: components["schemas"]["CounterThresholdCriteria"] | components["schemas"]["LeaderboardRankCriteria"] | components["schemas"]["ManualGrantCriteria"] | components["schemas"]["StreakCriteria"] | components["schemas"]["SubjectMasteryCriteria"];
+            criteria?: components["schemas"]["BadgeCriteria"];
             /**
              * @description Trạng thái kích hoạt của huy hiệu
              * @example true
@@ -3928,7 +4674,7 @@ export interface components {
              * @example https://sqb.s3.ap-southeast-1.amazonaws.com/badges/streak_7.png
              */
             icon_url?: string;
-            criteria?: components["schemas"]["CounterThresholdCriteria"] | components["schemas"]["LeaderboardRankCriteria"] | components["schemas"]["ManualGrantCriteria"] | components["schemas"]["StreakCriteria"] | components["schemas"]["SubjectMasteryCriteria"];
+            criteria?: components["schemas"]["BadgeCriteria"];
             /**
              * Format: int32
              * @description Tổng số người dùng đã đạt huy hiệu này
@@ -3947,8 +4693,17 @@ export interface components {
              */
             created_at?: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseBadgeResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["BadgeResponseDto"];
         };
@@ -3999,6 +4754,12 @@ export interface components {
              */
             content: string;
             /**
+             * Format: int64
+             * @description ID chủ đề đang dùng thuộc môn học của lớp được chọn. Bỏ qua nếu câu hỏi chưa có chủ đề.
+             * @example 37
+             */
+            topic_id?: number;
+            /**
              * @description Danh sách URL ảnh đính kèm minh họa đề bài
              * @example [
              *       "https://minio.sqb.edu.vn/media/questions/q1_diagram.png"
@@ -4013,6 +4774,12 @@ export interface components {
              */
             explanation?: string;
             /**
+             * @description Độ khó do sinh viên đề xuất. Mặc định UNCLASSIFIED.
+             * @example MEDIUM
+             * @enum {string}
+             */
+            difficulty?: "UNCLASSIFIED" | "EASY" | "MEDIUM" | "HARD";
+            /**
              * @description Đánh dấu câu hỏi do AI/LLM sinh (true) hay do tác giả tự biên soạn (false)
              * @example false
              */
@@ -4024,8 +4791,17 @@ export interface components {
              */
             confidence: number;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseProposeSessionResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["ProposeSessionResponse"];
         };
@@ -4074,6 +4850,7 @@ export interface components {
             /**
              * Format: date-time
              * @description Thời điểm khởi tạo phiên
+             * @example 2026-11-19T07:00:00Z
              */
             created_at?: string;
         };
@@ -4105,6 +4882,12 @@ export interface components {
              *     ]
              */
             evidence_urls?: string[];
+            /**
+             * @description Tối đa một object key từ POST /report/evidence của chính người gửi; không gửi đồng thời evidence_urls
+             * @example [
+             *       "report-evidence/7/550e8400-e29b-41d4-a716-446655440000"
+             *     ]
+             */
             evidence_keys?: string[];
             /**
              * @description Loại đối tượng bị báo cáo (USER, POST, COMMENT)
@@ -4119,8 +4902,17 @@ export interface components {
              */
             target_id: number;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseReportResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["ReportResponseDto"];
         };
@@ -4157,9 +4949,19 @@ export interface components {
              */
             created_at?: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseMapStringString: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
+            /** @description Payload nghiệp vụ theo kiểu response của endpoint; có thể null với thao tác không trả dữ liệu */
             data?: {
                 [key: string]: string;
             };
@@ -4185,17 +4987,43 @@ export interface components {
              */
             reaction_type: "LIKE" | "LOVE" | "WOW" | "LIKE" | "LOVE" | "WOW";
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseReactResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["ReactResponseDto"];
         };
+        /** @description Tổng hợp cảm xúc theo loại và cảm xúc hiện tại của người gọi */
         ReactResponseDto: {
+            /**
+             * @description Cảm xúc hiện tại của người gọi; null nếu chưa thả cảm xúc
+             * @example LIKE
+             */
             my_reaction?: string;
+            /**
+             * @description Bản đồ LIKE/LOVE/WOW tới số lượt tương ứng
+             * @example {
+             *       "LIKE": 3,
+             *       "LOVE": 1,
+             *       "WOW": 0
+             *     }
+             */
             reaction_counts?: {
                 [key: string]: number;
             };
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Tổng số lượt cảm xúc trên đối tượng
+             * @example 3
+             */
             total_count?: number;
         };
         /** @description Yêu cầu giảng viên/quản trị viên thẩm định báo lỗi câu hỏi (Game 5) */
@@ -4225,8 +5053,17 @@ export interface components {
              */
             comment?: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseRateQuestionResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["RateQuestionResponse"];
         };
@@ -4279,8 +5116,17 @@ export interface components {
              */
             explanation?: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseAnswerQuestionResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["AnswerQuestionResponse"];
         };
@@ -4296,6 +5142,12 @@ export interface components {
              * @example session_xyz123
              */
             chat_session_id?: string;
+            /**
+             * Format: int64
+             * @description ID bản đề xuất trước đó của cùng người duyệt nếu đang tinh chỉnh tiếp
+             * @example 310
+             */
+            previous_edit_log_id?: number;
         };
         /** @description Thông tin kỹ thuật phản hồi từ mô hình AI (Model metadata) */
         AiMetadataDto: {
@@ -4351,8 +5203,17 @@ export interface components {
             /** @description Danh sách các vi phạm logic nếu có */
             violations?: components["schemas"]["ViolationDto"][];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseAiRefineResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["AiRefineResponse"];
         };
@@ -4412,7 +5273,10 @@ export interface components {
              * @example true
              */
             approve: boolean;
-            /** @description Xác nhận đã tự rà soát khi BTProp cảnh báo hoặc chưa kiểm chứng được */
+            /**
+             * @description Xác nhận đã tự rà soát khi BTProp cảnh báo hoặc chưa kiểm chứng được
+             * @example true
+             */
             audit_acknowledged?: boolean;
         };
         /** @description Kết quả áp dụng/loại bỏ chỉnh sửa AI */
@@ -4440,8 +5304,17 @@ export interface components {
              */
             hallucination?: boolean;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseAiApplyResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["AiApplyResponse"];
         };
@@ -4473,98 +5346,256 @@ export interface components {
              */
             post_type?: "LEARNING_VIDEO" | "SOCIAL_POST" | "QUESTION_APPROVED_NOTIFICATION" | "LEADERBOARD_HONOR";
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponsePostResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["PostResponseDto"];
         };
+        /** @description Bài viết đầy đủ cùng media, tác giả và trạng thái tương tác của người đang đăng nhập */
         PostResponseDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID bài viết
+             * @example 42
+             */
             post_id?: number;
+            /**
+             * @description Nội dung văn bản theo ngữ cảnh của đối tượng
+             * @example Nội dung trao đổi về bài học
+             */
             content?: string;
-            /** @enum {string} */
+            /**
+             * @description Loại bài viết, quyết định các trường nghiệp vụ liên quan
+             * @enum {string}
+             */
             post_type?: "LEARNING_VIDEO" | "SOCIAL_POST" | "QUESTION_APPROVED_NOTIFICATION" | "LEADERBOARD_HONOR";
+            /** @description Các tệp đính kèm; kiểu phần tử theo schema của endpoint */
             media_urls?: components["schemas"]["MediaItem"][];
-            /** @enum {string} */
+            /**
+             * @description Phạm vi hiển thị bài viết theo enum API
+             * @enum {string}
+             */
             visibility?: "PUBLIC" | "ONLY_ME" | "FRIENDS";
             author?: components["schemas"]["AuthorDto"];
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Tổng số lượt cảm xúc
+             * @example 3
+             */
             react_count?: number;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Tổng số bình luận hiển thị theo thống kê của đối tượng
+             * @example 3
+             */
             comment_count?: number;
+            /**
+             * @description Người gọi đã thả cảm xúc vào đối tượng này
+             * @example true
+             */
             reacted_by_me?: boolean;
-            /** @enum {string} */
+            /**
+             * @description Cảm xúc hiện tại của người gọi; null nếu chưa thả cảm xúc
+             * @enum {string}
+             */
             my_reaction?: "LIKE" | "LOVE" | "WOW";
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm tạo dữ liệu, ISO-8601 UTC
+             * @example 2026-11-19T07:00:00Z
+             */
             created_at?: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm cập nhật gần nhất, ISO-8601 UTC; có thể null nếu chưa ghi nhận
+             * @example 2026-11-19T07:00:00Z
+             */
             updated_at?: string;
+            /**
+             * @description Ghi chú nhận xét của giảng viên; có thể null khi chưa có
+             * @example Cần bổ sung dẫn chứng và kiểm tra lại lời giải.
+             */
             lecturer_note?: string;
+            /**
+             * @description Người gọi được phép chỉnh sửa ghi chú giảng viên trên bài này
+             * @example true
+             */
             can_edit_lecturer_note?: boolean;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm ghi nhận ghi chú giảng viên
+             * @example 2026-11-19T07:00:00Z
+             */
             lecturer_note_added_at?: string;
             noted_lecturer?: components["schemas"]["AuthorDto"];
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID môn học
+             * @example 42
+             */
             subject_id?: number;
+            /**
+             * @description Tên môn học
+             * @example Cơ sở dữ liệu
+             */
             subject_name?: string;
+            /**
+             * @description Mã môn học
+             * @example IT3290
+             */
             subject_code?: string;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID phiên/bộ câu hỏi được liên kết, có thể null nếu không áp dụng
+             * @example 42
+             */
             session_id?: number;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseReadNotificationResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["ReadNotificationResponseDto"];
         };
+        /** @description Kết quả đánh dấu đã đọc và số chưa đọc còn lại */
         ReadNotificationResponseDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID thông báo thuộc người nhận hiện tại
+             * @example 42
+             */
             notification_id?: number;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm đánh dấu đã đọc, null nếu chưa đọc
+             * @example 2026-11-19T07:00:00Z
+             */
             read_at?: string;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Số mục chưa đọc của người dùng hiện tại theo ngữ cảnh API
+             * @example 3
+             */
             unread_count?: number;
             read?: boolean;
         };
+        /** @description Danh sách URL media cần kiểm tra tồn tại */
         MediaVerifyRequest: {
+            /**
+             * @description Các URL media cần kiểm tra tồn tại trong kho lưu trữ
+             * @example [
+             *       "https://media.example.com/image.png"
+             *     ]
+             */
             urls: string[];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseMediaVerifyResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["MediaVerifyResponse"];
         };
+        /** @description Các URL trong yêu cầu không tìm thấy trong kho lưu trữ */
         MediaVerifyResponse: {
+            /**
+             * @description Các URL được yêu cầu nhưng không tìm thấy
+             * @example [
+             *       "https://media.example.com/missing.png"
+             *     ]
+             */
             missing_urls?: string[];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseMediaUploadResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["MediaUploadResponse"];
         };
+        /** @description Kết quả tải tệp qua backend, gồm object key và metadata đã nhận diện */
         MediaUploadResponse: {
+            /**
+             * @description Object key trong bucket để tham chiếu tệp, không phải đường dẫn filesystem
+             * @example documents/550e8400-e29b-41d4-a716-446655440000.pdf
+             */
             object_key?: string;
+            /**
+             * @description URL tài nguyên hoặc đích điều hướng theo schema
+             * @example https://media.example.com/document.pdf
+             */
             url?: string;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description Dung lượng tệp đã tải lên tính bằng byte
+             * @example 1048576
+             */
             file_size?: number;
+            /**
+             * @description MIME type thực tế của tệp đã tải lên
+             * @example image/png
+             */
             content_type?: string;
-            /** @enum {string} */
+            /**
+             * @description Loại media được nhận diện, theo enum API
+             * @enum {string}
+             */
             media_type?: "IMAGE" | "VIDEO" | "DOCUMENT";
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Chiều rộng ảnh/video theo pixel, null khi không áp dụng
+             * @example 1280
+             */
             width?: number;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Chiều cao ảnh/video theo pixel, null khi không áp dụng
+             * @example 720
+             */
             height?: number;
         };
         /** @description Thông tin một tệp tin cần xin presigned URL */
         PresignFileItem: {
             /**
-             * @description Tên gốc của tệp tin
-             * @example de_thi_cuoi_ky.pdf
+             * @description Tên gốc của tệp tin, phần mở rộng phù hợp content_type
+             * @example avatar.webp
              */
             file_name: string;
             /**
              * Format: int64
-             * @description Kích thước tệp tính bằng byte (tối đa 15MB)
-             * @example 2048576
+             * @description Kích thước tệp tính bằng byte (trần DTO 15 MiB, còn chịu giới hạn riêng theo purpose)
+             * @example 204800
              */
             file_size: number;
             /**
@@ -4584,8 +5615,17 @@ export interface components {
             /** @description Danh sách các tệp tin cần tải lên (tối đa 10 tệp) */
             files: components["schemas"]["PresignFileItem"][];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponsePresignMediaResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["PresignMediaResponse"];
         };
@@ -4617,6 +5657,19 @@ export interface components {
              * @example 900
              */
             expires_in_seconds?: number;
+        };
+        /** @description Yêu cầu tạo chủ đề thuộc một môn học */
+        CreateTopicRequest: {
+            /**
+             * @description Tên duy nhất trong môn học khi đối chiếu không phân biệt hoa thường, tối đa 100 ký tự
+             * @example Định thời CPU
+             */
+            name: string;
+            /**
+             * @description Trạng thái sử dụng, mặc định là true khi bỏ qua
+             * @example true
+             */
+            active?: boolean;
         };
         /** @description Yêu cầu từ chối phê duyệt danh sách câu hỏi đề xuất */
         RejectQuestionsRequest: {
@@ -4661,23 +5714,314 @@ export interface components {
              */
             points_earned?: number;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseApproveQuestionsResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["ApproveQuestionsResponse"];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponsePartUrl: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["PartUrl"];
         };
+        /** @description URL PUT có chữ ký dành cho đúng một phần của phiên multipart video */
         PartUrl: {
+            /**
+             * @description URL có chữ ký để PUT binary trực tiếp lên R2; không gửi Bearer SQB tới URL này
+             * @example https://r2.example.com/upload?signature=example
+             */
             upload_url?: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseMediaItem: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["MediaItem"];
+        };
+        /** @description Tỉ lệ phân bổ độ khó (tổng các giá trị tương đương 1.0) */
+        DifficultyDistribution: {
+            /**
+             * Format: double
+             * @description Tỉ lệ câu dễ (0.0 - 1.0)
+             * @example 0.3
+             */
+            easy?: number;
+            /**
+             * Format: double
+             * @description Tỉ lệ câu trung bình (0.0 - 1.0)
+             * @example 0.5
+             */
+            medium?: number;
+            /**
+             * Format: double
+             * @description Tỉ lệ câu khó (0.0 - 1.0)
+             * @example 0.2
+             */
+            hard?: number;
+            /**
+             * Format: double
+             * @description Tỉ lệ câu chưa phân loại
+             * @example 0
+             */
+            unclassified?: number;
+        };
+        /** @description Yêu cầu tạo đề thi tự động từ ngân hàng câu hỏi */
+        GenerateExamRequest: {
+            /**
+             * Format: int64
+             * @description ID môn học tạo đề
+             * @example 10
+             */
+            subject_id: number;
+            /**
+             * @description Tiêu đề đề thi (nếu để trống hệ thống sẽ tự sinh)
+             * @example Đề thi Giữa kỳ Hệ điều hành - Kỳ 2024.1
+             */
+            title?: string;
+            /**
+             * Format: int32
+             * @description Số lượng câu hỏi trong đề thi
+             * @example 40
+             */
+            question_count?: number;
+            difficulty_distribution?: components["schemas"]["DifficultyDistribution"];
+            /**
+             * @description Trọng số theo ID chủ đề đang hoạt động cùng môn. Dùng khóa untagged cho câu chưa được phân loại chủ đề. Tổng bằng 1.0 nếu có.
+             * @example {
+             *       "12": 0.2,
+             *       "13": 0.5,
+             *       "untagged": 0.3
+             *     }
+             */
+            topic_weights?: {
+                [key: string]: number;
+            };
+            /**
+             * @description Đảo ngẫu nhiên thứ tự các phương án lựa chọn A, B, C, D
+             * @example true
+             */
+            shuffle_options?: boolean;
+            /**
+             * @description Có xuất kèm bảng đáp án hay không
+             * @example false
+             */
+            include_answer_key?: boolean;
+            /**
+             * @description Danh sách ID các lớp học phần được áp dụng đề thi này
+             * @example [
+             *       101,
+             *       102
+             *     ]
+             */
+            class_ids: number[];
+        };
+        /** @description Thông tin chi tiết đề thi */
+        ExamDetailResponse: {
+            /**
+             * Format: int64
+             * @description ID đề thi
+             * @example 5
+             */
+            exam_id?: number;
+            /**
+             * @description Tiêu đề đề thi
+             * @example Đề thi Giữa kỳ Hệ điều hành - Kỳ 2024.1
+             */
+            title?: string;
+            /**
+             * @description Tên môn học
+             * @example Hệ điều hành
+             */
+            subject_name?: string;
+            /**
+             * Format: int32
+             * @description Tổng số lượng câu hỏi trong đề
+             * @example 40
+             */
+            question_count?: number;
+            /** @description Danh sách câu hỏi trong đề thi */
+            questions?: components["schemas"]["ExamQuestionDto"][];
+            statistic?: components["schemas"]["Statistic"];
+            difficulty_matrix?: components["schemas"]["ExamDifficultyMatrix"];
+            topic_matrix?: components["schemas"]["ExamTopicMatrix"];
+            /**
+             * Format: date-time
+             * @description Thời gian tạo đề
+             * @example 2026-10-06T09:00:00Z
+             */
+            created_at?: string;
+        };
+        /** @description Bản chụp ma trận độ khó khi tạo đề */
+        ExamDifficultyMatrix: {
+            requested?: components["schemas"]["DifficultyDistribution"];
+            actual?: components["schemas"]["Statistic"];
+        };
+        /** @description Chi tiết câu hỏi trong đề thi */
+        ExamQuestionDto: {
+            /**
+             * Format: int32
+             * @description Thứ tự câu hỏi trong đề thi
+             * @example 1
+             */
+            order?: number;
+            /**
+             * Format: int64
+             * @description ID câu hỏi
+             * @example 105
+             */
+            question_id?: number;
+            /**
+             * @description Nội dung câu hỏi (hỗ trợ LaTeX/Markdown)
+             * @example Thuật toán định thời nào sau đây có thể dẫn đến starvation?
+             */
+            content?: string;
+            /**
+             * @description Danh sách URL hình ảnh minh họa cho câu hỏi
+             * @example [
+             *       "https://media.example.com/question.png"
+             *     ]
+             */
+            image_urls?: string[];
+            /** @description Danh sách các lựa chọn đáp án */
+            options?: components["schemas"]["OptionDto"][];
+            /**
+             * @description Độ khó của câu hỏi
+             * @enum {string}
+             */
+            difficulty?: "UNCLASSIFIED" | "EASY" | "MEDIUM" | "HARD";
+            /**
+             * @description Tên chủ đề / chương
+             * @example Định thời CPU
+             */
+            topic?: string;
+        };
+        /** @description Bản chụp ma trận chủ đề khi tạo đề */
+        ExamTopicMatrix: {
+            /** @description Tỷ lệ yêu cầu và số câu thực tế của từng chủ đề */
+            rows?: components["schemas"]["ExamTopicMatrixRow"][];
+        };
+        /** @description Hàng chủ đề trong ma trận đề thi */
+        ExamTopicMatrixRow: {
+            /**
+             * Format: int64
+             * @description ID chủ đề nếu câu có chủ đề
+             * @example 15
+             */
+            topic_id?: number;
+            /**
+             * @description Tên chủ đề tại thời điểm tạo đề
+             * @example Giao thức HTTP
+             */
+            topic_name?: string;
+            /**
+             * Format: double
+             * @description Tỷ lệ yêu cầu nếu có
+             * @example 0.5
+             */
+            requested_weight?: number;
+            /**
+             * Format: int32
+             * @description Số câu yêu cầu sau khi làm tròn, nếu áp dụng ma trận chủ đề
+             * @example 10
+             */
+            requested_count?: number;
+            /**
+             * Format: int32
+             * @description Tổng số câu thực tế trong đề của chủ đề
+             * @example 10
+             */
+            actual_count?: number;
+            actual_by_difficulty?: components["schemas"]["Statistic"];
+        };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
+        GlobalResponseExamDetailResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
+            code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
+            message?: string;
+            data?: components["schemas"]["ExamDetailResponse"];
+        };
+        /** @description Chi tiết phương án lựa chọn */
+        OptionDto: {
+            /**
+             * @description Khóa phương án
+             * @example A
+             */
+            key?: string;
+            /**
+             * @description Nội dung phương án
+             * @example Thuật toán Round Robin (RR)
+             */
+            text?: string;
+            /**
+             * @description URL hình ảnh đáp án (nếu có)
+             * @example https://media.example.com/image.png
+             */
+            media_url?: string;
+            /**
+             * @description Đáp án này có đúng hay không
+             * @example false
+             */
+            is_correct?: boolean;
+        };
+        /** @description Thống kê số lượng câu hỏi theo độ khó */
+        Statistic: {
+            /**
+             * Format: int32
+             * @description Số câu mức độ Dễ
+             * @example 12
+             */
+            easy_count?: number;
+            /**
+             * Format: int32
+             * @description Số câu mức độ Trung bình
+             * @example 20
+             */
+            medium_count?: number;
+            /**
+             * Format: int32
+             * @description Số câu mức độ Khó
+             * @example 8
+             */
+            hard_count?: number;
+            /**
+             * Format: int32
+             * @description Số câu chưa phân loại độ khó
+             * @example 0
+             */
+            unclassified_count?: number;
         };
         /** @description Yêu cầu tạo lớp học phần mới */
         CreateCourseClassRequest: {
@@ -4770,11 +6114,21 @@ export interface components {
             /**
              * Format: date-time
              * @description Thời điểm khởi tạo lớp học phần
+             * @example 2026-11-19T07:00:00Z
              */
             created_at?: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseCourseClassResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["CourseClassResponse"];
         };
@@ -4827,8 +6181,17 @@ export interface components {
              */
             not_found_codes?: string[];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseAssignStudentsResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["AssignStudentsResponse"];
         };
@@ -4909,8 +6272,17 @@ export interface components {
              */
             resolved_at?: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseGamePredictionResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["GamePredictionResponse"];
         };
@@ -4997,8 +6369,17 @@ export interface components {
              */
             message?: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseCheckInResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["CheckInResponse"];
         };
@@ -5011,20 +6392,49 @@ export interface components {
              */
             addressee_id: number;
         };
+        /** @description Quan hệ kết bạn, hai đầu gửi/nhận và các mốc thời gian */
         FriendshipResponseDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID người gửi lời mời kết bạn
+             * @example 42
+             */
             requester_id?: number;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID người nhận lời mời kết bạn
+             * @example 42
+             */
             addressee_id?: number;
-            /** @enum {string} */
+            /**
+             * @description Trạng thái nghiệp vụ hiện tại theo enum của schema
+             * @enum {string}
+             */
             status?: "NONE" | "PENDING" | "ACCEPTED" | "DECLINED";
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm tạo dữ liệu, ISO-8601 UTC
+             * @example 2026-11-19T07:00:00Z
+             */
             created_at?: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm lời mời kết bạn được chấp nhận, null nếu chưa chấp nhận
+             * @example 2026-11-19T07:00:00Z
+             */
             accepted_at?: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseFriendshipResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["FriendshipResponseDto"];
         };
@@ -5046,217 +6456,43 @@ export interface components {
              */
             requester_id: number;
         };
+        /** @description Trạng thái và số người theo dõi sau thao tác theo dõi */
         FollowResponseDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID tài khoản được thao tác theo dõi/bỏ theo dõi
+             * @example 42
+             */
             target_user_id?: number;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Tổng người theo dõi của tài khoản đích sau thao tác
+             * @example 3
+             */
             new_followers_count?: number;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm bắt đầu theo dõi tài khoản
+             * @example 2026-11-19T07:00:00Z
+             */
             followed_at?: string;
             following?: boolean;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseFollowResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["FollowResponseDto"];
         };
-        /** @description Tỉ lệ phân bổ độ khó (tổng các giá trị tương đương 1.0) */
-        DifficultyDistribution: {
-            /**
-             * Format: double
-             * @description Tỉ lệ câu dễ (0.0 - 1.0)
-             * @example 0.3
-             */
-            easy?: number;
-            /**
-             * Format: double
-             * @description Tỉ lệ câu trung bình (0.0 - 1.0)
-             * @example 0.5
-             */
-            medium?: number;
-            /**
-             * Format: double
-             * @description Tỉ lệ câu khó (0.0 - 1.0)
-             * @example 0.2
-             */
-            hard?: number;
-            /**
-             * Format: double
-             * @description Tỉ lệ câu chưa phân loại
-             * @example 0
-             */
-            unclassified?: number;
-        };
-        /** @description Yêu cầu tạo đề thi tự động từ ngân hàng câu hỏi */
-        GenerateExamRequest: {
-            /**
-             * Format: int64
-             * @description ID môn học tạo đề
-             * @example 10
-             */
-            subject_id: number;
-            /**
-             * @description Tiêu đề đề thi (nếu để trống hệ thống sẽ tự sinh)
-             * @example Đề thi Giữa kỳ Hệ điều hành - Kỳ 2024.1
-             */
-            title?: string;
-            /**
-             * Format: int32
-             * @description Số lượng câu hỏi trong đề thi
-             * @example 40
-             */
-            question_count?: number;
-            difficulty_distribution?: components["schemas"]["DifficultyDistribution"];
-            /**
-             * @description Trọng số các chủ đề/chương (tùy chọn)
-             * @example {
-             *       "Chương 1 - Tổng quan": 0.2,
-             *       "Chương 2 - Quản lý tiến trình": 0.5,
-             *       "Chương 3 - Định thời CPU": 0.3
-             *     }
-             */
-            topic_weights?: {
-                [key: string]: number;
-            };
-            /**
-             * @description Đảo ngẫu nhiên thứ tự các phương án lựa chọn A, B, C, D
-             * @example true
-             */
-            shuffle_options?: boolean;
-            /**
-             * @description Có xuất kèm bảng đáp án hay không
-             * @example false
-             */
-            include_answer_key?: boolean;
-            /**
-             * @description Danh sách ID các lớp học phần được áp dụng đề thi này
-             * @example [
-             *       101,
-             *       102
-             *     ]
-             */
-            class_ids: number[];
-        };
-        /** @description Thông tin chi tiết đề thi */
-        ExamDetailResponse: {
-            /**
-             * Format: int64
-             * @description ID đề thi
-             * @example 5
-             */
-            exam_id?: number;
-            /**
-             * @description Tiêu đề đề thi
-             * @example Đề thi Giữa kỳ Hệ điều hành - Kỳ 2024.1
-             */
-            title?: string;
-            /**
-             * @description Tên môn học
-             * @example Hệ điều hành
-             */
-            subject_name?: string;
-            /**
-             * Format: int32
-             * @description Tổng số lượng câu hỏi trong đề
-             * @example 40
-             */
-            question_count?: number;
-            /** @description Danh sách câu hỏi trong đề thi */
-            questions?: components["schemas"]["ExamQuestionDto"][];
-            statistic?: components["schemas"]["Statistic"];
-            /**
-             * Format: date-time
-             * @description Thời gian tạo đề
-             * @example 2026-10-06T09:00:00Z
-             */
-            created_at?: string;
-        };
-        /** @description Chi tiết câu hỏi trong đề thi */
-        ExamQuestionDto: {
-            /**
-             * Format: int32
-             * @description Thứ tự câu hỏi trong đề thi
-             * @example 1
-             */
-            order?: number;
-            /**
-             * Format: int64
-             * @description ID câu hỏi
-             * @example 105
-             */
-            question_id?: number;
-            /**
-             * @description Nội dung câu hỏi (hỗ trợ LaTeX/Markdown)
-             * @example Thuật toán định thời nào sau đây có thể dẫn đến starvation?
-             */
-            content?: string;
-            /** @description Danh sách URL hình ảnh minh họa cho câu hỏi */
-            image_urls?: string[];
-            /** @description Danh sách các lựa chọn đáp án */
-            options?: components["schemas"]["OptionDto"][];
-            /**
-             * @description Độ khó của câu hỏi
-             * @enum {string}
-             */
-            difficulty?: "UNCLASSIFIED" | "EASY" | "MEDIUM" | "HARD";
-            /**
-             * @description Tên chủ đề / chương
-             * @example Định thời CPU
-             */
-            topic?: string;
-        };
-        GlobalResponseExamDetailResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["ExamDetailResponse"];
-        };
-        /** @description Chi tiết phương án lựa chọn */
-        OptionDto: {
-            /**
-             * @description Khóa phương án
-             * @example A
-             */
-            key?: string;
-            /**
-             * @description Nội dung phương án
-             * @example Thuật toán Round Robin (RR)
-             */
-            text?: string;
-            /** @description URL hình ảnh đáp án (nếu có) */
-            media_url?: string;
-            /**
-             * @description Đáp án này có đúng hay không
-             * @example false
-             */
-            is_correct?: boolean;
-        };
-        /** @description Thống kê số lượng câu hỏi theo độ khó */
-        Statistic: {
-            /**
-             * Format: int32
-             * @description Số câu mức độ Dễ
-             * @example 12
-             */
-            easy_count?: number;
-            /**
-             * Format: int32
-             * @description Số câu mức độ Trung bình
-             * @example 20
-             */
-            medium_count?: number;
-            /**
-             * Format: int32
-             * @description Số câu mức độ Khó
-             * @example 8
-             */
-            hard_count?: number;
-            /**
-             * Format: int32
-             * @description Số câu chưa phân loại độ khó
-             * @example 0
-             */
-            unclassified_count?: number;
-        };
+        /** @description Đồng bộ Firebase Installation ID vào thiết bị của phiên hiện tại */
         SyncFidRequest: {
             /**
              * @description Firebase Installation ID (FID) cần đồng bộ hoặc cập nhật
@@ -5264,6 +6500,7 @@ export interface components {
              */
             fid: string;
         };
+        /** @description Gỡ Firebase Installation ID khỏi thiết bị của chính tài khoản */
         UnregisterFidRequest: {
             /**
              * @description Firebase Installation ID (FID) cần hủy đăng ký
@@ -5271,8 +6508,17 @@ export interface components {
              */
             fid: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseShopItemDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["ShopItemDto"];
         };
@@ -5343,22 +6589,59 @@ export interface components {
              */
             user_ids: number[];
         };
+        /** @description Kết quả thêm thành viên: người thêm trực tiếp, người thất bại và số lời mời đã gửi */
         AddGroupMembersResponseDto: {
+            /** @description Các thành viên đã được thêm trực tiếp vào nhóm */
             added_members?: components["schemas"]["ConversationMemberDto"][];
+            /** @description Các tài khoản không thêm được kèm lý do riêng */
             failed_members?: components["schemas"]["FailedMemberDto"][];
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Số tài khoản được gửi lời mời thay vì thêm trực tiếp
+             * @example 3
+             */
             invited_member_count?: number;
         };
+        /** @description Tài khoản không được thêm vào nhóm và lý do thất bại tương ứng */
         FailedMemberDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID tài khoản trong SQB
+             * @example 42
+             */
             user_id?: number;
+            /**
+             * @description Tên hiển thị của tài khoản
+             * @example Nguyễn Minh Anh
+             */
             full_name?: string;
+            /**
+             * @description URL ảnh đại diện công khai; có thể null/rỗng khi chưa đặt ảnh
+             * @example https://media.example.com/avatar.png
+             */
             avatar_url?: string;
+            /**
+             * @description URL khung trang trí avatar, null/rỗng khi không có
+             * @example https://media.example.com/frame.png
+             */
             frame_url?: string;
+            /**
+             * @description Lý do thao tác hoặc lý do thất bại của mục tương ứng
+             * @example Nội dung không phù hợp quy định cộng đồng
+             */
             reason?: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseAddGroupMembersResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["AddGroupMembersResponseDto"];
         };
@@ -5371,8 +6654,17 @@ export interface components {
              */
             new_chief_id?: number;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseLeaveGroupResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["LeaveGroupResponseDto"];
         };
@@ -5394,15 +6686,26 @@ export interface components {
              */
             pin: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseHiddenChatUnlockDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["HiddenChatUnlockDto"];
         };
+        /** @description Kết quả mở kho chat ẩn của phiên JWT hiện tại */
         HiddenChatUnlockDto: {
             /**
              * Format: date-time
              * @description Thời điểm quyền mở kho ẩn hết hạn
+             * @example 2026-11-19T07:00:00Z
              */
             expires_at?: string;
         };
@@ -5428,10 +6731,22 @@ export interface components {
              */
             member_ids: number[];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseLong: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description Payload nghiệp vụ theo kiểu response của endpoint; có thể null với thao tác không trả dữ liệu
+             */
             data?: number;
         };
         /** @description Yêu cầu tạo cuộc trò chuyện trực tiếp 1-1 */
@@ -5474,13 +6789,27 @@ export interface components {
              */
             media_url?: string;
         };
+        /** @description Trạng thái sau khi chặn một tài khoản */
         BlockResponseDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID tài khoản vừa bị người gọi chặn
+             * @example 42
+             */
             blocked_user_id?: number;
             blocked?: boolean;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseBlockResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["BlockResponseDto"];
         };
@@ -5492,8 +6821,17 @@ export interface components {
              */
             refresh_token: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseRefreshTokenResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["RefreshTokenResponse"];
         };
@@ -5505,8 +6843,8 @@ export interface components {
              */
             access_token?: string;
             /**
-             * @description Refresh Token mới
-             * @example 6cba92d1-4e12-4d88-87a1-f76123456789
+             * @description JWT RT mới cho native/LEGACY_JSON tạm thời; cookie WEB trả null và nhận RT qua Set-Cookie
+             * @example eyJhbGciOiJIUzUxMiJ9...
              */
             refresh_token?: string;
         };
@@ -5534,7 +6872,7 @@ export interface components {
              */
             fid?: string;
             /**
-             * @description Nền tảng thiết bị đang đăng nhập
+             * @description Metadata thiết bị: WEB cho cookie; ANDROID/IOS/DESKTOP cho /auth/native/login. /auth/login còn nhận non-WEB qua nhánh JSON tạm thời khi AUTH_LEGACY_JSON_ENABLED=true. Không xác thực danh tính ứng dụng.
              * @example WEB
              * @enum {string}
              */
@@ -5580,8 +6918,8 @@ export interface components {
              */
             access_token?: string;
             /**
-             * @description Refresh Token dùng để cấp mới Access Token
-             * @example 4fae89b2-3e41-4c77-96a9-e8548981b29d
+             * @description JSON chỉ có RT ở native hoặc nhánh LEGACY_JSON tạm thời khi bật. Luồng cookie WEB luôn null. ONBOARDING không có refresh token.
+             * @example eyJhbGciOiJIUzUxMiJ9...
              */
             refresh_token?: string;
             /**
@@ -5622,8 +6960,17 @@ export interface components {
              */
             account_state?: "EMAIL_VERIFICATION_REQUIRED" | "PASSWORD_CHANGE_REQUIRED" | "ACTIVE";
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseAuthResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["AuthResponse"];
         };
@@ -5648,10 +6995,23 @@ export interface components {
              */
             new_password: string;
         };
+        /** @description ADMIN xác nhận OTP email; chỉ tài khoản ACTIVE mới nhận phiên đầy đủ */
         VerifyOtpRequest: {
-            /** Format: email */
+            /**
+             * Format: email
+             * @description Email tài khoản được ADMIN cấp hoặc quản lý
+             * @example student@example.edu
+             */
             email: string;
+            /**
+             * @description Mã OTP 6 chữ số được gửi đến email tài khoản
+             * @example 123456
+             */
             verify_code: string;
+            /**
+             * @description Định danh ổn định của thiết bị/cài đặt; không dùng chung UUID mẫu giữa nhiều thiết bị
+             * @example 550e8400-e29b-41d4-a716-446655440000
+             */
             device_id: string;
         };
         /** @description Yêu cầu khôi phục mật khẩu người dùng từ Quản trị viên */
@@ -5663,22 +7023,90 @@ export interface components {
              */
             email: string;
             /**
-             * @description Mật khẩu mới chỉ định (để trống nếu muốn khôi phục về mật khẩu mặc định của trường)
-             * @example 20224980
+             * @description Mật khẩu mới chỉ định (để trống để sinh mật khẩu tạm ngẫu nhiên 16 ký tự)
+             * @example NewSecurePass@2026
              */
             new_password?: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
+        GlobalResponseIssuedAccountCredential: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
+            code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
+            message?: string;
+            data?: components["schemas"]["IssuedAccountCredential"];
+        };
+        /** @description Mật khẩu tạm bàn giao một lần cho ADMIN sau khi tạo/reset thành công; không lưu dạng rõ */
+        IssuedAccountCredential: {
+            /**
+             * Format: int64
+             * @description ID tài khoản được cấp mật khẩu tạm
+             * @example 7
+             */
+            user_id?: number;
+            /**
+             * @description Email đăng nhập của tài khoản
+             * @example an.nv20211234@sis.hust.edu.vn
+             */
+            email?: string;
+            /**
+             * @description Họ và tên người nhận tài khoản
+             * @example Nguyễn Văn An
+             */
+            full_name?: string;
+            /**
+             * @description Mã số sinh viên hoặc giảng viên
+             * @example 20211234
+             */
+            student_lecturer_code?: string;
+            /**
+             * @description Mật khẩu tạm chỉ bàn giao một lần cho ADMIN sau khi cấp thành công
+             * @example Q7!vR2@kT9#pL4&x
+             */
+            temporary_password?: string;
+        };
+        /** @description Email tài khoản cần cấp lại OTP kích hoạt trong luồng quản trị */
         ResendOtpRequest: {
-            /** Format: email */
+            /**
+             * Format: email
+             * @description Email tài khoản được ADMIN cấp hoặc quản lý
+             * @example student@example.edu
+             */
             email: string;
         };
+        /** @description ADMIN tạo một tài khoản và gửi OTP email; tài khoản còn phải hoàn tất onboarding */
         RegisterRequest: {
-            /** Format: email */
+            /**
+             * Format: email
+             * @description Email tài khoản được ADMIN cấp hoặc quản lý
+             * @example student@example.edu
+             */
             email: string;
+            /**
+             * @description Mật khẩu cho tài khoản; không ghi vào log hoặc lưu dạng rõ trên client
+             * @example Example!Password123
+             */
             password: string;
+            /**
+             * @description Định danh ổn định của thiết bị/cài đặt; không dùng chung UUID mẫu giữa nhiều thiết bị
+             * @example 550e8400-e29b-41d4-a716-446655440000
+             */
             device_id: string;
-            /** @enum {string} */
+            /**
+             * @description Vai trò tài khoản quyết định quyền truy cập nghiệp vụ
+             * @enum {string}
+             */
             role: "LECTURER" | "STUDENT";
+            /**
+             * @description Múi giờ IANA dùng để hiển thị và tính hoạt động theo ngày
+             * @example Asia/Ho_Chi_Minh
+             */
             timezone?: string;
         };
         /** @description Yêu cầu tạo hàng loạt tài khoản người dùng */
@@ -5695,8 +7123,8 @@ export interface components {
              */
             email: string;
             /**
-             * @description Mật khẩu ban đầu (bỏ trống để tự sinh theo ngày sinh ddMMyyyy hoặc mã số)
-             * @example 123456789
+             * @description Mật khẩu ban đầu (bỏ trống để sinh ngẫu nhiên 16 ký tự)
+             * @example NewSecurePass@2026
              */
             password?: string;
             /**
@@ -5725,11 +7153,11 @@ export interface components {
              */
             class_name?: string;
             /**
-             * @description Giới tính (chỉ nhận MALE hoặc FEMALE)
+             * @description Giới tính của người dùng, có thể bỏ trống
              * @example MALE
              * @enum {string}
              */
-            gender?: "MALE" | "FEMALE" | "MALE" | "FEMALE";
+            gender?: "MALE" | "FEMALE" | "OTHER" | "PREFER_NOT_TO_SAY";
             /**
              * Format: date
              * @description Ngày tháng năm sinh (định dạng YYYY-MM-DD)
@@ -5769,9 +7197,20 @@ export interface components {
              *     ]
              */
             errors?: string[];
+            /** @description Thông tin đăng nhập tạm bàn giao một lần cho các tài khoản vừa tạo thành công */
+            credentials?: components["schemas"]["IssuedAccountCredential"][];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseBulkImportResult: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["BulkImportResult"];
         };
@@ -5788,8 +7227,17 @@ export interface components {
              */
             code: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseSubjectResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["SubjectResponse"];
         };
@@ -5826,98 +7274,238 @@ export interface components {
              */
             start_date?: string;
         };
+        /** @description Quyết định đóng báo cáo PENDING; gửi version hiện tại để phát hiện xử lý đồng thời */
         ResolveRequest: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description Phiên bản hiện tại để kiểm soát xử lý đồng thời; gửi đúng version từ GET detail
+             * @example 0
+             */
             version: number;
-            /** @enum {string} */
+            /**
+             * @description Quyết định kiểm duyệt; chỉ chọn trong allowed_actions của báo cáo
+             * @example SUSPEND_ACCOUNT
+             * @enum {string}
+             */
             action: "DISMISS" | "HIDE_CONTENT" | "WARN_ACCOUNT" | "SUSPEND_ACCOUNT";
+            /**
+             * @description Lý do thao tác hoặc lý do thất bại của mục tương ứng
+             * @example Nội dung không phù hợp quy định cộng đồng
+             */
             reason: string;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Chỉ gửi khi SUSPEND_ACCOUNT, nhận 1/7/30 ngày; các action khác phải bỏ trống
+             * @example 7
+             */
             suspension_days?: number;
         };
+        /** @description Một biện pháp kiểm duyệt trong lịch sử, gồm quản trị viên và liên kết hoàn tác nếu có */
         Action: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID biện pháp kiểm duyệt, dùng khi hoàn tác
+             * @example 42
+             */
             id?: number;
-            /** @enum {string} */
+            /**
+             * @description Loại đối tượng theo enum của schema
+             * @enum {string}
+             */
             type?: "HIDE_CONTENT" | "WARN_ACCOUNT" | "SUSPEND_ACCOUNT" | "RESTORE_CONTENT" | "LIFT_SUSPENSION";
+            /**
+             * @description Lý do thao tác hoặc lý do thất bại của mục tương ứng
+             * @example Nội dung không phù hợp quy định cộng đồng
+             */
             reason?: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm tạo dữ liệu, ISO-8601 UTC
+             * @example 2026-11-19T07:00:00Z
+             */
             created_at?: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm hết đình chỉ, null nếu không áp dụng
+             * @example 2026-11-19T07:00:00Z
+             */
             suspended_until?: string;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID biện pháp gốc được hoàn tác; null nếu đây không phải hành động hoàn tác
+             * @example 42
+             */
             reversed_action_id?: number;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID báo cáo liên quan đến biện pháp
+             * @example 42
+             */
             report_id?: number;
             admin?: components["schemas"]["Person"];
         };
+        /** @description Chi tiết báo cáo, snapshot, version, hành động hợp lệ và lịch sử kiểm duyệt */
         Detail: {
             report?: components["schemas"]["Summary"];
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description Phiên bản hiện tại để kiểm soát xử lý đồng thời; gửi đúng version từ GET detail
+             * @example 0
+             */
             version?: number;
+            /**
+             * @description Mô tả bổ sung do người gửi báo cáo cung cấp
+             * @example Nội dung có dấu hiệu quảng cáo không liên quan.
+             */
             description?: string;
             reporter?: components["schemas"]["Person"];
             reviewer?: components["schemas"]["Person"];
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm hoàn tất xem xét, null nếu chưa duyệt
+             * @example 2026-11-19T07:00:00Z
+             */
             reviewed_at?: string;
+            /**
+             * @description Lý do/kết luận do quản trị viên ghi khi xử lý
+             * @example Đã kiểm tra và xử lý theo quy định.
+             */
             resolution_note?: string;
             snapshot?: components["schemas"]["ReportSnapshot"];
             current?: components["schemas"]["ReportSnapshot"];
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm hết đình chỉ, null nếu không áp dụng
+             * @example 2026-11-19T07:00:00Z
+             */
             suspended_until?: string;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID biện pháp đang có hiệu lực, dùng khi yêu cầu hoàn tác
+             * @example 42
+             */
             active_action_id?: number;
+            /** @description Các quyết định resolve hiện được phép theo loại và trạng thái đối tượng */
             allowed_actions?: ("DISMISS" | "HIDE_CONTENT" | "WARN_ACCOUNT" | "SUSPEND_ACCOUNT")[];
+            /** @description Lịch sử các biện pháp kiểm duyệt liên quan */
             history?: components["schemas"]["Action"][];
+            /**
+             * @description Báo cáo có bằng chứng riêng tư để xin URL xem
+             * @example true
+             */
             has_evidence?: boolean;
-            has_legacy_evidence?: boolean;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseDetail: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["Detail"];
         };
+        /** @description Thông tin rút gọn người tham gia xử lý báo cáo */
         Person: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID tài khoản người gửi/người duyệt/quản trị viên
+             * @example 7
+             */
             id?: number;
+            /**
+             * @description Tên hiển thị của tài khoản
+             * @example Nguyễn Minh Anh
+             */
             full_name?: string;
         };
+        /** @description Bản chụp nội dung/nguồn tác giả tại một thời điểm phục vụ đối chiếu báo cáo */
         ReportSnapshot: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID tác giả nội dung tại thời điểm chụp snapshot
+             * @example 42
+             */
             author_id?: number;
+            /**
+             * @description Nội dung văn bản theo ngữ cảnh của đối tượng
+             * @example Nội dung trao đổi về bài học
+             */
             content?: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm cập nhật gần nhất, ISO-8601 UTC; có thể null nếu chưa ghi nhận
+             * @example 2026-11-19T07:00:00Z
+             */
             updated_at?: string;
         };
+        /** @description Tóm tắt báo cáo và trạng thái hiện tại của đối tượng bị báo cáo */
         Summary: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID báo cáo vi phạm
+             * @example 120
+             */
             id?: number;
+            /**
+             * @description Loại đối tượng được tham chiếu; dùng giá trị enum API công bố
+             * @example POST
+             */
             target_type?: string;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID đối tượng được tham chiếu; diễn giải cùng target_type/type của API
+             * @example 42
+             */
             target_id?: number;
-            /** @enum {string} */
+            /**
+             * @description Loại vi phạm người dùng chọn theo enum API
+             * @enum {string}
+             */
             violation_type?: "HARASSMENT" | "HATE_STATEMENT" | "SPAM" | "OTHER";
-            /** @enum {string} */
+            /**
+             * @description Trạng thái nghiệp vụ hiện tại theo enum của schema
+             * @enum {string}
+             */
             status?: "PENDING" | "RESOLVED";
-            /** @enum {string} */
+            /**
+             * @description Kết quả xử lý báo cáo, null nếu chưa được đóng
+             * @enum {string}
+             */
             outcome?: "DISMISSED" | "TARGET_UNAVAILABLE" | "ALREADY_MODERATED" | "ACTION_TAKEN";
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm tạo dữ liệu, ISO-8601 UTC
+             * @example 2026-11-19T07:00:00Z
+             */
             created_at?: string;
+            /**
+             * @description Trích đoạn nội dung báo cáo, tối đa 160 code point trước dấu rút gọn
+             * @example Nội dung bị báo cáo cần được xem xét.
+             */
             preview?: string;
-            /** @enum {string} */
+            /**
+             * @description Tình trạng hiện tại của đối tượng bị báo cáo
+             * @enum {string}
+             */
             target_state?: "AVAILABLE" | "HIDDEN" | "SUSPENDED" | "UNAVAILABLE";
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description Số báo cáo PENDING cùng đối tượng
+             * @example 3
+             */
             pending_count?: number;
         };
-        Evidence: {
-            url?: string;
-        };
-        GlobalResponseEvidence: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["Evidence"];
-        };
+        /** @description Lý do hoàn tác một biện pháp kiểm duyệt đang có hiệu lực */
         ReverseRequest: {
+            /**
+             * @description Lý do thao tác hoặc lý do thất bại của mục tương ứng
+             * @example Nội dung không phù hợp quy định cộng đồng
+             */
             reason: string;
         };
         /** @description Yêu cầu tái xây dựng lại Bảng xếp hạng trong Redis */
@@ -5993,9 +7581,20 @@ export interface components {
              * @example 2
              */
             already_enrolled_count?: number;
+            /** @description Thông tin đăng nhập tạm bàn giao một lần cho các tài khoản mới tạo từ file Excel */
+            credentials?: components["schemas"]["IssuedAccountCredential"][];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseExcelImportClassResult: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["ExcelImportClassResult"];
         };
@@ -6018,8 +7617,8 @@ export interface components {
              */
             badge_tier: "BRONZE" | "SILVER" | "GOLD" | "PLATINUM";
             /**
-             * @description Sự kiện kích hoạt tự động trao huy hiệu
-             * @example PROPOSE_QUESTION
+             * @description Sự kiện xét thưởng, phải khớp kiểu criteria
+             * @example APPROVED_QUESTIONS
              * @enum {string}
              */
             badge_trigger_event: "APPROVED_QUESTIONS" | "PROPOSED_QUESTIONS" | "REVIEWED_SESSIONS" | "ACCEPTED_FRIENDS" | "PUBLIC_POINTS" | "STUDY_STREAK" | "LEADERBOARD_RANK" | "MANUAL_GRANT";
@@ -6028,9 +7627,17 @@ export interface components {
              * @example https://sqb.s3.ap-southeast-1.amazonaws.com/badges/proposer_gold.png
              */
             icon_url?: string;
-            criteria: components["schemas"]["CounterThresholdCriteria"] | components["schemas"]["LeaderboardRankCriteria"] | components["schemas"]["ManualGrantCriteria"] | components["schemas"]["StreakCriteria"] | components["schemas"]["SubjectMasteryCriteria"];
+            criteria: components["schemas"]["BadgeCriteria"];
         };
+        /** @description Danh sách tài khoản cần thu hồi huy hiệu được chọn */
         RevokeBadgeRequest: {
+            /**
+             * @description Danh sách ID tài khoản cần xử lý; không phải ID huy hiệu
+             * @example [
+             *       7,
+             *       8
+             *     ]
+             */
             user_ids: number[];
         };
         /** @description Yêu cầu cấp phát huy hiệu thủ công cho người dùng (Dành cho Quản trị viên) */
@@ -6050,49 +7657,134 @@ export interface components {
              */
             reason?: string;
         };
+        /** @description Thông tin phân trang ID cursor; giá trị null nghĩa không có mốc theo chiều tương ứng */
         CursorPaginationDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID mốc để lấy trang trước theo chiều phân trang của endpoint
+             * @example 3
+             */
             before?: number;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID mốc để lấy trang tiếp theo; bỏ trống ở trang đầu, dùng đúng cursor API trả về
+             * @example 3
+             */
             after?: number;
+            /**
+             * @description Còn trang theo chiều before hay không
+             * @example false
+             */
             has_prev?: boolean;
+            /**
+             * @description Còn trang theo chiều after hay không
+             * @example true
+             */
             has_next?: boolean;
         };
+        /** @description Một trang kết quả gồm items và pagination; trang trống trả danh sách rỗng */
         CursorResponseVideoPostItemDto: {
+            /** @description Các mục thuộc trang hiện tại; danh sách rỗng khi không có kết quả */
             items?: components["schemas"]["VideoPostItemDto"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseCursorResponseVideoPostItemDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["CursorResponseVideoPostItemDto"];
         };
+        /** @description Bài video trong feed, gồm metadata media và trạng thái tương tác hiện tại */
         VideoPostItemDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID bài viết
+             * @example 42
+             */
             post_id?: number;
+            /**
+             * @description Nội dung văn bản theo ngữ cảnh của đối tượng
+             * @example Nội dung trao đổi về bài học
+             */
             content?: string;
-            /** @enum {string} */
+            /**
+             * @description Phạm vi hiển thị bài viết theo enum API
+             * @enum {string}
+             */
             visibility?: "PUBLIC" | "ONLY_ME" | "FRIENDS";
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Tổng số lượt cảm xúc
+             * @example 3
+             */
             react_count?: number;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Tổng số bình luận hiển thị theo thống kê của đối tượng
+             * @example 3
+             */
             comment_count?: number;
+            /**
+             * @description Người gọi đã thả cảm xúc vào đối tượng này
+             * @example true
+             */
             reacted_by_me?: boolean;
-            /** @enum {string} */
+            /**
+             * @description Cảm xúc hiện tại của người gọi; null nếu chưa thả cảm xúc
+             * @enum {string}
+             */
             my_reaction?: "LIKE" | "LOVE" | "WOW";
+            /** @description Các tệp đính kèm; kiểu phần tử theo schema của endpoint */
             media_urls?: components["schemas"]["MediaItem"][];
             author?: components["schemas"]["AuthorDto"];
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm tạo dữ liệu, ISO-8601 UTC
+             * @example 2026-11-19T07:00:00Z
+             */
             created_at?: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm cập nhật gần nhất, ISO-8601 UTC; có thể null nếu chưa ghi nhận
+             * @example 2026-11-19T07:00:00Z
+             */
             updated_at?: string;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID môn học
+             * @example 42
+             */
             subject_id?: number;
+            /**
+             * @description Tên môn học
+             * @example Cơ sở dữ liệu
+             */
             subject_name?: string;
+            /**
+             * @description Mã môn học
+             * @example IT3290
+             */
             subject_code?: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseSubmissionsResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["SubmissionsResponse"];
         };
@@ -6172,11 +7864,13 @@ export interface components {
             /**
              * Format: int64
              * @description Số câu được duyệt, chỉ trả cho người nộp sau khi xét duyệt
+             * @example 10
              */
             approved_question_count?: number;
             /**
              * Format: date-time
              * @description Thời điểm khởi tạo phiên nộp
+             * @example 2026-11-19T07:00:00Z
              */
             created_at?: string;
             /**
@@ -6204,59 +7898,172 @@ export interface components {
             contents?: components["schemas"]["SubmissionSessionSummaryDto"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
         };
+        /** @description Số bạn bè, người theo dõi và người đang theo dõi */
         Counts: {
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Số tài khoản đang theo dõi người dùng này
+             * @example 3
+             */
             followers_count?: number;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Số tài khoản người dùng này đang theo dõi
+             * @example 3
+             */
             following_count?: number;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Số quan hệ bạn bè đã được chấp nhận
+             * @example 3
+             */
             friends_count?: number;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseRelationshipStatsResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["RelationshipStatsResponseDto"];
         };
+        /** @description Thống kê quan hệ của một tài khoản và trạng thái quan hệ với người gọi */
         RelationshipStatsResponseDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID tài khoản trong SQB
+             * @example 42
+             */
             user_id?: number;
             counts?: components["schemas"]["Counts"];
             relationship_with_me?: components["schemas"]["RelationshipWithMe"];
         };
+        /** @description Trạng thái quan hệ giữa người gọi và tài khoản đang xem */
         RelationshipWithMe: {
-            /** @enum {string} */
+            /**
+             * @description Trạng thái lời mời kết bạn giữa hai tài khoản; null nếu không có
+             * @enum {string}
+             */
             friend_request_status?: "NONE" | "PENDING" | "ACCEPTED" | "DECLINED";
             followed_by?: boolean;
             friend?: boolean;
             blocked?: boolean;
             following?: boolean;
         };
+        /** @description Một trang kết quả gồm items và pagination; trang trống trả danh sách rỗng */
         CursorResponsePostResponseDto: {
+            /** @description Các mục thuộc trang hiện tại; danh sách rỗng khi không có kết quả */
             items?: components["schemas"]["PostResponseDto"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseCursorResponsePostResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["CursorResponsePostResponseDto"];
         };
+        /** @description Thời điểm dự kiến xóa tài khoản cùng khả năng hủy yêu cầu */
         AccountDeletionResponse: {
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm dự kiến xóa tài khoản
+             * @example 2026-11-19T07:00:00Z
+             */
             scheduled_for?: string;
+            /**
+             * @description Yêu cầu xóa tài khoản còn được phép hủy hay không
+             * @example true
+             */
             can_cancel?: boolean;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseAccountDeletionResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["AccountDeletionResponse"];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseListSubjectResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
+            /** @description Payload nghiệp vụ theo kiểu response của endpoint; có thể null với thao tác không trả dữ liệu */
             data?: components["schemas"]["SubjectResponse"][];
         };
-        GlobalResponseSessionQuestionsResponse: {
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
+        GlobalResponseListTopicResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
+            message?: string;
+            /** @description Payload nghiệp vụ theo kiểu response của endpoint; có thể null với thao tác không trả dữ liệu */
+            data?: components["schemas"]["TopicResponse"][];
+        };
+        /** @description Chủ đề trong danh mục của một môn học */
+        TopicResponse: {
+            /**
+             * Format: int64
+             * @description ID của chủ đề
+             * @example 37
+             */
+            id?: number;
+            /**
+             * @description Tên hiển thị của chủ đề
+             * @example Định thời CPU
+             */
+            name?: string;
+            /**
+             * @description Chủ đề đang được sử dụng và có thể gán cho câu hỏi
+             * @example true
+             */
+            active?: boolean;
+        };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
+        GlobalResponseSessionQuestionsResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
+            code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["SessionQuestionsResponse"];
         };
@@ -6272,8 +8079,17 @@ export interface components {
              * @example SJF ưu tiên tiến trình ngắn, tiến trình dài có thể bị đói tài nguyên CPU.
              */
             explanation?: string;
+            /** @description Các lựa chọn người dùng đã nộp, gồm nội dung tại thời điểm trả lời */
             selected_options?: components["schemas"]["SubmittedOptionDto"][];
+            /**
+             * @description Lần trả lời đã nộp đúng hay sai; có thể null nếu chưa có kết quả
+             * @example true
+             */
             was_correct?: boolean;
+            /**
+             * @description Câu hỏi đã thay đổi kể từ lần trả lời đang hiển thị
+             * @example false
+             */
             question_updated_since_answer?: boolean;
         };
         /** @description Trạng thái tương tác của người dùng đối với câu hỏi */
@@ -6294,9 +8110,21 @@ export interface components {
              * @enum {string}
              */
             my_reaction?: "LIKE" | "LOVE" | "WOW";
-            /** Format: double */
+            /**
+             * Format: double
+             * @description Điểm đánh giá chất lượng của người gọi; có thể null khi chưa đánh giá
+             * @example 4
+             */
             my_rating?: number;
+            /**
+             * @description Nhận xét đi kèm đánh giá chất lượng
+             * @example Câu hỏi rõ ràng, có lời giải dễ hiểu.
+             */
             rating_comment?: string;
+            /**
+             * @description Người gọi đã báo cáo câu hỏi này hay chưa
+             * @example false
+             */
             reported?: boolean;
         };
         /** @description Thông tin câu hỏi luyện tập */
@@ -6317,7 +8145,12 @@ export interface components {
              * @example Thuật toán định thời nào sau đây có thể dẫn đến hiện tượng đói CPU?
              */
             content?: string;
-            /** @description Danh sách URL hình ảnh minh họa cho câu hỏi */
+            /**
+             * @description Danh sách URL hình ảnh minh họa cho câu hỏi
+             * @example [
+             *       "https://media.example.com/question.png"
+             *     ]
+             */
             image_urls?: string[];
             /** @description Danh sách các lựa chọn đáp án (đã ẩn trường is_correct nếu chưa trả lời) */
             options?: components["schemas"]["QuestionOption"][];
@@ -6426,42 +8259,113 @@ export interface components {
             /** @description Danh sách câu hỏi luyện tập */
             questions?: components["schemas"]["PracticeQuestionDto"][];
         };
+        /** @description Một lựa chọn đã nộp, lưu key và nội dung để so sánh khi câu hỏi được sửa */
         SubmittedOptionDto: {
+            /**
+             * @description Khóa phương án đã nộp, ví dụ A/B/C/D
+             * @example A
+             */
             key?: string;
+            /**
+             * @description Nội dung phương án tại thời điểm người dùng trả lời
+             * @example Lựa chọn thứ nhất
+             */
             text?: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponsePracticeCatalogResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["PracticeCatalogResponse"];
         };
         /** @description Bộ câu hỏi có thể luyện tập sau khi chốt phiên, kèm phân trang con trỏ */
         PracticeCatalogResponse: {
+            /** @description Các bộ câu hỏi trong trang danh mục luyện tập */
             contents?: components["schemas"]["PracticeSetDto"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
         };
         /** @description Thông tin bộ câu hỏi công khai cho người dùng đã đăng nhập */
         PracticeSetDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID phiên/bộ câu hỏi được liên kết, có thể null nếu không áp dụng
+             * @example 42
+             */
             session_id?: number;
+            /**
+             * @description Mã bộ câu hỏi/phiên đóng góp
+             * @example SQB-2026-001
+             */
             session_code?: string;
+            /**
+             * @description Tiêu đề hiển thị
+             * @example Bộ câu hỏi ôn tập chương 1
+             */
             title?: string;
+            /**
+             * @description Nội dung văn bản theo ngữ cảnh của đối tượng
+             * @example Nội dung trao đổi về bài học
+             */
             content?: string;
+            /**
+             * @description Tên môn học
+             * @example Cơ sở dữ liệu
+             */
             subject_name?: string;
+            /**
+             * @description Mã môn học
+             * @example IT3290
+             */
             subject_code?: string;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Số câu hỏi thuộc bộ câu hỏi
+             * @example 3
+             */
             question_counts?: number;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm tạo dữ liệu, ISO-8601 UTC
+             * @example 2026-11-19T07:00:00Z
+             */
             created_at?: string;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Tổng số lượt cảm xúc
+             * @example 3
+             */
             react_count?: number;
-            /** @enum {string} */
+            /**
+             * @description Cảm xúc hiện tại của người gọi; null nếu chưa thả cảm xúc
+             * @enum {string}
+             */
             my_reaction?: "LIKE" | "LOVE" | "WOW";
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Tổng số bình luận hiển thị theo thống kê của đối tượng
+             * @example 3
+             */
             comment_count?: number;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseMySubmissionDetailResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["MySubmissionDetailResponse"];
         };
@@ -6552,11 +8456,13 @@ export interface components {
             /**
              * Format: date-time
              * @description Thời điểm giảng viên hoàn tất duyệt phiên
+             * @example 2026-11-19T07:00:00Z
              */
             reviewed_at?: string;
             /**
              * Format: date-time
              * @description Thời điểm tạo phiên
+             * @example 2026-11-19T07:00:00Z
              */
             created_at?: string;
             /** @description Danh sách câu hỏi trong phiên */
@@ -6571,6 +8477,17 @@ export interface components {
              */
             question_id?: number;
             /**
+             * Format: int64
+             * @description ID chủ đề đã gắn với câu hỏi, nếu có
+             * @example 37
+             */
+            topic_id?: number;
+            /**
+             * @description Tên chủ đề đã gắn với câu hỏi, nếu có
+             * @example Định thời CPU
+             */
+            topic_name?: string;
+            /**
              * @description Nội dung câu hỏi
              * @example Pattern nào sau đây giải quyết bài toán phân tán giao dịch?
              */
@@ -6584,8 +8501,17 @@ export interface components {
             image_urls?: string[];
             /** @description Danh sách các lựa chọn đáp án */
             options?: components["schemas"]["QuestionOption"][];
-            /** @description Lời giải thích chi tiết cho đáp án */
+            /**
+             * @description Lời giải thích chi tiết cho đáp án
+             * @example Lựa chọn A đáp ứng đúng điều kiện của câu hỏi.
+             */
             explanation?: string;
+            /**
+             * @description Độ khó hiện tại của câu hỏi
+             * @example MEDIUM
+             * @enum {string}
+             */
+            difficulty?: "UNCLASSIFIED" | "EASY" | "MEDIUM" | "HARD";
             /**
              * @description Nguồn gốc câu hỏi (HOMO_SAPIENS hoặc LLM)
              * @example HOMO_SAPIENS
@@ -6610,7 +8536,10 @@ export interface components {
              * @enum {string}
              */
             rejection_code?: "DUPLICATE" | "INCORRECT_ANSWER" | "AMBIGUOUS_OR_INCOMPLETE" | "OUT_OF_SCOPE" | "LOW_QUALITY" | "OTHER" | "UNSPECIFIED" | "AUTO_REJECTED_ON_COMPLETION";
-            /** @description Ghi chú từ chối cụ thể của giảng viên */
+            /**
+             * @description Ghi chú từ chối cụ thể của giảng viên
+             * @example Thiếu lời giải hoặc nguồn tham khảo.
+             */
             rejection_reason?: string;
             /**
              * Format: int32
@@ -6633,26 +8562,81 @@ export interface components {
         };
         /** @description Lớp học phần có thể hiển thị trong danh sách đề xuất câu hỏi */
         CourseClassOptionResponse: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID lớp học phần
+             * @example 42
+             */
             course_class_id?: number;
+            /**
+             * @description Mã lớp học phần
+             * @example 161234
+             */
             class_code?: string;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID môn học
+             * @example 42
+             */
             subject_id?: number;
+            /**
+             * @description Mã môn học
+             * @example IT3290
+             */
             subject_code?: string;
+            /**
+             * @description Tên môn học
+             * @example Cơ sở dữ liệu
+             */
             subject_name?: string;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID học kỳ
+             * @example 42
+             */
             semester_id?: number;
+            /**
+             * @description Tên học kỳ
+             * @example 2026.1
+             */
             semester_name?: string;
+            /**
+             * @description Lớp thuộc học kỳ đang hoạt động hay không
+             * @example true
+             */
             active_semester?: boolean;
+            /**
+             * @description Người gọi được phép đề xuất bộ câu hỏi vào lớp này
+             * @example true
+             */
             can_propose?: boolean;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseListCourseClassOptionResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
+            /** @description Payload nghiệp vụ theo kiểu response của endpoint; có thể null với thao tác không trả dữ liệu */
             data?: components["schemas"]["CourseClassOptionResponse"][];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseGlobalSearchResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["GlobalSearchResponseDto"];
         };
@@ -6704,11 +8688,16 @@ export interface components {
             author_frame_url?: string;
             /**
              * @description Loại bài viết
-             * @example QUESTION_SHARING
+             * @example SOCIAL_POST
              * @enum {string}
              */
             post_type?: "LEARNING_VIDEO" | "SOCIAL_POST" | "QUESTION_APPROVED_NOTIFICATION" | "LEADERBOARD_HONOR";
-            /** @description Danh sách URL hình ảnh đính kèm bài viết */
+            /**
+             * @description Danh sách URL hình ảnh đính kèm bài viết
+             * @example [
+             *       "https://media.example.com/image.png"
+             *     ]
+             */
             media_urls?: string[];
             /**
              * Format: int32
@@ -6801,7 +8790,12 @@ export interface components {
             content?: string;
             /** @description Danh sách các lựa chọn đáp án */
             options?: components["schemas"]["QuestionOptionDto"][];
-            /** @description Danh sách URL hình ảnh minh họa trong câu hỏi */
+            /**
+             * @description Danh sách URL hình ảnh minh họa trong câu hỏi
+             * @example [
+             *       "https://media.example.com/question.png"
+             *     ]
+             */
             image_urls?: string[];
             /**
              * Format: double
@@ -6890,7 +8884,7 @@ export interface components {
             subject_name?: string;
             /**
              * @description Trạng thái phiên
-             * @example ACTIVE
+             * @example RESOLVED
              * @enum {string}
              */
             status?: "PENDING" | "REVIEWING" | "RESOLVED";
@@ -7011,8 +9005,17 @@ export interface components {
              */
             followers_count?: number;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseSavedAndTrendingSearchesResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["SavedAndTrendingSearchesResponseDto"];
         };
@@ -7051,8 +9054,17 @@ export interface components {
              */
             last_searched_at?: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseQuestionStatisticsResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["QuestionStatisticsResponse"];
         };
@@ -7112,8 +9124,17 @@ export interface components {
                 [key: string]: number;
             };
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseQuestionRatingsResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["QuestionRatingsResponse"];
         };
@@ -7154,97 +9175,236 @@ export interface components {
              */
             created_at?: string;
         };
+        /** @description Một câu hỏi được duyệt và phần thưởng được thông báo */
         ConfirmedQuestionDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID câu hỏi được duyệt
+             * @example 42
+             */
             question_id?: number;
+            /**
+             * @description Tên môn học của câu hỏi
+             * @example Cơ sở dữ liệu
+             */
             subject_name?: string;
+            /**
+             * @description Trích đoạn nội dung câu hỏi
+             * @example Khóa chính của một bảng có tính chất nào?
+             */
             question_snippet?: string;
-            /** Format: double */
+            /**
+             * Format: double
+             * @description Số điểm thưởng cho câu hỏi này
+             * @example 2.5
+             */
             points?: number;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseNotificationListResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["NotificationListResponseDto"];
         };
+        /** @description Thông báo của người nhận hiện tại; actor/target/metadata có thể không có tùy loại thông báo */
         NotificationDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID thông báo thuộc người nhận hiện tại
+             * @example 42
+             */
             notification_id?: number;
-            /** @enum {string} */
+            /**
+             * @description Loại đối tượng theo enum của schema
+             * @enum {string}
+             */
             type?: "FRIEND_REQUEST" | "NEW_COMMENT" | "QUESTION_APPROVED" | "EARNED_BADGE" | "BADGE_REVOKED" | "QUESTION_ERROR_PENALTY" | "GAME5_SEMESTER_RECAP" | "LEADERBOARD_HONOR" | "REPORT_REVIEWED" | "MODERATION_NOTICE";
+            /**
+             * @description Tiêu đề hiển thị
+             * @example Bộ câu hỏi ôn tập chương 1
+             */
             title?: string;
+            /**
+             * @description Nội dung hiển thị của thông báo
+             * @example Bộ câu hỏi của bạn đã được duyệt.
+             */
             body?: string;
+            /**
+             * @description URL biểu tượng thông báo khi có
+             * @example https://media.example.com/notification.png
+             */
             icon_url?: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm đánh dấu đã đọc, null nếu chưa đọc
+             * @example 2026-11-19T07:00:00Z
+             */
             read_at?: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm tạo dữ liệu, ISO-8601 UTC
+             * @example 2026-11-19T07:00:00Z
+             */
             created_at?: string;
             target?: components["schemas"]["NotificationTargetDto"];
             actor?: components["schemas"]["UserSummaryDto"];
             metadata?: components["schemas"]["NotificationMetadata"];
         };
+        /** @description Trang thông báo và tổng số thông báo chưa đọc */
         NotificationListResponseDto: {
+            /** @description Các mục thuộc trang hiện tại; danh sách rỗng khi không có kết quả */
             items?: components["schemas"]["NotificationDto"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
-            /** Format: int32 */
-            unread_count?: number;
-        };
-        NotificationMetadata: {
-            confirmed_questions?: components["schemas"]["ConfirmedQuestionDto"][];
-        };
-        NotificationTargetDto: {
-            /** @enum {string} */
-            type?: "BADGE" | "SESSION" | "POST" | "QUESTION" | "USER" | "CONVERSATION";
-            /** Format: int64 */
-            target_id?: number;
-            url?: string;
-        };
-        UserSummaryDto: {
-            /** Format: int64 */
-            user_id?: number;
-            full_name?: string;
-            avatar_url?: string;
-            frame_url?: string;
-        };
-        /** @description Cảnh báo trùng lặp câu hỏi được phát hiện bởi hệ thống */
-        DuplicateWarning: {
             /**
              * Format: int32
-             * @description Thứ tự của câu hỏi trong phiên nộp
-             * @example 0
+             * @description Số mục chưa đọc của người dùng hiện tại theo ngữ cảnh API
+             * @example 3
+             */
+            unread_count?: number;
+        };
+        /** @description Metadata thông báo; các trường được dùng tùy notification type */
+        NotificationMetadata: {
+            /** @description Các câu hỏi được xác nhận kèm thông tin cộng điểm trong thông báo tương ứng */
+            confirmed_questions?: components["schemas"]["ConfirmedQuestionDto"][];
+        };
+        /** @description Đích điều hướng của thông báo, phân biệt bằng type */
+        NotificationTargetDto: {
+            /**
+             * @description Loại đích điều hướng của thông báo
+             * @enum {string}
+             */
+            type?: "BADGE" | "SESSION" | "POST" | "QUESTION" | "USER" | "CONVERSATION";
+            /**
+             * Format: int64
+             * @description ID đối tượng được tham chiếu; diễn giải cùng target_type/type của API
+             * @example 42
+             */
+            target_id?: number;
+            /**
+             * @description Đường dẫn điều hướng nội bộ nếu thông báo dùng đích URL
+             * @example /posts/42
+             */
+            url?: string;
+        };
+        /** @description Thông tin công khai rút gọn của một tài khoản */
+        UserSummaryDto: {
+            /**
+             * Format: int64
+             * @description ID tài khoản trong SQB
+             * @example 42
+             */
+            user_id?: number;
+            /**
+             * @description Tên hiển thị của tài khoản
+             * @example Nguyễn Minh Anh
+             */
+            full_name?: string;
+            /**
+             * @description URL ảnh đại diện công khai; có thể null/rỗng khi chưa đặt ảnh
+             * @example https://media.example.com/avatar.png
+             */
+            avatar_url?: string;
+            /**
+             * @description URL khung trang trí avatar, null/rỗng khi không có
+             * @example https://media.example.com/frame.png
+             */
+            frame_url?: string;
+        };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
+        GlobalResponseListManagedTopicResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
+            code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
+            message?: string;
+            /** @description Payload nghiệp vụ theo kiểu response của endpoint; có thể null với thao tác không trả dữ liệu */
+            data?: components["schemas"]["ManagedTopicResponse"][];
+        };
+        /** @description Kết quả đối sánh giữa câu hỏi đang được dò trùng và một câu hỏi khác */
+        DuplicateWarning: {
+            /**
+             * Format: int64
+             * @description ID câu hỏi đang được dò trùng
+             * @example 105
+             */
+            question_id?: number;
+            /**
+             * Format: int32
+             * @description Vị trí câu hỏi trong phiên nếu có dữ liệu vị trí. Dùng question_id để xác định câu hỏi.
+             * @example 3
              */
             question_index?: number;
             /**
              * Format: int64
-             * @description ID của câu hỏi tương đồng đã tồn tại trong ngân hàng đề
-             * @example 1024
+             * @description ID câu hỏi được tìm thấy khi đối sánh
+             * @example 208
              */
             similar_question_id?: number;
             /**
+             * @description Phạm vi của câu đối sánh, trong cùng phiên hoặc trong ngân hàng câu hỏi
+             * @example QUESTION_BANK
+             * @enum {string}
+             */
+            scope?: "SAME_SESSION" | "QUESTION_BANK";
+            /**
+             * @description Loại kết quả đối sánh, gồm trùng hoàn toàn, trùng nội dung nhưng khác đáp án đúng hoặc tương tự
+             * @example SIMILAR
+             * @enum {string}
+             */
+            kind?: "EXACT" | "ANSWER_CONFLICT" | "SIMILAR";
+            /**
              * Format: double
-             * @description Điểm số tương đồng (0.0 - 1.0)
-             * @example 0.92
+             * @description Điểm tương đồng của phép so sánh trigram hoặc embedding văn bản, điểm cao hơn thể hiện mức tương đồng cao hơn
+             * @example 0.93
              */
             similarity_score?: number;
             /**
-             * @description Tầng phát hiện trùng lặp
-             * @example RULE_BASED
+             * Format: int32
+             * @description Số bit khác nhau giữa hai mã băm cảm nhận của ảnh trong kết quả P_HASH
+             * @example 3
+             */
+            hamming_distance?: number;
+            /**
+             * @description Phương pháp phát hiện dùng để tạo kết quả đối sánh này
+             * @example TRIGRAM
              * @enum {string}
              */
             tier?: "RULE_BASED" | "TRIGRAM" | "P_HASH" | "TEXT_EMBEDDING" | "IMAGE_EMBEDDING";
             /**
-             * @description Trích đoạn nội dung bị trùng lặp
-             * @example Thuật toán Round Robin phân chia thời gian CPU như thế nào...
+             * @description Đoạn đầu nội dung đã chuẩn hóa của câu hỏi đối sánh, tối đa 240 ký tự
+             * @example Thuật toán định thời CPU nào có thể gây đói tiến trình?
              */
-            matched_snipet?: string;
+            matched_snippet?: string;
             /**
-             * @description URL hình ảnh bị trùng lặp (nếu phát hiện trùng qua ảnh)
-             * @example https://sqb.s3.ap-southeast-1.amazonaws.com/questions/duplicate.png
+             * @description URL ảnh của câu hỏi đối sánh trong kết quả P_HASH
+             * @example https://media.sqb.edu.vn/questions/scheduling-diagram.png
              */
             media_url?: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseSessionDetailReviewResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["SessionDetailReviewResponse"];
         };
@@ -7287,6 +9447,17 @@ export interface components {
         /** @description Thông tin chi tiết phiên đề xuất dành cho giảng viên duyệt */
         SessionDetailReviewResponse: {
             /**
+             * Format: int64
+             * @description ID môn học của lớp gắn với phiên đề xuất
+             * @example 12
+             */
+            subject_id?: number;
+            /**
+             * @description Cảnh báo cấp phiên khi đáp án đúng tập trung vào một vị trí trong các câu có bốn lựa chọn
+             * @example Vị trí B là đáp án đúng ở 7/10 câu có bốn lựa chọn.
+             */
+            quality_warning?: string;
+            /**
              * @description Trạng thái phiên. RESOLVED là phiên đã chốt và chỉ đọc
              * @example REVIEWING
              * @enum {string}
@@ -7305,6 +9476,33 @@ export interface components {
              * @example 105
              */
             question_id?: number;
+            /**
+             * Format: int64
+             * @description ID chủ đề đã gắn với câu hỏi, nếu có
+             * @example 37
+             */
+            topic_id?: number;
+            /**
+             * @description Tên chủ đề đã gắn với câu hỏi, nếu có
+             * @example Định thời CPU
+             */
+            topic_name?: string;
+            /**
+             * @description Trạng thái xử lý dò trùng. PENDING đang chờ, RETRY đã lên lịch thử lại, COMPLETE hoàn tất, NEEDS_REVIEW cần người duyệt xem xét.
+             * @example RETRY
+             * @enum {string}
+             */
+            duplicate_check_status?: "PENDING" | "RETRY" | "COMPLETE" | "NEEDS_REVIEW";
+            /**
+             * @description Có thể yêu cầu dò trùng lại vì câu hỏi đang chờ duyệt và đã có lượt dò lỗi
+             * @example true
+             */
+            can_retry_duplicate_check?: boolean;
+            /**
+             * @description Cảnh báo cấp câu hỏi khi đáp án đúng dài nổi bật so với các lựa chọn còn lại
+             * @example Đáp án đúng dài nổi bật so với các lựa chọn còn lại.
+             */
+            quality_warning?: string;
             /**
              * @description Nội dung câu hỏi (hỗ trợ LaTeX/Markdown)
              * @example Thuật toán định thời nào sau đây có thể dẫn đến hiện tượng đói CPU (starvation)?
@@ -7330,6 +9528,12 @@ export interface components {
              */
             explanation?: string;
             /**
+             * @description Độ khó hiện tại của câu hỏi
+             * @example MEDIUM
+             * @enum {string}
+             */
+            difficulty?: "UNCLASSIFIED" | "EASY" | "MEDIUM" | "HARD";
+            /**
              * @description Trạng thái câu hỏi (PENDING, APPROVED, REJECTED)
              * @example PENDING
              */
@@ -7340,14 +9544,93 @@ export interface components {
              * @enum {string}
              */
             rejection_code?: "DUPLICATE" | "INCORRECT_ANSWER" | "AMBIGUOUS_OR_INCOMPLETE" | "OUT_OF_SCOPE" | "LOW_QUALITY" | "OTHER" | "UNSPECIFIED" | "AUTO_REJECTED_ON_COMPLETION";
-            /** @description Ghi chú từ chối cụ thể của giảng viên */
+            /**
+             * @description Ghi chú từ chối cụ thể của giảng viên
+             * @example Thiếu lời giải hoặc nguồn tham khảo.
+             */
             rejection_reason?: string;
             edit_log?: components["schemas"]["QuestionEditLogDto"];
         };
-        GlobalResponseReviewableSessionsResponse: {
+        /** @description Chi tiết của một câu đối sánh trong cảnh báo trùng khi duyệt */
+        DuplicateMatchResponse: {
+            /**
+             * Format: int64
+             * @description ID câu đối sánh
+             * @example 208
+             */
+            question_id?: number;
+            /**
+             * @description Nội dung câu đối sánh
+             * @example Giao thức HTTP dùng để làm gì?
+             */
+            content?: string;
+            /**
+             * @description Đường dẫn ảnh của đề bài
+             * @example [
+             *       "https://media.example.com/question.png"
+             *     ]
+             */
+            image_urls?: string[];
+            /** @description Các phương án trả lời, gồm nội dung, ảnh và cờ đúng */
+            options?: components["schemas"]["QuestionOption"][];
+            /**
+             * @description Lời giải của câu đối sánh
+             * @example HTTP truyền tải tài nguyên trên Web.
+             */
+            explanation?: string;
+        };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
+        GlobalResponseListDuplicateMatchResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
+            message?: string;
+            /** @description Payload nghiệp vụ theo kiểu response của endpoint; có thể null với thao tác không trả dữ liệu */
+            data?: components["schemas"]["DuplicateMatchResponse"][];
+        };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
+        GlobalResponseReviewableSessionsResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
+            code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["ReviewableSessionsResponse"];
+        };
+        /** @description Thông tin ẩn danh của tác giả đề xuất; khác thông tin tác giả công khai của bài viết */
+        ReviewableSessionAuthor: {
+            /**
+             * Format: int64
+             * @description ID tác giả
+             * @example 42
+             */
+            user_id?: number;
+            /**
+             * @description Tên hiển thị ẩn danh của học viên
+             * @example A8F2C1
+             */
+            full_name?: string;
+            /**
+             * @description URL ảnh đại diện
+             * @example https://sqb.s3.ap-southeast-1.amazonaws.com/avatars/user42.png
+             */
+            avatar_url?: string;
+            /**
+             * @description URL khung viền đại diện
+             * @example https://sqb.s3.ap-southeast-1.amazonaws.com/frames/top1.png
+             */
+            frame_url?: string;
         };
         /** @description Thông tin tóm tắt phiên có thể kiểm duyệt */
         ReviewableSessionItemDto: {
@@ -7405,7 +9688,7 @@ export interface components {
              * @example Bộ câu hỏi trắc nghiệm về giải thuật điều phối CPU
              */
             content?: string;
-            author?: components["schemas"]["AuthorDto"];
+            author?: components["schemas"]["ReviewableSessionAuthor"];
             /**
              * @description Trạng thái phiên đề xuất
              * @example REVIEWING
@@ -7450,14 +9733,143 @@ export interface components {
              */
             expires_at?: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseExportResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["ExportResponse"];
         };
-        GlobalResponseListCourseClassResponse: {
+        /** @description Số lượng câu hỏi trong ngân hàng có thể dùng để tạo đề của một môn */
+        ExamBankSummary: {
+            /**
+             * Format: int64
+             * @description ID môn học
+             * @example 12
+             */
+            subject_id?: number;
+            /**
+             * Format: int32
+             * @description Tổng số câu đã duyệt trong phiên đã chốt
+             * @example 72
+             */
+            total_questions?: number;
+            statistic?: components["schemas"]["Statistic"];
+            /** @description Số câu của từng chủ đề đang hoạt động và nhóm câu chưa được phân loại chủ đề */
+            topics?: components["schemas"]["ExamBankTopicStock"][];
+        };
+        /** @description Số lượng câu hỏi trong ngân hàng của một chủ đề */
+        ExamBankTopicStock: {
+            /**
+             * Format: int64
+             * @description ID chủ đề, để trống cho nhóm câu chưa được phân loại chủ đề
+             * @example 15
+             */
+            topic_id?: number;
+            /**
+             * @description Tên chủ đề
+             * @example Giao thức HTTP
+             */
+            topic_name?: string;
+            /**
+             * Format: int32
+             * @description Tổng số câu của chủ đề
+             * @example 24
+             */
+            total_questions?: number;
+            statistic?: components["schemas"]["Statistic"];
+        };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
+        GlobalResponseExamBankSummary: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
+            data?: components["schemas"]["ExamBankSummary"];
+        };
+        /** @description Thông tin tóm tắt đề thi */
+        ExamItem: {
+            /**
+             * Format: int64
+             * @description ID đề thi
+             * @example 5
+             */
+            exam_id?: number;
+            /**
+             * @description Tiêu đề đề thi
+             * @example Đề thi Giữa kỳ Hệ điều hành
+             */
+            title?: string;
+            /**
+             * @description Tên môn học
+             * @example Hệ điều hành
+             */
+            subject_name?: string;
+            /**
+             * Format: int32
+             * @description Tổng số câu hỏi trong đề
+             * @example 40
+             */
+            question_count?: number;
+            /**
+             * Format: date-time
+             * @description Thời gian tạo đề thi
+             * @example 2026-10-06T09:00:00Z
+             */
+            created_at?: string;
+            statistic?: components["schemas"]["Statistic"];
+            /**
+             * @description URL tải file PDF đề thi (nếu có)
+             * @example https://r2.example.com/export.pdf?signature=example
+             */
+            download_url?: string;
+        };
+        /** @description Phản hồi danh sách đề thi của giảng viên */
+        ExamListResponse: {
+            /** @description Danh sách đề thi */
+            items?: components["schemas"]["ExamItem"][];
+            pagination?: components["schemas"]["CursorPaginationDto"];
+        };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
+        GlobalResponseExamListResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
+            code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
+            message?: string;
+            data?: components["schemas"]["ExamListResponse"];
+        };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
+        GlobalResponseListCourseClassResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
+            code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
+            message?: string;
+            /** @description Payload nghiệp vụ theo kiểu response của endpoint; có thể null với thao tác không trả dữ liệu */
             data?: components["schemas"]["CourseClassResponse"][];
         };
         /** @description Thông tin chi tiết của sinh viên trong lớp học phần */
@@ -7507,17 +9919,38 @@ export interface components {
             /**
              * Format: date-time
              * @description Thời điểm ghi danh vào lớp học phần
+             * @example 2026-11-19T07:00:00Z
              */
             enrolled_at?: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseListClassStudentResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
+            /** @description Payload nghiệp vụ theo kiểu response của endpoint; có thể null với thao tác không trả dữ liệu */
             data?: components["schemas"]["ClassStudentResponse"][];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseListLecturerSummaryResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
+            /** @description Payload nghiệp vụ theo kiểu response của endpoint; có thể null với thao tác không trả dữ liệu */
             data?: components["schemas"]["LecturerSummaryResponse"][];
         };
         /** @description Thông tin tóm tắt của giảng viên */
@@ -7549,9 +9982,19 @@ export interface components {
              */
             school_faculty?: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseListMyCourseClassPredictionDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
+            /** @description Payload nghiệp vụ theo kiểu response của endpoint; có thể null với thao tác không trả dữ liệu */
             data?: components["schemas"]["MyCourseClassPredictionDto"][];
         };
         /** @description Thông tin lớp học phần để dự đoán Game 1 */
@@ -7650,18 +10093,44 @@ export interface components {
             content?: string;
             /** @description Danh sách các lựa chọn đáp án */
             options?: components["schemas"]["QuestionOption"][];
-            /** @description Lời giải chi tiết câu hỏi */
+            /**
+             * @description Lời giải chi tiết câu hỏi
+             * @example Lựa chọn A đáp ứng đúng điều kiện của câu hỏi.
+             */
             explanation?: string;
-            /** @description Danh sách URL ảnh đính kèm (nếu có) */
+            /**
+             * @description Danh sách URL ảnh đính kèm (nếu có)
+             * @example [
+             *       "https://media.example.com/question.png"
+             *     ]
+             */
             image_urls?: string[];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseGame6ActiveSessionResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["Game6ActiveSessionResponse"];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseMyPredictionsResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["MyPredictionsResponse"];
         };
@@ -7671,8 +10140,17 @@ export interface components {
             contents?: components["schemas"]["GamePredictionResponse"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseLeaderboardResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["LeaderboardResponse"];
         };
@@ -7797,174 +10275,346 @@ export interface components {
              */
             today?: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseCheckInStatusResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["CheckInStatusResponse"];
         };
+        /** @description Thông tin một người bạn đã được chấp nhận kết nối */
         FriendDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID tài khoản trong SQB
+             * @example 42
+             */
             user_id?: number;
+            /**
+             * @description Tên hiển thị của tài khoản
+             * @example Nguyễn Minh Anh
+             */
             full_name?: string;
+            /**
+             * @description URL ảnh đại diện công khai; có thể null/rỗng khi chưa đặt ảnh
+             * @example https://media.example.com/avatar.png
+             */
             avatar_url?: string;
+            /**
+             * @description URL khung trang trí avatar, null/rỗng khi không có
+             * @example https://media.example.com/frame.png
+             */
             frame_url?: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm hai tài khoản trở thành bạn bè
+             * @example 2026-11-19T07:00:00Z
+             */
             friends_since?: string;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Số người bạn chung giữa người gọi và tài khoản này
+             * @example 3
+             */
             mutual_friends_count?: number;
         };
+        /** @description Trang danh sách bạn bè được phân trang theo thời gian và ID */
         FriendListResponseDto: {
+            /** @description Các mục thuộc trang hiện tại; danh sách rỗng khi không có kết quả */
             items?: components["schemas"]["FriendDto"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
+            /**
+             * @description Cursor thời gian và ID cho trang tiếp theo; gửi nguyên chuỗi, null khi hết trang
+             * @example 2026-11-19T00:00:00Z|42
+             */
             next_cursor?: string;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Tổng số bạn bè đã được chấp nhận
+             * @example 3
+             */
             total_friends?: number;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseFriendListResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["FriendListResponseDto"];
         };
+        /** @description Lời mời kết bạn do người dùng hiện tại đã gửi */
         FriendRequestSentDto: {
             receiver?: components["schemas"]["AuthorDto"];
-            /** @enum {string} */
+            /**
+             * @description Trạng thái nghiệp vụ hiện tại theo enum của schema
+             * @enum {string}
+             */
             status?: "NONE" | "PENDING" | "ACCEPTED" | "DECLINED";
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm tạo dữ liệu, ISO-8601 UTC
+             * @example 2026-11-19T07:00:00Z
+             */
             created_at?: string;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Số người bạn chung giữa người gọi và tài khoản này
+             * @example 3
+             */
             mutual_friends_count?: number;
         };
+        /** @description Trang các lời mời kết bạn đã gửi */
         FriendRequestSentListResponseDto: {
+            /** @description Các mục thuộc trang hiện tại; danh sách rỗng khi không có kết quả */
             items?: components["schemas"]["FriendRequestSentDto"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
+            /**
+             * @description Cursor thời gian và ID cho trang tiếp theo; gửi nguyên chuỗi, null khi hết trang
+             * @example 2026-11-19T00:00:00Z|42
+             */
             next_cursor?: string;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Tổng số lời mời kết bạn đã gửi trong phạm vi danh sách
+             * @example 3
+             */
             total_sent?: number;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseFriendRequestSentListResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["FriendRequestSentListResponseDto"];
         };
+        /** @description Lời mời kết bạn nhận được từ một tài khoản khác */
         FriendRequestReceivedDto: {
             requester?: components["schemas"]["AuthorDto"];
-            /** @enum {string} */
+            /**
+             * @description Trạng thái nghiệp vụ hiện tại theo enum của schema
+             * @enum {string}
+             */
             status?: "NONE" | "PENDING" | "ACCEPTED" | "DECLINED";
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm tạo dữ liệu, ISO-8601 UTC
+             * @example 2026-11-19T07:00:00Z
+             */
             created_at?: string;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Số người bạn chung giữa người gọi và tài khoản này
+             * @example 3
+             */
             mutual_friends_count?: number;
         };
+        /** @description Trang lời mời kết bạn đến đang chờ xử lý */
         FriendRequestReceivedListResponseDto: {
+            /** @description Các mục thuộc trang hiện tại; danh sách rỗng khi không có kết quả */
             items?: components["schemas"]["FriendRequestReceivedDto"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
+            /**
+             * @description Cursor thời gian và ID cho trang tiếp theo; gửi nguyên chuỗi, null khi hết trang
+             * @example 2026-11-19T00:00:00Z|42
+             */
             next_cursor?: string;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Tổng số lời mời đến đang chờ xử lý
+             * @example 3
+             */
             total_pending?: number;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseFriendRequestReceivedListResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["FriendRequestReceivedListResponseDto"];
         };
+        /** @description Trang các tài khoản được người dùng hiện tại theo dõi */
         FollowingListResponseDto: {
+            /** @description Các mục thuộc trang hiện tại; danh sách rỗng khi không có kết quả */
             items?: components["schemas"]["FollowingUserDto"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
+            /**
+             * @description Cursor thời gian và ID cho trang tiếp theo; gửi nguyên chuỗi, null khi hết trang
+             * @example 2026-11-19T00:00:00Z|42
+             */
             next_cursor?: string;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Tổng số tài khoản người dùng hiện tại đang theo dõi
+             * @example 3
+             */
             total_following?: number;
         };
+        /** @description Một tài khoản đang được theo dõi kèm quan hệ với người đang đăng nhập */
         FollowingUserDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID tài khoản trong SQB
+             * @example 42
+             */
             user_id?: number;
+            /**
+             * @description Tên hiển thị của tài khoản
+             * @example Nguyễn Minh Anh
+             */
             full_name?: string;
+            /**
+             * @description URL ảnh đại diện công khai; có thể null/rỗng khi chưa đặt ảnh
+             * @example https://media.example.com/avatar.png
+             */
             avatar_url?: string;
+            /**
+             * @description URL khung trang trí avatar, null/rỗng khi không có
+             * @example https://media.example.com/frame.png
+             */
             frame_url?: string;
-            /** @enum {string} */
+            /**
+             * @description Vai trò tài khoản quyết định quyền truy cập nghiệp vụ
+             * @enum {string}
+             */
             role?: "ADMIN" | "LECTURER" | "STUDENT";
+            /**
+             * @description Tên trường/khoa theo hồ sơ tài khoản
+             * @example Trường Công nghệ thông tin và Truyền thông
+             */
             school_faculty?: string;
+            /**
+             * @description Mã sinh viên hoặc giảng viên theo hồ sơ
+             * @example SV20260001
+             */
             code?: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm bắt đầu theo dõi tài khoản
+             * @example 2026-11-19T07:00:00Z
+             */
             followed_at?: string;
             friend?: boolean;
             following_me?: boolean;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseFollowingListResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["FollowingListResponseDto"];
         };
+        /** @description Trang các tài khoản đang theo dõi người dùng hiện tại */
         FollowerListResponseDto: {
+            /** @description Các mục thuộc trang hiện tại; danh sách rỗng khi không có kết quả */
             items?: components["schemas"]["FollowerUserDto"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
+            /**
+             * @description Cursor thời gian và ID cho trang tiếp theo; gửi nguyên chuỗi, null khi hết trang
+             * @example 2026-11-19T00:00:00Z|42
+             */
             next_cursor?: string;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Tổng số tài khoản đang theo dõi người dùng hiện tại
+             * @example 3
+             */
             total_followers?: number;
         };
+        /** @description Một người theo dõi kèm quan hệ hai chiều với người đang đăng nhập */
         FollowerUserDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID tài khoản trong SQB
+             * @example 42
+             */
             user_id?: number;
+            /**
+             * @description Tên hiển thị của tài khoản
+             * @example Nguyễn Minh Anh
+             */
             full_name?: string;
+            /**
+             * @description URL ảnh đại diện công khai; có thể null/rỗng khi chưa đặt ảnh
+             * @example https://media.example.com/avatar.png
+             */
             avatar_url?: string;
+            /**
+             * @description URL khung trang trí avatar, null/rỗng khi không có
+             * @example https://media.example.com/frame.png
+             */
             frame_url?: string;
-            /** @enum {string} */
+            /**
+             * @description Vai trò tài khoản quyết định quyền truy cập nghiệp vụ
+             * @enum {string}
+             */
             role?: "ADMIN" | "LECTURER" | "STUDENT";
+            /**
+             * @description Tên trường/khoa theo hồ sơ tài khoản
+             * @example Trường Công nghệ thông tin và Truyền thông
+             */
             school_faculty?: string;
+            /**
+             * @description Mã sinh viên hoặc giảng viên theo hồ sơ
+             * @example SV20260001
+             */
             code?: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm tài khoản này bắt đầu theo dõi người gọi
+             * @example 2026-11-19T07:00:00Z
+             */
             followed_me_at?: string;
             following_back?: boolean;
             friend?: boolean;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseFollowerListResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["FollowerListResponseDto"];
-        };
-        /** @description Thông tin tóm tắt đề thi */
-        ExamItem: {
-            /**
-             * Format: int64
-             * @description ID đề thi
-             * @example 5
-             */
-            exam_id?: number;
-            /**
-             * @description Tiêu đề đề thi
-             * @example Đề thi Giữa kỳ Hệ điều hành
-             */
-            title?: string;
-            /**
-             * @description Tên môn học
-             * @example Hệ điều hành
-             */
-            subject_name?: string;
-            /**
-             * Format: int32
-             * @description Tổng số câu hỏi trong đề
-             * @example 40
-             */
-            question_count?: number;
-            /**
-             * Format: date-time
-             * @description Thời gian tạo đề thi
-             * @example 2026-10-06T09:00:00Z
-             */
-            created_at?: string;
-            statistic?: components["schemas"]["Statistic"];
-            /** @description URL tải file PDF đề thi (nếu có) */
-            download_url?: string;
-        };
-        /** @description Phản hồi danh sách đề thi của giảng viên */
-        ExamListResponse: {
-            /** @description Danh sách đề thi */
-            items?: components["schemas"]["ExamItem"][];
-            pagination?: components["schemas"]["CursorPaginationDto"];
-        };
-        GlobalResponseExamListResponse: {
-            code?: string;
-            message?: string;
-            data?: components["schemas"]["ExamListResponse"];
         };
         /** @description Danh sách các thiết bị người dùng đang đăng nhập */
         DeviceListResponse: {
@@ -8008,6 +10658,7 @@ export interface components {
             /**
              * Format: date-time
              * @description Thời điểm hoạt động gần nhất
+             * @example 2026-11-19T07:00:00Z
              */
             last_active_at?: string;
             /**
@@ -8021,8 +10672,17 @@ export interface components {
              */
             is_current_device?: boolean;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseDeviceListResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["DeviceListResponse"];
         };
@@ -8038,8 +10698,17 @@ export interface components {
             items?: components["schemas"]["ShopItemDto"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseCosmeticShopResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["CosmeticShopResponseDto"];
         };
@@ -8098,8 +10767,17 @@ export interface components {
              */
             asset_url?: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseMyInventoryResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["MyInventoryResponseDto"];
         };
@@ -8153,6 +10831,7 @@ export interface components {
             /**
              * Format: date-time
              * @description Thời hạn sở hữu hoặc thời hạn sự kiện (null nếu vĩnh viễn)
+             * @example 2026-12-31T23:59:59Z
              */
             available_until?: string;
         };
@@ -8176,169 +10855,523 @@ export interface components {
             inventory?: components["schemas"]["InventoryItemDto"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
         };
+        /** @description Tóm tắt hội thoại cho danh sách chat của người dùng hiện tại */
         ConversationDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID cuộc hội thoại mà người gọi là thành viên hoặc được phép truy cập
+             * @example 42
+             */
             conversation_id?: number;
-            /** @enum {string} */
+            /**
+             * @description Loại đối tượng theo enum của schema
+             * @enum {string}
+             */
             type?: "DIRECT" | "GROUP";
+            /**
+             * @description Tên hội thoại hiển thị cho người gọi
+             * @example Nhóm ôn tập Cơ sở dữ liệu
+             */
             display_name?: string;
+            /**
+             * @description URL ảnh đại diện hiển thị cho hội thoại theo góc nhìn của người gọi
+             * @example https://media.example.com/group.png
+             */
             display_avatar_url?: string;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Số thành viên của cuộc hội thoại
+             * @example 3
+             */
             member_count?: number;
             last_message?: components["schemas"]["LastMessageDto"];
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Số mục chưa đọc của người dùng hiện tại theo ngữ cảnh API
+             * @example 3
+             */
             unread_count?: number;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm ẩn hoặc mốc lịch sử bị ẩn theo ngữ cảnh hội thoại; có thể null
+             * @example 2026-11-19T07:00:00Z
+             */
             hidden_at?: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm cập nhật gần nhất, ISO-8601 UTC; có thể null nếu chưa ghi nhận
+             * @example 2026-11-19T07:00:00Z
+             */
             updated_at?: string;
             muted?: boolean;
         };
+        /** @description Trang hội thoại của tài khoản hiện tại với cursor thời gian ổn định */
         ConversationListResponseDto: {
+            /** @description Các mục thuộc trang hiện tại; danh sách rỗng khi không có kết quả */
             items?: components["schemas"]["ConversationDto"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
+            /**
+             * @description Cursor thời gian và ID cho trang tiếp theo; gửi nguyên chuỗi, null khi hết trang
+             * @example 2026-11-19T00:00:00Z|42
+             */
             next_cursor?: string;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Tổng số hội thoại trong phạm vi danh sách
+             * @example 3
+             */
             total_conversations?: number;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseConversationListResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["ConversationListResponseDto"];
         };
+        /** @description Tin nhắn gần nhất được phép hiển thị trong bản tóm tắt hội thoại */
         LastMessageDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID tin nhắn
+             * @example 42
+             */
             message_id?: number;
+            /**
+             * @description Nội dung văn bản theo ngữ cảnh của đối tượng
+             * @example Nội dung trao đổi về bài học
+             */
             content?: string;
-            /** @enum {string} */
-            message_type?: "TEXT" | "IMAGE" | "VIDEO" | "GIF";
+            /**
+             * @description Loại nội dung tin nhắn: TEXT, IMAGE, VIDEO hoặc GIF
+             * @enum {string}
+             */
+            message_type?: "TEXT" | "IMAGE" | "VIDEO" | "GIF" | "SYSTEM";
+            /**
+             * @description Tin nhắn đã bị thu hồi với mọi người hay chưa
+             * @example false
+             */
             revoked?: boolean;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm tạo dữ liệu, ISO-8601 UTC
+             * @example 2026-11-19T07:00:00Z
+             */
             created_at?: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseMessageListResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["MessageListResponseDto"];
         };
+        /** @description Tin nhắn hoặc dòng hệ thống trong lịch sử hội thoại */
         MessageDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID tin nhắn
+             * @example 42
+             */
             message_id?: number;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID tài khoản gửi tin nhắn, null với dòng hệ thống
+             * @example 42
+             */
             sender_id?: number;
+            /**
+             * @description Tên hiển thị người gửi tin nhắn, null với dòng hệ thống
+             * @example Nguyễn Minh Anh
+             */
             sender_name?: string;
+            /**
+             * @description URL ảnh đại diện công khai; có thể null/rỗng khi chưa đặt ảnh
+             * @example https://media.example.com/avatar.png
+             */
             avatar_url?: string;
+            /**
+             * @description URL khung trang trí avatar, null/rỗng khi không có
+             * @example https://media.example.com/frame.png
+             */
             frame_url?: string;
+            /**
+             * @description Nội dung văn bản theo ngữ cảnh của đối tượng
+             * @example Nội dung trao đổi về bài học
+             */
             content?: string;
-            /** @enum {string} */
-            message_type?: "TEXT" | "IMAGE" | "VIDEO" | "GIF";
+            /**
+             * @description Loại nội dung tin nhắn: TEXT, IMAGE, VIDEO, GIF hoặc SYSTEM
+             * @enum {string}
+             */
+            message_type?: "TEXT" | "IMAGE" | "VIDEO" | "GIF" | "SYSTEM";
+            /**
+             * @description Các tệp đính kèm; kiểu phần tử theo schema của endpoint
+             * @example [
+             *       "https://media.example.com/image.png"
+             *     ]
+             */
             media_urls?: string[];
             reply_to_message?: components["schemas"]["ReplyMessagePreviewDto"];
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm tạo dữ liệu, ISO-8601 UTC
+             * @example 2026-11-19T07:00:00Z
+             */
             created_at?: string;
+            /**
+             * @description Tin nhắn đã bị thu hồi với mọi người hay chưa
+             * @example false
+             */
             revoked?: boolean;
             edited?: boolean;
         };
+        /** @description Trang lịch sử tin nhắn mà thành viên hiện tại được phép xem */
         MessageListResponseDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID cuộc hội thoại mà người gọi là thành viên hoặc được phép truy cập
+             * @example 42
+             */
             conversation_id?: number;
-            /** @enum {string} */
+            /**
+             * @description Loại cuộc hội thoại theo enum API
+             * @enum {string}
+             */
             conversation_type?: "DIRECT" | "GROUP";
+            /**
+             * @description Tên nhóm trò chuyện
+             * @example Nhóm ôn tập Cơ sở dữ liệu
+             */
             group_name?: string;
+            /**
+             * @description URL ảnh đại diện nhóm, có thể null nếu nhóm chưa có ảnh
+             * @example https://media.example.com/group.png
+             */
             group_avatar_url?: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm ẩn hoặc mốc lịch sử bị ẩn theo ngữ cảnh hội thoại; có thể null
+             * @example 2026-11-19T07:00:00Z
+             */
             hidden_at?: string;
+            /**
+             * Format: int64
+             * @description ID tin nhắn đã đọc gần nhất của người gọi
+             * @example 120
+             */
+            last_read_message_id?: number;
+            /** @description Tin nhắn và dòng hệ thống trong trang lịch sử hiện tại, dùng chung con trỏ */
             messages?: components["schemas"]["MessageDto"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
         };
+        /** @description Bản trích dẫn tin nhắn gốc; unavailable=true khi tin gốc không còn được phép hiển thị */
         ReplyMessagePreviewDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID tin nhắn
+             * @example 42
+             */
             message_id?: number;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID tài khoản gửi tin nhắn
+             * @example 42
+             */
             sender_id?: number;
+            /**
+             * @description Tên hiển thị người gửi tin nhắn
+             * @example Nguyễn Minh Anh
+             */
             sender_name?: string;
+            /**
+             * @description Nội dung trích dẫn rút gọn của tin nhắn gốc
+             * @example Nội dung tin nhắn được trả lời
+             */
             content_preview?: string;
+            /**
+             * @description Tin nhắn gốc đã bị xóa/ẩn/không còn được người gọi xem
+             * @example false
+             */
             unavailable?: boolean;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseListConversationMemberDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
+            /** @description Payload nghiệp vụ theo kiểu response của endpoint; có thể null với thao tác không trả dữ liệu */
             data?: components["schemas"]["ConversationMemberDto"][];
         };
+        /** @description Trạng thái hoạt động của người đối thoại trong một cuộc chat trực tiếp */
+        ChatPresenceDto: {
+            /**
+             * Format: int64
+             * @description ID cuộc hội thoại
+             * @example 42
+             */
+            conversation_id?: number;
+            /**
+             * @description Người đối thoại có phiên đang hoạt động
+             * @example true
+             */
+            active?: boolean;
+            /**
+             * Format: int64
+             * @description Thời điểm đo theo mili giây Unix
+             * @example 1795665600000
+             */
+            observed_at?: number;
+        };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
+        GlobalResponseListChatPresenceDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
+            code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
+            message?: string;
+            /** @description Payload nghiệp vụ theo kiểu response của endpoint; có thể null với thao tác không trả dữ liệu */
+            data?: components["schemas"]["ChatPresenceDto"][];
+        };
+        /** @description Một trang kết quả gồm items và pagination; trang trống trả danh sách rỗng */
         CursorResponseGroupInvitationDto: {
+            /** @description Các mục thuộc trang hiện tại; danh sách rỗng khi không có kết quả */
             items?: components["schemas"]["GroupInvitationDto"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseCursorResponseGroupInvitationDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["CursorResponseGroupInvitationDto"];
         };
+        /** @description Lời mời tham gia nhóm còn hiệu lực của người dùng hiện tại */
         GroupInvitationDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID lời mời tham gia nhóm; dùng để chấp nhận hoặc từ chối
+             * @example 42
+             */
             invitation_id?: number;
+            /**
+             * @description Tên nhóm trò chuyện
+             * @example Nhóm ôn tập Cơ sở dữ liệu
+             */
             group_name?: string;
+            /**
+             * @description URL ảnh đại diện nhóm, có thể null nếu nhóm chưa có ảnh
+             * @example https://media.example.com/group.png
+             */
             group_avatar_url?: string;
+            /**
+             * @description Tên người đã gửi lời mời nhóm
+             * @example Nguyễn Minh Anh
+             */
             inviter_name?: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm quyền/lời mời hết hiệu lực, ISO-8601 UTC
+             * @example 2026-11-19T07:00:00Z
+             */
             expires_at?: string;
         };
+        /** @description Một trang kết quả gồm items và pagination; trang trống trả danh sách rỗng */
         CursorResponseGroupCandidateDto: {
+            /** @description Các mục thuộc trang hiện tại; danh sách rỗng khi không có kết quả */
             items?: components["schemas"]["GroupCandidateDto"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseCursorResponseGroupCandidateDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["CursorResponseGroupCandidateDto"];
         };
+        /** @description Ứng viên thêm/mời nhóm từ quan hệ bạn bè hoặc theo dõi */
         GroupCandidateDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID tài khoản trong SQB
+             * @example 42
+             */
             user_id?: number;
+            /**
+             * @description Tên hiển thị của tài khoản
+             * @example Nguyễn Minh Anh
+             */
             full_name?: string;
+            /**
+             * @description URL ảnh đại diện công khai; có thể null/rỗng khi chưa đặt ảnh
+             * @example https://media.example.com/avatar.png
+             */
             avatar_url?: string;
+            /**
+             * @description Tài khoản này là bạn bè của người gọi
+             * @example true
+             */
             friend?: boolean;
+            /**
+             * @description Người gọi đang theo dõi tài khoản này
+             * @example true
+             */
             following?: boolean;
+            /**
+             * @description Tài khoản này đang theo dõi người gọi
+             * @example true
+             */
             follower?: boolean;
         };
+        /** @description Một trang kết quả gồm items và pagination; trang trống trả danh sách rỗng */
         CursorResponseCommentResponseDto: {
+            /** @description Các mục thuộc trang hiện tại; danh sách rỗng khi không có kết quả */
             items?: components["schemas"]["CommentResponseDto"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseCursorResponseCommentResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["CursorResponseCommentResponseDto"];
         };
+        /** @description Danh sách tài khoản bị người dùng hiện tại chặn, có cursor tiếp trang */
         BlockedListResponseDto: {
+            /** @description Các mục thuộc trang hiện tại; danh sách rỗng khi không có kết quả */
             items?: components["schemas"]["BlockedUserDto"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
+            /**
+             * @description Cursor thời gian và ID cho trang tiếp theo; gửi nguyên chuỗi, null khi hết trang
+             * @example 2026-11-19T00:00:00Z|42
+             */
             next_cursor?: string;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Tổng số tài khoản người dùng hiện tại đã chặn
+             * @example 3
+             */
             total_blocked?: number;
         };
+        /** @description Thông tin tài khoản bị chặn và thời điểm chặn */
         BlockedUserDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID tài khoản trong SQB
+             * @example 42
+             */
             user_id?: number;
+            /**
+             * @description Tên hiển thị của tài khoản
+             * @example Nguyễn Minh Anh
+             */
             full_name?: string;
+            /**
+             * @description URL ảnh đại diện công khai; có thể null/rỗng khi chưa đặt ảnh
+             * @example https://media.example.com/avatar.png
+             */
             avatar_url?: string;
+            /**
+             * @description URL khung trang trí avatar, null/rỗng khi không có
+             * @example https://media.example.com/frame.png
+             */
             frame_url?: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm tài khoản bị người dùng hiện tại chặn
+             * @example 2026-11-19T07:00:00Z
+             */
             blocked_at?: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseBlockedListResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["BlockedListResponseDto"];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseListBadgeResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
+            /** @description Payload nghiệp vụ theo kiểu response của endpoint; có thể null với thao tác không trả dữ liệu */
             data?: components["schemas"]["BadgeResponseDto"][];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseListUserBadgeResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
+            /** @description Payload nghiệp vụ theo kiểu response của endpoint; có thể null với thao tác không trả dữ liệu */
             data?: components["schemas"]["UserBadgeResponseDto"][];
         };
         /** @description Thông tin huy hiệu mà người dùng đã sở hữu */
@@ -8376,72 +11409,205 @@ export interface components {
              * @example 2026-10-05T12:00:00Z
              */
             earned_at?: string;
-            /** @description Huy hiệu còn được trao hay đã ngừng trao */
+            /**
+             * @description Huy hiệu còn được trao hay đã ngừng trao
+             * @example true
+             */
             active?: boolean;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseListSemesterResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
+            /** @description Payload nghiệp vụ theo kiểu response của endpoint; có thể null với thao tác không trả dữ liệu */
             data?: components["schemas"]["SemesterResponse"][];
         };
+        /** @description Một trang kết quả gồm items và pagination; trang trống trả danh sách rỗng */
         CursorResponseSummary: {
+            /** @description Các mục thuộc trang hiện tại; danh sách rỗng khi không có kết quả */
             items?: components["schemas"]["Summary"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseCursorResponseSummary: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["CursorResponseSummary"];
         };
+        /** @description URL GET có chữ ký 120 giây xem bằng chứng riêng tư; không dùng làm URL lưu bền vững */
+        Evidence: {
+            /**
+             * @description URL GET riêng tư có chữ ký, hết hạn sau 120 giây; gọi lại API evidence để lấy URL mới
+             * @example https://r2.example.com/report-evidence/image?signature=example
+             */
+            url?: string;
+        };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
+        GlobalResponseEvidence: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
+            code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
+            message?: string;
+            data?: components["schemas"]["Evidence"];
+        };
+        /** @description Tài khoản tìm thấy để quản trị viên trao hoặc thu hồi huy hiệu */
         BadgeAccountResponse: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID tài khoản trong SQB
+             * @example 42
+             */
             user_id?: number;
+            /**
+             * @description Tên hiển thị của tài khoản
+             * @example Nguyễn Minh Anh
+             */
             full_name?: string;
+            /**
+             * @description Email tài khoản được ADMIN cấp hoặc quản lý
+             * @example student@example.edu
+             */
             email?: string;
-            /** @enum {string} */
+            /**
+             * @description Vai trò tài khoản quyết định quyền truy cập nghiệp vụ
+             * @enum {string}
+             */
             role?: "ADMIN" | "LECTURER" | "STUDENT";
         };
+        /** @description Một trang kết quả gồm items và pagination; trang trống trả danh sách rỗng */
         CursorResponseBadgeAccountResponse: {
+            /** @description Các mục thuộc trang hiện tại; danh sách rỗng khi không có kết quả */
             items?: components["schemas"]["BadgeAccountResponse"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseCursorResponseBadgeAccountResponse: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["CursorResponseBadgeAccountResponse"];
         };
+        /** @description Một sự kiện bảng tin; kiểu content phụ thuộc target_type/action_type */
         ActivityFeedItemDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID sự kiện bảng tin, dùng theo cơ chế cursor của feed
+             * @example 42
+             */
             feed_id?: number;
-            /** @enum {string} */
+            /**
+             * @description Loại đối tượng được tham chiếu; dùng giá trị enum API công bố
+             * @enum {string}
+             */
             target_type?: "POST" | "QUESTION" | "SESSION" | "BADGE" | "COSMETIC" | "USER" | "SUBJECT";
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID đối tượng được tham chiếu; diễn giải cùng target_type/type của API
+             * @example 42
+             */
             target_id?: number;
-            /** @enum {string} */
+            /**
+             * @description Loại sự kiện quyết định cách diễn giải content trên bảng tin
+             * @enum {string}
+             */
             action_type?: "CREATED_POST" | "PUBLISHED_LECTURE_VIDEO" | "SESSION_RESOLVED_APPROVED" | "EARNED_BADGE" | "REACHED_MILESTONE";
             actor?: components["schemas"]["AuthorDto"];
+            /**
+             * @description Map metadata theo target_type/action_type, không phải PostResponseDto. Có thể chứa title/description/media_url/badge_name/cosmetic_name/subject_code/subject_name. POST/SESSION/QUESTION bổ sung comment_count/react_count/my_reaction/reacted_by_me; POST có thể thêm visibility/media_urls/lecturer_note; EARNED_BADGE có react_count/reacted_by_me.
+             * @example {
+             *       "title": "Bài viết mới",
+             *       "description": "Cùng trao đổi bài học",
+             *       "comment_count": 2,
+             *       "react_count": 3,
+             *       "my_reaction": "LIKE",
+             *       "reacted_by_me": true,
+             *       "visibility": "PUBLIC"
+             *     }
+             */
             content?: Record<string, never>;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Thời điểm tạo dữ liệu, ISO-8601 UTC
+             * @example 2026-11-19T07:00:00Z
+             */
             created_at?: string;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Trọng số sự kiện; kết quả mapping hiện trả 1
+             * @example 1
+             */
             weight?: number;
         };
+        /** @description Một trang kết quả gồm items và pagination; trang trống trả danh sách rỗng */
         CursorResponseActivityFeedItemDto: {
+            /** @description Các mục thuộc trang hiện tại; danh sách rỗng khi không có kết quả */
             items?: components["schemas"]["ActivityFeedItemDto"][];
             pagination?: components["schemas"]["CursorPaginationDto"];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseCursorResponseActivityFeedItemDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["CursorResponseActivityFeedItemDto"];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseNewFeedCountResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["NewFeedCountResponseDto"];
         };
+        /** @description Số sự kiện mới để frontend quyết định làm mới bảng tin */
         NewFeedCountResponseDto: {
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Số sự kiện mới kể từ mốc client đã cung cấp
+             * @example 3
+             */
             new_count?: number;
         };
         /** @description Kết quả sau khi xóa từ khóa khỏi lịch sử tìm kiếm cá nhân */
@@ -8453,17 +11619,40 @@ export interface components {
              */
             saved_search_id?: number;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseDeleteSavedSearchResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["DeleteSavedSearchResponseDto"];
         };
+        /** @description ID bài viết vừa được xóa theo quyền của người gọi */
         DeletePostResponseDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID bài viết
+             * @example 42
+             */
             post_id?: number;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseDeletePostResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["DeletePostResponseDto"];
         };
@@ -8476,37 +11665,90 @@ export interface components {
              */
             scope: "ME" | "EVERYONE" | "ME" | "EVERYONE";
         };
+        /** @description Kết quả xóa tin nhắn và phạm vi áp dụng */
         DeleteMessageResponseDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID tin nhắn
+             * @example 42
+             */
             message_id?: number;
-            /** @enum {string} */
+            /**
+             * @description Phạm vi xóa tin nhắn: theo enum API, chỉ phía người gọi hoặc mọi người
+             * @enum {string}
+             */
             scope?: "ME" | "EVERYONE";
+            /**
+             * @description Thông tin giải thích kết quả thao tác
+             * @example Đã xóa tin nhắn trong phạm vi được chọn
+             */
             note?: string;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseDeleteMessageResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["DeleteMessageResponseDto"];
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseUnfollowResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["UnfollowResponseDto"];
         };
+        /** @description Trạng thái và số người theo dõi sau thao tác bỏ theo dõi */
         UnfollowResponseDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID tài khoản được thao tác theo dõi/bỏ theo dõi
+             * @example 42
+             */
             target_user_id?: number;
-            /** Format: int32 */
+            /**
+             * Format: int32
+             * @description Tổng người theo dõi của tài khoản đích sau thao tác
+             * @example 3
+             */
             new_followers_count?: number;
             following?: boolean;
         };
+        /** @description Vỏ phản hồi chuẩn: code/message và data nghiệp vụ; dùng HTTP status cùng code để xét kết quả */
         GlobalResponseUnblockResponseDto: {
+            /**
+             * @description Mã kết quả dạng chuỗi; 1000 là thành công, các mã lỗi xem ResponseCode và HTTP status
+             * @example 1000
+             */
             code?: string;
+            /**
+             * @description Thông báo kết quả; không dùng so sánh chuỗi message để xác định thành công
+             * @example Thành công
+             */
             message?: string;
             data?: components["schemas"]["UnblockResponseDto"];
         };
+        /** @description Trạng thái sau khi bỏ chặn một tài khoản */
         UnblockResponseDto: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description ID tài khoản vừa được người gọi bỏ chặn
+             * @example 42
+             */
             unblocked_user_id?: number;
             blocked?: boolean;
         };
@@ -9166,6 +12408,50 @@ export interface operations {
             };
         };
     };
+    update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description ID môn học chứa chủ đề
+                 * @example 12
+                 */
+                subjectId: number;
+                /**
+                 * @description ID chủ đề cần cập nhật
+                 * @example 37
+                 */
+                topicId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTopicRequest"];
+            };
+        };
+        responses: {
+            /** @description Đã lưu chủ đề và trả về phiên bản hiện tại */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseManagedTopicResponse"];
+                };
+            };
+            /** @description Phiên bản đã thay đổi. Tải lại danh mục trước khi cập nhật. */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseManagedTopicResponse"];
+                };
+            };
+        };
+    };
     editQuestion: {
         parameters: {
             query?: never;
@@ -9228,14 +12514,63 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /**
+                 * @description UUID phiên tải cần kiểm tra
+                 * @example 550e8400-e29b-41d4-a716-446655440000
+                 */
                 id: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Trạng thái upload; uploaded_parts dùng số thứ tự từ 1 */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseStatus"];
+                };
+            };
+            /** @description UUID, metadata, số phần hoặc trạng thái tải không hợp lệ */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseStatus"];
+                };
+            };
+            /** @description Thiếu/sai/hết hạn Bearer AT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseStatus"];
+                };
+            };
+            /** @description Không có quyền giảng viên/ADMIN hoặc phiên thuộc người khác */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseStatus"];
+                };
+            };
+            /** @description Quota chưa sẵn sàng (1018) hoặc kho lưu trữ không khả dụng */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseStatus"];
+                };
+            };
+            /** @description Vượt quota ghi R2 toàn tài khoản (1017) */
+            507: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -9250,6 +12585,10 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /**
+                 * @description UUID do client sinh cho phiên; giữ lại để resume
+                 * @example 550e8400-e29b-41d4-a716-446655440000
+                 */
                 id: string;
             };
             cookie?: never;
@@ -9260,8 +12599,53 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK */
+            /** @description Trạng thái phiên gồm part_size theo byte, uploaded_parts đã có và media nếu hoàn tất */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseStatus"];
+                };
+            };
+            /** @description UUID, metadata, số phần hoặc trạng thái tải không hợp lệ */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseStatus"];
+                };
+            };
+            /** @description Thiếu/sai/hết hạn Bearer AT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseStatus"];
+                };
+            };
+            /** @description Không có quyền giảng viên/ADMIN hoặc phiên thuộc người khác */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseStatus"];
+                };
+            };
+            /** @description Quota chưa sẵn sàng (1018) hoặc kho lưu trữ không khả dụng */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseStatus"];
+                };
+            };
+            /** @description Vượt quota ghi R2 toàn tài khoản (1017) */
+            507: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -9276,14 +12660,53 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /**
+                 * @description UUID phiên cần hủy
+                 * @example 550e8400-e29b-41d4-a716-446655440000
+                 */
                 id: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
-            200: {
+            /** @description Đã hủy hoặc không còn việc cần hủy; body rỗng */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description UUID, metadata, số phần hoặc trạng thái tải không hợp lệ */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Thiếu/sai/hết hạn Bearer AT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Không có quyền giảng viên/ADMIN hoặc phiên thuộc người khác */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Quota chưa sẵn sàng (1018) hoặc kho lưu trữ không khả dụng */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Vượt quota ghi R2 toàn tài khoản (1017) */
+            507: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -10132,14 +13555,71 @@ export interface operations {
         requestBody?: {
             content: {
                 "multipart/form-data": {
-                    /** Format: binary */
+                    /**
+                     * Format: binary
+                     * @description Binary ảnh bằng chứng, >0 và <=5 MiB, đúng MIME và chữ ký tệp
+                     */
                     file: string;
                 };
             };
         };
         responses: {
-            /** @description OK */
-            200: {
+            /** @description Ảnh staging đã tải; dùng data.key trong evidence_keys */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "code": "1000",
+                     *       "message": "Thành công",
+                     *       "data": {
+                     *         "key": "report-evidence/7/550e8400-e29b-41d4-a716-446655440000"
+                     *       }
+                     *     }
+                     */
+                    "*/*": unknown;
+                };
+            };
+            /** @description Sai định dạng/nội dung ảnh hoặc dung lượng */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseMapStringString"];
+                };
+            };
+            /** @description Chưa đăng nhập hoặc AT hết hạn */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseMapStringString"];
+                };
+            };
+            /** @description Quá số lần tải bằng chứng cho phép */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseMapStringString"];
+                };
+            };
+            /** @description Kho lưu trữ hoặc quota chưa khả dụng */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseMapStringString"];
+                };
+            };
+            /** @description Vượt quota lưu trữ R2 */
+            507: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -10438,6 +13918,36 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["GlobalResponseAiRefineResponse"];
+                };
+            };
+        };
+    };
+    streamRefinement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description ID của câu hỏi cần tinh chỉnh
+                 * @example 42
+                 */
+                questionId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AiRefineRequest"];
+            };
+        };
+        responses: {
+            /** @description Luồng sự kiện của lượt tinh chỉnh */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": string;
                 };
             };
         };
@@ -10812,6 +14322,62 @@ export interface operations {
             };
         };
     };
+    list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description ID môn học cần quản lý chủ đề
+                 * @example 12
+                 */
+                subjectId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseListManagedTopicResponse"];
+                };
+            };
+        };
+    };
+    create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description ID môn học sẽ chứa chủ đề mới
+                 * @example 12
+                 */
+                subjectId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTopicRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseManagedTopicResponse"];
+                };
+            };
+        };
+    };
     completeSessionReview: {
         parameters: {
             query?: never;
@@ -10949,13 +14515,16 @@ export interface operations {
             };
         };
     };
-    partUrl: {
+    retryDuplicateCheck: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                id: string;
-                number: number;
+                /**
+                 * @description ID câu hỏi cần dò trùng lại
+                 * @example 105
+                 */
+                questionId: number;
             };
             cookie?: never;
         };
@@ -10963,6 +14532,82 @@ export interface operations {
         responses: {
             /** @description OK */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseVoid"];
+                };
+            };
+        };
+    };
+    partUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description UUID phiên tải
+                 * @example 550e8400-e29b-41d4-a716-446655440000
+                 */
+                id: string;
+                /**
+                 * @description Số thứ tự phần từ 1 đến ceil(file_size/part_size)
+                 * @example 1
+                 */
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description data.upload_url dùng PUT binary trực tiếp R2 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponsePartUrl"];
+                };
+            };
+            /** @description UUID, metadata, số phần hoặc trạng thái tải không hợp lệ */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponsePartUrl"];
+                };
+            };
+            /** @description Thiếu/sai/hết hạn Bearer AT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponsePartUrl"];
+                };
+            };
+            /** @description Không có quyền giảng viên/ADMIN hoặc phiên thuộc người khác */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponsePartUrl"];
+                };
+            };
+            /** @description Quota chưa sẵn sàng (1018) hoặc kho lưu trữ không khả dụng */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponsePartUrl"];
+                };
+            };
+            /** @description Vượt quota ghi R2 toàn tài khoản (1017) */
+            507: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -10977,19 +14622,110 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /**
+                 * @description UUID phiên cần hoàn tất
+                 * @example 550e8400-e29b-41d4-a716-446655440000
+                 */
                 id: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description MediaItem video đã xác minh để gắn vào bài giảng */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "*/*": components["schemas"]["GlobalResponseMediaItem"];
+                };
+            };
+            /** @description UUID, metadata, số phần hoặc trạng thái tải không hợp lệ */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseMediaItem"];
+                };
+            };
+            /** @description Thiếu/sai/hết hạn Bearer AT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseMediaItem"];
+                };
+            };
+            /** @description Không có quyền giảng viên/ADMIN hoặc phiên thuộc người khác */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseMediaItem"];
+                };
+            };
+            /** @description Quota chưa sẵn sàng (1018) hoặc kho lưu trữ không khả dụng */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseMediaItem"];
+                };
+            };
+            /** @description Vượt quota ghi R2 toàn tài khoản (1017) */
+            507: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseMediaItem"];
+                };
+            };
+        };
+    };
+    generateExam: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GenerateExamRequest"];
+            };
+        };
+        responses: {
+            /** @description Tạo đề thi thành công */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseExamDetailResponse"];
+                };
+            };
+            /** @description Tham số không hợp lệ hoặc ngân hàng thiếu câu đáp ứng ma trận */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseExamDetailResponse"];
+                };
+            };
+            /** @description Từ chối truy cập: Sinh viên không có quyền tạo đề thi */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseExamDetailResponse"];
                 };
             };
         };
@@ -11729,48 +15465,6 @@ export interface operations {
             };
         };
     };
-    generateExam: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["GenerateExamRequest"];
-            };
-        };
-        responses: {
-            /** @description Tạo đề thi thành công */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["GlobalResponseExamDetailResponse"];
-                };
-            };
-            /** @description Tham số không hợp lệ: Chưa chọn lớp học phần, không tìm thấy môn học hoặc ngân hàng đề trống */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["GlobalResponseExamDetailResponse"];
-                };
-            };
-            /** @description Từ chối truy cập: Sinh viên không có quyền tạo đề thi */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["GlobalResponseExamDetailResponse"];
-                };
-            };
-        };
-    };
     revokeDevice: {
         parameters: {
             query?: never;
@@ -12291,7 +15985,10 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description ID lời mời */
+                /**
+                 * @description ID lời mời
+                 * @example 42
+                 */
                 id: number;
             };
             cookie?: never;
@@ -12691,7 +16388,129 @@ export interface operations {
             };
         };
     };
+    refresh: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefreshTokenRequest"];
+            };
+        };
+        responses: {
+            /** @description Cặp AT/RT mới, RT cũ không được dùng lại */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseRefreshTokenResponse"];
+                };
+            };
+            /** @description Thiếu hoặc rỗng refresh_token */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseRefreshTokenResponse"];
+                };
+            };
+            /** @description RT hết hạn, sai kênh, đã xoay/thu hồi hoặc phiên không còn hợp lệ */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseRefreshTokenResponse"];
+                };
+            };
+            /** @description Tài khoản không còn được phép dùng phiên đầy đủ */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseRefreshTokenResponse"];
+                };
+            };
+        };
+    };
     logout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Đã thu hồi RT/thiết bị; data null, client bỏ token đã lưu */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseVoid"];
+                };
+            };
+            /** @description AT hết hạn/sai kênh hoặc chưa đăng nhập */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseVoid"];
+                };
+            };
+        };
+    };
+    login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            /** @description AT/RT JSON cho ACTIVE; ONBOARDING chỉ có AT giới hạn */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseAuthResponse"];
+                };
+            };
+            /** @description Sai credential, platform hoặc thiếu trường bắt buộc */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseAuthResponse"];
+                };
+            };
+            /** @description Tài khoản bị khóa/đình chỉ */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseAuthResponse"];
+                };
+            };
+        };
+    };
+    logout_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -12720,7 +16539,7 @@ export interface operations {
             };
         };
     };
-    login: {
+    login_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -12733,7 +16552,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Đăng nhập thành công, trả về thông tin user và cặp token */
+            /** @description WEB: RT cookie, JSON RT null. Luồng tương thích non-WEB khi bật: RT JSON + message cảnh báo. ONBOARDING không RT. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -12918,7 +16737,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["GlobalResponseVoid"];
+                    "*/*": components["schemas"]["GlobalResponseIssuedAccountCredential"];
                 };
             };
             /** @description Không có quyền Quản trị viên (ACCESS_DENIED) */
@@ -12927,7 +16746,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["GlobalResponseVoid"];
+                    "*/*": components["schemas"]["GlobalResponseIssuedAccountCredential"];
                 };
             };
             /** @description Email người dùng không tồn tại (USER_NOT_FOUND) */
@@ -12936,7 +16755,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["GlobalResponseVoid"];
+                    "*/*": components["schemas"]["GlobalResponseIssuedAccountCredential"];
                 };
             };
         };
@@ -13232,6 +17051,10 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /**
+                 * @description ID báo cáo PENDING cần xử lý
+                 * @example 120
+                 */
                 id: number;
             };
             cookie?: never;
@@ -13242,8 +17065,53 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK */
+            /** @description Thành công; dữ liệu trong GlobalResponse.data */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseDetail"];
+                };
+            };
+            /** @description Bộ lọc, quyết định, lý do hoặc thời hạn đình chỉ không hợp lệ */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseDetail"];
+                };
+            };
+            /** @description Thiếu/sai/hết hạn Bearer AT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseDetail"];
+                };
+            };
+            /** @description Không có quyền ADMIN hoặc bị lớp Access từ chối */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseDetail"];
+                };
+            };
+            /** @description Báo cáo/biện pháp/bằng chứng không tồn tại */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseDetail"];
+                };
+            };
+            /** @description REPORT_CONFLICT: version hoặc trạng thái đối tượng đã thay đổi; tải lại chi tiết */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -13253,33 +17121,15 @@ export interface operations {
             };
         };
     };
-    importEvidence: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["GlobalResponseEvidence"];
-                };
-            };
-        };
-    };
     reverse: {
         parameters: {
             query?: never;
             header?: never;
             path: {
+                /**
+                 * @description ID biện pháp từ active_action_id/history cần hoàn tác
+                 * @example 42
+                 */
                 id: number;
             };
             cookie?: never;
@@ -13290,8 +17140,53 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK */
+            /** @description Thành công; dữ liệu trong GlobalResponse.data */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseDetail"];
+                };
+            };
+            /** @description Bộ lọc, quyết định, lý do hoặc thời hạn đình chỉ không hợp lệ */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseDetail"];
+                };
+            };
+            /** @description Thiếu/sai/hết hạn Bearer AT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseDetail"];
+                };
+            };
+            /** @description Không có quyền ADMIN hoặc bị lớp Access từ chối */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseDetail"];
+                };
+            };
+            /** @description Báo cáo/biện pháp/bằng chứng không tồn tại */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseDetail"];
+                };
+            };
+            /** @description REPORT_CONFLICT: version hoặc trạng thái đối tượng đã thay đổi; tải lại chi tiết */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -13473,6 +17368,10 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /**
+                 * @description ID huy hiệu cần tìm người giữ/trao/thu hồi
+                 * @example 42
+                 */
                 badgeId: number;
             };
             cookie?: never;
@@ -13483,7 +17382,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK */
+            /** @description Đã thu hồi các lượt trao còn hiệu lực; data null */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -13952,6 +17851,32 @@ export interface operations {
             };
         };
     };
+    list_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description ID môn học cần tra cứu chủ đề
+                 * @example 12
+                 */
+                subjectId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseListTopicResponse"];
+                };
+            };
+        };
+    };
     getSessionQuestions: {
         parameters: {
             query?: never;
@@ -14131,7 +18056,10 @@ export interface operations {
                 query?: string;
                 /** @description Loại thực thể cần tìm kiếm (ALL, POST, USER, QUESTION, SESSION, SUBJECT) */
                 type?: "ALL" | "POST" | "USER" | "QUESTION" | "SESSION" | "SUBJECT";
-                /** @description Vị trí bắt đầu tìm kiếm (from offset) */
+                /**
+                 * @description Vị trí bắt đầu tìm kiếm (from offset)
+                 * @example 42
+                 */
                 after?: number;
                 /**
                  * @description Số lượng bản ghi mỗi trang (tối đa 50)
@@ -14361,6 +18289,37 @@ export interface operations {
             };
         };
     };
+    getDuplicateMatches: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description ID phiên đang duyệt
+                 * @example 30
+                 */
+                sessionId: number;
+                /**
+                 * @description ID câu có cảnh báo trùng
+                 * @example 105
+                 */
+                questionId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseListDuplicateMatchResponse"];
+                };
+            };
+        };
+    };
     getReviewableSessions: {
         parameters: {
             query?: {
@@ -14369,6 +18328,10 @@ export interface operations {
                  * @example 50
                  */
                 after?: number;
+                /**
+                 * @description ID cursor cho chiều before; dùng pagination.before, trang đầu bỏ trống
+                 * @example 42
+                 */
                 before?: number;
                 /**
                  * @description Số lượng phiên tối đa mỗi trang (mặc định 10, tối đa 50)
@@ -14385,6 +18348,10 @@ export interface operations {
                  * @example created_at
                  */
                 sort_by?: string;
+                /**
+                 * @description Lọc tiêu đề/mã bộ câu hỏi, môn học, mã lớp, tên học kỳ hoặc ID phiên; bỏ trống để không lọc
+                 * @example Cơ sở dữ liệu
+                 */
                 q?: string;
             };
             header?: never;
@@ -14447,6 +18414,181 @@ export interface operations {
                     "*/*": components["schemas"]["GlobalResponseExportResponse"];
                 };
             };
+            /** @description Giảng viên không được phân công môn này trong học kỳ hiện tại */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseExportResponse"];
+                };
+            };
+        };
+    };
+    getExamDetail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description ID của đề thi
+                 * @example 5
+                 */
+                examId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lấy chi tiết đề thi thành công */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseExamDetailResponse"];
+                };
+            };
+            /** @description Không tìm thấy đề thi */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseExamDetailResponse"];
+                };
+            };
+            /** @description Không có quyền xem đề thi */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseExamDetailResponse"];
+                };
+            };
+        };
+    };
+    exportExam: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Định dạng file xuất (pdf hoặc excel/xlsx)
+                 * @example pdf
+                 */
+                format?: string;
+                /**
+                 * @description Có xuất kèm bảng đáp án đúng hay không
+                 * @example false
+                 */
+                include_answer_key?: boolean;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description ID của đề thi
+                 * @example 5
+                 */
+                examId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Xuất file đề thi thành công và trả về URL tải về */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseExportResponse"];
+                };
+            };
+            /** @description Không tìm thấy đề thi */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseExportResponse"];
+                };
+            };
+            /** @description Không có quyền xuất đề thi */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseExportResponse"];
+                };
+            };
+        };
+    };
+    getBankSummary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description ID môn học cần xem thống kê ngân hàng
+                 * @example 12
+                 */
+                subjectId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseExamBankSummary"];
+                };
+            };
+        };
+    };
+    getMyExams: {
+        parameters: {
+            query?: {
+                /**
+                 * @description ID đề thi cuối cùng của trang trước (cursor)
+                 * @example 20
+                 */
+                after?: number;
+                /**
+                 * @description ID cursor cho chiều before; dùng pagination.before, trang đầu bỏ trống
+                 * @example 42
+                 */
+                before?: number;
+                /**
+                 * @description Số lượng bản ghi tối đa mỗi trang (mặc định 10, tối đa 20)
+                 * @example 10
+                 */
+                limit?: number;
+                /**
+                 * @description Lọc theo ID môn học
+                 * @example 1
+                 */
+                subject_id?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lấy danh sách đề thi thành công */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseExamListResponse"];
+                };
+            };
         };
     };
     getCourseClassDetail: {
@@ -14496,7 +18638,15 @@ export interface operations {
     getMyCourseClasses: {
         parameters: {
             query?: {
+                /**
+                 * @description Lọc lớp theo học kỳ cụ thể; bỏ trống để dùng phạm vi mặc định/include_history
+                 * @example 42
+                 */
                 semester_id?: number;
+                /**
+                 * @description Lấy cả lớp trong lịch sử nếu không chọn semester_id; mặc định false chỉ học kỳ đang hoạt động
+                 * @example false
+                 */
                 include_history?: boolean;
             };
             header?: never;
@@ -14611,6 +18761,10 @@ export interface operations {
                  * @example 1050
                  */
                 after?: number;
+                /**
+                 * @description ID cursor cho chiều before; dùng pagination.before, trang đầu bỏ trống
+                 * @example 42
+                 */
                 before?: number;
                 /**
                  * @description Số lượng bản ghi tối đa mỗi trang (mặc định 10, tối đa 50)
@@ -14689,6 +18843,10 @@ export interface operations {
                  * @example 1728200000000
                  */
                 after?: number;
+                /**
+                 * @description Cursor thời gian|ID từ next_cursor; gửi nguyên chuỗi, ưu tiên hơn after legacy
+                 * @example 2026-11-19T00:00:00Z|42
+                 */
                 cursor?: string;
                 /**
                  * @description Số lượng bạn bè mỗi trang (mặc định 20, tối đa 50)
@@ -14730,6 +18888,10 @@ export interface operations {
                  * @example 1728200000000
                  */
                 after?: number;
+                /**
+                 * @description Cursor thời gian|ID từ next_cursor; gửi nguyên chuỗi, ưu tiên hơn after legacy
+                 * @example 2026-11-19T00:00:00Z|42
+                 */
                 cursor?: string;
                 /**
                  * @description Số lượng lời mời mỗi trang (mặc định 20, tối đa 50)
@@ -14771,6 +18933,10 @@ export interface operations {
                  * @example 1728200000000
                  */
                 after?: number;
+                /**
+                 * @description Cursor thời gian|ID từ next_cursor; gửi nguyên chuỗi, ưu tiên hơn after legacy
+                 * @example 2026-11-19T00:00:00Z|42
+                 */
                 cursor?: string;
                 /**
                  * @description Số lượng lời mời mỗi trang (mặc định 20, tối đa 50)
@@ -14812,6 +18978,10 @@ export interface operations {
                  * @example 1728200000000
                  */
                 after?: number;
+                /**
+                 * @description Cursor thời gian|ID từ next_cursor; gửi nguyên chuỗi, ưu tiên hơn after legacy
+                 * @example 2026-11-19T00:00:00Z|42
+                 */
                 cursor?: string;
                 /**
                  * @description Số lượng mỗi trang (mặc định 20, tối đa 50)
@@ -14853,6 +19023,10 @@ export interface operations {
                  * @example 1728200000000
                  */
                 after?: number;
+                /**
+                 * @description Cursor thời gian|ID từ next_cursor; gửi nguyên chuỗi, ưu tiên hơn after legacy
+                 * @example 2026-11-19T00:00:00Z|42
+                 */
                 cursor?: string;
                 /**
                  * @description Số lượng mỗi trang (mặc định 20, tối đa 50)
@@ -14882,129 +19056,6 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["GlobalResponseFollowerListResponseDto"];
-                };
-            };
-        };
-    };
-    getExamDetail: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /**
-                 * @description ID của đề thi
-                 * @example 5
-                 */
-                examId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Lấy chi tiết đề thi thành công */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["GlobalResponseExamDetailResponse"];
-                };
-            };
-            /** @description Không tìm thấy đề thi */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["GlobalResponseExamDetailResponse"];
-                };
-            };
-        };
-    };
-    exportExam: {
-        parameters: {
-            query?: {
-                /**
-                 * @description Định dạng file xuất (pdf hoặc excel/xlsx)
-                 * @example pdf
-                 */
-                format?: string;
-                /**
-                 * @description Có xuất kèm bảng đáp án đúng hay không
-                 * @example false
-                 */
-                include_answer_key?: boolean;
-                /**
-                 * @description Khổ giấy in
-                 * @example A4
-                 */
-                paper_size?: string;
-            };
-            header?: never;
-            path: {
-                /**
-                 * @description ID của đề thi
-                 * @example 5
-                 */
-                examId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Xuất file đề thi thành công và trả về URL tải về */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["GlobalResponseExportResponse"];
-                };
-            };
-            /** @description Không tìm thấy đề thi */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["GlobalResponseExportResponse"];
-                };
-            };
-        };
-    };
-    getMyExams: {
-        parameters: {
-            query?: {
-                /**
-                 * @description ID đề thi cuối cùng của trang trước (cursor)
-                 * @example 20
-                 */
-                after?: number;
-                before?: number;
-                /**
-                 * @description Số lượng bản ghi tối đa mỗi trang (mặc định 10, tối đa 20)
-                 * @example 10
-                 */
-                limit?: number;
-                /**
-                 * @description Lọc theo ID môn học
-                 * @example 1
-                 */
-                subject_id?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Lấy danh sách đề thi thành công */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["GlobalResponseExamListResponse"];
                 };
             };
         };
@@ -15045,7 +19096,10 @@ export interface operations {
                 type?: "AVATAR_FRAME" | "CHAT_BUBBLE";
                 /** @description Tiêu chí sắp xếp (NEWEST, PRICE_ASC, PRICE_DESC, RARITY) */
                 sort_by?: "NEWEST" | "PRICE_ASC" | "PRICE_DESC" | "RARITY";
-                /** @description Con trỏ phân trang (ID vật phẩm) */
+                /**
+                 * @description Con trỏ phân trang (ID vật phẩm)
+                 * @example 42
+                 */
                 after?: number;
                 /**
                  * @description Số lượng bản ghi mỗi trang
@@ -15082,7 +19136,10 @@ export interface operations {
                  * @example true
                  */
                 only_unlocked?: boolean;
-                /** @description Con trỏ phân trang (ID vật phẩm cuối cùng của trang trước) */
+                /**
+                 * @description Con trỏ phân trang (ID vật phẩm cuối cùng của trang trước)
+                 * @example 42
+                 */
                 after?: number;
                 /**
                  * @description Số lượng bản ghi mỗi trang (tối đa 50)
@@ -15129,7 +19186,10 @@ export interface operations {
                  * @example 20
                  */
                 limit?: number;
-                /** @description Con trỏ đầy đủ từ next_cursor của trang trước */
+                /**
+                 * @description Con trỏ đầy đủ từ next_cursor của trang trước
+                 * @example 2026-11-19T00:00:00Z|42
+                 */
                 cursor?: string;
             };
             header?: never;
@@ -15222,6 +19282,32 @@ export interface operations {
             };
         };
     };
+    snapshot: {
+        parameters: {
+            query: {
+                /**
+                 * @description ID hội thoại, phân cách bằng dấu phẩy
+                 * @example 42,75
+                 */
+                conversation_ids: number[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Trạng thái hoạt động của người đối thoại */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseListChatPresenceDto"];
+                };
+            };
+        };
+    };
     getHiddenConversations: {
         parameters: {
             query?: {
@@ -15235,7 +19321,10 @@ export interface operations {
                  * @example 20
                  */
                 limit?: number;
-                /** @description Con trỏ đầy đủ từ next_cursor của trang trước */
+                /**
+                 * @description Con trỏ đầy đủ từ next_cursor của trang trước
+                 * @example 2026-11-19T00:00:00Z|42
+                 */
                 cursor?: string;
             };
             header?: never;
@@ -15276,9 +19365,15 @@ export interface operations {
     incoming: {
         parameters: {
             query?: {
-                /** @description Con trỏ ID lời mời từ trang trước */
+                /**
+                 * @description Con trỏ ID lời mời từ trang trước
+                 * @example 0
+                 */
                 after?: number;
-                /** @description Số lời mời mỗi trang, tối đa 50 */
+                /**
+                 * @description Số lời mời mỗi trang, tối đa 50
+                 * @example 20
+                 */
                 limit?: number;
             };
             header?: never;
@@ -15310,13 +19405,25 @@ export interface operations {
     candidates: {
         parameters: {
             query?: {
-                /** @description ID nhóm hiện có. Bỏ qua khi tạo nhóm. */
+                /**
+                 * @description ID nhóm hiện có. Bỏ qua khi tạo nhóm.
+                 * @example 42
+                 */
                 conversation_id?: number;
-                /** @description Con trỏ ID người dùng từ trang trước */
+                /**
+                 * @description Con trỏ ID người dùng từ trang trước
+                 * @example 0
+                 */
                 after?: number;
-                /** @description Từ khóa tìm theo tên */
+                /**
+                 * @description Từ khóa tìm theo tên
+                 * @example Anh
+                 */
                 search?: string;
-                /** @description Số người mỗi trang, tối đa 50 */
+                /**
+                 * @description Số người mỗi trang, tối đa 50
+                 * @example 20
+                 */
                 limit?: number;
             };
             header?: never;
@@ -15371,6 +19478,10 @@ export interface operations {
                  * @example 1728200000000
                  */
                 after?: number;
+                /**
+                 * @description Cursor thời gian|ID từ next_cursor; gửi nguyên chuỗi, ưu tiên hơn after legacy
+                 * @example 2026-11-19T00:00:00Z|42
+                 */
                 cursor?: string;
                 /**
                  * @description Số lượng mỗi trang (mặc định 20, tối đa 50)
@@ -15517,10 +19628,30 @@ export interface operations {
     queue: {
         parameters: {
             query?: {
+                /**
+                 * @description PENDING, RESOLVED hoặc ALL; mặc định PENDING
+                 * @example PENDING
+                 */
                 status?: string;
+                /**
+                 * @description Lọc loại đối tượng; bỏ trống để lấy mọi loại
+                 * @example POST
+                 */
                 target_type?: "POST" | "COMMENT" | "USER";
+                /**
+                 * @description Lọc loại vi phạm; bỏ trống để không lọc
+                 * @example SPAM
+                 */
                 violation_type?: "HARASSMENT" | "HATE_STATEMENT" | "SPAM" | "OTHER";
+                /**
+                 * @description ID cursor từ pagination.after của trang trước; trang đầu bỏ trống
+                 * @example 120
+                 */
                 after?: number;
+                /**
+                 * @description Số mục, mặc định 20; server giới hạn trong 1..50
+                 * @example 20
+                 */
                 limit?: number;
             };
             header?: never;
@@ -15529,8 +19660,53 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Thành công; dữ liệu trong GlobalResponse.data */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseCursorResponseSummary"];
+                };
+            };
+            /** @description Bộ lọc, quyết định, lý do hoặc thời hạn đình chỉ không hợp lệ */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseCursorResponseSummary"];
+                };
+            };
+            /** @description Thiếu/sai/hết hạn Bearer AT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseCursorResponseSummary"];
+                };
+            };
+            /** @description Không có quyền ADMIN hoặc bị lớp Access từ chối */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseCursorResponseSummary"];
+                };
+            };
+            /** @description Báo cáo/biện pháp/bằng chứng không tồn tại */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseCursorResponseSummary"];
+                };
+            };
+            /** @description REPORT_CONFLICT: version hoặc trạng thái đối tượng đã thay đổi; tải lại chi tiết */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15545,14 +19721,63 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /**
+                 * @description ID báo cáo
+                 * @example 120
+                 */
                 id: number;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Thành công; dữ liệu trong GlobalResponse.data */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseDetail"];
+                };
+            };
+            /** @description Bộ lọc, quyết định, lý do hoặc thời hạn đình chỉ không hợp lệ */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseDetail"];
+                };
+            };
+            /** @description Thiếu/sai/hết hạn Bearer AT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseDetail"];
+                };
+            };
+            /** @description Không có quyền ADMIN hoặc bị lớp Access từ chối */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseDetail"];
+                };
+            };
+            /** @description Báo cáo/biện pháp/bằng chứng không tồn tại */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseDetail"];
+                };
+            };
+            /** @description REPORT_CONFLICT: version hoặc trạng thái đối tượng đã thay đổi; tải lại chi tiết */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15565,19 +19790,76 @@ export interface operations {
     related: {
         parameters: {
             query?: {
+                /**
+                 * @description Cursor pagination.after; trang đầu bỏ trống
+                 * @example 100
+                 */
                 after?: number;
+                /**
+                 * @description Số mục, mặc định 20; giới hạn 1..50
+                 * @example 20
+                 */
                 limit?: number;
             };
             header?: never;
             path: {
+                /**
+                 * @description ID báo cáo gốc
+                 * @example 120
+                 */
                 id: number;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Thành công; dữ liệu trong GlobalResponse.data */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseCursorResponseSummary"];
+                };
+            };
+            /** @description Bộ lọc, quyết định, lý do hoặc thời hạn đình chỉ không hợp lệ */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseCursorResponseSummary"];
+                };
+            };
+            /** @description Thiếu/sai/hết hạn Bearer AT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseCursorResponseSummary"];
+                };
+            };
+            /** @description Không có quyền ADMIN hoặc bị lớp Access từ chối */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseCursorResponseSummary"];
+                };
+            };
+            /** @description Báo cáo/biện pháp/bằng chứng không tồn tại */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseCursorResponseSummary"];
+                };
+            };
+            /** @description REPORT_CONFLICT: version hoặc trạng thái đối tượng đã thay đổi; tải lại chi tiết */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15592,14 +19874,63 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /**
+                 * @description ID báo cáo có ảnh bằng chứng
+                 * @example 120
+                 */
                 id: number;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Thành công; dữ liệu trong GlobalResponse.data */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseEvidence"];
+                };
+            };
+            /** @description Bộ lọc, quyết định, lý do hoặc thời hạn đình chỉ không hợp lệ */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseEvidence"];
+                };
+            };
+            /** @description Thiếu/sai/hết hạn Bearer AT */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseEvidence"];
+                };
+            };
+            /** @description Không có quyền ADMIN hoặc bị lớp Access từ chối */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseEvidence"];
+                };
+            };
+            /** @description Báo cáo/biện pháp/bằng chứng không tồn tại */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GlobalResponseEvidence"];
+                };
+            };
+            /** @description REPORT_CONFLICT: version hoặc trạng thái đối tượng đã thay đổi; tải lại chi tiết */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15612,19 +19943,35 @@ export interface operations {
     searchBadgeAccounts: {
         parameters: {
             query?: {
+                /**
+                 * @description true để tìm người đang giữ huy hiệu, false để tìm người chưa giữ; mặc định false
+                 * @example false
+                 */
                 holders?: boolean;
+                /**
+                 * @description Từ khóa tên/email, tối đa 100 ký tự; bỏ trống để không lọc
+                 * @example Anh
+                 */
                 query?: string;
+                /**
+                 * @description ID cursor từ pagination.after của trang trước; trang đầu bỏ trống
+                 * @example 42
+                 */
                 after?: number;
             };
             header?: never;
             path: {
+                /**
+                 * @description ID huy hiệu cần tìm người giữ/trao/thu hồi
+                 * @example 42
+                 */
                 badgeId: number;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Trang tài khoản phù hợp với bộ lọc */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -15869,6 +20216,10 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /**
+                 * @description ID tài khoản nhận lời mời kết bạn đang chờ do người gọi đã gửi
+                 * @example 42
+                 */
                 receiverId: number;
             };
             cookie?: never;
@@ -16020,7 +20371,10 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description ID lời mời */
+                /**
+                 * @description ID lời mời
+                 * @example 42
+                 */
                 id: number;
             };
             cookie?: never;

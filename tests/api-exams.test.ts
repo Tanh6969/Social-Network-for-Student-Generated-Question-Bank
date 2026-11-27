@@ -57,7 +57,7 @@ describe('đề thi — phiên thật không bao giờ dùng mock', () => {
     const examsApi = await load();
     const res = await examsApi.getMyExams({ limit: 10, subject_id: 3 });
     expect(res.items).toEqual([]);
-    expect(requests[0].path).toBe('/exams/my-exams?limit=10&subject_id=3');
+    expect(requests[0].path).toBe('/lecturer/exams/my-exams?limit=10&subject_id=3');
   });
 
   it('môn học / lớp rỗng trả về mảng rỗng', async () => {
@@ -105,7 +105,7 @@ describe('đề thi — phiên thật không bao giờ dùng mock', () => {
 
   it('trả đúng dữ liệu thật từ server', async () => {
     respond = (_m, url) =>
-      url.pathname.endsWith('/exams/9')
+      url.pathname.endsWith('/lecturer/exams/9')
         ? envelope({ exam_id: 9, title: 'Giữa kỳ', questions: [] })
         : envelope({ download_url: 'https://files/x.pdf' });
     const examsApi = await load();

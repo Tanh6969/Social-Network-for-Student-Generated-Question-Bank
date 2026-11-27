@@ -533,9 +533,9 @@ export const SessionReviewDetail: React.FC<SessionReviewDetailProps> = ({
                               Trùng với câu hỏi ID #{duplicateWarning.similar_question_id} đã có trong hệ thống.
                             </p>
                           )}
-                          {duplicateWarning.matched_snipet && (
+                          {duplicateWarning.matched_snippet && (
                             <p className="text-xs italic bg-fb-warning-soft p-2 rounded-lg border border-fb-warning/30">
-                              "{duplicateWarning.matched_snipet}"
+                              "{duplicateWarning.matched_snippet}"
                             </p>
                           )}
                         </div>

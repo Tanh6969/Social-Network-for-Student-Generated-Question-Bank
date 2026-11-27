@@ -28,7 +28,6 @@ export const ExamExportModal: React.FC<ExamExportModalProps> = ({
   showToast,
 }) => {
   const [format, setFormat] = useState<'pdf' | 'excel'>('pdf');
-  const [paperSize, setPaperSize] = useState<'A4' | 'Letter'>('A4');
   const [includeAnswerKey, setIncludeAnswerKey] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +43,6 @@ export const ExamExportModal: React.FC<ExamExportModalProps> = ({
     try {
       const response = await examsApi.exportExam(examId, {
         format,
-        paper_size: paperSize,
         include_answer_key: includeAnswerKey,
       });
 
@@ -133,23 +131,6 @@ export const ExamExportModal: React.FC<ExamExportModalProps> = ({
               </button>
             </div>
           </div>
-
-          {/* Paper size (Only if PDF) */}
-          {format === 'pdf' && (
-            <div>
-              <label className="block font-bold text-fb-text mb-1">
-                Khổ giấy in:
-              </label>
-              <select
-                value={paperSize}
-                onChange={(e) => setPaperSize(e.target.value as 'A4' | 'Letter')}
-                className="w-full px-3 py-2 rounded-lg bg-fb-input border border-fb-divider text-fb-text font-semibold focus:outline-hidden"
-              >
-                <option value="A4">A4 (Tiêu chuẩn Việt Nam - 210 x 297 mm)</option>
-                <option value="Letter">Letter (216 x 279 mm)</option>
-              </select>
-            </div>
-          )}
 
           {/* Include Answer Key Checkbox */}
           <div className="p-3 bg-fb-input rounded-lg border border-fb-divider">

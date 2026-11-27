@@ -98,7 +98,7 @@ export const ExamListView: React.FC<ExamListViewProps> = ({
         // Lỗi đã hiện ngay trong khung danh sách, không bắn thêm toast.
         setError(
           err instanceof ApiError && err.status === 404
-            ? 'Máy chủ chưa hỗ trợ xem danh sách đề thi (GET /exams/my-exams trả về 404). Bạn vẫn có thể tạo đề thi mới.'
+            ? 'Không tìm thấy endpoint danh sách đề thi (GET /lecturer/exams/my-exams trả về 404). Bạn vẫn có thể tạo đề thi mới.'
             : errorMessage(err, 'Không thể tải danh sách đề thi.'),
         );
       } finally {

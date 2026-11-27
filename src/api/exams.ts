@@ -40,7 +40,6 @@ export interface GetMyExamsParams {
 export interface ExportExamParams {
   format?: 'pdf' | 'excel' | 'xlsx' | string;
   include_answer_key?: boolean;
-  paper_size?: 'A4' | 'Letter' | string;
 }
 
 export interface ExportQuestionsParams {
@@ -127,17 +126,17 @@ const demoExams = {
 // ============================================================================
 
 export const examsApi = {
-  /** POST /exams/generate — tự động sinh đề thi từ ngân hàng câu hỏi đã APPROVED */
+  /** POST /lecturer/exams/generate — tự động sinh đề thi từ ngân hàng câu hỏi đã APPROVED */
   async generateExam(data: GenerateExamRequest): Promise<ExamDetailResponse> {
     if (!isApiSession()) return demoExams.generateExam(data);
 
     const envelope = expectEnvelope(
-      await api.POST('/exams/generate', { body: data }),
+      await api.POST('/lecturer/exams/generate', { body: data }),
     );
     return requireData(envelope.data, 'đề thi vừa sinh');
   },
 
-  /** GET /exams/my-exams — danh sách đề thi của giảng viên (cursor + lọc môn) */
+  /** GET /lecturer/exams/my-exams — danh sách đề thi của giảng viên (cursor + lọc môn) */
   async getMyExams(params?: GetMyExamsParams): Promise<ExamListResponse> {
     if (!isApiSession()) return demoExams.getMyExams(params);
 
@@ -149,7 +148,7 @@ export const examsApi = {
     }
 
     const envelope = expectEnvelope(
-      await api.GET('/exams/my-exams', { params: { query } }),
+      await api.GET('/lecturer/exams/my-exams', { params: { query } }),
     );
     return (
       envelope.data ?? {
@@ -159,17 +158,17 @@ export const examsApi = {
     );
   },
 
-  /** GET /exams/{examId} — chi tiết đề thi và danh sách câu hỏi */
+  /** GET /lecturer/exams/{examId} — chi tiết đề thi và danh sách câu hỏi */
   async getExamDetail(examId: number): Promise<ExamDetailResponse> {
     if (!isApiSession()) return demoExams.getExamDetail(examId);
 
     const envelope = expectEnvelope(
-      await api.GET('/exams/{examId}', { params: { path: { examId } } }),
+      await api.GET('/lecturer/exams/{examId}', { params: { path: { examId } } }),
     );
     return requireData(envelope.data, `chi tiết đề thi #${examId}`);
   },
 
-  /** GET /exams/{examId}/export — xuất file đề thi (PDF / Excel), trả về link tải */
+  /** GET /lecturer/exams/{examId}/export — xuất file đề thi (PDF / Excel), trả về link tải */
   async exportExam(
     examId: number,
     params?: ExportExamParams,
@@ -179,16 +178,14 @@ export const examsApi = {
     const query: {
       format?: string;
       include_answer_key?: boolean;
-      paper_size?: string;
     } = {};
     if (params?.format) query.format = params.format;
     if (params?.include_answer_key !== undefined) {
       query.include_answer_key = params.include_answer_key;
     }
-    if (params?.paper_size) query.paper_size = params.paper_size;
 
     const envelope = expectEnvelope(
-      await api.GET('/exams/{examId}/export', {
+      await api.GET('/lecturer/exams/{examId}/export', {
         params: { path: { examId }, query },
       }),
     );
