@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import {
   examsApi,
+  ApiError,
   errorMessage,
   ExamItem,
   CursorPaginationDto,
@@ -94,14 +95,17 @@ export const ExamListView: React.FC<ExamListViewProps> = ({
         setExams(response.items || []);
         setPagination(response.pagination || null);
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'Không thể tải danh sách đề thi.';
-        setError(msg);
-        showToast(msg, 'error');
+        // Lỗi đã hiện ngay trong khung danh sách, không bắn thêm toast.
+        setError(
+          err instanceof ApiError && err.status === 404
+            ? 'Máy chủ chưa hỗ trợ xem danh sách đề thi (GET /exams/my-exams trả về 404). Bạn vẫn có thể tạo đề thi mới.'
+            : errorMessage(err, 'Không thể tải danh sách đề thi.'),
+        );
       } finally {
         setLoading(false);
       }
     },
-    [limit, selectedSubjectId, showToast]
+    [limit, selectedSubjectId]
   );
 
   // Initial fetch and reset when subject or limit changes
