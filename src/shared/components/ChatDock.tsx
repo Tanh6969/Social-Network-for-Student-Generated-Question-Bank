@@ -101,7 +101,7 @@ export const ChatDock: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-0 right-4 z-40 flex items-end gap-3 pointer-events-none">
+    <div className="fixed bottom-0 right-4 z-[350] flex items-end gap-3 pointer-events-none">
       {/* Minimized Avatars Bubbles */}
       <div className="flex flex-col gap-2 pb-2 pointer-events-auto">
         {minimizedDockIds.map((convId) => {

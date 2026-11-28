@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { X } from 'lucide-react';
 import type { CommentItem } from '../../demo/types';
 import { useApp } from '../../demo/context/AppContext';
 import { AvatarWithFrame } from '../../../shared/components/AvatarWithFrame';
@@ -74,8 +76,15 @@ function CommentRow({
   onReply?: (comment: CommentItem) => void;
   isReply?: boolean;
 }) {
-  const { setViewingUserId, setActiveTab, currentUser, sessionKind,
-    updateComment, deleteComment } = useApp();
+  const {
+    setViewingUserId,
+    setActiveTab,
+    setActivePostDetail,
+    currentUser,
+    sessionKind,
+    updateComment,
+    deleteComment,
+  } = useApp();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(comment.content);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -99,7 +108,10 @@ function CommentRow({
     setBusy(false);
   };
   const openAuthorProfile = () => {
-    setViewingUserId(comment.author.id);
+    setActivePostDetail(null);
+    setViewingUserId(
+      comment.author.id === currentUser.id ? null : comment.author.id,
+    );
     setActiveTab('profile');
   };
 
@@ -147,26 +159,102 @@ function CommentRow({
               Trả lời
             </button>
           )}
-          {canManage && !editing && !confirmDelete && (
+          {canManage && !editing && (
             <>
-              <button type="button" onClick={() => { setDraft(comment.content); setEditing(true); }} className="font-semibold hover:underline">Sửa</button>
-              <button type="button" onClick={() => setConfirmDelete(true)} className="font-semibold hover:underline">Xóa</button>
+              <button
+                type="button"
+                onClick={() => {
+                  setDraft(comment.content);
+                  setEditing(true);
+                }}
+                className="font-semibold hover:underline cursor-pointer"
+              >
+                Sửa
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(true)}
+                className="font-semibold hover:underline cursor-pointer"
+              >
+                Xóa
+              </button>
             </>
           )}
           {editing && (
             <>
-              <button type="button" disabled={busy || !draft.trim()} onClick={() => void save()} className="font-semibold text-fb-blue disabled:opacity-50">Lưu</button>
-              <button type="button" disabled={busy} onClick={() => setEditing(false)} className="hover:underline">Hủy</button>
-            </>
-          )}
-          {confirmDelete && (
-            <>
-              <span>Xóa bình luận này?</span>
-              <button type="button" disabled={busy} onClick={() => void remove()} className="font-semibold text-fb-danger">Xóa</button>
-              <button type="button" disabled={busy} onClick={() => setConfirmDelete(false)} className="hover:underline">Hủy</button>
+              <button
+                type="button"
+                disabled={busy || !draft.trim()}
+                onClick={() => void save()}
+                className="font-semibold text-fb-blue disabled:opacity-50 cursor-pointer"
+              >
+                Lưu
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => setEditing(false)}
+                className="hover:underline cursor-pointer"
+              >
+                Hủy
+              </button>
             </>
           )}
         </div>
+        {confirmDelete &&
+          typeof document !== 'undefined' &&
+          createPortal(
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Xóa bình luận?"
+              onClick={(event) => {
+                if (!busy && event.target === event.currentTarget) {
+                  setConfirmDelete(false);
+                }
+              }}
+              className="fixed inset-0 z-[400] flex items-center justify-center bg-black/65 p-4 animate-in fade-in duration-150"
+            >
+              <div className="w-full max-w-[500px] overflow-hidden rounded-xl border border-fb-divider bg-fb-card text-fb-text shadow-2xl">
+                <div className="relative flex items-center justify-center border-b border-fb-divider px-4 py-4">
+                  <h3 className="text-lg font-bold text-fb-text">
+                    Xóa bình luận?
+                  </h3>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => setConfirmDelete(false)}
+                    aria-label="Đóng"
+                    className="absolute right-4 flex h-9 w-9 items-center justify-center rounded-full bg-fb-btn text-fb-text-2 transition hover:bg-fb-btn-hover hover:text-fb-text cursor-pointer disabled:opacity-50"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+                <div className="px-4 py-4 text-sm text-fb-text">
+                  Bạn có chắc chắn muốn xóa bình luận này không?
+                </div>
+                <div className="flex items-center justify-end gap-2 px-4 pb-4 pt-1">
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => setConfirmDelete(false)}
+                    className="rounded-lg px-4 py-2 text-sm font-semibold text-fb-blue transition hover:bg-fb-hover cursor-pointer disabled:opacity-50"
+                  >
+                    Không
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void remove()}
+                    className="rounded-lg bg-fb-blue px-6 py-2 text-sm font-semibold text-white transition hover:bg-fb-blue-hover cursor-pointer disabled:opacity-50"
+                  >
+                    Xóa
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )}
         {!isReply &&
           comment.replies?.map((reply) => (
             <CommentRow key={reply.id} postId={postId} comment={reply} isReply />
